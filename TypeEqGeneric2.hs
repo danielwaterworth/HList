@@ -27,8 +27,8 @@ module TypeEqGeneric2 where
 -- of TypeEqBool does not issue problems with the instance
 -- constraints.
 
-import FakePrelude hiding (TypeEq,typeEq,proxyEq)
-
+import FakePrelude hiding (TypeEq,typeEq,proxyEq,TypeCast,typeCast)
+import TypeCastGeneric2
 
 -- Re-enabled for testing
 
@@ -44,9 +44,12 @@ class TypeEq' () x y b => TypeEq x y b | x y -> b
 class TypeEq' q x y b | q x y -> b
 class TypeEq'' q x y b | q x y -> b
 instance TypeEq' () x y b => TypeEq x y b
-instance TypeEq' () x x HTrue
+-- This instance used to work < GHC 6.2
+-- instance TypeEq' () x x HTrue
+-- There were some problems however with 6.3.
+-- So we favour the following instance instead.
+instance TypeCast b HTrue => TypeEq' () x x b
 instance TypeEq'' q x y b => TypeEq' q x y b
 instance TypeEq'' () x y HFalse
-
 
 {-----------------------------------------------------------------------------}

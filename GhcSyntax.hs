@@ -66,8 +66,8 @@ r .<++. r' = hLeftUnion r r'
 
 -- Convenience notation for TIRs
 
-infixr 3 :+:
-infixr 3 .+.
+infixr 2 :+:
+infixr 2 .+.
 
 type e :+: l = HCons (Proxy e) l
 

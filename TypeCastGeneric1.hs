@@ -10,9 +10,9 @@
    A generic implementation of type cast. For this implementation to
    work, we need to import it at a higher level in the module hierarchy
    than all clients of the class. Otherwise, type simplification will
-   turn constraints of the form TypeCast x y into the form TypeCast x x.
+   inline TypeCast x y, which implies compile-time unification of x and y.
 
-   This technique works for both hugs and ghc.
+   This technique works fine for ghc, and within limits for hugs.
 
 -}
 
