@@ -69,7 +69,7 @@ instance HTail (HCons e l) l
 
 -- A class for extension
 
-class HExtend e l l' | e l -> l'
+class HExtend e l l' | e l -> l', l' -> e l
  where
   hExtend :: e -> l -> l'
 

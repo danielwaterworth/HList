@@ -6,12 +6,13 @@
 
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
-   This is a next-to-top-level file that loads all across-model modules.
-   This file is not enough for a session. Use Main?.hs.
+   This is a next-to-main module that loads all modules that at least
+   *compile* fine for all the models of interest. See the Makefile
+   for ways to run different models.
 
 -}
 
-module Portable (
+module CommonMain (
 
    module Datatypes
  , module FakePrelude
@@ -19,6 +20,7 @@ module Portable (
  , module HArray
  , module HOccurs
  , module TypeIndexed
+ , module TIP
  , module GenericCast
 ) where
 
@@ -28,6 +30,7 @@ import HList
 import HArray
 import HOccurs
 import TypeIndexed
+import TIP
 import GenericCast
 
 --

@@ -77,10 +77,22 @@ instance ( HType2HNat   l e n
 
 -- Define type-indexed delete in terms of the natural-based primitive
 
-hDeleteByProxy l p
+class HDeleteByProxy l e l' | l e -> l'
+ where
+  hDeleteByProxy :: l -> HProxy e -> l'
+
+instance ( HType2HNat (HCons e l) e' n
+         , HDeleteByHNat  (HCons e l) n  l'
+         , TypeEqBool e e' b
+         , HType2HNat' b l e' n
+         )
+      =>   HDeleteByProxy (HCons e l) e' l'
+ where
+  hDeleteByProxy = hDeleteByProxy'
+
+hDeleteByProxy' l p
  =
    hDeleteByHNat l (hType2HNat l p)
-
 
 {-----------------------------------------------------------------------------}
 
@@ -115,12 +127,10 @@ hSplitByProxies l ps
 -- Thanks to the HW 2004 reviewer who pointed out the value of this example.
 
 tuple :: ( HOccursGrounded ex l
-         , HType2HNat l ex nx 
-         , HDeleteByHNat l nx lx
+         , HDeleteByProxy l ex lx
          , HOccursGrounded ey lx
          , HOccursGrounded ey l
-         , HType2HNat l ey ny 
-         , HDeleteByHNat l ny ly
+         , HDeleteByProxy l ey ly
          , HOccursGrounded ex ly
          )
       => l -> (ex,ey)

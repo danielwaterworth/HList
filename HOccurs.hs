@@ -108,24 +108,33 @@ instance ( HOccurs e l
 -- One occurrence and nothing is left
 -- This variation even grounds the result type for a singleton list.
 
+class HOccursGrounded' e l
+ where
+  hOccursGrounded' :: l -> e
+
+instance HFreeType e l
+      => HOccursGrounded' e (HCons e l)
+ where
+  hOccursGrounded' (HCons e _) = e
+
+instance HOccursGrounded' e l
+      => HOccursGrounded' e (HCons e' l)
+ where
+  hOccursGrounded' (HCons _ l) = hOccursGrounded' l
+
 class HOccursGrounded e l
  where
   hOccursGrounded :: l -> e
-
-instance HFreeType e l
-      => HOccursGrounded e (HCons e (HCons x l))
- where
-  hOccursGrounded (HCons e _) = e
-
-instance HOccursGrounded e l
-      => HOccursGrounded e (HCons e' l)
- where
-  hOccursGrounded (HCons _ l) = hOccursGrounded l
 
 instance Cast e e'
       => HOccursGrounded e' (HCons e HNil)
  where
   hOccursGrounded (HCons e _) = cast e
+
+instance HOccursGrounded' e (HCons x l)
+      => HOccursGrounded e (HCons x l)
+ where
+  hOccursGrounded l = hOccursGrounded' l
 
 
 {-----------------------------------------------------------------------------}

@@ -13,7 +13,7 @@
 -}
 
 
-import Portable
+import CommonMain
 import GenericTypeEq
 import GenericTypeEqBool
 

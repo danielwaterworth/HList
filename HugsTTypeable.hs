@@ -12,7 +12,7 @@
 -}
 
 
-import Portable
+import CommonMain
 import TTypeableTypeEq
 import TTypeableTypeEqBool
 
