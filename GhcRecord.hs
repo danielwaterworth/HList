@@ -70,33 +70,33 @@ instance HasNoProxies l => HasNoProxies (HCons e l)
 
 {-----------------------------------------------------------------------------}
 
--- Coerce a record up to a different record type
+-- Narrow a record to a different record type
 
-class  Coerce a b
- where coerce :: Record a -> Record b
+class  Narrow a b
+ where narrow :: Record a -> Record b
 
-instance Coerce a HNil
- where   coerce _ = emptyRecord
+instance Narrow a HNil
+ where   narrow _ = emptyRecord
 
-instance ( Coerce r r'
+instance ( Narrow r r'
          , HExtract r l v
-         ) => Coerce r (HCons (l,v) r')
+         ) => Narrow r (HCons (l,v) r')
   where
-    coerce (Record r) = Record (HCons (l,v) r')
+    narrow (Record r) = Record (HCons (l,v) r')
       where
-        (Record r')    = coerce (Record r)
+        (Record r')    = narrow (Record r)
         ((l,v)::(l,v)) = hExtract r
 
 
 {-----------------------------------------------------------------------------}
 
-constrain :: Coerce r l => Record r -> Proxy l
+constrain :: Narrow r l => Record r -> Proxy l
 constrain = const proxy
 
 
 {-----------------------------------------------------------------------------}
 
--- Helper of coerce
+-- Helper of narrow
 
 class  HExtract r l v
  where hExtract :: r -> (l,v)
