@@ -1,7 +1,8 @@
 ##############################################################################
 
-#ghci = ghci
-ghci = /home/ralf/cvs/software/ghc-fptools/ghc/compiler/stage2/ghc-inplace --interactive
+#ghci = /home/ralf/cvs/software/ghc-fptools/ghc/compiler/stage2/ghc-inplace --interactive
+#ghci = /home/ralf/software/ghc-6.4.20050301/bin/i386-unknown-linux/ghc --interactive
+ghci = ghci
 ghc-favourite  = MainGhcGeneric1.hs
 hugs-favourite = MainHugsTTypeable.hs
 
