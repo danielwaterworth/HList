@@ -1,15 +1,13 @@
 (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
-Code for the paper "Strongly typed heterogeneous collections"
+The HList library and samples
 
-We provide the code as shown in the paper for the reader's
-convenience. We have minimised this distribution to focus on the
-issues discussed in the paper. In the future, there is likely to be an
-elaborated distribution of the HList library, or a corresponding
-contribution to the Haskell libraries project. The code from the
-database section is not included since doing so would have implied
-inclusion of substantial packages, namely the underlying
-infrastructure for database access library.
+This distribution covers all issues discussed in the HList paper. The
+code from the database section of the HList paper is not included
+since doing so would have implied inclusion of substantial packages,
+namely the underlying infrastructure for database access library. We
+think of an elaborated distribution of the HList library, or a
+corresponding contribution to the Haskell libraries project.
 
 The code works --- within the limits exercised in the source files ---
 for both GHC (6.2) and Hugs (Nov 2003). See the Makefile for ways of
