@@ -255,7 +255,7 @@ unProxy =  undefined
 
 -- Type equality and disequality
 
-class TypeEq    x y
+class TypeEq x y
 class TypeNotEq x y
 
 typeEq :: TypeEq x y => x -> y -> ()
