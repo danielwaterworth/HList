@@ -29,9 +29,9 @@ import FakePrelude hiding (TypeCast,typeCast)
 
 -- The actual encoding
 
-class TypeCast   a b   | a -> b   where typeCast   :: a -> b
-class TypeCast'  t a b | t a -> b where typeCast'  :: t->a->b
-class TypeCast'' t a b | t a -> b where typeCast'' :: t->a->b
+class TypeCast   a b   | a -> b, b->a   where typeCast   :: a -> b
+class TypeCast'  t a b | t a -> b, t b -> a where typeCast'  :: t->a->b
+class TypeCast'' t a b | t a -> b, t b -> a where typeCast'' :: t->a->b
 instance TypeCast'  () a b => TypeCast a b where typeCast x = typeCast' () x
 instance TypeCast'' t a b => TypeCast' t a b where typeCast' = typeCast''
 instance TypeCast'' () a a where typeCast'' _ x  = x
