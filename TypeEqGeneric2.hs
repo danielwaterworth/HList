@@ -44,10 +44,10 @@ class TypeEq' () x y b => TypeEq x y b | x y -> b
 class TypeEq' q x y b | q x y -> b
 class TypeEq'' q x y b | q x y -> b
 instance TypeEq' () x y b => TypeEq x y b
--- This instance used to work < GHC 6.2
+-- This instance used to work <= GHC 6.2
 -- instance TypeEq' () x x HTrue
--- There were some problems however with 6.3.
--- So we favour the following instance instead.
+-- There were some problems however with GHC CVS 6.3.
+-- So we favour the following, more stable (?) instance instead.
 instance TypeCast b HTrue => TypeEq' () x x b
 instance TypeEq'' q x y b => TypeEq' q x y b
 instance TypeEq'' () x y HFalse
