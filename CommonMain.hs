@@ -24,6 +24,8 @@ module CommonMain (
  , module TIP
  , module TIC
  , module HZip
+ , module Record
+ , module Variant
 ) where
 
 import FakePrelude
@@ -34,3 +36,5 @@ import HTypeIndexed
 import TIP
 import TIC
 import HZip
+import Record
+import Variant

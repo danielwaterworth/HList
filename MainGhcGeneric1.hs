@@ -192,6 +192,16 @@ Type error ...
 -}
 
 
+testVariant = (testVar1,(testVar2,(testVar3)))
+ where
+  animalVar =  key   .=. (proxy::Proxy Integer)
+           .*. name  .=. (proxy::Proxy String)
+           .*. breed .=. (proxy::Proxy Breed)
+           .*. emptyRecord
+  testVar1 = mkVariant name "angus" animalVar
+  testVar2 = unVariant key testVar1
+  testVar3 = unVariant name testVar1
+
 
 {-----------------------------------------------------------------------------}
 
@@ -202,7 +212,8 @@ main = print $   ( testHArray
                , ( testTIP
                , ( testRecords
                , ( testTIC
-               )))))))
+               , ( testVariant
+               ))))))))
 
 
 {-----------------------------------------------------------------------------}

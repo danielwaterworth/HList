@@ -35,7 +35,7 @@ instance HList l => HList (HCons e l)
 
 {-----------------------------------------------------------------------------}
 
--- Public constructor
+-- Public constructors
 
 hNil  :: HNil
 hNil  =  HNil

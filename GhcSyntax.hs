@@ -61,7 +61,8 @@ infixr 3 .+.
 
 type e :+: l = HCons (Proxy e) l
 
-(.+.) :: ( HTypeProxied l
+(.+.) :: ( HTypeIndexed l
+         , HTypeProxied l
          , HOccursNot (Proxy e) l
          )
       => e -> TIP l -> TIP (HCons (Proxy e) l)

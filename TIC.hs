@@ -35,7 +35,8 @@ data TIC l = TIC Dynamic
 
 -- Public constructor
 
-mkTIC :: ( HTypeProxied l
+mkTIC :: ( HTypeIndexed l
+         , HTypeProxied l
          , HOccurs (Proxy i) l
          , Typeable i
          ) 
@@ -48,7 +49,8 @@ mkTIC i = TIC (toDyn i)
 
 -- Public destructor
 
-unTIC :: ( HTypeProxied l
+unTIC :: ( HTypeIndexed l
+         , HTypeProxied l
          , HOccurs (Proxy o) l
          , Typeable o
          ) 
@@ -61,12 +63,9 @@ unTIC (TIC i) = fromDynamic i
 
 -- A type-indexed type sequence that is a sequence of proxy types
 
-class HTypeIndexed l => HTypeProxied l
+class HTypeProxied l
 instance HTypeProxied HNil
-instance ( HTypeProxied l
-         , HOccursNot (Proxy e) l
-         )
-           => HTypeProxied (HCons (Proxy e) l)
+instance HTypeProxied l => HTypeProxied (HCons (Proxy e) l)
 
 
 {-----------------------------------------------------------------------------}

@@ -21,10 +21,7 @@
 -}
 
  
-module Label3 (
-  module Label3,
-  module Record
-) where
+module Label3 where
 
 import FakePrelude
 import HListPrelude
