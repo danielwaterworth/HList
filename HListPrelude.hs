@@ -336,6 +336,17 @@ instance ( Monad m
 
 {-----------------------------------------------------------------------------}
 
+-- Type-level equality for lists
+
+instance HEq HNil HNil HTrue
+instance HList l => HEq HNil (HCons e l) HFalse
+instance HList l => HEq (HCons e l) HNil HFalse
+instance (HList l, HList l', HEq e e' b, HEq l l' b', HAnd b b' b'')
+      => HEq (HCons e l) (HCons e' l') b''
+
+
+{-----------------------------------------------------------------------------}
+
 -- Staged equality for lists
 
 instance HStagedEq HNil HNil

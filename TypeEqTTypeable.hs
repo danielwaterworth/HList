@@ -23,7 +23,7 @@ import TTypeable
 -- Generic implementation of the type equality predicate
 instance ( TTypeable t tt
          , TTypeable t' tt'
-         , TTypeableEq tt tt' b
+         , HEq tt tt' b
          )
       =>   TypeEq t t' b
 
