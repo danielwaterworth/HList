@@ -14,7 +14,8 @@
 module HOccurs where
 
 import FakePrelude
-import HList
+import HListPrelude
+import HListGoodies
 import HArray
 
 
@@ -108,6 +109,20 @@ instance ( HOccurs e l
 -- One occurrence and nothing is left
 -- This variation even grounds the result type for a singleton list.
 
+class HOccursGrounded e l
+ where
+  hOccursGrounded :: l -> e
+
+instance TypeUnify e e'
+      => HOccursGrounded e' (HCons e HNil)
+ where
+  hOccursGrounded (HCons e _) = typeUnify e
+
+instance HOccursGrounded' e (HCons x l)
+      => HOccursGrounded e (HCons x l)
+ where
+  hOccursGrounded l = hOccursGrounded' l
+
 class HOccursGrounded' e l
  where
   hOccursGrounded' :: l -> e
@@ -121,20 +136,6 @@ instance HOccursGrounded' e l
       => HOccursGrounded' e (HCons e' l)
  where
   hOccursGrounded' (HCons _ l) = hOccursGrounded' l
-
-class HOccursGrounded e l
- where
-  hOccursGrounded :: l -> e
-
-instance Cast e e'
-      => HOccursGrounded e' (HCons e HNil)
- where
-  hOccursGrounded (HCons e _) = cast e
-
-instance HOccursGrounded' e (HCons x l)
-      => HOccursGrounded e (HCons x l)
- where
-  hOccursGrounded l = hOccursGrounded' l
 
 
 {-----------------------------------------------------------------------------}

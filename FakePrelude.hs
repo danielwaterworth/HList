@@ -144,6 +144,17 @@ instance ( HNat n
 
 {-----------------------------------------------------------------------------}
 
+-- Staged equality
+--  - Establish type equality statically
+--  - Establish remaining value-level equality dynamically
+
+class HStagedEq x y
+ where
+  hStagedEq :: x -> y -> Bool
+ 
+
+{-----------------------------------------------------------------------------}
+
 -- Less than
 
 class HBool b => HLt x y b | x y -> b
@@ -197,9 +208,9 @@ proxyEqBool x y = typeEqBool (hUnProxy x) (hUnProxy y)
 
 -- Type-safe cast
 
-class Cast x y | x -> y
+class TypeUnify x y | x -> y
  where
-  cast :: x -> y
+  typeUnify :: x -> y
 
 
 {-----------------------------------------------------------------------------}
@@ -227,6 +238,16 @@ typeEq _ _ = ()
 
 typeNotEq :: TypeNotEq x y => x -> y -> ()
 typeNotEq _ _ = ()
+
+
+{-----------------------------------------------------------------------------}
+
+-- Subtyping
+
+class HSubType l l'
+
+hSubType :: HSubType l l' => l -> l' -> ()
+hSubType _ _ = ()
 
 
 {-----------------------------------------------------------------------------}

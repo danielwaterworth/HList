@@ -43,10 +43,32 @@ testTIP = [show testTIP1, show testTIP2, show testTIP3, show testTIP4]
   testTIP3 = hExtend Sheep $ hDeleteByProxy myTipyCow (HProxy::HProxy Breed)
   testTIP4 = hUpdateByType myTipyCow Sheep
 
+testSimpleRecords = [ show test1 
+                    , show test2
+                    , show test3 
+                    , show test4
+                    , show test5
+                    , show test6
+                    ]
+ where
+  key   = HZero
+  name  = HSucc key
+  breed = HSucc name
+  price = HSucc breed
+  test1 = mkSimpleRecord $ HCons (key,42::Integer)
+                         $ HCons (name,"Angus")
+                         $ HCons (breed,Cow)
+                         $ HNil 
+  test2 = hLookup test1 breed
+  test3 = hDelete test1 breed
+  test4 = hUpdate test1 breed Sheep
+  test5 = hExtend (price,8.8) test1
+  test6 = hProject test5 (HCons breed (HCons price HNil))
 
-main = print $ ( testHArray
-               , testHOccurs
-               , testTypeIndexed
-               , testTuple
-               , testTIP
-               )
+main = print $   ( testHArray
+               , ( testHOccurs
+               , ( testTypeIndexed
+               , ( testTuple
+               , ( testTIP
+               , ( testSimpleRecords
+               ))))))

@@ -1,0 +1,1 @@
+(HCons (MyImplementation1 10) (HCons (MyImplementation2 20) HNil),(True,(False,(True,(False,False)))))

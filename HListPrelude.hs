@@ -5,12 +5,12 @@
 
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
-   Typeful heterogeneous lists.
+   Basic declarations for typeful heterogeneous lists.
 
  -}
 
  
-module HList where
+module HListPrelude where
 
 import FakePrelude
 import Datatypes
@@ -358,7 +358,6 @@ instance ( Monad m
       => HApply (HSeq f) (x,m ()) (m ())
  where
   hApply (HSeq f) (x,c) = do hApply f x; c
-
 
 
 {-----------------------------------------------------------------------------}

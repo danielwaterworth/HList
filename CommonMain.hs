@@ -16,22 +16,28 @@ module CommonMain (
 
    module Datatypes
  , module FakePrelude
- , module HList
+ , module HListPrelude
+ , module HListGoodies
  , module HArray
  , module HOccurs
  , module TypeIndexed
  , module TIP
- , module GenericCast
+ , module HZip
+ , module SimpleRecords
+ , module GenericTypeUnify
 ) where
 
 import Datatypes
 import FakePrelude
-import HList
+import HListPrelude
+import HListGoodies
 import HArray
 import HOccurs
 import TypeIndexed
 import TIP
-import GenericCast
+import HZip
+import SimpleRecords
+import GenericTypeUnify
 
 --
 -- In the remainder of the module,

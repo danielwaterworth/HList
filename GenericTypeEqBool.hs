@@ -20,4 +20,4 @@ module GenericTypeEqBool where
 import FakePrelude
 
 instance TypeEqBool x x HTrue
-instance Cast HFalse b => TypeEqBool x y b
+instance TypeUnify HFalse b => TypeEqBool x y b

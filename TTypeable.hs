@@ -14,7 +14,8 @@ module TTypeable where
 
 import Datatypes
 import FakePrelude
-import HList
+import HListPrelude
+import HListGoodies
 
 
 class TTypeable a b | a-> b

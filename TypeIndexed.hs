@@ -14,7 +14,8 @@
 module TypeIndexed where
 
 import FakePrelude
-import HList
+import HListPrelude
+import HListGoodies
 import HArray
 import HOccurs
 

@@ -1,6 +1,6 @@
 {-# OPTIONS -fglasgow-exts #-}
-{-# OPTIONS -fallow-overlapping-instances #-}
 {-# OPTIONS -fallow-undecidable-instances #-}
+{-# OPTIONS -fallow-overlapping-instances #-}
 
 {- 
 
@@ -15,10 +15,10 @@
 -}
 
   
-module GenericCast where
+module GenericTypeUnify where
 
 import FakePrelude
 
-instance Cast x x
+instance TypeUnify x x
  where
-  cast = id
+  typeUnify = id
