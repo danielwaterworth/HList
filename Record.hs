@@ -9,7 +9,7 @@
 
    Extensible records
 
-   The are different refinements for this module;
+   The are different models of labels that go with this module;
    see the files Label?.hs
 
 -}

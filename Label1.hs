@@ -7,7 +7,8 @@
 
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
-   A model of extensible records.
+   A model of label as needed for extensible records.
+
    Record labels are simply type-level naturals.
    This models is as simple and as portable as it could be.
 

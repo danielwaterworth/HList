@@ -7,7 +7,7 @@
 
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
-   A model of extensible records.
+   A model of labels as needed for extensible records.
 
    Record labels are triplets of type-level naturals, namespace and string.
    The namespace part helps with avoiding confusions between labels from
