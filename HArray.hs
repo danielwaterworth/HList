@@ -100,7 +100,7 @@ instance ( HLookupByHNat l i (e,b)
   hSplitByHNats' l (HCons i il) = (HCons e l',l'')
    where
     (e,_)    = hLookupByHNat  l i
-    l'''     = hUpdateByHNat  l i (e,HFalse)
+    l'''     = hUpdateByHNat  l i (e,hFalse)
     (l',l'') = hSplitByHNats' l''' il
 
 
@@ -205,7 +205,7 @@ class HOrdMember e l b | e l -> b
 
 instance HOrdMember e HNil HFalse
  where
-  hOrdMember _ _ = HFalse
+  hOrdMember _ _ = hFalse
 
 instance ( HEq e e' b1
          , HOrdMember e l b2

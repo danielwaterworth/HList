@@ -120,14 +120,14 @@ class HOccurs' e l
  where
   hOccurs' :: l -> e
                                                                                
-instance ( TypeEqBool e e' b
+instance ( TypeEq e e' b
          , HOccursBool b e (HCons e' l) )
       =>   HOccurs' e (HCons e' l)
  where
   hOccurs' (HCons e' l) = e
    where
     e = hOccursBool b (HCons e' l)
-    b = proxyEqBool (proxy e) (proxy e')
+    b = proxyEq (proxy e) (proxy e')
                                                                                
 class HOccursBool b e l
  where
@@ -162,10 +162,10 @@ class HLookup e l
  where
   hLookup :: l -> e
 
-instance TypeUnify e e'
+instance TypeCast e e'
       => HLookup e' (HCons e HNil)
  where
-  hLookup (HCons e _) = typeUnify e
+  hLookup (HCons e _) = typeCast e
 
 instance HLookup' e (HCons x l)
       => HLookup e (HCons x l)

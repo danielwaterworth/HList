@@ -14,18 +14,18 @@
    of the constraints of the more specific instance is assumed for
    the more general instance.
 
-   The specific encoding given here makes use of TypeUnify,
+   The specific encoding given here makes use of TypeCast,
    and by transitive closure therefore relies on separate compilation
-   of TypeUnify clients and the TypeUnify instance.
+   of TypeCast clients and the TypeCast instance.
 
-   There is another encoding in TypeEqBoolGeneric2.hs.
+   There is another encoding in TypeEqGeneric2.hs.
 
 -}
 
   
-module TypeEqBoolGeneric1 where
+module TypeEqGeneric1 where
 
 import FakePrelude
 
-instance TypeEqBool x x HTrue
-instance TypeUnify HFalse b => TypeEqBool x y b
+instance TypeEq x x HTrue
+instance (HBool b, TypeCast HFalse b) => TypeEq x y b

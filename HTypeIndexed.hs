@@ -23,20 +23,57 @@ import HOccurs
 
 {-----------------------------------------------------------------------------}
 
+class HDeleteMany e l l' | e l -> l'
+ where
+  hDeleteMany :: Proxy e -> l -> l'
+
+instance HDeleteMany e HNil HNil
+ where
+  hDeleteMany _ HNil = HNil
+
+instance ( HList l
+         , TypeEq e e' b
+         , HDeleteManyCase b e e' l l'
+         )
+      =>   HDeleteMany e (HCons e' l) l'
+ where
+  hDeleteMany p (HCons e' l) = l'
+   where
+    b  = proxyEq p (proxy e')
+    l' = hDeleteManyCase b p e' l
+
+class HDeleteManyCase b e e' l l' | b e e' l -> l'
+ where
+  hDeleteManyCase :: b -> Proxy e -> e' -> l -> l'
+
+instance HDeleteMany e l l'
+      => HDeleteManyCase HTrue e e l l'
+ where
+  hDeleteManyCase _ p _ l = hDeleteMany p l
+
+
+instance HDeleteMany e l l'
+      => HDeleteManyCase HFalse e e' l (HCons e' l')
+ where
+  hDeleteManyCase _ p e' l = HCons e' (hDeleteMany p l)
+
+
+{-----------------------------------------------------------------------------}
+
 -- Map a type to a natural
 
 class HNat n => HType2HNat l e n | l e -> n
  where
   hType2HNat :: l -> Proxy e -> n
 
-instance ( TypeEqBool e' e b
+instance ( TypeEq e' e b
          , HType2HNat' b l e n
          )
            => HType2HNat (HCons e' l) e n
  where
   hType2HNat (HCons e' l) p = n
    where
-    b = proxyEqBool (proxy e') p
+    b = proxyEq (proxy e') p
     n = hType2HNat' b l p 
 
 

@@ -3,10 +3,12 @@
 ghc-favourite  = MainGhcGeneric1.hs
 hugs-favourite = MainHugsTTypeable.hs
 
+
 ##############################################################################
 
 all:
 	@echo "No default target for make."
+
 
 ##############################################################################
 #
@@ -15,12 +17,14 @@ all:
 ghci:
 	ghci ${ghc-favourite}
 
+
 ##############################################################################
 #
 # Start a Hugs session for the favoured Hugs model
 #
 hugs:
 	hugs -98 +o ${hugs-favourite}
+
 
 ##############################################################################
 #
@@ -52,6 +56,11 @@ test:
 #
 	ghci MainGhcGeneric2.hs -v0 < Main.in > MainGhcGeneric2.out
 	diff MainGhcGeneric2.out MainGhcGeneric2.ref
+#
+# Yet another generic type cast
+#
+	ghci MainGhcGeneric3.hs -v0 < Main.in > MainGhcGeneric3.out
+	diff MainGhcGeneric3.out MainGhcGeneric3.ref
 
 
 ##############################################################################
@@ -64,6 +73,8 @@ copy:
 	cp MainHugsTTypeable.out MainHugsTTypeable.ref
 	cp MainPosting-040607.out MainPosting-040607.ref
 	cp MainGhcGeneric2.out MainGhcGeneric2.ref
+	cp MainGhcGeneric3.out MainGhcGeneric3.ref
+
 
 ##############################################################################
 #
@@ -72,5 +83,6 @@ copy:
 clean:
 	rm -f *~
 	rm -f *.out
+
 
 ##############################################################################

@@ -20,15 +20,11 @@ module FakePrelude where
 
 -- Type-level Booleans
 
-data HTrue  = HTrue
-data HFalse = HFalse
+data HTrue; hTrue :: HTrue; hTrue = undefined
+data HFalse; hFalse :: HFalse; hFalse = undefined
+class HBool x; instance HBool HTrue; instance HBool HFalse
 instance Show HTrue where show _ = "HTrue"
 instance Show HFalse where show _ = "HFalse"
-
-
-class HBool x
-instance HBool HTrue
-instance HBool HFalse
 
 
 -- Conjunction of type-level Booleans
@@ -39,19 +35,19 @@ class (HBool t, HBool t', HBool t'') => HAnd t t' t'' | t t' -> t''
 
 instance HAnd HFalse HFalse HFalse
  where
-  hAnd _ _ = HFalse
+  hAnd _ _ = hFalse
 
 instance HAnd HTrue HFalse HFalse
  where
-  hAnd _ _ = HFalse
+  hAnd _ _ = hFalse
 
 instance HAnd HFalse HTrue HFalse
  where
-  hAnd _ _ = HFalse
+  hAnd _ _ = hFalse
 
 instance HAnd HTrue HTrue HTrue
  where
-  hAnd _ _ = HTrue
+  hAnd _ _ = hTrue
 
 
 -- Disjunction of type-level Booleans
@@ -62,19 +58,19 @@ class (HBool t, HBool t', HBool t'') => HOr t t' t'' | t t' -> t''
 
 instance HOr HFalse HFalse HFalse
  where
-  hOr _ _ = HFalse
+  hOr _ _ = hFalse
 
 instance HOr HTrue HFalse HTrue
  where
-  hOr _ _ = HTrue
+  hOr _ _ = hTrue
 
 instance HOr HFalse HTrue HTrue
  where
-  hOr _ _ = HTrue
+  hOr _ _ = hTrue
 
 instance HOr HTrue HTrue HTrue
  where
-  hOr _ _ = HTrue
+  hOr _ _ = hTrue
 
 
 -- Type-level conditional
@@ -148,15 +144,15 @@ class HBool b => HEq x y b | x y -> b
 
 instance HEq HZero HZero HTrue
  where
-  hEq _ _ = HTrue
+  hEq _ _ = hTrue
 
 instance HNat n => HEq HZero (HSucc n) HFalse
  where
-  hEq _ _ = HFalse
+  hEq _ _ = hFalse
 
 instance HNat n => HEq (HSucc n) HZero HFalse
  where
-  hEq _ _ = HFalse
+  hEq _ _ = hFalse
 
 instance ( HNat n
          , HNat n'
@@ -191,15 +187,15 @@ class HBool b => HLt x y b | x y -> b
 
 instance HLt HZero HZero HFalse
  where
-  hLt _ _ = HFalse
+  hLt _ _ = hFalse
 
 instance HNat n => HLt HZero (HSucc n) HTrue
  where
-  hLt _ _ = HTrue
+  hLt _ _ = hTrue
 
 instance HNat n => HLt (HSucc n) HZero HFalse
  where
-  hLt _ _ = HFalse
+  hLt _ _ = hFalse
 
 instance ( HNat n
          , HNat n'
@@ -216,26 +212,26 @@ instance ( HNat n
 -- There are different implementations.
 -- See imports in Main*.hs
 
-class TypeEqBool x y b | x y -> b
+class HBool b => TypeEq x y b | x y -> b
 
 
 -- Rely on lazy show for type-level Booleans
-typeEqBool :: TypeEqBool t t' b => t -> t' -> b
-typeEqBool = undefined
+typeEq :: TypeEq t t' b => t -> t' -> b
+typeEq = undefined
 
 
 -- A more disciplined version: based on proxies
-proxyEqBool :: TypeEqBool t t' b => Proxy t -> Proxy t' -> b
-proxyEqBool x y = typeEqBool (unProxy x) (unProxy y)
+proxyEq :: TypeEq t t' b => Proxy t -> Proxy t' -> b
+proxyEq x y = undefined
 
 
 {-----------------------------------------------------------------------------}
 
 -- Type-safe cast
 
-class TypeUnify x y | x -> y
+class TypeCast x y | x -> y, y -> x
  where
-  typeUnify :: x -> y
+  typeCast :: x -> y
 
 
 {-----------------------------------------------------------------------------}
@@ -255,14 +251,14 @@ unProxy =  undefined
 
 -- Type equality and disequality
 
-class TypeEq x y
-class TypeNotEq x y
+class TypeEqTrue x y
+class TypeEqFalse x y
 
-typeEq :: TypeEq x y => x -> y -> ()
-typeEq _ _ = ()
+typeEqTrue :: TypeEqTrue x y => x -> y -> ()
+typeEqTrue _ _ = ()
 
-typeNotEq :: TypeNotEq x y => x -> y -> ()
-typeNotEq _ _ = ()
+typeEqFalse :: TypeEqFalse x y => x -> y -> ()
+typeEqFalse _ _ = ()
 
 
 {-----------------------------------------------------------------------------}

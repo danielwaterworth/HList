@@ -171,7 +171,7 @@ instance HBoundType e l => HBoundType e (HCons e' l)
 class HBool b => HOccursNotStatus e l b | e l -> b
 class (HBool b, HBool b') => HOccursNotStatus' b e l b' | b e l -> b'
 instance HOccursNotStatus e HNil HTrue
-instance ( TypeEqBool e e' b
+instance ( TypeEq e e' b
          , HOccursNotStatus' b e l b'
          )
       =>   HOccursNotStatus e (HCons e' l) b'

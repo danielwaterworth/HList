@@ -213,7 +213,7 @@ HCons True (HCons 'a' (HCons "ok" HNil))
 HList> hEnd (hBuild (Key 42) (Name "Angus") Cow (Price 75.5))
 HCons (Key 42) (HCons (Name "Angus") (HCons Cow (HCons (Price 75.5) HNil)))
 
-HList> hEnd (hBuild (Key 42) (Name "Angus") Cow (Price 75.5)) == myAnimal
+HList> hEnd (hBuild (Key 42) (Name "Angus") Cow (Price 75.5)) == angus
 True
 
 -}
@@ -350,7 +350,7 @@ instance HStagedEq (HCons e l) HNil
  where
   hStagedEq _ _ = False
 
-instance ( TypeEqBool e e' b
+instance ( TypeEq e e' b
          , HStagedEq l l'
          , HStagedEq' b e e'
          )
@@ -358,7 +358,7 @@ instance ( TypeEqBool e e' b
  where
   hStagedEq (HCons e l) (HCons e' l') = (hStagedEq' b e e') && b'
    where
-    b  = typeEqBool e e'
+    b  = typeEq e e'
     b' = hStagedEq l l'
 
 class HStagedEq' b e e'
@@ -503,7 +503,7 @@ instance Apply HRmTag (e,t) e
 
 -- Annotate list with a type-level Boolean
 
-hFlag l = hAddTag HTrue l
+hFlag l = hAddTag hTrue l
 
 
 {-----------------------------------------------------------------------------}

@@ -12,10 +12,10 @@
 
 -}
 
-module TypeEqGeneric where
+module TypeEqBoolGeneric where
 
 import FakePrelude
 
-instance            TypeEq    x x
-instance Fail () => TypeNotEq x x
-instance            TypeNotEq x y
+instance            TypeEqTrue  x x
+instance Fail () => TypeEqFalse x x
+instance            TypeEqFalse x y

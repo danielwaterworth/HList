@@ -71,19 +71,19 @@ instance TTypeable Disease (HCons Thirteen HNil)
 
 
 -- Equality predicate on type-level type representations
-class TTypeableEqBool x y r | x y -> r
-instance TTypeableEqBool HNil HNil        HTrue
-instance TTypeableEqBool HNil (HCons a b) HFalse
-instance TTypeableEqBool (HCons a b) HNil HFalse
-instance TTypeableEqBool l l' r =>
-         TTypeableEqBool (HCons HZero l) (HCons HZero l') r
-instance TTypeableEqBool (HCons HZero l) (HCons (HSucc a) l') HFalse
-instance TTypeableEqBool (HCons (HSucc a) l') (HCons HZero l) HFalse
-instance TTypeableEqBool (HCons n l) (HCons n' l') r =>
-         TTypeableEqBool (HCons (HSucc n) l) (HCons (HSucc n') l') r
-instance TTypeableEqBool l l' r =>
-         TTypeableEqBool (HCons HNil l) (HCons HNil l') r
-instance TTypeableEqBool (HCons HNil l) (HCons (HCons a' t') l') HFalse
-instance TTypeableEqBool (HCons (HCons a' t') l') (HCons HNil l) HFalse
-instance TTypeableEqBool (HCons a (HCons t l)) (HCons a' (HCons t' l')) r =>
-         TTypeableEqBool (HCons (HCons a t) l) (HCons (HCons a' t') l') r
+class HBool b => TTypeableEq x y b | x y -> b
+instance TTypeableEq HNil HNil        HTrue
+instance TTypeableEq HNil (HCons a b) HFalse
+instance TTypeableEq (HCons a b) HNil HFalse
+instance TTypeableEq l l' r =>
+         TTypeableEq (HCons HZero l) (HCons HZero l') r
+instance TTypeableEq (HCons HZero l) (HCons (HSucc a) l') HFalse
+instance TTypeableEq (HCons (HSucc a) l') (HCons HZero l) HFalse
+instance TTypeableEq (HCons n l) (HCons n' l') r =>
+         TTypeableEq (HCons (HSucc n) l) (HCons (HSucc n') l') r
+instance TTypeableEq l l' r =>
+         TTypeableEq (HCons HNil l) (HCons HNil l') r
+instance TTypeableEq (HCons HNil l) (HCons (HCons a' t') l') HFalse
+instance TTypeableEq (HCons (HCons a' t') l') (HCons HNil l) HFalse
+instance TTypeableEq (HCons a (HCons t l)) (HCons a' (HCons t' l')) r =>
+         TTypeableEq (HCons (HCons a t) l) (HCons (HCons a' t') l') r

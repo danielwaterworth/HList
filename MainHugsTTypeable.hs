@@ -14,6 +14,7 @@ import Datatypes1
 import CommonMain
 import TypeEqTTypeable
 import TypeEqBoolTTypeable
+import TypeCastGeneric1
 import Label2
 
 
@@ -25,8 +26,8 @@ type Animal =  HCons Key
               (HCons Price
                HNil)))
 
-myAnimal :: Animal
-myAnimal =  HCons (Key 42)
+angus :: Animal
+angus =  HCons (Key 42)
            (HCons (Name "Angus")
            (HCons  Cow
            (HCons (Price 75.5)
@@ -34,13 +35,13 @@ myAnimal =  HCons (Key 42)
 
 {-
 
-HList> hFoldr (HSeq HShow) (return () :: IO ()) myAnimal
+HList> hFoldr (HSeq HShow) (return () :: IO ()) angus
 Key 42
 Name "Angus"
 Cow
 Price 75.5
 
-HList> hAppend myAnimal myAnimal
+HList> hAppend angus angus
 HCons (Key 42) (HCons (Name "Angus") (HCons Cow (HCons (Price 75.5) (HCons (Key
 42) (HCons (Name "Angus") (HCons Cow (HCons (Price 75.5) HNil)))))))
 
@@ -48,10 +49,10 @@ HCons (Key 42) (HCons (Name "Angus") (HCons Cow (HCons (Price 75.5) (HCons (Key
 
 testHArray = (myProj1,myProj2,myProj3,myProj4)
  where
-  myProj1 = hProjectByHNats myAnimal (HCons HZero (HCons HZero HNil))
-  myProj2 = hProjectByHNats myAnimal (HCons HZero (HCons (HSucc HZero) HNil))
-  myProj3 = hProjectAwayByHNats myAnimal (HCons HZero HNil)
-  myProj4 = hSplitByHNats myAnimal (HCons HZero (HCons (HSucc HZero) HNil))
+  myProj1 = hProjectByHNats angus (HCons HZero (HCons HZero HNil))
+  myProj2 = hProjectByHNats angus (HCons HZero (HCons (HSucc HZero) HNil))
+  myProj3 = hProjectAwayByHNats angus (HCons HZero HNil)
+  myProj4 = hSplitByHNats angus (HCons HZero (HCons (HSucc HZero) HNil))
 
 {-
 
@@ -71,18 +72,24 @@ HCons (Name "Angus") (HCons Cow (HCons (Price 75.5) HNil))
 
 testHOccurs = (testHOccurs1,testHOccurs2,testHOccurs3,testHOccurs4)
  where
-  testHOccurs1 = hOccurs myAnimal :: Breed
+  testHOccurs1 = hOccurs angus :: Breed
   testHOccurs2 = hLookup (HCons 1 HNil)
   testHOccurs3 = null $ hLookup (HCons [] HNil)
-  testHOccurs4 = hProject myAnimal :: (HCons Key (HCons Name HNil))
+  testHOccurs4 = hProject angus :: (HCons Key (HCons Name HNil))
 
-testTypeIndexed = (typeIdx1,typeIdx2,typeIdx3,typeIdx4,typeIdx5)
+testTypeIndexed =   ( typeIdx1
+                  , ( typeIdx2
+                  , ( typeIdx3
+                  , ( typeIdx4
+                  , ( typeIdx5
+                  , ( typeIdx6 ))))))
  where
-   typeIdx1 = hExtend BSE myAnimal
-   typeIdx2 = hUpdateByType  typeIdx1 Sheep
-   typeIdx3 = hDeleteByProxy myAnimal (Proxy::Proxy Breed)
-   typeIdx4 = hProjectByProxies myAnimal (HCons (Proxy::Proxy Breed) HNil)
-   typeIdx5 = fst$ hSplitByProxies myAnimal (HCons (Proxy::Proxy Breed) HNil)
+  typeIdx1 = hDeleteMany (Proxy::Proxy Name) angus
+  typeIdx2 = hExtend BSE angus
+  typeIdx3 = hUpdateByType  typeIdx1 Sheep
+  typeIdx4 = hDeleteByProxy typeIdx2 (Proxy::Proxy Breed)
+  typeIdx5 = hProjectByProxies angus (HCons (Proxy::Proxy Breed) HNil)
+  typeIdx6 = fst $ hSplitByProxies angus (HCons (Proxy::Proxy Breed) HNil)
 
 testTuple = (testTuple1,testTuple2,testTuple3,testTuple4)
  where
@@ -95,7 +102,7 @@ testTuple = (testTuple1,testTuple2,testTuple3,testTuple4)
 
 testTIP = [show testTIP1, show testTIP2, show testTIP3, show testTIP4]
  where
-  myTipyCow = TIP myAnimal
+  myTipyCow = TIP angus
   animalKey :: (HOccurs Key l, SubType l (TIP Animal)) => l -> Key
   animalKey = hOccurs
   testTIP1 = hOccurs myTipyCow :: Breed

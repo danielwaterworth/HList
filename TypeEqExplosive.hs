@@ -13,14 +13,14 @@ module ExplosiveTypeEq where
 
 import FakePrelude
 
-instance TypeEq Integer Integer
-instance TypeEq Char Char
-instance (TypeEq x x', TypeEq y y') => TypeEq (x->y) (x'->y')
+instance TypeEqTrue Integer Integer
+instance TypeEqTrue Char Char
+instance (TypeEqTrue x x', TypeEqTrue y y') => TypeEqTrue (x->y) (x'->y')
  
-instance TypeNotEq Integer Char
-instance TypeNotEq Char Integer
-instance TypeNotEq (x->y) Integer
-instance TypeNotEq (Char->Integer) (Integer->Char)
-instance TypeNotEq (Char->Char) (Char->Integer) 
+instance TypeEqFalse Integer Char
+instance TypeEqFalse Char Integer
+instance TypeEqFalse (x->y) Integer
+instance TypeEqFalse (Char->Integer) (Integer->Char)
+instance TypeEqFalse (Char->Char) (Char->Integer) 
 
 -- ... exploding ...

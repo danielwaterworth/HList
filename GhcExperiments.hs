@@ -43,10 +43,10 @@ instance (HList l, HDeleteMany e l l')
 
 instance ( HList l
          , HDeleteMany e l l'
-         , TypeUnify (HCons e' l') l''
+         , TypeCast (HCons e' l') l''
          )
       =>   HDeleteMany e (HCons e' l) l''
  where
   hDeleteMany p (HCons e' l)
    =
-     typeUnify (HCons e' (hDeleteMany p l))
+     typeCast (HCons e' (hDeleteMany p l))
