@@ -79,8 +79,8 @@ HCons (Name "Angus") (HCons Cow (HCons (Price 75.5) HNil))
 testHOccurs = (testHOccurs1,testHOccurs2,testHOccurs3,testHOccurs4)
  where
   testHOccurs1 = hOccurs angus :: Breed
-  testHOccurs2 = hLookup (HCons 1 HNil)
-  testHOccurs3 = null $ hLookup (HCons [] HNil)
+  testHOccurs2 = hOccurs (TIP (HCons 1 HNil))
+  testHOccurs3 = null $ hOccurs (TIP (HCons [] HNil))
   testHOccurs4 = hProject angus :: (HCons Key (HCons Name HNil))
 
 testTypeIndexed =   ( typeIdx1
@@ -97,12 +97,19 @@ testTypeIndexed =   ( typeIdx1
   typeIdx5 = hProjectByProxies (HCons (proxy::Proxy Breed) HNil) angus
   typeIdx6 = fst $ hSplitByProxies (HCons (proxy::Proxy Breed) HNil) angus
 
-testTuple = (testTuple1,testTuple2,testTuple3,testTuple4)
+testTuple =   ( testTuple1
+            , ( testTuple2
+            , ( testTuple3
+            , ( testTuple4
+            , ( testTuple5
+              )))))
  where
   testTuple1 = let (a,b) = tuple oneTrue in (a+(1::Int), not b)
-  testTuple2 = let (n,l,a,b) = tuple' oneTrue in (a+(1::Int), not b)
-  testTuple3 = let b = not $ fst $ tuple oneTrue in (1::Int,b)
-  testTuple4 = tuple oneTrue == (1,True)
+  testTuple2 = let b = not $ fst $ tuple oneTrue in (1::Int,b)
+  testTuple3 = tuple oneTrue == (1::Int,True)
+  testTuple4 = ((+) (1::Int)) $ fst $ tuple oneTrue
+  -- requires explicit type for tuple
+  testTuple5 = ((+) (1::Int)) $ snd $ tuple oneTrue
 
 testTIP = (testTIP1,testTIP2,testTIP3,testTIP4)
  where

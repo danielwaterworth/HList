@@ -13,6 +13,7 @@ module GhcSyntax where
 
 import FakePrelude
 import HListPrelude
+import HOccurs
 import Record
 import TIP
 import TIC
@@ -57,7 +58,9 @@ infixr 3 .+.
 
 type e :+: l = HCons (Proxy e) l
 
-(.+.) :: HTypeProxied (HCons (Proxy e) l)
+(.+.) :: ( HTypeProxied l
+         , HOccursNot (Proxy e) l
+         )
       => e -> TIP l -> TIP (HCons (Proxy e) l)
 e .+. r = hExtend (toProxy e) r
 

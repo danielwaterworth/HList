@@ -1,6 +1,6 @@
 {-# OPTIONS -fglasgow-exts #-}
-{-# OPTIONS -fallow-overlapping-instances #-}
 {-# OPTIONS -fallow-undecidable-instances #-}
+{-# OPTIONS -fallow-overlapping-instances #-}
 
 {- 
 
@@ -129,51 +129,6 @@ hProjectByProxies ps l
 hSplitByProxies ps l
  =
    hSplitByHNats (hTypes2HNats ps l) l
-
-
-{-----------------------------------------------------------------------------}
-
--- This example from the TIR paper challenges forgotten types.
--- Thanks to the HW 2004 reviewer who pointed out the value of this example.
-
-tuple :: ( HLookup e1 l
-         , HType2HNat e1 l n
-         , HDeleteAtHNat n l l'
-         , HLookup e2 l'
-         , HLookup e2 l
-         , HType2HNat e2 l n'
-         , HDeleteAtHNat n' l l''
-         , HLookup e1 l''
-         ) =>
-              l -> (e1, e2)
-
-tuple l = let
-              x  = hLookup l
-              l' = hDeleteAtProxy (toProxy x) l
-              y  = hLookup l'
-          in (x,y)
-
-
--- A specific tuple
-oneTrue :: HCons Int (HCons Bool HNil)
-oneTrue =  HCons 1   (HCons True HNil)
-
-
--- A variation that propagates all involved types
-
-tuple' :: ( HType2HNat x l n 
-          , HDeleteAtHNat n l l'
-          , HLookup x l
-          , HLookup y l'
-          )
-            => l -> (n,l',x,y)
-
-tuple' l = let
-   n  = hType2HNat (toProxy x) l
-   l' = hDeleteAtHNat n l
-   x  = hLookup l
-   y  = hLookup l'
-  in (n,l',x,y)
 
 
 {-----------------------------------------------------------------------------}

@@ -51,9 +51,29 @@ instance (HOccursNot e l,HTypeIndexed l) => HTypeIndexed (HCons e l)
 
 {-----------------------------------------------------------------------------}
 
+--
+-- One occurrence and nothing is left
+--
+-- This variation provides an extra feature for singleton lists.
+-- That is, the result type is unified with the element in the list.
+-- Hence the explicit provision of a result type can be omitted.
+--
+
+instance TypeCast e' e => HOccurs e (TIP (HCons e' HNil))
+ where
+  hOccurs (TIP (HCons e' _)) = typeCast e'
+
+instance HOccurs e (HCons x (HCons y l))
+      => HOccurs e (TIP (HCons x (HCons y l)))
+ where
+  hOccurs (TIP l) = hOccurs l
+
+
+{-----------------------------------------------------------------------------}
+
 -- HOccursNot lifted to TIPs
 
-instance HOccursNot p l => HOccursNot p (TIP l)
+instance HOccursNot e l => HOccursNot e (TIP l)
 
 
 {-----------------------------------------------------------------------------}
@@ -66,7 +86,7 @@ hExtend' e (TIP l) = mkTIP (HCons e l)
 
 Valid type I
 
-hExtend' :: (HTypeIndexed l, HOccursNot (HProxy e) l)
+hExtend' :: (HTypeIndexed l, HOccursNot e l)
          => e -> TIP l -> TIP (HCons e l)  
 
 Valid type II
@@ -83,7 +103,9 @@ hExtend' :: forall l e.
 
 -- Lift extension through HExtend
 
-instance HTypeIndexed (HCons e l)
+instance ( HOccursNot e l
+         , HTypeIndexed l
+         )
       => HExtend e (TIP l) (TIP (HCons e l))
  where
   hExtend = hExtend'
@@ -126,18 +148,6 @@ instance HOccursOpt e l
   hOccursOpt = hOccursOpt . unTIP
 
 
-instance HOccurs e l
-      => HOccurs e (TIP l)
- where
-  hOccurs = hOccurs . unTIP
-
-
-instance HLookup e l
-      => HLookup e (TIP l)
- where
-  hLookup = hLookup . unTIP
-
-
 {-----------------------------------------------------------------------------}
 
 -- Shielding type-indexed operations
@@ -159,33 +169,10 @@ tipySplit ps (TIP l) = (mkTIP l',mkTIP l'')
 
 {-----------------------------------------------------------------------------}
 
--- Complement of the HOccursNot class
-
-class HBoundType e r
-instance HBoundType e (HCons e l)
-instance HBoundType e l => HBoundType e (HCons e' l)
-
-
--- Class to compute a Boolean for "free type" status
-
-class HBool b => HOccursNotStatus e l b | e l -> b
-class (HBool b, HBool b') => HOccursNotStatus' b e l b' | b e l -> b'
-instance HOccursNotStatus e HNil HTrue
-instance ( TypeEq e e' b
-         , HOccursNotStatus' b e l b'
-         )
-      =>   HOccursNotStatus e (HCons e' l) b'
-instance HOccursNotStatus' HTrue e l HFalse
-instance HOccursNotStatus e l b
-      => HOccursNotStatus' HFalse e l b
-
-
-{-----------------------------------------------------------------------------}
-
 -- Subtyping for TIPs
 
 instance SubType (TIP l) (TIP HNil)
-instance (HBoundType e l, SubType (TIP l) (TIP l'))
+instance (HOccurs e l, SubType (TIP l) (TIP l'))
       =>  SubType (TIP l) (TIP (HCons e l'))
 
 
@@ -231,5 +218,32 @@ TIP (HCons Sheep (HCons (Key 42) (HCons (Name "Angus") (HCons (Price 75.5) HNil)
 TIP (HCons (Key 42) (HCons (Name "Angus") (HCons Sheep (HCons (Price 75.5) HNil))))
 
 -}
+
+{-----------------------------------------------------------------------------}
+
+-- This example from the TIR paper challenges singleton lists.
+-- Thanks to the HW 2004 reviewer who pointed out the value of this example.
+
+tuple :: ( HOccurs e1 (TIP l)
+         , HType2HNat e1 l n
+         , HDeleteAtHNat n l l'
+         , HOccurs e2 (TIP l')
+         , HOccurs e2 (TIP l)
+         , HType2HNat e2 l n'
+         , HDeleteAtHNat n' l l''
+         , HOccurs e1 (TIP l'')
+         ) =>
+              TIP l -> (e1, e2)
+
+tuple (TIP l) = let
+                 x  = hOccurs (TIP l)
+                 l' = hDeleteAtProxy (toProxy x) l
+                 y  = hOccurs (TIP l')
+                in (x,y)
+
+
+-- A specific tuple
+oneTrue = hExtend (1::Int) (hExtend True emptyTIP)
+
 
 {-----------------------------------------------------------------------------}

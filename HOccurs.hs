@@ -150,45 +150,6 @@ instance ( HOccurs' e l
 
 {-----------------------------------------------------------------------------}
 
---
--- One occurrence and nothing is left
---
--- This variation provides an extra feature for singleton lists.
--- That is, the result type is unified with the element in the list.
--- Hence the explicit provision of a result type can be omitted.
---
-
-class HLookup e l
- where
-  hLookup :: l -> e
-
-instance TypeCast e e'
-      => HLookup e' (HCons e HNil)
- where
-  hLookup (HCons e _) = typeCast e
-
-instance HLookup' e (HCons x l)
-      => HLookup e (HCons x l)
- where
-  hLookup l = hLookup' l
-
-class HLookup' e l
- where
-  hLookup' :: l -> e
-
-instance HOccursNot e l
-      => HLookup' e (HCons e l)
- where
-  hLookup' (HCons e _) = e
-
-instance HLookup' e l
-      => HLookup' e (HCons e' l)
- where
-  hLookup' (HCons _ l) = hLookup' l
-
-
-{-----------------------------------------------------------------------------}
-
 -- Zero or at least one occurrence
 
 class HOccursOpt e l
@@ -217,7 +178,7 @@ data TypeFound e
 class HOccursNot e l
 instance HOccursNot e HNil
 instance Fail (TypeFound e) => HOccursNot e (HCons e l)
-instance HOccursNot e' l => HOccursNot e (HCons e' l)
+instance HOccursNot e l => HOccursNot e (HCons e' l)
 
 
 {-----------------------------------------------------------------------------}

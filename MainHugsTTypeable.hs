@@ -73,8 +73,8 @@ HCons (Name "Angus") (HCons Cow (HCons (Price 75.5) HNil))
 testHOccurs = (testHOccurs1,testHOccurs2,testHOccurs3,testHOccurs4)
  where
   testHOccurs1 = hOccurs angus :: Breed
-  testHOccurs2 = hLookup (HCons 1 HNil)
-  testHOccurs3 = null $ hLookup (HCons [] HNil)
+  testHOccurs2 = hOccurs (TIP (HCons 1 HNil))
+  testHOccurs3 = null $ hOccurs (TIP (HCons [] HNil))
   testHOccurs4 = hProject angus :: (HCons Key (HCons Name HNil))
 
 testTypeIndexed =   ( typeIdx1
@@ -91,20 +91,15 @@ testTypeIndexed =   ( typeIdx1
   typeIdx5 = hProjectByProxies (HCons (proxy::Proxy Breed) HNil) angus
   typeIdx6 = fst $ hSplitByProxies (HCons (proxy::Proxy Breed) HNil) angus
 
-testTuple = (testTuple1,testTuple2,testTuple3,testTuple4)
- where
-  testTuple1 = let (a,b) = tuple oneTrue in (a+(1::Int), not b)
-  testTuple2 = let (n,l,a,b) = tuple' oneTrue in (a+(1::Int), not b)
-  testTuple3 = let b = not $ fst $ tuple oneTrue in (1::Int,b)
--- The following test case fails with Hugs
--- testTuple4 = tuple oneTrue == (1,True)
-  testTuple4 = True
+-- Test for tuple omitted.
+-- Too fragile.
+
+myTipyCow = TIP angus
+animalKey :: (HOccurs Key l, SubType l (TIP Animal)) => l -> Key
+animalKey = hOccurs
 
 testTIP = [show testTIP1, show testTIP2, show testTIP3, show testTIP4]
  where
-  myTipyCow = TIP angus
-  animalKey :: (HOccurs Key l, SubType l (TIP Animal)) => l -> Key
-  animalKey = hOccurs
   testTIP1 = hOccurs myTipyCow :: Breed
   testTIP2 = hExtend BSE myTipyCow
   testTIP3 = hExtend Sheep $ tipyDelete (proxy::Proxy Breed) myTipyCow
@@ -140,10 +135,9 @@ testRecords =   ( test1
 main = print $   ( testHArray
                , ( testHOccurs
                , ( testTypeIndexed
-               , ( testTuple
                , ( testTIP
                , ( testRecords
-               ))))))
+               )))))
 
 
 {-----------------------------------------------------------------------------}

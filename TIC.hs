@@ -36,7 +36,7 @@ data TIC l = TIC Dynamic
 -- Public constructor
 
 mkTIC :: ( HTypeProxied l
-         , HBoundType (Proxy i) l
+         , HOccurs (Proxy i) l
          , Typeable i
          ) 
       => i -> TIC l
@@ -49,7 +49,7 @@ mkTIC i = TIC (toDyn i)
 -- Public destructor
 
 unTIC :: ( HTypeProxied l
-         , HBoundType (Proxy o) l
+         , HOccurs (Proxy o) l
          , Typeable o
          ) 
       => TIC l -> Maybe o
