@@ -116,24 +116,106 @@ instance (HAppend l l' l'', HList l'')
 
 -- Reversing HLists
 
--- The class HReverse
--- Naive; could use standard higher-order trick.
-
-class HReverse l l' | l -> l'
+class HReverse l1 l2 | l1 -> l2, l2 -> l1
  where
-  hReverse :: l -> l'
+  hReverse:: l1 -> l2
 
-instance HReverse HNil HNil
+instance (HReverse' HNil l2 l3, HReverse' HNil l3 l2)
+      =>  HReverse l2 l3
  where
-  hReverse HNil = HNil
+  hReverse l1 = hReverse' HNil l1
 
-instance ( HReverse l l'
+
+-- l3 = (reverse l2) ++ l1
+
+class HReverse' l1 l2 l3 | l1 l2 -> l3
+ where
+  hReverse':: l1 -> l2 -> l3
+    
+instance HReverse' l1 HNil l1
+ where
+  hReverse' l1 HNil = l1
+    
+instance HReverse' (HCons a l1) l2' l3
+      => HReverse' l1 (HCons a l2') l3
+ where
+  hReverse' l1 (HCons a l2') = hReverse' (HCons a l1) l2'
+
+
+-- Naive HReverse
+
+class NaiveHReverse l l' | l -> l'
+ where
+  naiveHReverse :: l -> l'
+
+instance NaiveHReverse HNil HNil
+ where
+  naiveHReverse HNil = HNil
+
+instance ( NaiveHReverse l l'
          , HAppend l' (HCons e HNil) l''
          )
-      =>   HReverse (HCons e l) l''
+      =>   NaiveHReverse (HCons e l) l''
  where
-  hReverse (HCons e l) = hAppend (hReverse l) (HCons e HNil)
+  naiveHReverse (HCons e l)
+   = hAppend (naiveHReverse l) (HCons e HNil)
 
+
+{-----------------------------------------------------------------------------}
+
+--
+-- A nicer notation for lists
+--
+
+-- List termination
+hEnd t@(HCons x y) = t
+
+{-
+   Note: 
+        - x :: HCons a b
+            means: forall a b. x :: HCons a b
+        - hEnd x
+            means: exists a b. x :: HCons a b
+-}
+
+
+-- Building non-empty lists
+
+hBuild   :: forall r a. (HBuild' HNil a r) => a -> r
+hBuild x =  hBuild' HNil x
+
+class HBuild' l a r | r-> a l
+ where
+  hBuild' :: l -> a -> r
+
+instance HReverse (HCons a l) (HCons a' l')
+      => HBuild' l a (HCons a' l')
+ where
+  hBuild' l x = hReverse (HCons x l)
+
+instance HBuild' (HCons a l) b r
+      => HBuild' l a (b->r)
+ where
+  hBuild' l x y = hBuild' (HCons x l) y
+
+{-
+
+HList> let x = hBuild True in hEnd x
+HCons True HNil
+
+HList> let x = hBuild True 'a' in hEnd x
+HCons True (HCons 'a' HNil)
+
+HList> let x = hBuild True 'a' "ok" in hEnd x
+HCons True (HCons 'a' (HCons "ok" HNil))
+
+HList> hEnd (hBuild (Key 42) (Name "Angus") Cow (Price 75.5))
+HCons (Key 42) (HCons (Name "Angus") (HCons Cow (HCons (Price 75.5) HNil)))
+
+HList> hEnd (hBuild (Key 42) (Name "Angus") Cow (Price 75.5)) == myAnimal
+True
+
+-}
 
 {-----------------------------------------------------------------------------}
 
