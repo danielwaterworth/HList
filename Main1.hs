@@ -13,46 +13,10 @@
 -}
 
 
--- Reusable modules
-import Datatypes
-import FakePrelude
-import HList
-import HOccurs
-
--- Special imports
-import GenericCast
-import GenericTypeEq
+import Portable
 import GenericTypeEqBool
 
 
-{-
-
-Retrieve the Breed of an animal.
-
-*Main> hOccurs myAnimal :: Breed
-Cow
-
--}
-
-{-
-
-Normal hOccurs cannot ground result type even if it is imaginable.
-
-*Main> hOccurs (HCons 1 HNil)
-
-<interactive>:1:
-    No instance for (HOccurs e1 (HCons e HNil))
-
--}
-
-{-
-
-hOccurs can be elaborated to ground the result type for singletons.
-
-*Main> hOccurs' (HCons 1 HNil)
-1
-
--}
 
 {-
 tuple :: ( HOccurs x l, HDelete l (HProxy x) m, HOccurs y m
@@ -65,3 +29,8 @@ tuple l = let
               y = hOccurs m
           in (x,y)
 -}
+
+
+main = print $ ( hOccurs myAnimal :: Breed
+               , hOccursGrounded (HCons 1 HNil)
+               )

@@ -11,43 +11,9 @@
 
 -}
 
-
--- Reusable modules
-import Datatypes
-import FakePrelude
-import HList
-import HOccurs
-
--- Special imports
-import GenericCast
-import GenericTypeEq
+import Portable
 import TTypeable
 
-{-
-
-Retrieve the Breed of an animal.
-
-Main> hOccurs myAnimal :: Breed
-Cow
-
--}
-
-{-
-
-Normal hOccurs cannot ground result type even if it is imaginable.
-
-Main> hOccurs (HCons 1 HNil)
-ERROR - Unresolved overloading
-*** Type       : HOccurs a HNil => a
-*** Expression : hOccurs (HCons 1 HNil)
-
--}
-
-{-
-
-hOccurs can be elaborated to ground the result type for singletons.
-
-Main> hOccurs' (HCons 1 HNil)
-1
-
--}
+main = print $ ( hOccurs myAnimal :: Breed
+               , hOccursGrounded (HCons 1 HNil)
+               )
