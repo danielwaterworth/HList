@@ -223,6 +223,11 @@ TIP (HCons (Key 42) (HCons (Name "Angus") (HCons Sheep (HCons (Price 75.5) HNil)
 
 -- This example from the TIR paper challenges singleton lists.
 -- Thanks to the HW 2004 reviewer who pointed out the value of this example.
+-- We note that the explicit type below is richer than the inferred type.
+-- This richer type is needed for making this operation more polymorphic.
+-- That is, a) would not work without the explicit type, while it would:
+--  a)  ((+) (1::Int)) $ snd $ tuple oneTrue
+--  b)  ((+) (1::Int)) $ fst $ tuple oneTrue
 
 tuple :: ( HOccurs e1 (TIP l)
          , HType2HNat e1 l n
