@@ -10,6 +10,11 @@
    cast and generic type equality. Because of generic type equality,
    this model works with GHC but it does not work with Hugs.
 
+   Note: even though there are no overlapping instances in *this*
+   module, one must still enable overlapping instances here; otherwise
+   overlapping (for type equality) is not resolved properly for the
+   imported modules.
+
 -}
 
 module MainGhcGeneric1 (

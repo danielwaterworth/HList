@@ -10,7 +10,7 @@ all: index.html HList.zip
 index.html: pre.html README post.html
 	cat pre.html README post.html > index.html
 
-HList.zip:
+HList.zip: *.hs *.html
 	mkdir -p HList
 	cp --preserve *.hs *.lhs README HList
 	zip -r HList.zip HList

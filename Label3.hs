@@ -30,7 +30,11 @@ import Record
 
 -- Labels are type-level naturals
 
-data Label x ns = Label x ns String deriving Show
+data Label x ns = Label x ns String
+
+instance ShowLabel (Label x ns) => Show (Label x ns)
+ where
+  show = showLabel
 
 
 -- Public constructors for labels
