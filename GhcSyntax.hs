@@ -42,11 +42,14 @@ type l :=: v = (l,v)
 infixr 4 .=.
 l .=. v = (l,v)
 
-infixr 3 !!!
-r !!! l =  hLookupByLabel l r
+infixr 3 .!.
+r .!. l =  hLookupByLabel l r
 
-infixr 3 @@@
-r @@@ (l,v) =  hUpdateAtLabel l v r
+infixr 3 .-.
+r .-. l =  hDeleteAtLabel l r
+
+infixr 3 .@.
+r .@. (l,v) =  hUpdateAtLabel l v r
 
 
 {-----------------------------------------------------------------------------}

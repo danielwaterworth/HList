@@ -162,9 +162,9 @@ testRecords =   ( test1
                 ))))))
  where
   test1 = unpricedAngus
-  test2 = test1 !!! breed
+  test2 = test1 .!. breed
   test3 = hDeleteAtLabel breed test1
-  test4 = test1 @@@ breed .=. Sheep
+  test4 = test1 .@. breed .=. Sheep
   test5 = price .=. 8.8 .*. test1
   test6 = hProjectByLabels (HCons breed (HCons price HNil)) test5
 
