@@ -14,7 +14,7 @@ index.html: pre.html README post.html
 
 HList.zip: *.hs *.html
 	mkdir -p HList
-	cp --preserve *.hs *.lhs README HList
+	cp --preserve *.hs *.lhs README LICENSE HList
 	zip -r HList.zip HList
 	rm -rf HList
 
