@@ -85,9 +85,9 @@ list2 = listOfMyInterface list1
 
 data ImplementsMyInterface = ImplementsMyInterface
 
-instance HApply ImplementsMyInterface (e,l) (HCons e l)
+instance Apply ImplementsMyInterface (e,l) (HCons e l)
  where
-  hApply _ (e,l) = HCons e l
+  apply _ (e,l) = HCons e l
 
 myKindOfList l = hFoldr ImplementsMyInterface HNil l
 
@@ -114,9 +114,9 @@ bar = sum . hMapOut Foo
 
 data Foo = Foo -- type driver for class-level application
 
-instance MyInterface e => HApply Foo e Int
+instance MyInterface e => Apply Foo e Int
  where
-  hApply _ e = foo e
+  apply _ e = foo e
 
 
 -- Yet another heterogeneous equality.

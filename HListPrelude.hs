@@ -222,25 +222,25 @@ True
 
 -- A heterogeneous apply operator
 
-class HApply f a r | f a -> r
+class Apply f a r | f a -> r
  where
-  hApply :: f -> a -> r
+  apply :: f -> a -> r
 
 
 -- Normal function application
 
-instance HApply (x -> y) x y
+instance Apply (x -> y) x y
  where
-  hApply f x = f x
+  apply f x = f x
 
 
 -- Identity
 
 data Id = Id
 
-instance HApply Id x x
+instance Apply Id x x
  where
-  hApply _ x = x
+  apply _ x = x
 
 
 {-----------------------------------------------------------------------------}
@@ -256,11 +256,11 @@ instance HFoldr f v HNil v
   hFoldr _ v _ = v
 
 instance ( HFoldr f v l r
-         , HApply f (e,r) r'
+         , Apply f (e,r) r'
          )
       => HFoldr f v (HCons e l) r'
  where
-  hFoldr f v (HCons e l) = hApply f (e,hFoldr f v l)
+  hFoldr f v (HCons e l) = apply f (e,hFoldr f v l)
 
 
 {-----------------------------------------------------------------------------}
@@ -276,11 +276,11 @@ instance HMapOut f HNil e
   hMapOut _ _ = []
 
 instance ( HMapOut f l e'
-         , HApply f e e'
+         , Apply f e e'
          )
       =>   HMapOut f (HCons e l) e'
  where
-  hMapOut f (HCons e l) = hApply f e : hMapOut f l
+  hMapOut f (HCons e l) = apply f e : hMapOut f l
 
 
 {-----------------------------------------------------------------------------}
@@ -294,31 +294,25 @@ hAppend' l l' = hFoldr ApplyHCons l' l
 
 data ApplyHCons = ApplyHCons
 
-instance HList l => HApply ApplyHCons (e,l) (HCons e l)
+instance HList l => Apply ApplyHCons (e,l) (HCons e l)
  where
-  hApply ApplyHCons (e,l) = hCons e l
+  apply ApplyHCons (e,l) = hCons e l
 
 
 {-----------------------------------------------------------------------------}
 
 -- A heterogeneous map for all types
 
-class HList l => HMap f l l' | f l -> l'
- where
-  hmap :: f -> l -> l'
+data HMap f = HMap f
 
-instance HMap f HNil HNil
- where
-  hmap _ HNil = hNil
+hMap f = hFoldr (HMap f) hNil 
 
-instance ( HApply f e e'
-         , HMap f l l'
-         , HList l
-         , HList l'
-         )
-      => HMap f (HCons e l) (HCons e' l')
+instance Apply f e e'
+      => Apply (HMap f) (e,l) (HCons e' l)
  where
-  hmap f (HCons e l) = hCons (hApply f e) (hmap f l)
+  apply (HMap f) (e,l) = HCons e' l
+   where
+    e' = apply f e
 
 
 {-----------------------------------------------------------------------------}
@@ -328,16 +322,16 @@ instance ( HApply f e e'
 data HShow  = HShow
 data HSeq x = HSeq x
 
-instance Show x => HApply HShow x (IO ())
+instance Show x => Apply HShow x (IO ())
  where
-  hApply _ x = do putStrLn $ show x
+  apply _ x = do putStrLn $ show x
 
 instance ( Monad m 
-         , HApply f x (m ())
+         , Apply f x (m ())
          )
-      => HApply (HSeq f) (x,m ()) (m ())
+      => Apply (HSeq f) (x,m ()) (m ())
  where
-  hApply (HSeq f) (x,c) = do hApply f x; c
+  apply (HSeq f) (x,c) = do apply f x; c
 
 
 {-----------------------------------------------------------------------------}
@@ -490,43 +484,29 @@ instance FromHJust l l' => FromHJust (HCons (HJust e) l) (HCons e l')
 
 {-----------------------------------------------------------------------------}
 
--- Qualification of lists
+-- Annotated lists
 
-class HQualify u a q | u a -> q, q a -> u
- where
-  hQualify   :: u -> a -> q
-  hUnqualify :: q -> a -> u
-  
+data HAddTag t = HAddTag t
+data HRmTag    = HRmTag
 
-instance HQualify HNil a HNil
- where
-  hQualify   HNil _ = hNil
-  hUnqualify HNil _ = hNil 
+hAddTag t l = hMap (HAddTag t) l
+hRmTag l    = hMap HRmTag l
 
-instance (HQualify l a l', HList l, HList l') 
-      => HQualify (HCons e l) a (HCons (e,a) l')
+instance Apply (HAddTag t) e (e,t)
  where
-  hQualify   (HCons e l) a     = hCons (e,a) (hQualify l a)
-  hUnqualify (HCons (e,_) l) a = hCons e     (hUnqualify l a)
+  apply (HAddTag t) e = (e,t)
+
+instance Apply HRmTag (e,t) e
+ where
+  apply HRmTag (e,t) = e
+
+
+-- Annotate list with a type-level Boolean
+
+hFlag l = hAddTag HTrue l
 
 
 {-----------------------------------------------------------------------------}
-
--- Type-level Boolean flags
-
-class HFlag l l' | l -> l'
- where
-  hFlag :: l -> l' 
-
-instance HFlag HNil HNil
- where
-  hFlag HNil = HNil
-
-instance HFlag l l'
-      => HFlag (HCons e l) (HCons (e,HTrue) l')
- where
-  hFlag (HCons e l) = HCons (e,HTrue) (hFlag l)
-
 
 -- Splitting by HTrue and HFalse
 
@@ -554,14 +534,15 @@ instance HSplit l l' l''
 
 {-
 
-Inlining "$" makes a difference to hugs.
+Let expansion makes a difference to Hugs:
 
-HListPrelude> hSplit (hFlag (HCons "1" HNil))
+HListPrelude> let x = (hFlag (HCons "1" HNil)) in hSplit x
 (HCons "1" HNil,HNil)
-HListPrelude> hSplit $ hFlag (HCons "1" HNil)
+HListPrelude> hSplit (hFlag (HCons "1" HNil))
 ERROR - Unresolved overloading
-*** Type       : (HSplit HNil a b, HCons' [Char] a c) => (c,b)
-*** Expression : hSplit $ hFlag (HCons "1" HNil)
+*** Type       : HSplit (HCons ([Char],HTrue) HNil) a b => (a,b)
+*** Expression : hSplit (hFlag (HCons "1" HNil))
+
 
 -}
 

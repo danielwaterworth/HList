@@ -107,35 +107,37 @@ instance ( HOccurs e l
 {-----------------------------------------------------------------------------}
 
 -- One occurrence and nothing is left
--- This variation even grounds the result type for a singleton list.
+-- This variation provides an extra feature for singleton lists.
+-- That is, the result type is unified with the element in the list.
+-- Hence the explicit provision of a result type can be omitted.
 
-class HOccursGrounded e l
+class HLookup e l
  where
-  hOccursGrounded :: l -> e
+  hLookup :: l -> e
 
 instance TypeUnify e e'
-      => HOccursGrounded e' (HCons e HNil)
+      => HLookup e' (HCons e HNil)
  where
-  hOccursGrounded (HCons e _) = typeUnify e
+  hLookup (HCons e _) = typeUnify e
 
-instance HOccursGrounded' e (HCons x l)
-      => HOccursGrounded e (HCons x l)
+instance HLookup' e (HCons x l)
+      => HLookup e (HCons x l)
  where
-  hOccursGrounded l = hOccursGrounded' l
+  hLookup l = hLookup' l
 
-class HOccursGrounded' e l
+class HLookup' e l
  where
-  hOccursGrounded' :: l -> e
+  hLookup' :: l -> e
 
 instance HFreeType e l
-      => HOccursGrounded' e (HCons e l)
+      => HLookup' e (HCons e l)
  where
-  hOccursGrounded' (HCons e _) = e
+  hLookup' (HCons e _) = e
 
-instance HOccursGrounded' e l
-      => HOccursGrounded' e (HCons e' l)
+instance HLookup' e l
+      => HLookup' e (HCons e' l)
  where
-  hOccursGrounded' (HCons _ l) = hOccursGrounded' l
+  hLookup' (HCons _ l) = hLookup' l
 
 
 {-----------------------------------------------------------------------------}
@@ -185,7 +187,8 @@ Cow
 
 {-
 
-Normal hOccurs cannot ground result type even if it is imaginable.
+Normal hOccurs requires specification of the result type even if the result
+type is determined by the fact that we are faced with a singleton list.
 
 ghci-or-hugs> hOccurs (HCons 1 HNil)
 
@@ -196,9 +199,9 @@ ghci-or-hugs> hOccurs (HCons 1 HNil)
 
 {-
 
-hOccurs can be elaborated to ground the result type for singletons.
+However, hOccurs can be elaborated as improved as follows:
 
-ghci-or-hugs> hOccursGrounded (HCons 1 HNil)
+ghci-or-hugs> hLookup (HCons 1 HNil)
 1
 
 -}

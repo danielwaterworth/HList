@@ -83,10 +83,11 @@ HCons (Name "Angus") (HCons Cow (HCons (Price 75.5) HNil))
 
 -}
 
-testHOccurs = (testHOccurs1,testHOccurs2)
+testHOccurs = (testHOccurs1,testHOccurs2,testHOccurs3)
  where
   testHOccurs1 = hOccurs myAnimal :: Breed
-  testHOccurs2 = hOccursGrounded (HCons 1 HNil)
+  testHOccurs2 = hLookup (HCons 1 HNil)
+  testHOccurs3 = null $ hLookup (HCons [] HNil)
 
 testTypeIndexed = (typeIdx1,typeIdx2,typeIdx3,typeIdx4,typeIdx5)
  where

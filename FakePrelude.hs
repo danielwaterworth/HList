@@ -107,8 +107,8 @@ data HSucc n = HSucc n  deriving Show
 -- Access predecessor of a type
 -- This allows us to avoid references to data constructors for HNat.
 --
-hPrec :: HSucc n -> n
-hPrec =  undefined
+hPred :: HSucc n -> n
+hPred =  undefined
 
 
 -- The value-level reification is for convenience only.
@@ -164,7 +164,7 @@ instance ( HNat n
          )
       =>   HEq (HSucc n) (HSucc n') b
  where
-  hEq n n' = hEq (hPrec n) (hPrec n')
+  hEq n n' = hEq (hPred n) (hPred n')
 
 
 {-----------------------------------------------------------------------------}
@@ -207,7 +207,7 @@ instance ( HNat n
          )
       =>   HLt (HSucc n) (HSucc n') b
  where
-  hLt n n' = hLt (hPrec n) (hPrec n')
+  hLt n n' = hLt (hPred n) (hPred n')
 
 
 {-----------------------------------------------------------------------------}

@@ -12,9 +12,11 @@
    Record labels are triplets of type-level naturals, namespace and string.
    The namespace part helps with avoiding confusions between labels from
    different Haskell modules. The string part is simple for an improved
-   instance of ShowLabel. This model even allows the labels in a record
-   to belong to different namespaces. To this end, the model relies on
-   the infamouse predicate for type equality.
+   instance of ShowLabel.
+
+   This model even allows the labels in a record to belong to different
+   namespaces. To this end, the model employs the predicate for type
+   equality.
 
 -}
 

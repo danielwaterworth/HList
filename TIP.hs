@@ -102,16 +102,6 @@ instance ( HAppend l l' l''
   hAppend (TIP l) (TIP l') = mkTIP (hAppend l l')
 
 
-instance ( HQualify u a q
-         , HTypeIndexed u
-         , HTypeIndexed q
-         ) 
-           => HQualify (TIP u) a (TIP q)
- where
-  hQualify   (TIP u) a = mkTIP (hQualify u a)
-  hUnqualify (TIP q) a = mkTIP (hUnqualify q a)
-
-
 instance HOccursMany e l
       => HOccursMany e (TIP l)
  where
@@ -142,10 +132,10 @@ instance HOccurs e l
   hOccurs = hOccurs . unTIP
 
 
-instance HOccursGrounded e l
-      => HOccursGrounded e (TIP l)
+instance HLookup e l
+      => HLookup e (TIP l)
  where
-  hOccursGrounded = hOccursGrounded . unTIP
+  hLookup = hLookup . unTIP
 
 
 {-----------------------------------------------------------------------------}

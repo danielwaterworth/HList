@@ -8,14 +8,14 @@ all:
 # Start a GHCI session for the favoured GHC model
 #
 ghci:
-	ghci GhcGeneric.hs
+	ghci MainGhcGeneric.hs
 
 ##############################################################################
 #
 # Start a Hugs session for the favoured Hugs model
 #
 hugs:
-	hugs -98 +o HugsTTypeable.hs
+	hugs -98 +o MainHugsTTypeable.hs
 
 ##############################################################################
 #

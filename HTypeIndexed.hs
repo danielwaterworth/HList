@@ -116,21 +116,21 @@ hSplitByProxies l ps
 -- This example from the TIR paper challenges forgotten types.
 -- Thanks to the HW 2004 reviewer who pointed out the value of this example.
 
-tuple :: ( HOccursGrounded e1 l
+tuple :: ( HLookup e1 l
          , HType2HNat l e1 n
          , HDeleteByHNat l n l'
-         , HOccursGrounded e2 l'
-         , HOccursGrounded e2 l
+         , HLookup e2 l'
+         , HLookup e2 l
          , HType2HNat l e2 n'
          , HDeleteByHNat l n' l''
-         , HOccursGrounded e1 l''
+         , HLookup e1 l''
          ) =>
               l -> (e1, e2)
 
 tuple l = let
-              x  = hOccursGrounded l
+              x  = hLookup l
               l' = hDeleteByProxy l (proxy x)
-              y  = hOccursGrounded l'
+              y  = hLookup l'
           in (x,y)
 
 
@@ -143,16 +143,16 @@ oneTrue =  HCons 1   (HCons True HNil)
 
 tuple' :: ( HType2HNat l x n 
           , HDeleteByHNat l n l'
-          , HOccursGrounded x l
-          , HOccursGrounded y l'
+          , HLookup x l
+          , HLookup y l'
           )
             => l -> (n,l',x,y)
 
 tuple' l = let
    n  = hType2HNat l (proxy x)
    l' = hDeleteByHNat l n
-   x  = hOccursGrounded l
-   y  = hOccursGrounded l'
+   x  = hLookup l
+   y  = hLookup l'
   in (n,l',x,y)
 
 
