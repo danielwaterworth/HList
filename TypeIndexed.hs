@@ -94,11 +94,25 @@ hDeleteByProxy' l p
  =
    hDeleteByHNat l (hType2HNat l p)
 
+
 {-----------------------------------------------------------------------------}
 
 -- Define type-indexed update in terms of the natural-based update
 
-hUpdateByType l e
+class HUpdateByType l e
+ where
+  hUpdateByType :: l -> e -> l
+
+instance ( HType2HNat (HCons e l) e' n
+         , HUpdateByHNat (HCons e l) n e' (HCons e l)
+         , TypeEqBool e e' b
+         , HType2HNat' b l e' n
+         )
+      =>   HUpdateByType (HCons e l) e'
+ where
+  hUpdateByType = hUpdateByType'
+
+hUpdateByType' l e
  =
    hUpdateByHNat l (hType2HNat l (hProxy e)) e 
 
@@ -107,7 +121,22 @@ hUpdateByType l e
 
 -- Projection based on proxies
 
-hProjectByProxies l ps
+class HProjectByProxies l ps l' | l ps -> l'
+ where
+  hProjectByProxies :: l -> ps -> l'
+
+instance HProjectByProxies HNil HNil HNil
+ where
+  hProjectByProxies HNil HNil = HNil
+
+instance ( HTypes2HNats (HCons e l) ps ns
+         , HProjectByHNats (HCons e l) ns l'
+         )
+      =>   HProjectByProxies (HCons e l) ps l'
+ where 
+  hProjectByProxies =  hProjectByProxies'
+
+hProjectByProxies' l ps
  =
    hProjectByHNats l $ hTypes2HNats l ps
 
@@ -116,7 +145,25 @@ hProjectByProxies l ps
 
 -- Splitting based on proxies
 
-hSplitByProxies l ps
+class HSplitByProxies l ps l' l'' | l ps -> l' l''
+ where
+  hSplitByProxies :: l -> ps -> (l',l'')
+
+instance HSplitByProxies HNil HNil HNil HNil
+ where
+  hSplitByProxies HNil HNil = (HNil,HNil)
+
+instance ( HTypes2HNats (HCons e l) ps ns
+         , ToHJust (HCons e l) (HCons (HJust e) l')
+         , HSplitByHNats' (HCons (HJust e) l') ns ly ln
+         , FromHJust ly l''
+         , FromHJust ln l'''
+         )
+      =>   HSplitByProxies (HCons e l) ps l'' l'''
+ where 
+  hSplitByProxies =  hSplitByProxies'
+
+hSplitByProxies' l ps
  =
    hSplitByHNats l $ hTypes2HNats l ps
 

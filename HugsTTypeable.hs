@@ -5,9 +5,7 @@
    This is a main module for exercising a model with generic cast
    and TTypeable-based type equality. This module is prepared for use
    with Hugs. This model works in principle also for GHC (see module
-   GHCTTypeable), but some details and some test cases require slight
-   variations. In particular, we show comment lines for test cases
-   that work with GHC but that do not work with Hugs.
+   GHCTTypeable) perhaps modulo some slight differences in test cases.
 
 -}
 
@@ -21,22 +19,34 @@ testHOccurs = (testHOccurs1,testHOccurs2)
   testHOccurs1 = hOccurs myAnimal :: Breed
   testHOccurs2 = hOccursGrounded (HCons 1 HNil)
 
-testTypeIndexed = (typeIdx1,typeIdx3,typeIdx4)
+testTypeIndexed = (typeIdx1,typeIdx2,typeIdx3,typeIdx4)
  where
    typeIdx1 = hExtend BSE myAnimal
--- typeIdx2 = hUpdateByType  typeIdx1 Sheep
+   typeIdx2 = hUpdateByType  typeIdx1 Sheep
    typeIdx3 = hDeleteByProxy myAnimal (HProxy::HProxy Breed)
    typeIdx4 = hProjectByProxies myAnimal (HCons (HProxy::HProxy Breed) HNil)
 -- typeIdx5 = fst$ hSplitByProxies myAnimal (HCons (HProxy::HProxy Breed) HNil)
 
--- testTuple = [testTuple1,testTuple2,testTuple3]
---  where
---   testTuple1 = let (a,b) = tuple oneTrue in (a+(1::Int), not b)
---   testTuple2 = let (n,l,a,b) = tuple' oneTrue in (a+(1::Int), not b)
---   testTuple3 = let b = not $ fst $ tuple oneTrue in (1::Int,b)
+testTuple = [testTuple1,testTuple2,testTuple3]
+ where
+  testTuple1 = let (a,b) = tuple oneTrue in (a+(1::Int), not b)
+  testTuple2 = let (n,l,a,b) = tuple' oneTrue in (a+(1::Int), not b)
+  testTuple3 = let b = not $ fst $ tuple oneTrue in (1::Int,b)
+
+testTIP = [show testTIP1, show testTIP2, show testTIP3, show testTIP4]
+ where
+  myTipyCow = TIP myAnimal
+  animalKey :: (HOccurs Key l, HSubType l (TIP Animal)) => l -> Key
+  animalKey = hOccurs
+  testTIP1 = hOccurs myTipyCow :: Breed
+  testTIP2 = hExtend BSE myTipyCow
+  testTIP3 = hExtend Sheep $ hDeleteByProxy myTipyCow (HProxy::HProxy Breed)
+  testTIP4 = hUpdateByType myTipyCow Sheep
+
 
 main = print $ ( testHArray
                , testHOccurs
                , testTypeIndexed
-               -- , testTuple
+               , testTuple
+               , testTIP
                )

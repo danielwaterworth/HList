@@ -19,6 +19,7 @@ import CommonMain
 import TTypeableTypeEq
 import TTypeableTypeEqBool
 
+
 testHOccurs = (testHOccurs1,testHOccurs2)
  where
   testHOccurs1 = hOccurs myAnimal :: Breed
@@ -38,8 +39,20 @@ testTuple = [testTuple1,testTuple2,testTuple3]
   testTuple2 = let (n,l,a,b) = tuple' oneTrue in (a+(1::Int), not b)
   testTuple3 = let b = not $ fst $ tuple oneTrue in (1::Int,b)
 
+testTIP = [show testTIP1, show testTIP2, show testTIP3, show testTIP4]
+ where
+  myTipyCow = TIP myAnimal
+  animalKey :: (HOccurs Key l, HSubType l (TIP Animal)) => l -> Key
+  animalKey = hOccurs
+  testTIP1 = hOccurs myTipyCow :: Breed
+  testTIP2 = hExtend BSE myTipyCow
+  testTIP3 = hExtend Sheep $ hDeleteByProxy myTipyCow (HProxy::HProxy Breed)
+  testTIP4 = hUpdateByType myTipyCow Sheep
+
+
 main = print $ ( testHArray
                , testHOccurs
                , testTypeIndexed
                , testTuple
+               , testTIP
                )
