@@ -438,6 +438,9 @@ instance HMember e HNil HFalse
 instance (HEq e e' b, HMember e l b', HOr b b' b'')
       =>  HMember e (HCons e' l) b''
 
+hMember :: HMember e l b => e -> l -> b
+hMember _ _ = undefined
+
 
 -- Turn a heterogeneous list into a homogeneous one
 

@@ -15,4 +15,4 @@ The code works --- within the limits exercised in the source files ---
 for both GHC (6.2) and Hugs (Nov 2003). See the Makefile for ways of
 running test cases.
 
-Last updated; November 2, 2004
+Last updated; November 3, 2004

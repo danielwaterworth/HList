@@ -23,8 +23,8 @@ import TIC
 
 -- Convenience notation for type sequences
 
-infixr 1 :*:
-infixr 1 .*.
+infixr 2 :*:
+infixr 2 .*.
  
 type e :*: l = HCons e l
  
@@ -50,6 +50,15 @@ r .-. l =  hDeleteAtLabel l r
 
 infixl 1 .@.
 r .@. (l,v) =  hUpdateAtLabel l v r
+
+infixr 1 .^.
+(l,v) .^. r = hUnproxyLabel l v r
+
+infixr 1 .<.
+(l,v) .<. r = hTPupdateAtLabel l v r
+
+infixl 1 .<++.
+r .<++. r' = hLeftUnion r r'
 
 
 {-----------------------------------------------------------------------------}
