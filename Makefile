@@ -3,30 +3,30 @@ all:
 
 # Start a GHCI session for the favourite GHC model
 ghci:
-	ghci Main1.hs
+	ghci GhcGeneric.hs
 
 
 # Start a Hugs session for the favourite Hugs model
 hugs:
-	hugs -98 +o Main2.hs
+	hugs -98 +o HugsTTypeable.hs
 
 
 # Run some test cases for both GHCI and Hugs
 test:
-	ghci Main1.hs -v0 < Main.in > Main.run.ghci
-	diff Main.run.ghci Main.out
-	ghci Main2.hs -v0 < Main.in > Main.run.ghci
-	diff Main.run.ghci Main.out
-	runhugs -98 +o Main2.hs < Main.in > Main.run.hugs
-	diff Main.run.hugs Main.out
+	ghci GhcGeneric.hs -v0 < Main.in > Main.out.GhcGeneric
+	diff Main.out.GhcGeneric Main.ref.GhcGeneric
+	ghci GhcTTypeable.hs -v0 < Main.in > Main.out.GhcTTypeable
+	diff Main.out.GhcTTypeable Main.ref.GhcTTypeable
+	runhugs -98 +o HugsTTypeable.hs < Main.in > Main.out.HugsTTypeable
+	diff Main.out.HugsTTypeable Main.ref.HugsTTypeable
 
-
-# Approve current session outputs as test data
+# Approve generated output as test results
 copy:
-	cp Main.run.ghci Main.out
-
+	cp Main.out.GhcGeneric Main.ref.GhcGeneric
+	cp Main.out.GhcTTypeable Main.ref.GhcTTypeable
+	cp Main.out.HugsTTypeable Main.ref.HugsTTypeable
 
 # Clean up directory
 clean:
 	rm -f *~
-	rm -f Main.run.*
+	rm -f *.out.*

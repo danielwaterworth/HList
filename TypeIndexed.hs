@@ -110,3 +110,47 @@ hSplitByProxies l ps
 
 
 {-----------------------------------------------------------------------------}
+
+-- This example from the TIR paper challenges forgotten types.
+-- Thanks to the HW 2004 reviewer who pointed out the value of this example.
+
+tuple :: ( HOccursGrounded ex l
+         , HType2HNat l ex nx 
+         , HDeleteByHNat l nx lx
+         , HOccursGrounded ey lx
+         , HOccursGrounded ey l
+         , HType2HNat l ey ny 
+         , HDeleteByHNat l ny ly
+         , HOccursGrounded ex ly
+         )
+      => l -> (ex,ey)
+tuple l = let
+              x  = hOccursGrounded l
+              l' = hDeleteByProxy l (hProxy x)
+              y  = hOccursGrounded l'
+          in (x,y)
+
+
+-- A specific tuple
+oneTrue :: HCons Int (HCons Bool HNil)
+oneTrue =  HCons 1   (HCons True HNil)
+
+
+-- A variation that propagates all involved types
+
+tuple' :: ( HType2HNat l x n 
+          , HDeleteByHNat l n l'
+          , HOccursGrounded x l
+          , HOccursGrounded y l'
+          )
+            => l -> (n,l',x,y)
+
+tuple' l = let
+   n  = hType2HNat l (hProxy x)
+   l' = hDeleteByHNat l n
+   x  = hOccursGrounded l
+   y  = hOccursGrounded l'
+  in (n,l',x,y)
+
+
+{-----------------------------------------------------------------------------}

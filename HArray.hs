@@ -61,7 +61,7 @@ instance ( HDeleteByHNat l n l'
 
 -- An update operation
 
-class HUpdateByHNat l i e l' | l i e -> l'
+class HUpdateByHNat l i e l' | l i e -> l', l' i -> e
  where
   hUpdateByHNat :: l -> i -> e -> l'
 
@@ -80,13 +80,12 @@ instance (HList l, HList l', HNat n, HUpdateByHNat l n e' l')
 
 -- Projection as iterated deletion
 
-hSplitByHNats l il = (l'',l''')
--- (ly,ln)
+hSplitByHNats l il = (ly,ln)
  where
     l'         = toHJust l
     (l'',l''') = hSplitByHNats' l' il
---    ly         = fromHJust l''
---    ln         = fromHJust l'''
+    ly         = fromHJust l''
+    ln         = fromHJust l'''
 
 class HSplitByHNats' l il l' l'' | l il -> l' l''
  where

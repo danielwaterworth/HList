@@ -19,34 +19,36 @@ import HList
 
 class TTypeable a b | a-> b
 
-type Zero   = HZero
-type One    = HSucc Zero
-type Two    = HSucc One
-type Three  = HSucc Two
-type Four   = HSucc Three
-type Five   = HSucc Four
-type Six    = HSucc Five
-type Seven  = HSucc Six
-type Eight  = HSucc Seven
-type Nine   = HSucc Eight
-type Ten    = HSucc Nine
-type Eleven = HSucc Ten
-type Twelf  = HSucc Eleven
+type Zero     = HZero
+type One      = HSucc Zero
+type Two      = HSucc One
+type Three    = HSucc Two
+type Four     = HSucc Three
+type Five     = HSucc Four
+type Six      = HSucc Five
+type Seven    = HSucc Six
+type Eight    = HSucc Seven
+type Nine     = HSucc Eight
+type Ten      = HSucc Nine
+type Eleven   = HSucc Ten
+type Twelf    = HSucc Eleven
+type Thirteen = HSucc Twelf
 
 
 -- Built-in datatypes
-instance TTypeable Integer (HCons Zero  HNil)
-instance TTypeable Char    (HCons One   HNil)
-instance TTypeable Bool    (HCons Two   HNil)
+instance TTypeable Int     (HCons Zero  HNil)
+instance TTypeable Integer (HCons One   HNil)
+instance TTypeable Char    (HCons Two   HNil)
+instance TTypeable Bool    (HCons Three HNil)
 
 
 -- Some type constructors
 instance (TTypeable a al, TTypeable b bl)
-      =>  TTypeable (a->b) (HCons Three (HCons al (HCons bl HNil)))
+      =>  TTypeable (a->b) (HCons Four (HCons al (HCons bl HNil)))
 instance (TTypeable a al)
-      =>  TTypeable [a] (HCons Four (HCons al HNil))
+      =>  TTypeable [a] (HCons Five (HCons al HNil))
 instance (TTypeable a al)
-      =>  TTypeable (Maybe a) (HCons Five (HCons al HNil))
+      =>  TTypeable (Maybe a) (HCons Six (HCons al HNil))
 
 
 -- Example of a higher-kind type
@@ -54,16 +56,16 @@ instance (TTypeable a al)
 data Fix f = Fix (f (Fix f))
 
 instance (TTypeable (f Bool) (HCons al l'))
-      =>  TTypeable (Fix f) (HCons Six (HCons al HNil))
+      =>  TTypeable (Fix f) (HCons Seven (HCons al HNil))
 
 
 -- User-defined datatypes
-instance TTypeable Float   (HCons Seven  HNil)
-instance TTypeable Key     (HCons Eight  HNil)
-instance TTypeable Name    (HCons Nine   HNil)
-instance TTypeable Breed   (HCons Ten    HNil)
-instance TTypeable Price   (HCons Eleven HNil)
-instance TTypeable Disease (HCons Twelf  HNil)
+instance TTypeable Float   (HCons Eight    HNil)
+instance TTypeable Key     (HCons Nine     HNil)
+instance TTypeable Name    (HCons Ten      HNil)
+instance TTypeable Breed   (HCons Eleven   HNil)
+instance TTypeable Price   (HCons Twelf    HNil)
+instance TTypeable Disease (HCons Thirteen HNil)
 
 
 -- Equality predicate on type-level type representations

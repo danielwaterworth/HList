@@ -6,9 +6,9 @@
 
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
-   This is a top-level test file that demonstrates GHC's benefits
-   with regard to HList. That is, we are able to use generic cast
-   and generic type equality.
+   This is a main module for exercising a model with generic cast
+   and generic type equality. Because of generic type equality,
+   this model works with GHC but it does not work with Hugs.
 
 -}
 
@@ -30,20 +30,12 @@ testTypeIndexed = (typeIdx1,typeIdx2,typeIdx3,typeIdx4,typeIdx5)
   typeIdx4 = hProjectByProxies myAnimal (HCons (HProxy::HProxy Breed) HNil)
   typeIdx5 = fst $ hSplitByProxies myAnimal (HCons (HProxy::HProxy Breed) HNil)
 
+testTuple = let (a,b) = tuple oneTrue in (a+(1::Int), not b)
+testTuple' = let (n,l,a,b) = tuple' oneTrue in (a+(1::Int), not b)
+
 main = print $ ( testHArray
                , testHOccurs
                , testTypeIndexed
+               , testTuple 
+               , testTuple'
                )
-
-
-{-
-tuple :: ( HOccurs x l, HDelete l (HProxy x) m, HOccurs y m
-         , HOccurs y l, HDelete l (HProxy y) n, HOccurs x n
-         )
-      => l -> (x,y)
-tuple l = let
-              x = hOccurs l
-              m = hDelete l (hProxy x)
-              y = hOccurs m
-          in (x,y)
--}
