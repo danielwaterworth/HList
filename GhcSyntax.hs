@@ -45,10 +45,10 @@ l .=. v = (l,v)
 infixr 3 .!.
 r .!. l =  hLookupByLabel l r
 
-infixr 3 .-.
+infixl 1 .-.
 r .-. l =  hDeleteAtLabel l r
 
-infixr 3 .@.
+infixl 1 .@.
 r .@. (l,v) =  hUpdateAtLabel l v r
 
 
