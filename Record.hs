@@ -45,7 +45,8 @@ emptyRecord = mkRecord $ hZip HNil HNil
  
 class HLabelSet ls
 instance HLabelSet HNil
--- HCons instance is specific to model.
+instance (HMember x ls HFalse, HLabelSet ls)
+      =>  HLabelSet (HCons x ls)
 
 
 {-----------------------------------------------------------------------------}

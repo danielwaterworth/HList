@@ -49,15 +49,6 @@ instance HEq n n' b
       => HEq (Label n) (Label n') b
 
 
--- Propery of a proper label set for a record
-
-instance ( HNat n
-         , HMember (Label n) ls HFalse
-         , HLabelSet ls
-         )
-      =>   HLabelSet (HCons (Label n) ls)
-
-
 -- Show label
 
 instance Show n => ShowLabel (Label n)
