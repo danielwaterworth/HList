@@ -14,27 +14,27 @@
 
 module CommonMain (
 
-   module Datatypes
- , module FakePrelude
+   module FakePrelude
  , module HListPrelude
  , module HListGoodies
  , module HArray
  , module HOccurs
- , module TypeIndexed
+ , module HTypeIndexed
  , module TIP
+ , module TIC
  , module HZip
  , module SimpleRecords
  , module GenericTypeUnify
 ) where
 
-import Datatypes
 import FakePrelude
 import HListPrelude
 import HListGoodies
 import HArray
 import HOccurs
-import TypeIndexed
+import HTypeIndexed
 import TIP
+import TIC
 import HZip
 import SimpleRecords
 import GenericTypeUnify

@@ -1,4 +1,4 @@
-module Datatypes where
+module HugsDatatypes where
 
 -- The fout-n-mouth example
 

@@ -13,7 +13,6 @@
 module HListGoodies where
 
 import FakePrelude
-import Datatypes
 import HListPrelude
 
 

@@ -11,7 +11,7 @@
 -}
 
 
-module TypeIndexed where
+module HTypeIndexed where
 
 import FakePrelude
 import HListPrelude
@@ -26,7 +26,7 @@ import HOccurs
 
 class HNat n => HType2HNat l e n | l e -> n
  where
-  hType2HNat :: l -> HProxy e -> n
+  hType2HNat :: l -> Proxy e -> n
 
 instance ( TypeEqBool e' e b
          , HType2HNat' b l e n
@@ -35,7 +35,7 @@ instance ( TypeEqBool e' e b
  where
   hType2HNat (HCons e' l) p = n
    where
-    b = proxyEqBool (hProxy e') p
+    b = proxyEqBool (proxy e') p
     n = hType2HNat' b l p 
 
 
@@ -43,7 +43,7 @@ instance ( TypeEqBool e' e b
 
 class (HBool b, HNat n) => HType2HNat' b l e n | b l e -> n
  where
-  hType2HNat' :: b -> l -> HProxy e -> n
+  hType2HNat' :: b -> l -> Proxy e -> n
 
 instance HFreeType e l
       => HType2HNat' HTrue l e HZero
@@ -69,7 +69,7 @@ instance HTypes2HNats l HNil HNil
 instance ( HType2HNat   l e n
          , HTypes2HNats l ps ns
          )
-      =>   HTypes2HNats l (HCons (HProxy e) ps) (HCons n ns)
+      =>   HTypes2HNats l (HCons (Proxy e) ps) (HCons n ns)
  where
   hTypes2HNats l (HCons p ps) = HCons (hType2HNat l p) (hTypes2HNats l ps)
 
@@ -80,7 +80,7 @@ instance ( HType2HNat   l e n
 
 class HDeleteByProxy l e l' | l e -> l'
  where
-  hDeleteByProxy :: l -> HProxy e -> l'
+  hDeleteByProxy :: l -> Proxy e -> l'
 
 instance ( HType2HNat (HCons e l) e' n
          , HDeleteByHNat  (HCons e l) n  l'
@@ -115,7 +115,7 @@ instance ( HType2HNat (HCons e l) e' n
 
 hUpdateByType' l e
  =
-   hUpdateByHNat l (hType2HNat l (hProxy e)) e 
+   hUpdateByHNat l (hType2HNat l (proxy e)) e 
 
 
 {-----------------------------------------------------------------------------}
@@ -184,7 +184,7 @@ tuple :: ( HOccursGrounded ex l
       => l -> (ex,ey)
 tuple l = let
               x  = hOccursGrounded l
-              l' = hDeleteByProxy l (hProxy x)
+              l' = hDeleteByProxy l (proxy x)
               y  = hOccursGrounded l'
           in (x,y)
 
@@ -204,7 +204,7 @@ tuple' :: ( HType2HNat l x n
             => l -> (n,l',x,y)
 
 tuple' l = let
-   n  = hType2HNat l (hProxy x)
+   n  = hType2HNat l (proxy x)
    l' = hDeleteByHNat l n
    x  = hOccursGrounded l
    y  = hOccursGrounded l'

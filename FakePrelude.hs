@@ -200,8 +200,8 @@ typeEqBool = undefined
 
 
 -- A more disciplined version: based on proxies
-proxyEqBool :: TypeEqBool t t' b => HProxy t -> HProxy t' -> b
-proxyEqBool x y = typeEqBool (hUnProxy x) (hUnProxy y)
+proxyEqBool :: TypeEqBool t t' b => Proxy t -> Proxy t' -> b
+proxyEqBool x y = typeEqBool (unProxy x) (unProxy y)
 
 
 {-----------------------------------------------------------------------------}
@@ -217,13 +217,13 @@ class TypeUnify x y | x -> y
  
 -- A phantom type for type proxies
  
-data HProxy e = HProxy deriving Show
+data Proxy e = Proxy deriving Show
 
-hProxy   :: e -> HProxy e
-hProxy _ =  HProxy
+proxy   :: e -> Proxy e
+proxy _ =  Proxy
 
-hUnProxy :: HProxy e -> e
-hUnProxy =  undefined
+unProxy :: Proxy e -> e
+unProxy =  undefined
 
 
 {-----------------------------------------------------------------------------}
@@ -244,10 +244,10 @@ typeNotEq _ _ = ()
 
 -- Subtyping
 
-class HSubType l l'
+class SubType l l'
 
-hSubType :: HSubType l l' => l -> l' -> ()
-hSubType _ _ = ()
+subType :: SubType l l' => l -> l' -> ()
+subType _ _ = ()
 
 
 {-----------------------------------------------------------------------------}

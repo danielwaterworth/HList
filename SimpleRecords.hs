@@ -181,7 +181,7 @@ instance ( HProject r ls r''
 instance ( HZip ls vs r'
          , HProject (SimpleRecord r) ls (SimpleRecord r')
          )
-           => HSubType (SimpleRecord r) (SimpleRecord r')
+           => SubType (SimpleRecord r) (SimpleRecord r')
 
 
 {-----------------------------------------------------------------------------}

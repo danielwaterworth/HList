@@ -15,11 +15,64 @@
 -}
 
 
+import HugsDatatypes -- no deriving
 import CommonMain
 import GhcSyntax
 import TTypeableTypeEq
 import TTypeableTypeEqBool
 
+
+{-----------------------------------------------------------------------------}
+
+type Animal =  HCons Key
+              (HCons Name
+              (HCons Breed
+              (HCons Price
+               HNil)))
+
+myAnimal :: Animal
+myAnimal =  HCons (Key 42)
+           (HCons (Name "Angus")
+           (HCons  Cow
+           (HCons (Price 75.5)
+            HNil)))
+
+{-
+
+HList> hFoldr (HSeq HShow) (return () :: IO ()) myAnimal
+Key 42
+Name "Angus"
+Cow
+Price 75.5
+
+HList> hAppend myAnimal myAnimal
+HCons (Key 42) (HCons (Name "Angus") (HCons Cow (HCons (Price 75.5) (HCons (Key
+42) (HCons (Name "Angus") (HCons Cow (HCons (Price 75.5) HNil)))))))
+
+-}
+
+testHArray = (myProj1,myProj2,myProj3,myProj4)
+ where
+  myProj1 = hProjectByHNats myAnimal (HCons HZero (HCons HZero HNil))
+  myProj2 = hProjectByHNats myAnimal (HCons HZero (HCons (HSucc HZero) HNil))
+  myProj3 = hProjectAwayByHNats myAnimal (HCons HZero HNil)
+  myProj4 = hSplitByHNats myAnimal (HCons HZero (HCons (HSucc HZero) HNil))
+
+{-
+
+*HArray> myProj1
+HCons (Key 42) (HCons (Key 42) HNil)
+
+*HArray> myProj2
+HCons (Key 42) (HCons Cow HNil)
+
+*HArray> myProj3
+HCons (Name "Angus") (HCons Cow (HCons (Price 75.5) HNil))
+
+*HArray> myProj4
+(HCons (Key 42) (HCons (Name "Angus") HNil),HCons Cow (HCons (Price 75.5) HNil)
+
+-}
 
 testHOccurs = (testHOccurs1,testHOccurs2)
  where
@@ -30,9 +83,9 @@ testTypeIndexed = (typeIdx1,typeIdx2,typeIdx3,typeIdx4,typeIdx5)
  where
   typeIdx1 = hExtend BSE myAnimal
   typeIdx2 = hUpdateByType  typeIdx1 Sheep
-  typeIdx3 = hDeleteByProxy typeIdx2 (HProxy::HProxy Breed)
-  typeIdx4 = hProjectByProxies myAnimal (HCons (HProxy::HProxy Breed) HNil)
-  typeIdx5 = fst $ hSplitByProxies myAnimal (HCons (HProxy::HProxy Breed) HNil)
+  typeIdx3 = hDeleteByProxy typeIdx2 (Proxy::Proxy Breed)
+  typeIdx4 = hProjectByProxies myAnimal (HCons (Proxy::Proxy Breed) HNil)
+  typeIdx5 = fst $ hSplitByProxies myAnimal (HCons (Proxy::Proxy Breed) HNil)
 
 testTuple = [testTuple1,testTuple2,testTuple3]
  where
@@ -43,11 +96,11 @@ testTuple = [testTuple1,testTuple2,testTuple3]
 testTIP = [show testTIP1, show testTIP2, show testTIP3, show testTIP4]
  where
   myTipyCow = TIP myAnimal
-  animalKey :: (HOccurs Key l, HSubType l (TIP Animal)) => l -> Key
+  animalKey :: (HOccurs Key l, SubType l (TIP Animal)) => l -> Key
   animalKey = hOccurs
   testTIP1 = hOccurs myTipyCow :: Breed
   testTIP2 = hExtend BSE myTipyCow
-  testTIP3 = hExtend Sheep $ hDeleteByProxy myTipyCow (HProxy::HProxy Breed)
+  testTIP3 = hExtend Sheep $ hDeleteByProxy myTipyCow (Proxy::Proxy Breed)
   testTIP4 = hUpdateByType myTipyCow Sheep
 
 testSimpleRecords = [ show test1 
@@ -72,6 +125,9 @@ testSimpleRecords = [ show test1
   test5 = hExtend (price,8.8) test1
   test6 = hProject test5 (HCons breed (HCons price HNil))
 
+
+{-----------------------------------------------------------------------------}
+
 main = print $   ( testHArray
                , ( testHOccurs
                , ( testTypeIndexed
@@ -79,3 +135,7 @@ main = print $   ( testHArray
                , ( testTIP
                , ( testSimpleRecords
                ))))))
+
+
+{-----------------------------------------------------------------------------}
+

@@ -18,7 +18,7 @@ import HListPrelude
 import HListGoodies
 import HArray
 import HOccurs
-import TypeIndexed
+import HTypeIndexed
 
 
 {-----------------------------------------------------------------------------}
@@ -211,9 +211,9 @@ instance HFreeTypeStatus e l b
 
 -- Subtyping for TIPs
 
-instance HSubType (TIP l) (TIP HNil)
-instance (HBoundType e l, HSubType (TIP l) (TIP l'))
-      =>  HSubType (TIP l) (TIP (HCons e l'))
+instance SubType (TIP l) (TIP HNil)
+instance (HBoundType e l, SubType (TIP l) (TIP l'))
+      =>  SubType (TIP l) (TIP (HCons e l'))
 
 
 {-----------------------------------------------------------------------------}
@@ -226,7 +226,7 @@ Assume
 
 myTipyCow = TIP myAnimal
 
-animalKey :: (HOccurs Key l, HSubType l (TIP Animal)) => l -> Key
+animalKey :: (HOccurs Key l, SubType l (TIP Animal)) => l -> Key
 animalKey = hOccurs
 
 Session log

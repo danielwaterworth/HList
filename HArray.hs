@@ -308,31 +308,3 @@ hSingle = hHead
 
 
 {-----------------------------------------------------------------------------}
-
--- Samples
-
-myProj1 = hProjectByHNats myAnimal (HCons HZero (HCons HZero HNil))
-myProj2 = hProjectByHNats myAnimal (HCons HZero (HCons (HSucc HZero) HNil))
-myProj3 = hProjectAwayByHNats myAnimal (HCons HZero HNil)
-myProj4 = hSplitByHNats myAnimal (HCons HZero (HCons (HSucc HZero) HNil))
-
-{-
-
-*HArray> myProj1
-HCons (Key 42) (HCons (Key 42) HNil)
-
-*HArray> myProj2
-HCons (Key 42) (HCons Cow HNil)
-
-*HArray> myProj3
-HCons (Name "Angus") (HCons Cow (HCons (Price 75.5) HNil))
-
-*HArray> myProj4
-(HCons (Key 42) (HCons (Name "Angus") HNil),HCons Cow (HCons (Price 75.5) HNil)
-
--}
-
--- A test tuple for main files
-testHArray = (myProj1,myProj2,myProj3,myProj4)
-
-{-----------------------------------------------------------------------------}

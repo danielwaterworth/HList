@@ -13,7 +13,6 @@
 module HListPrelude where
 
 import FakePrelude
-import Datatypes
 
 {-----------------------------------------------------------------------------}
 
@@ -359,38 +358,5 @@ instance ( Monad m
  where
   hApply (HSeq f) (x,c) = do hApply f x; c
 
-
-{-----------------------------------------------------------------------------}
-
-type Animal =  HCons Key
-              (HCons Name
-              (HCons Breed
-              (HCons Price
-               HNil)))
-
-myAnimal :: Animal
-myAnimal =  HCons (Key 42)
-           (HCons (Name "Angus")
-           (HCons  Cow
-           (HCons (Price 75.5)
-            HNil)))
-
-{-----------------------------------------------------------------------------}
-
-{-
-
-
-
-HList> hFoldr (HSeq HShow) (return () :: IO ()) myAnimal
-Key 42
-Name "Angus"
-Cow
-Price 75.5
-
-HList> hAppend myAnimal myAnimal
-HCons (Key 42) (HCons (Name "Angus") (HCons Cow (HCons (Price 75.5) (HCons (Key
-42) (HCons (Name "Angus") (HCons Cow (HCons (Price 75.5) HNil)))))))
-
--}
 
 {-----------------------------------------------------------------------------}

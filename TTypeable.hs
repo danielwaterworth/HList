@@ -12,7 +12,7 @@
 
 module TTypeable where
 
-import Datatypes
+import HugsDatatypes
 import FakePrelude
 import HListPrelude
 import HListGoodies
