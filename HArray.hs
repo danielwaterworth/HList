@@ -36,6 +36,11 @@ instance HLookupByHNat l n e'
  where
   hLookupByHNat (HCons _ l) (HSucc n) = hLookupByHNat l n
 
+-- An improvement rule
+instance Fail x => HLookupByHNat HNil x ()
+ where
+  hLookupByHNat = undefined
+
 
 {-----------------------------------------------------------------------------}
 

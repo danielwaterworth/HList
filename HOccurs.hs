@@ -107,9 +107,49 @@ instance ( HOccurs e l
 {-----------------------------------------------------------------------------}
 
 -- One occurrence and nothing is left
+-- A variation that avoids overlapping instances
+                                                                               
+class HOccurs' e l
+ where
+  hOccurs' :: l -> e
+                                                                               
+instance ( TypeEqBool e e' b
+         , HOccursBool b e (HCons e' l) )
+      =>   HOccurs' e (HCons e' l)
+ where
+  hOccurs' (HCons e' l) = e
+   where
+    e = hOccursBool b (HCons e' l)
+    b = proxyEqBool (proxy e) (proxy e')
+                                                                               
+class HOccursBool b e l
+ where
+  hOccursBool :: b -> l -> e
+
+instance ( HList l
+         , HFreeType e l
+         )
+           => HOccursBool HTrue e (HCons e l)
+ where
+  hOccursBool _ (HCons e _) = e
+                                                                               
+instance ( HOccurs' e l
+         , HList l
+         )
+           => HOccursBool HFalse e (HCons e' l)
+ where
+  hOccursBool _ (HCons _ l) = hOccurs' l
+
+
+{-----------------------------------------------------------------------------}
+
+--
+-- One occurrence and nothing is left
+--
 -- This variation provides an extra feature for singleton lists.
 -- That is, the result type is unified with the element in the list.
 -- Hence the explicit provision of a result type can be omitted.
+--
 
 class HLookup e l
  where
