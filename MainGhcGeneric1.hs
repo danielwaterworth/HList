@@ -97,11 +97,12 @@ testTypeIndexed = (typeIdx1,typeIdx2,typeIdx3,typeIdx4,typeIdx5)
   typeIdx4 = hProjectByProxies myAnimal (HCons (Proxy::Proxy Breed) HNil)
   typeIdx5 = fst $ hSplitByProxies myAnimal (HCons (Proxy::Proxy Breed) HNil)
 
-testTuple = (testTuple1,testTuple2,testTuple3)
+testTuple = (testTuple1,testTuple2,testTuple3,testTuple4)
  where
   testTuple1 = let (a,b) = tuple oneTrue in (a+(1::Int), not b)
   testTuple2 = let (n,l,a,b) = tuple' oneTrue in (a+(1::Int), not b)
   testTuple3 = let b = not $ fst $ tuple oneTrue in (1::Int,b)
+  testTuple4 = tuple oneTrue == (1,True)
 
 testTIP = (testTIP1,testTIP2,testTIP3,testTIP4)
  where
