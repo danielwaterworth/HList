@@ -29,3 +29,4 @@ import FakePrelude
 
 instance TypeEq x x HTrue
 instance (HBool b, TypeCast HFalse b) => TypeEq x y b
+-- instance TypeEq x y HFalse -- would violate functional dependency
