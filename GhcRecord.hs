@@ -31,7 +31,7 @@ import qualified Record (hLookupByLabel)
 -- Hugs cannot deal with such shield.
 -- We get buggy "Outstanding context ..." for record access.
 
-class Hash l r v
+class Hash l r v | l r -> v
  where
   hLookupByLabel :: l -> r -> v
 
