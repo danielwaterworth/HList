@@ -1,5 +1,4 @@
 {-# OPTIONS -fglasgow-exts #-}
-{-# OPTIONS -fallow-overlapping-instances #-}
 {-# OPTIONS -fallow-undecidable-instances #-}
 
 {- 
@@ -9,10 +8,9 @@
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
    A generic implementation of a type-safe cast. The specific coding
-   here is only shown for completeness' sake. We actually favour the
-   encoding from TypeCastGeneric1.hs for its conciseness. The specific
-   coding here does not rely on separate compilation (while
-   TypeCastGeneric1.hs does), but on some other tricks.
+   here is only shown for completeness' sake and it is explained in the
+   TR version of the paper. The shown coding does not rely on separate
+   compilation (while TypeCastGeneric1.hs does), but on some other tricks.
 
 -}
 
