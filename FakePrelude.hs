@@ -31,6 +31,29 @@ instance HBool HTrue
 instance HBool HFalse
 
 
+-- Conjunction of type-level Booleans
+
+class (HBool t, HBool t', HBool t'') => HAnd t t' t'' | t t' -> t''
+ where
+  hAnd :: t -> t' -> t''
+
+instance HAnd HFalse HFalse HFalse
+ where
+  hAnd _ _ = HFalse
+
+instance HAnd HTrue HFalse HFalse
+ where
+  hAnd _ _ = HFalse
+
+instance HAnd HFalse HTrue HFalse
+ where
+  hAnd _ _ = HFalse
+
+instance HAnd HTrue HTrue HTrue
+ where
+  hAnd _ _ = HTrue
+
+
 -- Disjunction of type-level Booleans
 
 class (HBool t, HBool t', HBool t'') => HOr t t' t'' | t t' -> t''

@@ -25,7 +25,6 @@ module CommonMain (
  , module TIP
  , module TIC
  , module HZip
- , module SimpleRecords
  , module GenericTypeUnify
 ) where
 
@@ -38,40 +37,4 @@ import HTypeIndexed
 import TIP
 import TIC
 import HZip
-import SimpleRecords
 import GenericTypeUnify
-
---
--- In the remainder of the module,
--- we comment on some standard test cases.
--- These test cases work for all models that import HListMain.hs.
---
-
-{-
-
-Retrieve the Breed of an animal.
-
-ghci-or-hugs> hOccurs myAnimal :: Breed
-Cow
-
--}
-
-{-
-
-Normal hOccurs cannot ground result type even if it is imaginable.
-
-ghci-or-hugs> hOccurs (HCons 1 HNil)
-
-<interactive>:1:
-    No instance for (HOccurs e1 (HCons e HNil))
-
--}
-
-{-
-
-hOccurs can be elaborated to ground the result type for singletons.
-
-ghci-or-hugs> hOccursGrounded (HCons 1 HNil)
-1
-
--}

@@ -1,6 +1,6 @@
 {-# OPTIONS -fglasgow-exts #-}
 
-module GhcDatatypes where
+module Datatypes2 where
 
 import Data.Typeable
 

@@ -1,0 +1,70 @@
+{-# OPTIONS -fglasgow-exts #-}
+{-# OPTIONS -fallow-undecidable-instances #-}
+
+{- 
+
+   The HList library
+
+   (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
+
+   A model of extensible records.
+   Record labels are simply type-level naturals.
+   This models is as simple and as portable as it could be.
+
+-}
+
+ 
+module Label1 (
+  module Label1,
+  module Record
+) where
+
+import FakePrelude
+import HListPrelude
+import HListGoodies
+import Record
+
+
+-- Labels are type-level naturals
+
+newtype Label x = Label x deriving Show
+
+
+-- Public constructors for labels
+
+label :: HNat n => n -> Label n
+label =  Label
+
+
+-- Construct the first label
+
+firstLabel = label HZero
+
+
+-- Construct the next label
+
+nextLabel (Label n) = label (HSucc n)
+
+
+-- Equality on labels
+
+instance HEq n n' b
+      => HEq (Label n) (Label n') b
+ where
+  hEq (Label n) (Label n') = hEq n n'
+
+
+-- Propery of a proper label set for a record
+
+instance ( HNat n
+         , HMember (Label n) ls HFalse
+         , HLabelSet ls
+         )
+      =>   HLabelSet (HCons (Label n) ls)
+
+
+-- Show label
+
+instance Show n => ShowLabel (Label n)
+ where
+  showLabel (Label n) = show n

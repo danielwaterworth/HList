@@ -13,7 +13,7 @@ module GhcSyntax where
 
 import FakePrelude
 import HListPrelude
-import SimpleRecords
+import Record
 import TIP
 import TIC
 
@@ -41,7 +41,6 @@ type l :=: v = (l,v)
 infixr 4 .=.
 l .=. v = (l,v)
 
-(!)   :: HLookupByLabel l x y => l -> x -> y
 l ! x =  hLookupByLabel l x
 
 

@@ -14,7 +14,7 @@
 
 module TTypeable where
 
-import HugsDatatypes
+import Datatypes1
 import FakePrelude
 import HListPrelude
 import HListGoodies

@@ -15,11 +15,12 @@
 -}
 
 
-import HugsDatatypes -- no deriving
+import Datatypes1
 import CommonMain
 import GhcSyntax
 import TTypeableTypeEq
 import TTypeableTypeEqBool
+import Label1
 
 
 {-----------------------------------------------------------------------------}
@@ -103,27 +104,27 @@ testTIP = [show testTIP1, show testTIP2, show testTIP3, show testTIP4]
   testTIP3 = hExtend Sheep $ tipyDelete myTipyCow (Proxy::Proxy Breed)
   testTIP4 = tipyUpdate myTipyCow Sheep
 
-testSimpleRecords = [ show test1 
-                    , show test2
-                    , show test3 
-                    , show test4
-                    , show test5
-                    , show test6
-                    ]
+testRecords =   ( test1 
+              , ( test2
+              , ( test3 
+              , ( test4
+              , ( test5
+              , ( test6
+                ))))))
  where
-  key   = HZero
-  name  = HSucc key
-  breed = HSucc name
-  price = HSucc breed
-  test1 = mkSimpleRecord $ HCons (key,42::Integer)
-                         $ HCons (name,"Angus")
-                         $ HCons (breed,Cow)
-                         $ HNil 
+  key   = firstLabel
+  name  = nextLabel key
+  breed = nextLabel name
+  price = nextLabel breed
+  test1 = mkRecord $ HCons (key,42::Integer)
+                   $ HCons (name,"Angus")
+                   $ HCons (breed,Cow)
+                   $ HNil 
   test2 = hLookupByLabel test1 breed
   test3 = hDeleteByLabel test1 breed
   test4 = hUpdateByLabel test1 breed Sheep
   test5 = hExtend (price,8.8) test1
-  test6 = hProject test5 (HCons breed (HCons price HNil))
+  test6 = hProjectByLabels test5 (HCons breed (HCons price HNil))
 
 
 {-----------------------------------------------------------------------------}
@@ -133,7 +134,7 @@ main = print $   ( testHArray
                , ( testTypeIndexed
                , ( testTuple
                , ( testTIP
-               , ( testSimpleRecords
+               , ( testRecords
                ))))))
 
 

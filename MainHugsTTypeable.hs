@@ -1,32 +1,20 @@
-{-# OPTIONS -fglasgow-exts #-}
-{-# OPTIONS -fallow-overlapping-instances #-}
-{-# OPTIONS -fallow-undecidable-instances #-}
-
 {-
 
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
    This is a main module for exercising a model with generic cast
-   and generic type equality. Because of generic type equality,
-   this model works with GHC but it does not work with Hugs.
+   and TTypeable-based type equality. This module is prepared for use
+   with Hugs. This model works in principle also for GHC (see module
+   GHCTTypeable) perhaps modulo some slight differences in test cases.
 
 -}
 
-module GhcGeneric (
 
- module GhcDatatypes,
- module CommonMain,
- module GhcSyntax,
- module GenericTypeEq,
- module GenericTypeEqBool
-
-) where
-
-import GhcDatatypes
+import Datatypes1
 import CommonMain
-import GhcSyntax
-import GenericTypeEq
-import GenericTypeEqBool
+import TTypeableTypeEq
+import TTypeableTypeEqBool
+import Label2
 
 
 {-----------------------------------------------------------------------------}
@@ -88,19 +76,19 @@ testHOccurs = (testHOccurs1,testHOccurs2)
 
 testTypeIndexed = (typeIdx1,typeIdx2,typeIdx3,typeIdx4,typeIdx5)
  where
-  typeIdx1 = hExtend BSE myAnimal
-  typeIdx2 = hUpdateByType  typeIdx1 Sheep
-  typeIdx3 = hDeleteByProxy typeIdx2 (Proxy::Proxy Breed)
-  typeIdx4 = hProjectByProxies myAnimal (HCons (Proxy::Proxy Breed) HNil)
-  typeIdx5 = fst $ hSplitByProxies myAnimal (HCons (Proxy::Proxy Breed) HNil)
+   typeIdx1 = hExtend BSE myAnimal
+   typeIdx2 = hUpdateByType  typeIdx1 Sheep
+   typeIdx3 = hDeleteByProxy myAnimal (Proxy::Proxy Breed)
+   typeIdx4 = hProjectByProxies myAnimal (HCons (Proxy::Proxy Breed) HNil)
+   typeIdx5 = fst$ hSplitByProxies myAnimal (HCons (Proxy::Proxy Breed) HNil)
 
-testTuple = (testTuple1,testTuple2,testTuple3)
+testTuple = [testTuple1,testTuple2,testTuple3]
  where
   testTuple1 = let (a,b) = tuple oneTrue in (a+(1::Int), not b)
   testTuple2 = let (n,l,a,b) = tuple' oneTrue in (a+(1::Int), not b)
   testTuple3 = let b = not $ fst $ tuple oneTrue in (1::Int,b)
 
-testTIP = (testTIP1,testTIP2,testTIP3,testTIP4)
+testTIP = [show testTIP1, show testTIP2, show testTIP3, show testTIP4]
  where
   myTipyCow = TIP myAnimal
   animalKey :: (HOccurs Key l, SubType l (TIP Animal)) => l -> Key
@@ -110,44 +98,29 @@ testTIP = (testTIP1,testTIP2,testTIP3,testTIP4)
   testTIP3 = hExtend Sheep $ tipyDelete myTipyCow (Proxy::Proxy Breed)
   testTIP4 = tipyUpdate myTipyCow Sheep
 
-testSimpleRecords = (test1,(test2,(test3,(test4,(test5,test6)))))
+data MyNS = MyNS -- a name space for record labels
+
+testRecords =   ( test1 
+              , ( test2
+              , ( test3 
+              , ( test4
+              , ( test5
+              , ( test6
+                ))))))
  where
-  key   = HZero
-  name  = HSucc key
-  breed = HSucc name
-  price = HSucc breed
-  test1 = mkSimpleRecord $ HCons (key,42::Integer)
-                         $ HCons (name,"Angus")
-                         $ HCons (breed,Cow)
-                         $ HNil 
+  key   = firstLabel MyNS  "key"
+  name  = nextLabel  key   "name"
+  breed = nextLabel  name  "breed"
+  price = nextLabel  breed "price"
+  test1 = mkRecord $ HCons (key,42::Integer)
+                   $ HCons (name,"Angus")
+                   $ HCons (breed,Cow)
+                   $ HNil 
   test2 = hLookupByLabel test1 breed
   test3 = hDeleteByLabel test1 breed
   test4 = hUpdateByLabel test1 breed Sheep
   test5 = hExtend (price,8.8) test1
-  test6 = hProject test5 (HCons breed (HCons price HNil))
-
-type AnimalCol = Key :+: Name :+: Breed :+: Price :+: HNil
-
-testTIC = (myCol,test2,test3)
- where
-  myCol = mkTIC Cow :: TIC AnimalCol
-  test2 = unTIC myCol :: Maybe Breed
-  test3 = unTIC myCol :: Maybe Price
-
-{-
-
-myCol = mkTIC Cow :: TIC AnimalCol
-
-*TIC> unTIC myCol :: Maybe Breed
-Just Cow
-*TIC> unTIC myCol :: Maybe Price
-Nothing
-*TIC> mkTIC "42" :: TIC AnimalCol
-Type error ...
-*TIC> unTIC myCol :: Maybe String
-Type error ...
-
--}
+  test6 = hProjectByLabels test5 (HCons breed (HCons price HNil))
 
 
 {-----------------------------------------------------------------------------}
@@ -157,9 +130,8 @@ main = print $   ( testHArray
                , ( testTypeIndexed
                , ( testTuple
                , ( testTIP
-               , ( testSimpleRecords
-               , ( testTIC
-               )))))))
+               , ( testRecords
+               ))))))
 
 
 {-----------------------------------------------------------------------------}
