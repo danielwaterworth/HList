@@ -113,9 +113,9 @@ testSimpleRecords = [ show test1
                          $ HCons (name,"Angus")
                          $ HCons (breed,Cow)
                          $ HNil 
-  test2 = hLookup test1 breed
-  test3 = hDelete test1 breed
-  test4 = hUpdate test1 breed Sheep
+  test2 = hLookupByLabel test1 breed
+  test3 = hDeleteByLabel test1 breed
+  test4 = hUpdateByLabel test1 breed Sheep
   test5 = hExtend (price,8.8) test1
   test6 = hProject test5 (HCons breed (HCons price HNil))
 

@@ -3,6 +3,8 @@
 {-# OPTIONS -fallow-overlapping-instances #-}
 
 {-
+   
+   The HList library
 
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 

@@ -1,8 +1,10 @@
 {-# OPTIONS -fglasgow-exts #-}
-{-# OPTIONS -fallow-overlapping-instances #-}
 {-# OPTIONS -fallow-undecidable-instances #-}
+{-# OPTIONS -fallow-overlapping-instances #-}
 
 {- 
+
+   The HList library
 
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
@@ -36,9 +38,10 @@ testTTypeable
         show$ typeEqBool not not,
 
 {-
-
-    Context reduction stack overflow; size = 21
-    Use -fcontext-stack20 to increase stack size to (e.g.) 20
+    We got this:
+     Context reduction stack overflow; size = 21
+     Use -fcontext-stack20 to increase stack size to (e.g.) 20
+    So we reduced the test suite a bit.
 
 -}
 

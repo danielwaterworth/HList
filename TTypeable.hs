@@ -3,6 +3,8 @@
 
 {- 
 
+   The HList library
+
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
    Typeable at the type level.

@@ -3,6 +3,8 @@
 
 {- 
 
+   The HList library
+
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
    A wave of type-level functions involving HLists.

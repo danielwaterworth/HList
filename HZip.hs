@@ -9,6 +9,8 @@ import HArray
 
 {- 
 
+   The HList library
+
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
    Zipping and unzipping for (conceptually) lists of pairs.

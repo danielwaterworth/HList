@@ -4,6 +4,8 @@
 
 {- 
 
+   The HList library
+
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
    Type-indexed co-products.

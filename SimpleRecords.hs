@@ -4,6 +4,8 @@
 
 {- 
 
+   The HList library
+
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
    Extensible records --- a simple model based on type-level naturals.
@@ -65,17 +67,17 @@ instance ( HAppend r r' r''
 
 -- Lookup operation
 
-class HLookup r l v | r l -> v
+class HLookupByLabel r l v | r l -> v
  where
-  hLookup :: r -> l -> v
+  hLookupByLabel :: r -> l -> v
 
 instance ( HZip ls vs r
          , HFind l ls n
          , HLookupByHNat vs n v
          )
-           => HLookup (SimpleRecord r) l v
+           => HLookupByLabel (SimpleRecord r) l v
  where
-  hLookup (SimpleRecord r) l = v
+  hLookupByLabel (SimpleRecord r) l = v
    where
     (ls,vs) = hUnzip r
     n       = hFind l ls
@@ -84,11 +86,11 @@ instance ( HZip ls vs r
 
 {-----------------------------------------------------------------------------}
 
--- Lifted hDelete
+-- Delete operation
 
-class HDelete r l r' | r l -> r'
+class HDeleteByLabel r l r' | r l -> r'
  where
-  hDelete :: r -> l -> r'
+  hDeleteByLabel :: r -> l -> r'
 
 instance ( HZip ls vs r
          , HFind l ls n
@@ -96,9 +98,9 @@ instance ( HZip ls vs r
          , HDeleteByHNat vs n vs'
          , HZip ls' vs' r'
          )
-           => HDelete (SimpleRecord r) l (SimpleRecord r')
+           => HDeleteByLabel (SimpleRecord r) l (SimpleRecord r')
  where
-  hDelete (SimpleRecord r) l = SimpleRecord r'
+  hDeleteByLabel (SimpleRecord r) l = SimpleRecord r'
    where
     (ls,vs) = hUnzip r
     n       = hFind l ls 
@@ -109,19 +111,19 @@ instance ( HZip ls vs r
 
 {-----------------------------------------------------------------------------}
 
--- Lifted hUpdate
+-- Update operation
 
-class HUpdate r l v
+class HUpdateByLabel r l v
  where
-  hUpdate :: r -> l -> v -> r
+  hUpdateByLabel :: r -> l -> v -> r
 
 instance ( HZip ls vs r
          , HFind l ls n
          , HUpdateByHNat vs n v vs
          )
-           => HUpdate (SimpleRecord r) l v
+           => HUpdateByLabel (SimpleRecord r) l v
  where
-  hUpdate (SimpleRecord r) l v = SimpleRecord (hZip ls vs')
+  hUpdateByLabel (SimpleRecord r) l v = SimpleRecord (hZip ls vs')
    where
     (ls,vs) = hUnzip r
     n       = hFind l ls
@@ -162,7 +164,7 @@ instance HProject (SimpleRecord l) HNil (SimpleRecord HNil)
   hProject _ _ = emptySimpleRecord
 
 instance ( HProject r ls r''
-         , HLookup r l v
+         , HLookupByLabel r l v
          , HExtend (l,v) r'' r'
          )
       =>   HProject r (HCons l ls) r'
@@ -170,7 +172,7 @@ instance ( HProject r ls r''
   hProject r (HCons l ls) = r'
    where
     r'' = hProject r ls
-    v   = hLookup r l
+    v   = hLookupByLabel r l
     r'  = hExtend (l,v) r''
 
 
@@ -180,8 +182,8 @@ instance ( HProject r ls r''
  
 hRename l l' r = r''
  where
-  v   = hLookup r l
-  r'  = hDelete r l
+  v   = hLookupByLabel r l
+  r'  = hDeleteByLabel r l
   r'' = hExtend (l',v) r'
 
 

@@ -4,6 +4,8 @@
 
 {- 
 
+   The HList library
+
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
    A generic implementation of type-level type-safe cast. For this

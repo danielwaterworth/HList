@@ -1,5 +1,14 @@
 {-# OPTIONS -fglasgow-exts #-}
 
+{- 
+
+   (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
+
+   Some dedicated infix operators at the type and the value level.
+
+-}
+
+
 module GhcSyntax where
 
 import FakePrelude
@@ -32,8 +41,8 @@ type l :=: v = (l,v)
 infixr 4 .=.
 l .=. v = (l,v)
 
-(!)   :: HLookup l x y => l -> x -> y
-l ! x =  hLookup l x
+(!)   :: HLookupByLabel l x y => l -> x -> y
+l ! x =  hLookupByLabel l x
 
 
 {-----------------------------------------------------------------------------}
