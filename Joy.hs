@@ -23,13 +23,22 @@ hThree = undefined
 end :: HNil
 end = hNil
 
+instance HList s => Apply HNil s s where
+	apply _ s = s
+instance (HList s,HList s',HList l,Apply a s s',Apply l s' s'') => Apply (HCons a l) s s'' where
+	apply (HCons a l) s = apply l (apply a s :: s')
+instance HList s => Apply HZero s (HCons HZero s) where
+	apply _ s = hCons hZero s
+instance (HNat a,HList s) => Apply (HSucc a) s (HCons (HSucc a) s) where
+	apply a s = hCons a s
+
 data Lit a = Lit a
 lit :: a -> Lit a
 lit a = Lit a
 unl :: Lit a -> a
 unl (Lit a) = a
 instance Show a => Show (Lit a) where
-	showsPrec _ a = showChar '[' . shows a . showChar ']'
+	showsPrec _ (Lit a) = showChar '[' . shows a . showChar ']'
 instance HList s => Apply (Lit a) s (HCons a s) where
 	apply (Lit a) s = hCons a s
 
@@ -46,7 +55,7 @@ ifte = undefined
 instance Show Ifte where
 	showsPrec _ _ = showString "If"
 instance (Apply b s r,HHead r b',HIfte b' t f s s')
-	=> Apply Ifte (HCons f (HCons t (HCons b s))) s' where
+	=> Apply Ifte (f :*: t :*: b :*: s) s' where
 	apply _ (HCons f (HCons t (HCons b s))) = hIfte (hHead (apply b s :: r) :: b') t f s
 
 data Nul
@@ -169,25 +178,6 @@ instance HNat b => HMult HZero b HZero where
 instance (HMult a b s,HAdd b s s') => HMult (HSucc a) b s' where
 	hMult _ _ = hAdd (undefined::b) (hMult (undefined::a) (undefined::b) :: s)
 
-{-
-data Seq a b = Seq a b
-o :: a -> b -> (Seq a b)
-o a b = Seq a b
-leftOp :: (Seq a b) -> a
-leftOp (Seq a _) = a
-rightOp :: (Seq a b) -> b
-rightOp (Seq _ b) = b
-instance (Show a,Show b) => Show (Seq a b) where
-	showsPrec _ op = shows (leftOp op) . shows (rightOp op)
-instance (HList s,Apply a s s',Apply b s' s'') => Apply (Seq a b) s s'' where
-	apply op s = apply (rightOp op) (apply (leftOp op) s :: s')
--}
-
-instance HList s => Apply HNil s s where
-	apply _ s = s
-instance (HList s,HList s',HList l,Apply a s s',Apply l s' s'') => Apply (HCons a l) s s'' where
-	apply (HCons a l) s = apply l (apply a s :: s')
-
 square = dup .*. mult .*. hNil
 cube = mult .*. mult .*. dup .*. dup .*. hNil
 
@@ -201,16 +191,14 @@ instance Apply I HNil HNil where
 instance (HList s,Apply a s s') => Apply I (HCons a s) s' where
 	apply _ (HCons a s) = apply a s
 
-data Primrec
+data Primrec = Primrec deriving Show
 primrec :: Primrec
 primrec = undefined
-instance Show Primrec where
-	showsPrec _ _ = showString "Primrec"
 instance Apply z s s' => Apply Primrec (HCons nz (HCons z (HCons HZero s))) s' where
 	apply _ (HCons _ (HCons z (HCons _ s))) = apply z s
 instance (HList s,Apply Primrec (HCons nz (HCons z (HCons n (HCons (HSucc n) s)))) s',Apply nz s' s'')
 	=> Apply Primrec (HCons nz (HCons z (HCons (HSucc n) s))) s'' where
-	apply _ (HCons nz (HCons z s@(HCons _ _))) = apply nz (apply primrec (hCons nz (hCons z (hCons (undefined::n) s))))
+	apply _ (HCons nz (HCons z s@(HCons _ _))) = apply nz (apply Primrec (hCons nz (hCons z (hCons (undefined::n) s))))
 
 data Times
 times :: Times
@@ -277,23 +265,23 @@ fac1 = hCons (lit (hCons (lit hZero) (hCons eq hNil)))
 	(hCons (lit (hCons dup (hCons (lit hOne) (hCons sub (hCons fact (hCons mult hNil))))))
 	(hCons ifte hNil)))
 
-fac2 = lit (lit hOne .*. lit hOne .*. hNil)
-	.*. dip .*. lit (dup .*. lit mult .*. dip .*. suc .*. hNil)
-	.*. times .*. pop .*. hNil
+fac2 = lit (hOne .*. hOne .*. end)
+	.*. dip .*. lit (dup .*. lit mult .*. dip .*. suc .*. end)
+	.*. times .*. pop .*. end
 
-fac3 = lit nul .*. lit suc .*. lit (dup .*. pre .*. hNil)
-	.*. lit (i .*. mult .*. hNil) .*. genrec .*. hNil
+fac3 = lit nul .*. lit suc .*. lit (dup .*. pre .*. end)
+	.*. lit (i .*. mult .*. end) .*. genrec .*. end
 
-fac4 = lit nul .*. lit suc .*. lit (dup .*. pre .*. hNil)
-	.*. lit mult .*. linrec .*. hNil
+fac4 = lit nul .*. lit suc .*. lit (dup .*. pre .*. end)
+	.*. lit mult .*. linrec .*. end
 
-fac5 = lit (lit hOne) .*. lit mult .*. primrec .*. hNil
+fac5 = lit hOne .*. lit mult .*. primrec .*. end
 
 main :: IO ()
 main = do
-	putStrLn $ show $ apply (lit hThree .*. fac1 .*. hNil) hNil
-	putStrLn $ show $ apply i (fac2 .*. hThree .*. hNil)
-	putStrLn $ show $ apply i (fac3 .*. hThree .*. hNil)
-	putStrLn $ show $ apply i (fac4 .*. hThree .*. hNil)
-	putStrLn $ show $ apply i (fac5 .*. hThree .*. hNil)
+	putStrLn $ show $ apply (lit hThree .*. fac1 .*. end) end
+	putStrLn $ show $ apply i (fac2 .*. hThree .*. end)
+	putStrLn $ show $ apply i (fac3 .*. hThree .*. end)
+	putStrLn $ show $ apply i (fac4 .*. hThree .*. end)
+	putStrLn $ show $ apply i (fac5 .*. hThree .*. end)
 
