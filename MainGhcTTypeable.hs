@@ -55,10 +55,10 @@ HCons (Key 42) (HCons (Name "Angus") (HCons Cow (HCons (Price 75.5) (HCons (Key
 
 testHArray = (myProj1,myProj2,myProj3,myProj4)
  where
-  myProj1 = hProjectByHNats angus (HCons HZero (HCons HZero HNil))
-  myProj2 = hProjectByHNats angus (HCons HZero (HCons (HSucc HZero) HNil))
-  myProj3 = hProjectAwayByHNats angus (HCons HZero HNil)
-  myProj4 = hSplitByHNats angus (HCons HZero (HCons (HSucc HZero) HNil))
+  myProj1 = hProjectByHNats (HCons hZero (HCons hZero HNil)) angus
+  myProj2 = hProjectByHNats (HCons hZero (HCons (hSucc hZero) HNil)) angus
+  myProj3 = hProjectAwayByHNats (HCons hZero HNil) angus
+  myProj4 = hSplitByHNats (HCons hZero (HCons (hSucc hZero) HNil)) angus
 
 {-
 
@@ -90,12 +90,12 @@ testTypeIndexed =   ( typeIdx1
                   , ( typeIdx5
                   , ( typeIdx6 ))))))
  where
-  typeIdx1 = hDeleteMany (Proxy::Proxy Name) angus
+  typeIdx1 = hDeleteMany (proxy::Proxy Name) angus
   typeIdx2 = hExtend BSE angus
-  typeIdx3 = hUpdateByType  typeIdx1 Sheep
-  typeIdx4 = hDeleteByProxy typeIdx2 (Proxy::Proxy Breed)
-  typeIdx5 = hProjectByProxies angus (HCons (Proxy::Proxy Breed) HNil)
-  typeIdx6 = fst $ hSplitByProxies angus (HCons (Proxy::Proxy Breed) HNil)
+  typeIdx3 = hUpdateByType Sheep typeIdx1
+  typeIdx4 = hDeleteByProxy (proxy::Proxy Breed) typeIdx2
+  typeIdx5 = hProjectByProxies (HCons (proxy::Proxy Breed) HNil) angus
+  typeIdx6 = fst $ hSplitByProxies (HCons (proxy::Proxy Breed) HNil) angus
 
 testTuple = (testTuple1,testTuple2,testTuple3,testTuple4)
  where
@@ -111,8 +111,8 @@ testTIP = (testTIP1,testTIP2,testTIP3,testTIP4)
   animalKey = hOccurs
   testTIP1 = hOccurs myTipyCow :: Breed
   testTIP2 = hExtend BSE myTipyCow
-  testTIP3 = hExtend Sheep $ tipyDelete myTipyCow (Proxy::Proxy Breed)
-  testTIP4 = tipyUpdate myTipyCow Sheep
+  testTIP3 = hExtend Sheep $ tipyDelete (proxy::Proxy Breed) myTipyCow
+  testTIP4 = tipyUpdate Sheep myTipyCow
 
 testRecords =   ( test1 
               , ( test2
@@ -130,11 +130,11 @@ testRecords =   ( test1
                    $ HCons (name,"Angus")
                    $ HCons (breed,Cow)
                    $ HNil 
-  test2 = hLookupByLabel test1 breed
-  test3 = hDeleteByLabel test1 breed
-  test4 = hUpdateByLabel test1 breed Sheep
+  test2 = hLookupByLabel breed test1
+  test3 = hDeleteByLabel breed test1
+  test4 = hUpdateByLabel breed Sheep test1
   test5 = hExtend (price,8.8) test1
-  test6 = hProjectByLabels test5 (HCons breed (HCons price HNil))
+  test6 = hProjectByLabels (HCons breed (HCons price HNil)) test5
 
 
 {-----------------------------------------------------------------------------}

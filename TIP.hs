@@ -145,16 +145,16 @@ instance HLookup e l
 onTIP :: HTypeIndexed a => (b -> a) -> TIP b -> TIP a
 onTIP f (TIP l) = mkTIP (f l)
 
-tipyDelete  t p  = onTIP (flip hDeleteByProxy p) t
-tipyUpdate  t e  = onTIP (flip hUpdateByType e) t
-tipyProject t ps = onTIP (flip hProjectByProxies ps) t
+tipyDelete  p t  = onTIP (hDeleteByProxy p) t
+tipyUpdate  e t  = onTIP (hUpdateByType e) t
+tipyProject ps t = onTIP (hProjectByProxies ps) t
 
 
 -- Split produces two TIPs
 
-tipySplit (TIP l) ps = (mkTIP l',mkTIP l'')
+tipySplit ps (TIP l) = (mkTIP l',mkTIP l'')
  where
-  (l',l'') = hSplitByProxies l ps
+  (l',l'') = hSplitByProxies ps l
 
 
 {-----------------------------------------------------------------------------}

@@ -55,7 +55,7 @@ type e :+: l = HCons (Proxy e) l
 
 (.+.) :: HTypeProxied (HCons (Proxy e) l)
       => e -> TIP l -> TIP (HCons (Proxy e) l)
-e .+. r = hExtend (proxy e) r
+e .+. r = hExtend (toProxy e) r
 
 
 {-----------------------------------------------------------------------------}

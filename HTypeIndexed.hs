@@ -39,7 +39,7 @@ instance ( HList l
  where
   hDeleteMany p (HCons e' l) = l'
    where
-    b  = proxyEq p (proxy e')
+    b  = proxyEq p (toProxy e')
     l' = hDeleteManyCase b p e' l
 
 class HDeleteManyCase b e e' l l' | b e e' l -> l'
@@ -62,90 +62,73 @@ instance HDeleteMany e l l'
 
 -- Map a type to a natural
 
-class HNat n => HType2HNat l e n | l e -> n
- where
-  hType2HNat :: l -> Proxy e -> n
-
-instance ( TypeEq e' e b
-         , HType2HNat' b l e n
-         )
-           => HType2HNat (HCons e' l) e n
- where
-  hType2HNat (HCons e' l) p = n
-   where
-    b = proxyEq (proxy e') p
-    n = hType2HNat' b l p 
-
+class HNat n => HType2HNat e l n | e l -> n
+instance (TypeEq e' e b, HType2HNatCase b e l n)
+      =>  HType2HNat e (HCons e' l) n
 
 -- Helper class
 
-class (HBool b, HNat n) => HType2HNat' b l e n | b l e -> n
- where
-  hType2HNat' :: b -> l -> Proxy e -> n
+class (HBool b, HNat n) => HType2HNatCase b e l n | b e l -> n
+instance HOccursNot e l => HType2HNatCase HTrue e l HZero
+instance HType2HNat e l n => HType2HNatCase HFalse e l (HSucc n)
 
-instance HOccursNot e l
-      => HType2HNat' HTrue l e HZero
- where
-  hType2HNat' _ _ _ = HZero
+hType2HNat :: HType2HNat e l n => Proxy e -> l -> n
+hType2HNat _ _ = undefined
 
-instance HType2HNat l e n
-      => HType2HNat' HFalse l e (HSucc n)
- where
-  hType2HNat' _ l p = HSucc (hType2HNat l p)
 
 
 -- Map types to naturals
 
-class HTypes2HNats l ps ns | l ps -> ns
+class HTypes2HNats ps l ns | ps l -> ns
  where
-  hTypes2HNats :: l -> ps -> ns
+  hTypes2HNats :: ps -> l -> ns
 
-instance HTypes2HNats l HNil HNil
+instance HTypes2HNats HNil l HNil
  where
   hTypes2HNats _ _ = HNil
 
-instance ( HType2HNat   l e n
-         , HTypes2HNats l ps ns
+instance ( HType2HNat   e l n
+         , HTypes2HNats ps l ns
          )
-      =>   HTypes2HNats l (HCons (Proxy e) ps) (HCons n ns)
+      =>   HTypes2HNats (HCons (Proxy e) ps) l (HCons n ns)
  where
-  hTypes2HNats l (HCons p ps) = HCons (hType2HNat l p) (hTypes2HNats l ps)
+  hTypes2HNats (HCons p ps) l = HCons (hType2HNat p l) (hTypes2HNats ps l)
 
 
 {-----------------------------------------------------------------------------}
 
 -- Define type-indexed delete in terms of the natural-based primitive
 
-hDeleteByProxy l p
+hDeleteByProxy p l
  =
-   hDeleteByHNat l (hType2HNat l p)
+   hDeleteByHNat (hType2HNat p l) l
 
 
 {-----------------------------------------------------------------------------}
 
 -- Define type-indexed update in terms of the natural-based update
 
-hUpdateByType l e
+hUpdateByType e l
  =
-   hUpdateByHNat l (hType2HNat l (proxy e)) e 
+   hUpdateByHNat (hType2HNat (toProxy e) l) e l
 
 
 {-----------------------------------------------------------------------------}
 
 -- Projection based on proxies
 
-hProjectByProxies l ps
+hProjectByProxies ps l
  =
-   hProjectByHNats l $ hTypes2HNats l ps
+   hProjectByHNats (hTypes2HNats ps l) l
 
 
 {-----------------------------------------------------------------------------}
 
 -- Splitting based on proxies
 
-hSplitByProxies l ps
+hSplitByProxies ps l
  =
-   hSplitByHNats l (hTypes2HNats l ps)
+   hSplitByHNats (hTypes2HNats ps l) l
 
 
 {-----------------------------------------------------------------------------}
@@ -154,19 +137,19 @@ hSplitByProxies l ps
 -- Thanks to the HW 2004 reviewer who pointed out the value of this example.
 
 tuple :: ( HLookup e1 l
-         , HType2HNat l e1 n
-         , HDeleteByHNat l n l'
+         , HType2HNat e1 l n
+         , HDeleteByHNat n l l'
          , HLookup e2 l'
          , HLookup e2 l
-         , HType2HNat l e2 n'
-         , HDeleteByHNat l n' l''
+         , HType2HNat e2 l n'
+         , HDeleteByHNat n' l l''
          , HLookup e1 l''
          ) =>
               l -> (e1, e2)
 
 tuple l = let
               x  = hLookup l
-              l' = hDeleteByProxy l (proxy x)
+              l' = hDeleteByProxy (toProxy x) l
               y  = hLookup l'
           in (x,y)
 
@@ -178,16 +161,16 @@ oneTrue =  HCons 1   (HCons True HNil)
 
 -- A variation that propagates all involved types
 
-tuple' :: ( HType2HNat l x n 
-          , HDeleteByHNat l n l'
+tuple' :: ( HType2HNat x l n 
+          , HDeleteByHNat n l l'
           , HLookup x l
           , HLookup y l'
           )
             => l -> (n,l',x,y)
 
 tuple' l = let
-   n  = hType2HNat l (proxy x)
-   l' = hDeleteByHNat l n
+   n  = hType2HNat (toProxy x) l
+   l' = hDeleteByHNat n l
    x  = hLookup l
    y  = hLookup l'
   in (n,l',x,y)

@@ -412,12 +412,12 @@ class HNat n => HFind' b e l n | b e l -> n
 
 instance HFind' HTrue e l HZero
  where
-  hFind' _ _ _ = HZero
+  hFind' _ _ _ = hZero
 
 instance HFind e l n
       => HFind' HFalse e l (HSucc n)
  where
-  hFind' _ e l = HSucc (hFind e l)
+  hFind' _ e l = hSucc (hFind e l)
 
 
 -- Membership test

@@ -96,31 +96,34 @@ instance HCond HTrue x y x
 
 -- Type-level naturals
 
-data HZero   = HZero    deriving Show
-data HSucc n = HSucc n  deriving Show
+data HZero
+data HSucc n
 
+hZero :: HZero; hZero = undefined
+hSucc :: HNat n => n -> HSucc n; hSucc _ = undefined
+hPred :: HNat n => HSucc n -> n; hPred _ = undefined
 
--- Access predecessor of a type
--- This allows us to avoid references to data constructors for HNat.
---
-hPred :: HSucc n -> n
-hPred =  undefined
-
-
--- The value-level reification is for convenience only.
--- We can operate at the type level normally.
---
 class HNat n
+instance HNat HZero
+instance HNat n => HNat (HSucc n)
+
+instance Show HZero where show _ = "HZero"
+instance Show (HSucc HZero)
+ where show _ = "HSucc HZero"
+instance (HNat n, Show n) => Show (HSucc n)
+ where show n = "HSucc (" ++ show (hPred n) ++ ")"
+
+class HNat n => HNat2Integral n
  where
   hNat2Integral :: Integral i => n -> i
  
-instance HNat HZero
+instance HNat2Integral HZero
  where
   hNat2Integral _ = 0
  
-instance HNat n => HNat (HSucc n)
+instance HNat2Integral n => HNat2Integral (HSucc n)
  where
-  hNat2Integral (HSucc n) = hNat2Integral n + 1
+  hNat2Integral n = hNat2Integral (hPred n) + 1
 
 
 {-----------------------------------------------------------------------------}
@@ -136,31 +139,18 @@ data HJust x   = HJust x   deriving Show
 -- Equality for types
 
 class HBool b => HEq x y b | x y -> b
- where
-  hEq :: x -> y -> b
 
 
 -- Equality instances for naturals
 
 instance HEq HZero HZero HTrue
- where
-  hEq _ _ = hTrue
-
 instance HNat n => HEq HZero (HSucc n) HFalse
- where
-  hEq _ _ = hFalse
-
 instance HNat n => HEq (HSucc n) HZero HFalse
- where
-  hEq _ _ = hFalse
+instance (HNat n, HNat n', HEq  n n' b )
+      =>  HEq (HSucc n) (HSucc n') b
 
-instance ( HNat n
-         , HNat n'
-         , HEq  n n' b 
-         )
-      =>   HEq (HSucc n) (HSucc n') b
- where
-  hEq n n' = hEq (hPred n) (hPred n')
+hEq :: HEq x y b => x -> y -> b
+hEq =  undefined
 
 
 {-----------------------------------------------------------------------------}
@@ -179,31 +169,18 @@ class HStagedEq x y
 -- Less than
 
 class HBool b => HLt x y b | x y -> b
- where
-  hLt :: x -> y -> b
 
 
 -- Equality instances for naturals
 
 instance HLt HZero HZero HFalse
- where
-  hLt _ _ = hFalse
-
 instance HNat n => HLt HZero (HSucc n) HTrue
- where
-  hLt _ _ = hTrue
-
 instance HNat n => HLt (HSucc n) HZero HFalse
- where
-  hLt _ _ = hFalse
+instance (HNat n, HNat n', HLt  n n' b)
+      =>  HLt (HSucc n) (HSucc n') b
 
-instance ( HNat n
-         , HNat n'
-         , HLt  n n' b 
-         )
-      =>   HLt (HSucc n) (HSucc n') b
- where
-  hLt n n' = hLt (hPred n) (hPred n')
+hLt   :: HLt x y b => x -> y -> b
+hLt _ =  undefined
 
 
 {-----------------------------------------------------------------------------}
@@ -238,10 +215,14 @@ class TypeCast x y | x -> y, y -> x
  
 -- A phantom type for type proxies
  
-data Proxy e = Proxy deriving Show
+data Proxy e
+instance Show (Proxy e) where show _ = "Proxy"
 
-proxy   :: e -> Proxy e
-proxy _ =  Proxy
+proxy :: Proxy e
+proxy =  undefined
+
+toProxy :: e -> Proxy e
+toProxy _ = undefined
 
 unProxy :: Proxy e -> e
 unProxy =  undefined

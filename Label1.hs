@@ -37,20 +37,18 @@ label =  Label
 
 -- Construct the first label
 
-firstLabel = label HZero
+firstLabel = label hZero
 
 
 -- Construct the next label
 
-nextLabel (Label n) = label (HSucc n)
+nextLabel (Label n) = label (hSucc n)
 
 
 -- Equality on labels
 
 instance HEq n n' b
       => HEq (Label n) (Label n') b
- where
-  hEq (Label n) (Label n') = hEq n n'
 
 
 -- Propery of a proper label set for a record

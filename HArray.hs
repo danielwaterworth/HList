@@ -23,134 +23,134 @@ import HListPrelude
 
 -- A lookup operation
 
-class HLookupByHNat l i e | l i -> e
+class HNat n => HLookupByHNat n l e | n l -> e
  where
-  hLookupByHNat :: l -> i -> e
+  hLookupByHNat :: n -> l -> e
 
-instance HLookupByHNat (HCons e l) HZero e
+instance HLookupByHNat HZero (HCons e l) e
  where
-  hLookupByHNat (HCons e _) _ = e
+  hLookupByHNat _ (HCons e _) = e
 
-instance HLookupByHNat l n e'
-      => HLookupByHNat (HCons e l) (HSucc n) e'
+instance (HLookupByHNat n l e', HNat n)
+      => HLookupByHNat (HSucc n) (HCons e l) e'
  where
-  hLookupByHNat (HCons _ l) (HSucc n) = hLookupByHNat l n
+  hLookupByHNat n (HCons _ l) = hLookupByHNat (hPred n) l
 
 
 {-----------------------------------------------------------------------------}
 
 -- A delete operation
 
-class HDeleteByHNat l i l' | l i -> l'
+class HNat n => HDeleteByHNat n l l' | n l -> l'
  where
-  hDeleteByHNat :: l -> i -> l'
+  hDeleteByHNat :: n -> l -> l'
 
-instance HDeleteByHNat (HCons e l) HZero l
+instance HDeleteByHNat HZero (HCons e l) l
  where
-  hDeleteByHNat (HCons _ l) HZero = l
+  hDeleteByHNat _ (HCons _ l) = l
 
-instance HDeleteByHNat l n l'
-      => HDeleteByHNat (HCons e l) (HSucc n) (HCons e l')
+instance (HDeleteByHNat n l l', HNat n)
+      => HDeleteByHNat (HSucc n) (HCons e l) (HCons e l')
  where
-  hDeleteByHNat (HCons e l) (HSucc n) = HCons e (hDeleteByHNat l n)
+  hDeleteByHNat n (HCons e l) = HCons e (hDeleteByHNat (hPred n) l)
 
 
 {-----------------------------------------------------------------------------}
 
 -- An update operation
 
-class HUpdateByHNat l i e l' | l i e -> l', l' i -> e
+class HNat n => HUpdateByHNat n e l l' | n e l -> l', l' n -> e
  where
-  hUpdateByHNat :: l -> i -> e -> l'
+  hUpdateByHNat :: n -> e -> l -> l'
 
-instance HUpdateByHNat (HCons e l) HZero e' (HCons e' l)
+instance HUpdateByHNat HZero e' (HCons e l) (HCons e' l)
  where
-  hUpdateByHNat (HCons e l) _ e' = HCons e' l
+  hUpdateByHNat _ e' (HCons e l) = HCons e' l
 
-instance HUpdateByHNat l n e' l'
-      => HUpdateByHNat (HCons e l) (HSucc n) e' (HCons e l')
+instance (HUpdateByHNat n e' l l', HNat n)
+      => HUpdateByHNat (HSucc n) e' (HCons e l) (HCons e l')
  where
-  hUpdateByHNat (HCons e l) (HSucc n) e'
-               = HCons e (hUpdateByHNat l n e')
+  hUpdateByHNat n e' (HCons e l)
+   = HCons e (hUpdateByHNat (hPred n) e' l)
 
 
 {-----------------------------------------------------------------------------}
 
 -- Splitting an array according to indices
 
-hSplitByHNats l = hSplitByHNats' (hFlag l)
+hSplitByHNats ns l = hSplitByHNats' ns (hFlag l)
 
-class HSplitByHNats' l il l' l'' | l il -> l' l''
+class HNats ns => HSplitByHNats' ns l l' l'' | ns l -> l' l''
  where
-  hSplitByHNats' :: l -> il -> (l',l'')
+  hSplitByHNats' :: ns -> l -> (l',l'')
 
 instance HSplit l l' l''
-      => HSplitByHNats' l HNil HNil l'
+      => HSplitByHNats' HNil l HNil l'
  where
-  hSplitByHNats' l HNil = (HNil,l')
+  hSplitByHNats' HNil l = (HNil,l')
    where
     (l',l'') = hSplit l
 
-instance ( HLookupByHNat l i (e,b)
-         , HUpdateByHNat l i (e,HFalse) l'''
-         , HSplitByHNats' l''' il l' l''
+instance ( HLookupByHNat n l (e,b)
+         , HUpdateByHNat n (e,HFalse) l l'''
+         , HSplitByHNats' ns l''' l' l''
          )
-      =>   HSplitByHNats' l (HCons i il) (HCons e l') l''
+      =>   HSplitByHNats' (HCons n ns) l (HCons e l') l''
  where
-  hSplitByHNats' l (HCons i il) = (HCons e l',l'')
+  hSplitByHNats' (HCons n ns) l = (HCons e l',l'')
    where
-    (e,_)    = hLookupByHNat  l i
-    l'''     = hUpdateByHNat  l i (e,hFalse)
-    (l',l'') = hSplitByHNats' l''' il
+    (e,_)    = hLookupByHNat  n l
+    l'''     = hUpdateByHNat  n (e,hFalse) l
+    (l',l'') = hSplitByHNats' ns l'''
 
 
 {-----------------------------------------------------------------------------}
 
 -- Another projection operation
 
-class HProjectByHNats l il l' | l il -> l'
+class HNats ns => HProjectByHNats ns l l' | ns l -> l'
  where
-  hProjectByHNats :: l -> il -> l'
+  hProjectByHNats :: ns -> l -> l'
 
 instance HProjectByHNats HNil HNil HNil
  where
   hProjectByHNats _ _ = HNil
 
-instance HProjectByHNats (HCons e l) HNil HNil
+instance HProjectByHNats HNil (HCons e l) HNil
  where
   hProjectByHNats _ _ = HNil
 
-instance ( HLookupByHNat (HCons e l) i e'
-         , HProjectByHNats (HCons e l) il l'
+instance ( HLookupByHNat n (HCons e l) e'
+         , HProjectByHNats ns (HCons e l) l'
          )
-         => HProjectByHNats (HCons e l) (HCons i il) (HCons e' l')
+         => HProjectByHNats (HCons n ns) (HCons e l) (HCons e' l')
  where
-  hProjectByHNats l (HCons i il) = HCons e' l'
-   where e' = hLookupByHNat l i
-         l' = hProjectByHNats l il
+  hProjectByHNats (HCons n ns) l = HCons e' l'
+   where e' = hLookupByHNat n l
+         l' = hProjectByHNats ns l
  
 
 {-----------------------------------------------------------------------------}
 
 -- The complement of projection
 
-class HProjectAwayByHNats l il l' | l il -> l'
+class HProjectAwayByHNats ns l l' | ns l -> l'
  where
-  hProjectAwayByHNats :: l -> il -> l'
+  hProjectAwayByHNats :: ns -> l -> l'
 
 instance ( HLength l len
          , HBetween len nats
-         , HDiff nats il il'
-         , HProjectByHNats l il' l'
+         , HDiff nats ns ns'
+         , HProjectByHNats ns' l l'
          )
-           => HProjectAwayByHNats l il l'
+           => HProjectAwayByHNats ns l l'
  where
-  hProjectAwayByHNats l il = l'
+  hProjectAwayByHNats ns l = l'
    where
     len  = hLength l
     nats = hBetween len
-    il'  = hDiff nats il
-    l'   = hProjectByHNats l il'
+    ns'  = hDiff nats ns
+    l'   = hProjectByHNats ns' l
 
 
 {-----------------------------------------------------------------------------}
@@ -163,15 +163,16 @@ class HBetween x y | x -> y
 
 instance HBetween (HSucc HZero) (HCons HZero HNil)
  where
-  hBetween _ = HCons HZero HNil
+  hBetween _ = HCons hZero HNil
 
-instance ( HBetween (HSucc x) y
+instance ( HNat x
+         , HBetween (HSucc x) y
          , HAppend y (HCons (HSucc x) HNil) z
          , HList y
          )
            => HBetween (HSucc (HSucc x)) z
  where
-  hBetween (HSucc x) = hBetween x `hAppend` HCons x HNil
+  hBetween x = hBetween (hPred x) `hAppend` HCons (hPred x) HNil
 
 
 -- Set-difference on naturals
@@ -223,18 +224,13 @@ instance ( HEq e e' b1
 
 -- Length operation
 
-class HLength l s | l -> s
- where
-  hLength :: l -> s
-
+class (HList l, HNat n) => HLength l n | l -> n
 instance HLength HNil HZero
- where
-  hLength _ = HZero
-
-instance HLength l n
+instance (HLength l n, HNat n, HList l)
       => HLength (HCons a l) (HSucc n)
- where
-  hLength (HCons _ l) = HSucc (hLength l)
+
+hLength   :: HLength l n => l -> n
+hLength _ =  undefined
 
 
 {-----------------------------------------------------------------------------}

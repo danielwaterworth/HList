@@ -127,7 +127,7 @@ instance ( TypeEq e e' b
   hOccurs' (HCons e' l) = e
    where
     e = hOccursBool b (HCons e' l)
-    b = proxyEq (proxy e) (proxy e')
+    b = proxyEq (toProxy e) (toProxy e')
                                                                                
 class HOccursBool b e l
  where

@@ -125,23 +125,23 @@ instance ( HAppend r r' r''
 
 -- Lookup operation
 
-hLookupByLabel (Record r) l = v
+hLookupByLabel l (Record r) = v
  where
    (ls,vs) = hUnzip r
    n       = hFind l ls
-   v       = hLookupByHNat vs n
+   v       = hLookupByHNat n vs
 
 
 {-----------------------------------------------------------------------------}
 
 -- Delete operation
 
-hDeleteByLabel (Record r) l = Record r'
+hDeleteByLabel l (Record r) = Record r'
  where
   (ls,vs) = hUnzip r
   n       = hFind l ls 
-  ls'     = hDeleteByHNat ls n
-  vs'     = hDeleteByHNat vs n
+  ls'     = hDeleteByHNat n ls
+  vs'     = hDeleteByHNat n vs
   r'      = hZip ls' vs'
 
 
@@ -149,11 +149,11 @@ hDeleteByLabel (Record r) l = Record r'
 
 -- Update operation
 
-hUpdateByLabel (Record r) l v = Record (hZip ls vs')
+hUpdateByLabel l v (Record r) = Record (hZip ls vs')
  where
   (ls,vs) = hUnzip r
   n       = hFind l ls
-  vs'     = hUpdateByHNat vs n v
+  vs'     = hUpdateByHNat n v vs
 
 
 {-----------------------------------------------------------------------------}
@@ -161,32 +161,32 @@ hUpdateByLabel (Record r) l v = Record (hZip ls vs')
 
 -- Projection for records
 
-hProjectByLabels (Record r) ls
+hProjectByLabels ls (Record r)
  = 
-   mkRecord (hProjectByLabels' r ls)
+   mkRecord (hProjectByLabels' ls r)
 
-class HProjectByLabels r ls r' | r ls -> r'
+class HProjectByLabels ls r r' | ls r -> r'
  where
-  hProjectByLabels' :: r -> ls -> r'
+  hProjectByLabels' :: ls -> r -> r'
 
-instance HProjectByLabels r HNil HNil
+instance HProjectByLabels HNil r HNil
  where 
   hProjectByLabels' _ _ = HNil
 
-instance ( HProjectByLabels r ls r''
+instance ( HProjectByLabels ls r r''
          , HZip ls' vs r
          , HFind l ls' n
-         , HLookupByHNat vs n v
+         , HLookupByHNat n vs v
          , HExtend (l,v) r'' r'
          )
-      =>   HProjectByLabels r (HCons l ls) r'
+      =>   HProjectByLabels (HCons l ls) r r'
  where
-  hProjectByLabels' r (HCons l ls) = r'
+  hProjectByLabels' (HCons l ls) r = r'
    where
-    r''      = hProjectByLabels' r ls
+    r''      = hProjectByLabels' ls r
     (ls',vs) = hUnzip r
     n        = hFind l ls'
-    v        = hLookupByHNat vs n
+    v        = hLookupByHNat n vs
     r'       = hExtend (l,v) r''
 
 
@@ -196,8 +196,8 @@ instance ( HProjectByLabels r ls r''
  
 hRenameLabel l l' r = r''
  where
-  v   = hLookupByLabel r l
-  r'  = hDeleteByLabel r l
+  v   = hLookupByLabel l r
+  r'  = hDeleteByLabel l r
   r'' = hExtend (l',v) r'
 
 
@@ -206,7 +206,7 @@ hRenameLabel l l' r = r''
 -- Subtyping for records
 
 instance ( HZip ls vs r'
-         , HProjectByLabels (Record r) ls (Record r')
+         , HProjectByLabels ls (Record r) (Record r')
          )
            => SubType (Record r) (Record r')
 
