@@ -21,7 +21,24 @@ import FakePrelude
 import HListPrelude
 import HArray
 import HZip
-import Record
+import Record hiding (hLookupByLabel)
+import qualified Record (hLookupByLabel)
+
+
+{-----------------------------------------------------------------------------}
+
+-- A look-up operation with A shielding class
+-- Hugs cannot deal with such shield.
+-- We get buggy "Outstanding context ..." for record access.
+
+class HLookupByLabel l r v
+ where
+  hLookupByLabel :: l -> r -> v
+
+instance (HLookupByHNat n y v, HFind l x n, HZip x y r)
+      => HLookupByLabel l (Record r) v
+ where
+  hLookupByLabel l r = Record.hLookupByLabel l r
 
 
 {-----------------------------------------------------------------------------}

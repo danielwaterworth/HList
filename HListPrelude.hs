@@ -285,6 +285,27 @@ instance ( HMapOut f l e'
 
 {-----------------------------------------------------------------------------}
 
+-- A heterogenous version of mapM.
+-- mapM :: forall b m a. (Monad m) => (a -> m b) -> [a] -> m [b]
+-- Likewise for mapM_.
+
+hMapM   :: (Monad m, HMapOut f l (m e)) => f -> l -> [m e]
+hMapM f =  hMapOut f
+
+-- GHC doesn't like its own type.
+-- hMapM_  :: forall m a f e. (Monad m, HMapOut f a (m e)) => f -> a -> m ()
+-- Without explicit type signature, it's Ok. Sigh.
+-- Anyway, Hugs does insist on a better type. So we restrict as follows:
+-- 
+hMapM_   :: (Monad m, HMapOut f l (m ())) => f -> l -> m ()
+hMapM_ f =  sequence_ .  disambiguate . hMapM f
+ where
+  disambiguate :: [q ()] -> [q ()]
+  disambiguate =  id
+
+
+{-----------------------------------------------------------------------------}
+
 -- A reconstruction of append
 
 append' :: [a] -> [a] -> [a]
