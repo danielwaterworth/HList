@@ -173,7 +173,7 @@ testRecords =   ( test1
   test5 = price .=. 8.8 .*. test1
   test6 = hProjectByLabels (HCons breed (HCons price HNil)) test5
 
-type AnimalCol = Key :+: (Name :+: (Breed :+: (Price :+: HNil)))
+type AnimalCol = Key :+: Name :+: Breed :+: Price :+: HNil
 
 testTIC = (myCol,test2,test3)
  where
