@@ -15,6 +15,7 @@ import FakePrelude
 import HListPrelude
 import HOccurs
 import Record
+import GhcRecord
 import TIP
 import TIC
 

@@ -1,6 +1,5 @@
 {-# OPTIONS -fglasgow-exts #-}
 {-# OPTIONS -fallow-undecidable-instances #-}
-{-# OPTIONS -fallow-overlapping-instances #-}
 
 {- 
 
@@ -203,16 +202,6 @@ hRenameLabel l l' r = r''
 
 {-----------------------------------------------------------------------------}
 
--- A variation on update.
--- Replace a proxy by a value of the proxied type.
-
-hUnproxyLabel l (v::v) r = hUpdateAtLabel l v r
- where
-  (_::Proxy v) = hLookupByLabel l r
-
-
-{-----------------------------------------------------------------------------}
-
 -- A variation on update: type-preserving update.
 
 hTPupdateAtLabel l (v::v) r = hUpdateAtLabel l v r
@@ -265,23 +254,6 @@ instance HLeftUnionBool HTrue r l v r
 instance HLeftUnionBool HFalse r l v (HCons (l,v) r)
  where
   hLeftUnionBool _ r l v = HCons (l,v) r
-
-
-{-----------------------------------------------------------------------------}
-
--- Test for values; refuse proxies
-
-hasNoProxies :: ( HZip ls vs r
-                , HasNoProxies vs
-                )
-             => Record r -> ()
-hasNoProxies = const ()
-
-data ProxyFound x
-class HasNoProxies l
-instance HasNoProxies HNil
-instance Fail (ProxyFound x) => HasNoProxies (HCons (Proxy x) l)
-instance HasNoProxies l => HasNoProxies (HCons e l)
 
 
 {-----------------------------------------------------------------------------}
