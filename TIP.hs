@@ -233,10 +233,10 @@ TIP (HCons BSE
 *TIP> Sheep .*. myTipyCow
 Type error ...
 
-*TIP> Sheep .*. hDelete myTipyCow (HProxy::HProxy Breed)
+*TIP> Sheep .*. tipyDelete myTipyCow (HProxy::HProxy Breed)
 TIP (HCons Sheep (HCons (Key 42) (HCons (Name "Angus") (HCons (Price 75.5) HNil))))
 
-*TIP> hUpdate myTipyCow Sheep
+*TIP> tipyUpdate myTipyCow Sheep
 TIP (HCons (Key 42) (HCons (Name "Angus") (HCons Sheep (HCons (Price 75.5) HNil))))
 
 -}

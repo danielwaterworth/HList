@@ -44,23 +44,6 @@ hCons e l = HCons e l
 
 {-----------------------------------------------------------------------------}
 
--- Type-level constructor
-
-class HCons' e l l' | e l -> l'
- where
-  hCons' :: e -> l -> l'
-
-instance HCons' e HNil (HCons e HNil)
- where
-  hCons' = HCons
-
-instance HCons' e (HCons e' l) (HCons e (HCons e' l))
- where
-  hCons' = HCons
-
-
-{-----------------------------------------------------------------------------}
-
 -- Basic list functions
 
 class HHead l h | l -> h
