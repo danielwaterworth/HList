@@ -13,7 +13,23 @@
 
 import Portable
 import TTypeable
+import TTypeableTypeEq
+import TTypeableTypeEqBool
 
-main = print $ ( hOccurs myAnimal :: Breed
-               , hOccursGrounded (HCons 1 HNil)
+testHOccurs = (testHOccurs1,testHOccurs2)
+ where
+  testHOccurs1 = hOccurs myAnimal :: Breed
+  testHOccurs2 = hOccursGrounded (HCons 1 HNil)
+
+testTypeIndexed = undefined -- (typeIdx1,typeIdx2,typeIdx3,typeIdx4,typeIdx5)
+ where
+  typeIdx1 = hExtend BSE myAnimal
+  typeIdx2 = hUpdateByType myAnimal Sheep
+  typeIdx3 = hDeleteByProxy myAnimal (HProxy::HProxy Breed)
+  typeIdx4 = hProjectByProxies myAnimal (HCons (HProxy::HProxy Breed) HNil)
+--  typeIdx5 = fst $ hSplitByProxies myAnimal (HCons (HProxy::HProxy Breed) HNil)
+
+main = print $ ( testHArray
+               , testHOccurs
+--               , testTypeIndexed
                )

@@ -14,8 +14,26 @@
 
 
 import Portable
+import GenericTypeEq
 import GenericTypeEqBool
 
+testHOccurs = (testHOccurs1,testHOccurs2)
+ where
+  testHOccurs1 = hOccurs myAnimal :: Breed
+  testHOccurs2 = hOccursGrounded (HCons 1 HNil)
+
+testTypeIndexed = (typeIdx1,typeIdx2,typeIdx3,typeIdx4,typeIdx5)
+ where
+  typeIdx1 = hExtend BSE myAnimal
+  typeIdx2 = hUpdateByType  typeIdx1 Sheep
+  typeIdx3 = hDeleteByProxy typeIdx2 (HProxy::HProxy Breed)
+  typeIdx4 = hProjectByProxies myAnimal (HCons (HProxy::HProxy Breed) HNil)
+  typeIdx5 = fst $ hSplitByProxies myAnimal (HCons (HProxy::HProxy Breed) HNil)
+
+main = print $ ( testHArray
+               , testHOccurs
+               , testTypeIndexed
+               )
 
 
 {-
@@ -29,8 +47,3 @@ tuple l = let
               y = hOccurs m
           in (x,y)
 -}
-
-
-main = print $ ( hOccurs myAnimal :: Breed
-               , hOccursGrounded (HCons 1 HNil)
-               )

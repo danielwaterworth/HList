@@ -19,161 +19,94 @@ import HList
 
 {-----------------------------------------------------------------------------}
 
--- Convenience notation
-
-(!)   :: HLookup l x y => l -> x -> y
-l ! x =  hLookup l x
-
-
-{-----------------------------------------------------------------------------}
-
 -- A lookup operation
 
-class HLookup l i e | l i -> e
+class HLookupByHNat l i e | l i -> e
  where
-  hLookup :: l -> i -> e
+  hLookupByHNat :: l -> i -> e
 
-instance HList l => HLookup (HCons e l) HZero e
+instance HList l => HLookupByHNat (HCons e l) HZero e
  where
-  hLookup (HCons e _) _ = e
+  hLookupByHNat (HCons e _) _ = e
 
-instance (HList l, HNat n, HLookup l n e')
-      => HLookup (HCons e l) (HSucc n) e'
+instance (HList l, HNat n, HLookupByHNat l n e')
+      => HLookupByHNat (HCons e l) (HSucc n) e'
  where
-  hLookup (HCons _ l) (HSucc n) = hLookup l n
+  hLookupByHNat (HCons _ l) (HSucc n) = hLookupByHNat l n
 
 
 {-----------------------------------------------------------------------------}
 
 -- A delete operation
 
-class HDelete l i l' | l i -> l'
+class HDeleteByHNat l i l' | l i -> l'
  where
-  hDelete :: l -> i -> l'
+  hDeleteByHNat :: l -> i -> l'
 
-instance HList l => HDelete (HCons e l) HZero l
+instance HList l => HDeleteByHNat (HCons e l) HZero l
  where
-  hDelete (HCons _ l) HZero = l
+  hDeleteByHNat (HCons _ l) HZero = l
 
-instance ( HDelete l n l'
+instance ( HDeleteByHNat l n l'
          , HList l
          , HList l'
          , HNat n
          )
-           => HDelete (HCons e l) (HSucc n) (HCons e l')
+           => HDeleteByHNat (HCons e l) (HSucc n) (HCons e l')
  where
-  hDelete (HCons e l) (HSucc n) = hCons e (hDelete l n)
+  hDeleteByHNat (HCons e l) (HSucc n) = hCons e (hDeleteByHNat l n)
 
 
 {-----------------------------------------------------------------------------}
 
--- Type-preserving update
+-- An update operation
 
-class HUpdateTP l i e | l i -> e
+class HUpdateByHNat l i e l' | l i e -> l'
  where
-  hUpdateTP :: l -> i -> e -> l
+  hUpdateByHNat :: l -> i -> e -> l'
 
-instance HList l => HUpdateTP (HCons e l) HZero e
+instance HList l => HUpdateByHNat (HCons e l) HZero e' (HCons e' l)
  where
-  hUpdateTP (HCons e l) _ e' = HCons e' l
+  hUpdateByHNat (HCons e l) _ e' = HCons e' l
 
-instance (HList l, HNat n, HUpdateTP l n e')
-      => HUpdateTP (HCons e l) (HSucc n) e'
+instance (HList l, HList l', HNat n, HUpdateByHNat l n e' l')
+      => HUpdateByHNat (HCons e l) (HSucc n) e' (HCons e l')
  where
-  hUpdateTP (HCons e l) (HSucc n) e'
-           = HCons e (hUpdateTP l n e')
-
-
-{-----------------------------------------------------------------------------}
-
--- Type-changing update
-
-class HUpdateTC l i e l' | l i e -> l'
- where
-  hUpdateTC :: l -> i -> e -> l'
-
-instance HList l => HUpdateTC (HCons e l) HZero e' (HCons e' l)
- where
-  hUpdateTC (HCons e l) _ e' = HCons e' l
-
-instance (HList l, HList l', HNat n, HUpdateTC l n e' l')
-      => HUpdateTC (HCons e l) (HSucc n) e' (HCons e l')
- where
-  hUpdateTC (HCons e l) (HSucc n) e'
-           = HCons e (hUpdateTC l n e')
-
-
-{-----------------------------------------------------------------------------}
-
--- A combined lookup-delete operation
-
-class HLookDel l i e l' | l i -> e l'
- where
-  hLookDel :: l -> i -> (e,l')
-
-instance HList l => HLookDel (HCons e l) HZero e l
- where
-  hLookDel (HCons e l) _ = (e,l)
-
-instance ( HLookDel l n e l'
-         , HList l
-         , HList l'
-         , HNat n
-         )
-           => HLookDel (HCons e' l) (HSucc n) e (HCons e' l')
- where
-  hLookDel (HCons e' l) (HSucc n) = (e, hCons e' l')
-   where
-    (e,l') = hLookDel l n
+  hUpdateByHNat (HCons e l) (HSucc n) e'
+               = HCons e (hUpdateByHNat l n e')
 
 
 {-----------------------------------------------------------------------------}
 
 -- Projection as iterated deletion
 
-class HSplit l il l' l'' | l il -> l' l''
+hSplitByHNats l il = (l'',l''')
+-- (ly,ln)
  where
-  hSplit :: l -> il -> (l',l'')
+    l'         = toHJust l
+    (l'',l''') = hSplitByHNats' l' il
+--    ly         = fromHJust l''
+--    ln         = fromHJust l'''
 
-instance HSplit HNil HNil HNil HNil
+class HSplitByHNats' l il l' l'' | l il -> l' l''
  where
-  hSplit HNil HNil = (HNil,HNil)
+  hSplitByHNats' :: l -> il -> (l',l'')
 
-instance ( HExtend e l l'
-         , ToHJust l' l''
-         , HSplit' l'' il l''' l''''
-         , FromHJust l'''  ly
-         , FromHJust l'''' ln
+instance HSplitByHNats' l HNil HNil l
+ where
+  hSplitByHNats' l HNil = (HNil,l)
+
+instance ( HLookupByHNat l i e
+         , HUpdateByHNat l i HNothing l'
+         , HSplitByHNats' l' il l'' l'''
          )
-      =>   HSplit (HCons e l) il ly ln
- where 
-  hSplit (HCons e l) il = (ly,ln)
+      =>   HSplitByHNats' l (HCons i il) (HCons e l'') l'''
+ where
+  hSplitByHNats' l (HCons i il) = (HCons e l'',l''')
    where
-    l'           = hExtend e l
-    l''          = toHJust l'
-    (l''',l'''') = hSplit' l'' il
-    ly           = fromHJust l'''
-    ln           = fromHJust l''''
-
-class HSplit' l il l' l'' | l il -> l' l''
- where
-  hSplit' :: l -> il -> (l',l'')
-
-instance HSplit' l HNil HNil l
- where
-  hSplit' l HNil = (HNil,l)
-
-instance ( HLookup l i e
-         , ToHNothing l i l'
-         , HSplit' l' il l'' l'''
-         )
-      =>   HSplit' l (HCons i il) (HCons e l'') l'''
- where
-  hSplit' l (HCons i il) = (HCons e l'',l''')
-   where
-    e          = hLookup l i
-    l'         = toHNothing l i
-    (l'',l''') = hSplit' l' il
+    e          = hLookupByHNat l i
+    l'         = hUpdateByHNat l i HNothing
+    (l'',l''') = hSplitByHNats' l' il
 
 
 {-----------------------------------------------------------------------------}
@@ -216,95 +149,55 @@ instance FromHJust l l' => FromHJust (HCons (HJust e) l) (HCons e l')
 
 {-----------------------------------------------------------------------------}
 
--- Mark an index as nothing
-
-class ToHNothing l i l' | l i -> l'
- where
-  toHNothing :: l -> i -> l'
-
-instance ToHNothing (HCons (HJust e) l) HZero (HCons HNothing l)
- where
-  toHNothing (HCons (HJust _) l) HZero = HCons HNothing l
-
-instance ToHNothing l n l'
-      => ToHNothing (HCons e l) (HSucc n) (HCons e l')
- where
-  toHNothing (HCons e l) (HSucc n) = HCons e (toHNothing l n)
-
-
-{-----------------------------------------------------------------------------}
-
--- A lookup operation with an observable failure type
-
-class HLookupMaybe l i maybe | l i -> maybe
- where
-  hLookupMaybe :: l -> i -> maybe
-
-instance HLookupMaybe HNil n HNothing
- where
-  hLookupMaybe _ _ = HNothing
-
-instance HList l => HLookupMaybe (HCons e l) HZero (HJust e)
- where
-  hLookupMaybe (HCons e _) _ = HJust e
-
-instance (HList l, HNat n, HLookupMaybe l n e')
-      => HLookupMaybe (HCons e l) (HSucc n) e'
- where
-  hLookupMaybe (HCons _ l) (HSucc n) = hLookupMaybe l n
-
-
-{-----------------------------------------------------------------------------}
-
 -- Another projection operation
 
-class HProject l il l' | l il -> l'
+class HProjectByHNats l il l' | l il -> l'
  where
-  hProject :: l -> il -> l'
+  hProjectByHNats :: l -> il -> l'
 
-instance HProject HNil HNil HNil
+instance HProjectByHNats HNil HNil HNil
  where
-  hProject _ _ = HNil
+  hProjectByHNats _ _ = HNil
 
-instance HProject (HCons e l) HNil HNil
+instance HProjectByHNats (HCons e l) HNil HNil
  where
-  hProject _ _ = HNil
+  hProjectByHNats _ _ = HNil
 
-instance ( HLookup (HCons e l) i e'
-         , HProject (HCons e l) il l'
+instance ( HLookupByHNat (HCons e l) i e'
+         , HProjectByHNats (HCons e l) il l'
          , HList il
          , HList l
          , HList l'
          )
-         => HProject (HCons e l) (HCons i il) (HCons e' l')
+         => HProjectByHNats (HCons e l) (HCons i il) (HCons e' l')
  where
-  hProject l (HCons i il) = HCons e' l'
-   where e' = hLookup l i
-         l' = hProject l il
+  hProjectByHNats l (HCons i il) = HCons e' l'
+   where e' = hLookupByHNat l i
+         l' = hProjectByHNats l il
  
 
 {-----------------------------------------------------------------------------}
 
 -- The complement of projection
 
-class HProjectAway l il l' | l il -> l'
+class HProjectAwayByHNats l il l' | l il -> l'
  where
-  hProjectAway :: l -> il -> l'
+  hProjectAwayByHNats :: l -> il -> l'
 
 instance ( HLength l len
          , HNat len
          , HBetween len nats
          , HDiff nats il il'
-         , HProject l il' l'
+         , HProjectByHNats l il' l'
          )
-           => HProjectAway l il l'
+           => HProjectAwayByHNats l il l'
  where
-  hProjectAway l il = l'
+  hProjectAwayByHNats l il = l'
    where
     len  = hLength l
     nats = hBetween len
     il'  = hDiff nats il
-    l'   = hProject l il'
+    l'   = hProjectByHNats l il'
 
 
 {-----------------------------------------------------------------------------}
@@ -418,10 +311,10 @@ hSingle = hHead
 
 -- Samples
 
-myProj1 = hProject myAnimal (HCons HZero (HCons HZero HNil))
-myProj2 = hProject myAnimal (HCons HZero (HCons (HSucc (HSucc HZero)) HNil))
-myProj3 = hProjectAway myAnimal (HCons HZero HNil)
-myProj4 = hSplit myAnimal (HCons HZero (HCons (HSucc HZero) HNil))
+myProj1 = hProjectByHNats myAnimal (HCons HZero (HCons HZero HNil))
+myProj2 = hProjectByHNats myAnimal (HCons HZero (HCons (HSucc HZero) HNil))
+myProj3 = hProjectAwayByHNats myAnimal (HCons HZero HNil)
+myProj4 = hSplitByHNats myAnimal (HCons HZero (HCons (HSucc HZero) HNil))
 
 {-
 
@@ -439,5 +332,7 @@ HCons (Name "Angus") (HCons Cow (HCons (Price 75.5) HNil))
 
 -}
 
+-- A test tuple for main files
+testHArray = (myProj1,myProj2,myProj3,myProj4)
 
 {-----------------------------------------------------------------------------}

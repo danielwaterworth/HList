@@ -183,6 +183,16 @@ instance ( HNat n
 class TypeEqBool x y b | x y -> b
 
 
+-- Rely on lazy show for type-level Booleans
+typeEqBool :: TypeEqBool t t' b => t -> t' -> b
+typeEqBool = undefined
+
+
+-- A more disciplined version: based on proxies
+proxyEqBool :: TypeEqBool t t' b => HProxy t -> HProxy t' -> b
+proxyEqBool x y = typeEqBool (hUnProxy x) (hUnProxy y)
+
+
 {-----------------------------------------------------------------------------}
 
 -- Type-safe cast
@@ -200,6 +210,9 @@ data HProxy e = HProxy deriving Show
 
 hProxy   :: e -> HProxy e
 hProxy _ =  HProxy
+
+hUnProxy :: HProxy e -> e
+hUnProxy =  undefined
 
 
 {-----------------------------------------------------------------------------}

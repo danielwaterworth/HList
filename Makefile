@@ -14,17 +14,16 @@ hugs:
 # Run some test cases for both GHCI and Hugs
 test:
 	ghci Main1.hs -v0 < Main.in > Main.run.ghci
-	diff Main.run.ghci Main.out.ghci
+	diff Main.run.ghci Main.out
 	ghci Main2.hs -v0 < Main.in > Main.run.ghci
-	diff Main.run.ghci Main.out.ghci
+	diff Main.run.ghci Main.out
 	runhugs -98 +o Main2.hs < Main.in > Main.run.hugs
-	diff Main.run.hugs Main.out.hugs
+	diff Main.run.hugs Main.out
 
 
 # Approve current session outputs as test data
 copy:
-	cp Main.run.ghci Main.out.ghci
-	cp Main.run.hugs Main.out.hugs
+	cp Main.run.ghci Main.out
 
 
 # Clean up directory
