@@ -89,6 +89,13 @@ class HOccurs e l
  where
   hOccurs :: l -> e
 
+data TypeNotFound e
+
+instance Fail (TypeNotFound e)
+      => HOccurs e HNil
+ where
+  hOccurs = undefined
+
 instance ( HList l
          , HOccursNot e l
          )
@@ -206,11 +213,30 @@ instance HOccursOpt e l
 
 -- Class to test that a type is "free" in a type sequence
 
-data HOccursNotError e
+data TypeFound e
 class HOccursNot e l
 instance HOccursNot e HNil
-instance Fail (HOccursNotError e) => HOccursNot e (HCons e l)
+instance Fail (TypeFound e) => HOccursNot e (HCons e l)
 instance HOccursNot e' l => HOccursNot e (HCons e' l)
+
+
+{-----------------------------------------------------------------------------}
+
+class HProject l l'
+ where
+  hProject :: l -> l'
+
+instance HProject l HNil
+ where
+  hProject l = HNil
+
+instance ( HList l'
+         , HOccurs e l
+         , HProject l l'
+         )
+      =>   HProject l (HCons e l')
+ where
+  hProject l = HCons (hOccurs l) (hProject l)
 
 
 {-----------------------------------------------------------------------------}
