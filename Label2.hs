@@ -25,7 +25,6 @@ module Label2 (
 
 import FakePrelude
 import HListPrelude
-import HListGoodies
 import Record
 
 

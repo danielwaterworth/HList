@@ -17,7 +17,6 @@ module HArray where
 
 import FakePrelude
 import HListPrelude
-import HListGoodies
 
 
 {-----------------------------------------------------------------------------}

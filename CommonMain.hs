@@ -18,7 +18,6 @@ module CommonMain (
 
    module FakePrelude
  , module HListPrelude
- , module HListGoodies
  , module HArray
  , module HOccurs
  , module HTypeIndexed
@@ -30,7 +29,6 @@ module CommonMain (
 
 import FakePrelude
 import HListPrelude
-import HListGoodies
 import HArray
 import HOccurs
 import HTypeIndexed

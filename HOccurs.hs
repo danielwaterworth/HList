@@ -17,7 +17,6 @@ module HOccurs where
 
 import FakePrelude
 import HListPrelude
-import HListGoodies
 import HArray
 
 

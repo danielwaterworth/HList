@@ -17,7 +17,6 @@ module TIP where
 
 import FakePrelude
 import HListPrelude
-import HListGoodies
 import HArray
 import HOccurs
 import HTypeIndexed
