@@ -53,23 +53,34 @@ instance HasNoProxies l => HasNoProxies (HCons e l)
 
 {-----------------------------------------------------------------------------}
 
--- Casting a record up to a supertype
+-- Coerce a record up to a different record type
 
-class UpCast a b where
-    upCast :: Record a -> Record b
+class Coerce a b where
+    coerce :: Record a -> Record b
 
-instance UpCast a HNil where
-    upCast _ = emptyRecord
+instance Coerce a HNil where
+    coerce _ = emptyRecord
 
-instance ( UpCast r r'
+instance ( Coerce r r'
          , HExtract r l v
          )
-           => UpCast r (HCons (l,v) r')
+           => Coerce r (HCons (l,v) r')
   where
-    upCast (Record r) = Record (HCons (l,v) r')
+    coerce (Record r) = Record (HCons (l,v) r')
       where
-        (Record r')    = upCast (Record r)
+        (Record r')    = coerce (Record r)
         ((l,v)::(l,v)) = hExtract r
+
+
+{-----------------------------------------------------------------------------}
+
+constrain :: Coerce r l => Record r -> Proxy l
+constrain = const proxy
+
+
+{-----------------------------------------------------------------------------}
+
+-- Helper of coerce
 
 class HExtract r l v
   where 
