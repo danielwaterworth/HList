@@ -40,7 +40,7 @@ mkRecord = Record
 
 -- Build an empty record
 
-emptyRecord = mkRecord HNil
+emptyRecord = mkRecord $ hZip HNil HNil
 
 
 -- Propery of a proper label set for a record

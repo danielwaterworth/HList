@@ -30,23 +30,17 @@ import Record
 
 -- Labels are type-level naturals
 
-data Label x ns = Label x ns String deriving Show
-
-
--- Public constructors for labels
-
-label :: HNat x => x -> ns -> String -> Label x ns
-label =  Label
+data HNat x => Label x ns = Label x ns String deriving Show
 
 
 -- Construct the first label
 
-firstLabel = label hZero
+firstLabel = Label hZero
 
 
 -- Construct the next label
 
-nextLabel (Label x ns _) = label (hSucc x) ns
+nextLabel (Label x ns _) = Label (hSucc x) ns
 
 
 -- Equality on labels
@@ -66,6 +60,6 @@ instance ( HNat x
 
 -- Show label
 
-instance Show x => ShowLabel (Label x ns)
+instance HNat x => ShowLabel (Label x ns)
  where
   showLabel (Label _ _ s) = s
