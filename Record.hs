@@ -221,13 +221,11 @@ instance ( HZip ls vs r'
 
 {-----------------------------------------------------------------------------}
 
-class HLeftUnion r r' r'' | r r' -> r''
- where 
-  hLeftUnion :: r -> r' -> r''
+class  HLeftUnion r r' r'' | r r' -> r''
+ where hLeftUnion :: r -> r' -> r''
 
 instance HLeftUnion r (Record HNil) r
- where
-  hLeftUnion r _ = r
+ where   hLeftUnion r _ = r
 
 instance ( HZip ls vs r
          , HMember l ls b
@@ -235,25 +233,22 @@ instance ( HZip ls vs r
          , HLeftUnion (Record r''') (Record r') r''
          )
            => HLeftUnion (Record r) (Record (HCons (l,v) r')) r''
- where
-  hLeftUnion (Record r) (Record (HCons (l,v) r')) = r''
-   where
-    (ls,vs) = hUnzip r
-    b       = hMember l ls
-    r'''    = hLeftUnionBool b r l v
-    r''     = hLeftUnion (Record r''') (Record r')
+  where
+   hLeftUnion (Record r) (Record (HCons (l,v) r')) = r''
+    where
+     (ls,vs) = hUnzip r
+     b       = hMember l ls
+     r'''    = hLeftUnionBool b r l v
+     r''     = hLeftUnion (Record r''') (Record r')
 
-class HLeftUnionBool b r l v r' | b r l v -> r'
- where
-  hLeftUnionBool :: b -> r -> l -> v -> r'
+class  HLeftUnionBool b r l v r' | b r l v -> r'
+ where hLeftUnionBool :: b -> r -> l -> v -> r'
 
 instance HLeftUnionBool HTrue r l v r
- where
-  hLeftUnionBool _ r _ _ = r
+   where hLeftUnionBool _ r _ _ = r
 
 instance HLeftUnionBool HFalse r l v (HCons (l,v) r)
- where
-  hLeftUnionBool _ r l v = HCons (l,v) r
+   where hLeftUnionBool _ r l v = HCons (l,v) r
 
 
 {-----------------------------------------------------------------------------}
