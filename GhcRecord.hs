@@ -55,16 +55,15 @@ instance HasNoProxies l => HasNoProxies (HCons e l)
 
 -- Coerce a record up to a different record type
 
-class Coerce a b where
-    coerce :: Record a -> Record b
+class  Coerce a b
+ where coerce :: Record a -> Record b
 
-instance Coerce a HNil where
-    coerce _ = emptyRecord
+instance Coerce a HNil
+ where   coerce _ = emptyRecord
 
 instance ( Coerce r r'
          , HExtract r l v
-         )
-           => Coerce r (HCons (l,v) r')
+         ) => Coerce r (HCons (l,v) r')
   where
     coerce (Record r) = Record (HCons (l,v) r')
       where
@@ -82,33 +81,29 @@ constrain = const proxy
 
 -- Helper of coerce
 
-class HExtract r l v
-  where 
-    hExtract :: r -> (l,v)
+class  HExtract r l v
+ where hExtract :: r -> (l,v)
 
 instance ( TypeEq l l1 b
          , HExtractBool b (HCons (l1,v1) r) l v
-         )
-           => HExtract (HCons (l1,v1) r) l v
+         ) => HExtract (HCons (l1,v1) r) l v
   where
-    hExtract
-      = hExtractBool (undefined::b)
+   hExtract = hExtractBool (undefined::b)
 
-class HBool b => HExtractBool b r l v
-  where 
-    hExtractBool :: b -> r -> (l,v)
+class HBool b
+   => HExtractBool b r l v
+  where
+   hExtractBool :: b -> r -> (l,v)
 
 instance TypeCast v1 v
       => HExtractBool HTrue (HCons (l,v1) r) l v
   where
-    hExtractBool _ (HCons (l,v) _)
-      = (l,typeCast v)
+   hExtractBool _ (HCons (l,v) _) = (l,typeCast v)
 
 instance HExtract r l v
       => HExtractBool HFalse (HCons (l1,v1) r) l v
-  where
-    hExtractBool _ (HCons _ r)
-      = hExtract r
+  where 
+   hExtractBool _ (HCons _ r) = hExtract r
 
 
 {-----------------------------------------------------------------------------}
