@@ -176,6 +176,17 @@ instance ( HProject r ls r''
 
 {-----------------------------------------------------------------------------}
 
+-- Rename the label of record
+ 
+hRename l l' r = r''
+ where
+  v   = hLookup r l
+  r'  = hDelete r l
+  r'' = hExtend (l',v) r'
+
+
+{-----------------------------------------------------------------------------}
+
 -- Subtyping for records
 
 instance ( HZip ls vs r'

@@ -4,6 +4,7 @@ module GhcSyntax where
 
 import FakePrelude
 import HListPrelude
+import SimpleRecords
 import TIP
 import TIC
 
@@ -23,6 +24,19 @@ type e :*: l = HCons e l
 
 {-----------------------------------------------------------------------------}
 
+-- Convenience notation for records
+ 
+infixr 4 :=:
+type l :=: v = (l,v)
+ 
+infixr 4 .=.
+l .=. v = (l,v)
+
+(!)   :: HLookup l x y => l -> x -> y
+l ! x =  hLookup l x
+
+
+{-----------------------------------------------------------------------------}
 
 -- Convenience notation for TIRs
 

@@ -126,13 +126,11 @@ testSimpleRecords = (test1,(test2,(test3,(test4,(test5,test6)))))
   test5 = hExtend (price,8.8) test1
   test6 = hProject test5 (HCons breed (HCons price HNil))
 
+type AnimalCol = Key :+: Name :+: Breed :+: Price :+: HNil
+
 testTIC = (myCol,test2,test3)
  where
-  myCol = mkTIC Cow :: TIC ( HCons (Proxy Key)
-                           ( HCons (Proxy Name)
-                           ( HCons (Proxy Breed)
-                           ( HCons (Proxy Price)
-                             HNil ))))
+  myCol = mkTIC Cow :: TIC AnimalCol
   test2 = unTIC myCol :: Maybe Breed
   test3 = unTIC myCol :: Maybe Price
 
