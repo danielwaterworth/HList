@@ -41,37 +41,37 @@ instance (HLookupByHNat n l e', HNat n)
 
 -- A delete operation
 
-class HNat n => HDeleteByHNat n l l' | n l -> l'
+class HNat n => HDeleteAtHNat n l l' | n l -> l'
  where
-  hDeleteByHNat :: n -> l -> l'
+  hDeleteAtHNat :: n -> l -> l'
 
-instance HDeleteByHNat HZero (HCons e l) l
+instance HDeleteAtHNat HZero (HCons e l) l
  where
-  hDeleteByHNat _ (HCons _ l) = l
+  hDeleteAtHNat _ (HCons _ l) = l
 
-instance (HDeleteByHNat n l l', HNat n)
-      => HDeleteByHNat (HSucc n) (HCons e l) (HCons e l')
+instance (HDeleteAtHNat n l l', HNat n)
+      => HDeleteAtHNat (HSucc n) (HCons e l) (HCons e l')
  where
-  hDeleteByHNat n (HCons e l) = HCons e (hDeleteByHNat (hPred n) l)
+  hDeleteAtHNat n (HCons e l) = HCons e (hDeleteAtHNat (hPred n) l)
 
 
 {-----------------------------------------------------------------------------}
 
 -- An update operation
 
-class HNat n => HUpdateByHNat n e l l' | n e l -> l', l' n -> e
+class HNat n => HUpdateAtHNat n e l l' | n e l -> l', l' n -> e
  where
-  hUpdateByHNat :: n -> e -> l -> l'
+  hUpdateAtHNat :: n -> e -> l -> l'
 
-instance HUpdateByHNat HZero e' (HCons e l) (HCons e' l)
+instance HUpdateAtHNat HZero e' (HCons e l) (HCons e' l)
  where
-  hUpdateByHNat _ e' (HCons e l) = HCons e' l
+  hUpdateAtHNat _ e' (HCons e l) = HCons e' l
 
-instance (HUpdateByHNat n e' l l', HNat n)
-      => HUpdateByHNat (HSucc n) e' (HCons e l) (HCons e l')
+instance (HUpdateAtHNat n e' l l', HNat n)
+      => HUpdateAtHNat (HSucc n) e' (HCons e l) (HCons e l')
  where
-  hUpdateByHNat n e' (HCons e l)
-   = HCons e (hUpdateByHNat (hPred n) e' l)
+  hUpdateAtHNat n e' (HCons e l)
+   = HCons e (hUpdateAtHNat (hPred n) e' l)
 
 
 {-----------------------------------------------------------------------------}
@@ -92,7 +92,7 @@ instance HSplit l l' l''
     (l',l'') = hSplit l
 
 instance ( HLookupByHNat n l (e,b)
-         , HUpdateByHNat n (e,HFalse) l l'''
+         , HUpdateAtHNat n (e,HFalse) l l'''
          , HSplitByHNats' ns l''' l' l''
          )
       =>   HSplitByHNats' (HCons n ns) l (HCons e l') l''
@@ -100,7 +100,7 @@ instance ( HLookupByHNat n l (e,b)
   hSplitByHNats' (HCons n ns) l = (HCons e l',l'')
    where
     (e,_)    = hLookupByHNat  n l
-    l'''     = hUpdateByHNat  n (e,hFalse) l
+    l'''     = hUpdateAtHNat  n (e,hFalse) l
     (l',l'') = hSplitByHNats' ns l'''
 
 

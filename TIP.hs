@@ -145,8 +145,8 @@ instance HLookup e l
 onTIP :: HTypeIndexed a => (b -> a) -> TIP b -> TIP a
 onTIP f (TIP l) = mkTIP (f l)
 
-tipyDelete  p t  = onTIP (hDeleteByProxy p) t
-tipyUpdate  e t  = onTIP (hUpdateByType e) t
+tipyDelete  p t  = onTIP (hDeleteAtProxy p) t
+tipyUpdate  e t  = onTIP (hUpdateAtType e) t
 tipyProject ps t = onTIP (hProjectByProxies ps) t
 
 

@@ -103,8 +103,8 @@ testTypeIndexed =   ( typeIdx1
  where
   typeIdx1 = hDeleteMany (proxy::Proxy Name) angus
   typeIdx2 = hExtend BSE angus
-  typeIdx3 = hUpdateByType Sheep typeIdx1
-  typeIdx4 = hDeleteByProxy (proxy::Proxy Breed) typeIdx2
+  typeIdx3 = hUpdateAtType Sheep typeIdx1
+  typeIdx4 = hDeleteAtProxy (proxy::Proxy Breed) typeIdx2
   typeIdx5 = hProjectByProxies (HCons (proxy::Proxy Breed) HNil) angus
   typeIdx6 = fst $ hSplitByProxies (HCons (proxy::Proxy Breed) HNil) angus
 
@@ -127,6 +127,17 @@ testTIP = (testTIP1,testTIP2,testTIP3,testTIP4)
 
 data MyNS = MyNS -- a name space for record labels
 
+key   = firstLabel MyNS  "key"
+name  = nextLabel  key   "name"
+breed = nextLabel  name  "breed"
+price = nextLabel  breed "price"
+unpricedAngus =  key    .=. (42::Integer)
+             .*. name   .=. "Angus"
+             .*. breed  .=. Cow
+             .*. emptyRecord
+
+getKey l = hLookupByLabel key l
+
 testRecords =   ( test1 
               , ( test2
               , ( test3 
@@ -135,16 +146,9 @@ testRecords =   ( test1
               , ( test6
                 ))))))
  where
-  key   = firstLabel MyNS  "key"
-  name  = nextLabel  key   "name"
-  breed = nextLabel  name  "breed"
-  price = nextLabel  breed "price"
-  test1 =  key    .=. (42::Integer)
-       .*. name   .=. "Angus"
-       .*. breed  .=. Cow
-       .*. emptyRecord
+  test1 = unpricedAngus
   test2 = test1 !!! breed
-  test3 = hDeleteByLabel breed test1
+  test3 = hDeleteAtLabel breed test1
   test4 = test1 @@@ breed .=. Sheep
   test5 = price .=. 8.8 .*. test1
   test6 = hProjectByLabels (HCons breed (HCons price HNil)) test5

@@ -45,7 +45,7 @@ infixr 3 !!!
 r !!! l =  hLookupByLabel l r
 
 infixr 3 @@@
-r @@@ (l,v) =  hUpdateByLabel l v r
+r @@@ (l,v) =  hUpdateAtLabel l v r
 
 
 {-----------------------------------------------------------------------------}

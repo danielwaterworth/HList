@@ -99,18 +99,18 @@ instance ( HType2HNat   e l n
 
 -- Define type-indexed delete in terms of the natural-based primitive
 
-hDeleteByProxy p l
+hDeleteAtProxy p l
  =
-   hDeleteByHNat (hType2HNat p l) l
+   hDeleteAtHNat (hType2HNat p l) l
 
 
 {-----------------------------------------------------------------------------}
 
 -- Define type-indexed update in terms of the natural-based update
 
-hUpdateByType e l
+hUpdateAtType e l
  =
-   hUpdateByHNat (hType2HNat (toProxy e) l) e l
+   hUpdateAtHNat (hType2HNat (toProxy e) l) e l
 
 
 {-----------------------------------------------------------------------------}
@@ -138,18 +138,18 @@ hSplitByProxies ps l
 
 tuple :: ( HLookup e1 l
          , HType2HNat e1 l n
-         , HDeleteByHNat n l l'
+         , HDeleteAtHNat n l l'
          , HLookup e2 l'
          , HLookup e2 l
          , HType2HNat e2 l n'
-         , HDeleteByHNat n' l l''
+         , HDeleteAtHNat n' l l''
          , HLookup e1 l''
          ) =>
               l -> (e1, e2)
 
 tuple l = let
               x  = hLookup l
-              l' = hDeleteByProxy (toProxy x) l
+              l' = hDeleteAtProxy (toProxy x) l
               y  = hLookup l'
           in (x,y)
 
@@ -162,7 +162,7 @@ oneTrue =  HCons 1   (HCons True HNil)
 -- A variation that propagates all involved types
 
 tuple' :: ( HType2HNat x l n 
-          , HDeleteByHNat n l l'
+          , HDeleteAtHNat n l l'
           , HLookup x l
           , HLookup y l'
           )
@@ -170,7 +170,7 @@ tuple' :: ( HType2HNat x l n
 
 tuple' l = let
    n  = hType2HNat (toProxy x) l
-   l' = hDeleteByHNat n l
+   l' = hDeleteAtHNat n l
    x  = hLookup l
    y  = hLookup l'
   in (n,l',x,y)

@@ -92,8 +92,8 @@ testTypeIndexed =   ( typeIdx1
  where
   typeIdx1 = hDeleteMany (proxy::Proxy Name) angus
   typeIdx2 = hExtend BSE angus
-  typeIdx3 = hUpdateByType Sheep typeIdx1
-  typeIdx4 = hDeleteByProxy (proxy::Proxy Breed) typeIdx2
+  typeIdx3 = hUpdateAtType Sheep typeIdx1
+  typeIdx4 = hDeleteAtProxy (proxy::Proxy Breed) typeIdx2
   typeIdx5 = hProjectByProxies (HCons (proxy::Proxy Breed) HNil) angus
   typeIdx6 = fst $ hSplitByProxies (HCons (proxy::Proxy Breed) HNil) angus
 
@@ -131,8 +131,8 @@ testRecords =   ( test1
                    $ HCons (breed,Cow)
                    $ HNil 
   test2 = hLookupByLabel breed test1
-  test3 = hDeleteByLabel breed test1
-  test4 = hUpdateByLabel breed Sheep test1
+  test3 = hDeleteAtLabel breed test1
+  test4 = hUpdateAtLabel breed Sheep test1
   test5 = hExtend (price,8.8) test1
   test6 = hProjectByLabels (HCons breed (HCons price HNil)) test5
 

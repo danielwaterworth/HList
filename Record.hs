@@ -9,10 +9,8 @@
 
    Extensible records
 
-   The are different refinements for this module:
-    - LabelHNat.hs --- record labels are simply type-level naturals
-    - Label???
-    - Label???
+   The are different refinements for this module;
+   see the files Label?.hs
 
 -}
 
@@ -136,12 +134,12 @@ hLookupByLabel l (Record r) = v
 
 -- Delete operation
 
-hDeleteByLabel l (Record r) = Record r'
+hDeleteAtLabel l (Record r) = Record r'
  where
   (ls,vs) = hUnzip r
   n       = hFind l ls 
-  ls'     = hDeleteByHNat n ls
-  vs'     = hDeleteByHNat n vs
+  ls'     = hDeleteAtHNat n ls
+  vs'     = hDeleteAtHNat n vs
   r'      = hZip ls' vs'
 
 
@@ -149,11 +147,11 @@ hDeleteByLabel l (Record r) = Record r'
 
 -- Update operation
 
-hUpdateByLabel l v (Record r) = Record (hZip ls vs')
+hUpdateAtLabel l v (Record r) = Record (hZip ls vs')
  where
   (ls,vs) = hUnzip r
   n       = hFind l ls
-  vs'     = hUpdateByHNat n v vs
+  vs'     = hUpdateAtHNat n v vs
 
 
 {-----------------------------------------------------------------------------}
@@ -197,7 +195,7 @@ instance ( HProjectByLabels ls r r''
 hRenameLabel l l' r = r''
  where
   v   = hLookupByLabel l r
-  r'  = hDeleteByLabel l r
+  r'  = hDeleteAtLabel l r
   r'' = hExtend (l',v) r'
 
 
