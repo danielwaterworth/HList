@@ -32,12 +32,14 @@ testTypeIndexed = (typeIdx1,typeIdx2,typeIdx3,typeIdx4,typeIdx5)
   typeIdx4 = hProjectByProxies myAnimal (HCons (HProxy::HProxy Breed) HNil)
   typeIdx5 = fst $ hSplitByProxies myAnimal (HCons (HProxy::HProxy Breed) HNil)
 
-testTuple = let (a,b) = tuple oneTrue in (a+(1::Int), not b)
-testTuple' = let (n,l,a,b) = tuple' oneTrue in (a+(1::Int), not b)
+testTuple = [testTuple1,testTuple2,testTuple3]
+ where
+  testTuple1 = let (a,b) = tuple oneTrue in (a+(1::Int), not b)
+  testTuple2 = let (n,l,a,b) = tuple' oneTrue in (a+(1::Int), not b)
+  testTuple3 = let b = not $ fst $ tuple oneTrue in (1::Int,b)
 
 main = print $ ( testHArray
                , testHOccurs
                , testTypeIndexed
-               , testTuple 
-               , testTuple'
+               , testTuple
                )
