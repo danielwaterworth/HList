@@ -44,6 +44,23 @@ hCons e l = HCons e l
 
 {-----------------------------------------------------------------------------}
 
+-- Type-level constructor
+
+class HCons' e l l' | e l -> l'
+ where
+  hCons' :: e -> l -> l'
+
+instance HCons' e HNil (HCons e HNil)
+ where
+  hCons' = HCons
+
+instance HCons' e (HCons e' l) (HCons e (HCons e' l))
+ where
+  hCons' = HCons
+
+
+{-----------------------------------------------------------------------------}
+
 -- Basic list functions
 
 class HHead l h | l -> h
@@ -215,27 +232,6 @@ HList> hEnd (hBuild (Key 42) (Name "Angus") Cow (Price 75.5)) == myAnimal
 True
 
 -}
-
-{-----------------------------------------------------------------------------}
-
--- Qualification of lists
-
-class HQualify u a q | u a -> q, q a -> u
- where
-  hQualify   :: u -> a -> q
-  hUnqualify :: q -> a -> u
-
-instance HQualify HNil a HNil
- where
-  hQualify   HNil _ = hNil
-  hUnqualify HNil _ = hNil 
-
-instance (HQualify l a l', HList l, HList l') 
-      => HQualify (HCons e l) a (HCons (e,a) l')
- where
-  hQualify   (HCons e l) a     = hCons (e,a) (hQualify l a)
-  hUnqualify (HCons (e,_) l) a = hCons e     (hUnqualify l a)
-
 
 {-----------------------------------------------------------------------------}
 

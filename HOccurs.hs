@@ -84,7 +84,6 @@ instance ( HOccursFst e l, HList l )
 
 -- One occurrence and nothing is left
 
-
 class HOccurs e l
  where
   hOccurs :: l -> e

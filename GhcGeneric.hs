@@ -107,8 +107,8 @@ testTIP = (testTIP1,testTIP2,testTIP3,testTIP4)
   animalKey = hOccurs
   testTIP1 = hOccurs myTipyCow :: Breed
   testTIP2 = hExtend BSE myTipyCow
-  testTIP3 = hExtend Sheep $ hDeleteByProxy myTipyCow (Proxy::Proxy Breed)
-  testTIP4 = hUpdateByType myTipyCow Sheep
+  testTIP3 = hExtend Sheep $ tipyDelete myTipyCow (Proxy::Proxy Breed)
+  testTIP4 = tipyUpdate myTipyCow Sheep
 
 testSimpleRecords = (test1,(test2,(test3,(test4,(test5,test6)))))
  where

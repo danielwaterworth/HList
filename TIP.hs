@@ -90,7 +90,7 @@ instance HTypeIndexed (HCons e l)
 
 {-----------------------------------------------------------------------------}
 
--- Lifting previous operations -----------------------------------------------
+-- Lifting previous operations
 
 
 instance ( HAppend l l' l''
@@ -147,41 +147,23 @@ instance HOccursGrounded e l
   hOccursGrounded = hOccursGrounded . unTIP
 
 
-instance ( HDeleteByProxy l e l'
-         , HTypeIndexed l'
-         )
-           => HDeleteByProxy (TIP l) e (TIP l')
+{-----------------------------------------------------------------------------}
+
+-- Shielding type-indexed operations
+
+onTIP :: HTypeIndexed a => (b -> a) -> TIP b -> TIP a
+onTIP f (TIP l) = mkTIP (f l)
+
+tipyDelete  t p  = onTIP (flip hDeleteByProxy p) t
+tipyUpdate  t e  = onTIP (flip hUpdateByType e) t
+tipyProject t ps = onTIP (flip hProjectByProxies ps) t
+
+
+-- Split produces two TIPs
+
+tipySplit (TIP l) ps = (mkTIP l',mkTIP l'')
  where
-  hDeleteByProxy (TIP l) p = TIP (hDeleteByProxy l p)
-
-
-instance ( HUpdateByType l e
-         , HTypeIndexed l
-         )
-           => HUpdateByType (TIP l) e
- where
-  hUpdateByType (TIP l) e = mkTIP (hUpdateByType l e)
-
-
-instance ( HProjectByProxies l ps l'
-         , HTypeIndexed l'
-         )
-           => HProjectByProxies (TIP l) ps (TIP l')
- where
-  hProjectByProxies (TIP l) ps
-   =
-     mkTIP (hProjectByProxies l ps)
-
-
-instance ( HSplitByProxies l ps l' l''
-         , HTypeIndexed l'
-         , HTypeIndexed l''
-         )
-           => HSplitByProxies (TIP l) ps (TIP l') (TIP l'')
- where
-  hSplitByProxies (TIP l)
-   =
-     (\(x,y) -> (mkTIP x,mkTIP y)) . hSplitByProxies l
+  (l',l'') = hSplitByProxies l ps
 
 
 {-----------------------------------------------------------------------------}

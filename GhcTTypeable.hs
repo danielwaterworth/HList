@@ -100,8 +100,8 @@ testTIP = [show testTIP1, show testTIP2, show testTIP3, show testTIP4]
   animalKey = hOccurs
   testTIP1 = hOccurs myTipyCow :: Breed
   testTIP2 = hExtend BSE myTipyCow
-  testTIP3 = hExtend Sheep $ hDeleteByProxy myTipyCow (Proxy::Proxy Breed)
-  testTIP4 = hUpdateByType myTipyCow Sheep
+  testTIP3 = hExtend Sheep $ tipyDelete myTipyCow (Proxy::Proxy Breed)
+  testTIP4 = tipyUpdate myTipyCow Sheep
 
 testSimpleRecords = [ show test1 
                     , show test2

@@ -78,20 +78,7 @@ instance ( HType2HNat   l e n
 
 -- Define type-indexed delete in terms of the natural-based primitive
 
-class HDeleteByProxy l e l' | l e -> l'
- where
-  hDeleteByProxy :: l -> Proxy e -> l'
-
-instance ( HType2HNat (HCons e l) e' n
-         , HDeleteByHNat  (HCons e l) n  l'
-         , TypeEqBool e e' b
-         , HType2HNat' b l e' n
-         )
-      =>   HDeleteByProxy (HCons e l) e' l'
- where
-  hDeleteByProxy = hDeleteByProxy'
-
-hDeleteByProxy' l p
+hDeleteByProxy l p
  =
    hDeleteByHNat l (hType2HNat l p)
 
@@ -100,20 +87,7 @@ hDeleteByProxy' l p
 
 -- Define type-indexed update in terms of the natural-based update
 
-class HUpdateByType l e
- where
-  hUpdateByType :: l -> e -> l
-
-instance ( HType2HNat (HCons e l) e' n
-         , HUpdateByHNat (HCons e l) n e' (HCons e l)
-         , TypeEqBool e e' b
-         , HType2HNat' b l e' n
-         )
-      =>   HUpdateByType (HCons e l) e'
- where
-  hUpdateByType = hUpdateByType'
-
-hUpdateByType' l e
+hUpdateByType l e
  =
    hUpdateByHNat l (hType2HNat l (proxy e)) e 
 
@@ -122,22 +96,7 @@ hUpdateByType' l e
 
 -- Projection based on proxies
 
-class HProjectByProxies l ps l' | l ps -> l'
- where
-  hProjectByProxies :: l -> ps -> l'
-
-instance HProjectByProxies HNil HNil HNil
- where
-  hProjectByProxies HNil HNil = HNil
-
-instance ( HTypes2HNats (HCons e l) ps ns
-         , HProjectByHNats (HCons e l) ns l'
-         )
-      =>   HProjectByProxies (HCons e l) ps l'
- where 
-  hProjectByProxies =  hProjectByProxies'
-
-hProjectByProxies' l ps
+hProjectByProxies l ps
  =
    hProjectByHNats l $ hTypes2HNats l ps
 
@@ -146,27 +105,9 @@ hProjectByProxies' l ps
 
 -- Splitting based on proxies
 
-class HSplitByProxies l ps l' l'' | l ps -> l' l''
- where
-  hSplitByProxies :: l -> ps -> (l',l'')
-
-instance HSplitByProxies HNil HNil HNil HNil
- where
-  hSplitByProxies HNil HNil = (HNil,HNil)
-
-instance ( HTypes2HNats (HCons e l) ps ns
-         , ToHJust (HCons e l) (HCons (HJust e) l')
-         , HSplitByHNats' (HCons (HJust e) l') ns ly ln
-         , FromHJust ly l''
-         , FromHJust ln l'''
-         )
-      =>   HSplitByProxies (HCons e l) ps l'' l'''
- where 
-  hSplitByProxies =  hSplitByProxies'
-
-hSplitByProxies' l ps
+hSplitByProxies l ps
  =
-   hSplitByHNats l $ hTypes2HNats l ps
+   hSplitByHNats l (hTypes2HNats l ps)
 
 
 {-----------------------------------------------------------------------------}
@@ -174,14 +115,17 @@ hSplitByProxies' l ps
 -- This example from the TIR paper challenges forgotten types.
 -- Thanks to the HW 2004 reviewer who pointed out the value of this example.
 
-tuple :: ( HOccursGrounded ex l
-         , HDeleteByProxy l ex lx
-         , HOccursGrounded ey lx
-         , HOccursGrounded ey l
-         , HDeleteByProxy l ey ly
-         , HOccursGrounded ex ly
-         )
-      => l -> (ex,ey)
+tuple :: ( HOccursGrounded e1 l
+         , HType2HNat l e1 n
+         , HDeleteByHNat l n l'
+         , HOccursGrounded e2 l'
+         , HOccursGrounded e2 l
+         , HType2HNat l e2 n'
+         , HDeleteByHNat l n' l''
+         , HOccursGrounded e1 l''
+         ) =>
+              l -> (e1, e2)
+
 tuple l = let
               x  = hOccursGrounded l
               l' = hDeleteByProxy l (proxy x)

@@ -73,13 +73,13 @@ testHOccurs = (testHOccurs1,testHOccurs2)
   testHOccurs1 = hOccurs myAnimal :: Breed
   testHOccurs2 = hOccursGrounded (HCons 1 HNil)
 
-testTypeIndexed = (typeIdx1,typeIdx2,typeIdx3,typeIdx4)
+testTypeIndexed = (typeIdx1,typeIdx2,typeIdx3,typeIdx4,typeIdx5)
  where
    typeIdx1 = hExtend BSE myAnimal
    typeIdx2 = hUpdateByType  typeIdx1 Sheep
    typeIdx3 = hDeleteByProxy myAnimal (Proxy::Proxy Breed)
    typeIdx4 = hProjectByProxies myAnimal (HCons (Proxy::Proxy Breed) HNil)
--- typeIdx5 = fst$ hSplitByProxies myAnimal (HCons (Proxy::Proxy Breed) HNil)
+   typeIdx5 = fst$ hSplitByProxies myAnimal (HCons (Proxy::Proxy Breed) HNil)
 
 testTuple = [testTuple1,testTuple2,testTuple3]
  where
@@ -94,8 +94,8 @@ testTIP = [show testTIP1, show testTIP2, show testTIP3, show testTIP4]
   animalKey = hOccurs
   testTIP1 = hOccurs myTipyCow :: Breed
   testTIP2 = hExtend BSE myTipyCow
-  testTIP3 = hExtend Sheep $ hDeleteByProxy myTipyCow (Proxy::Proxy Breed)
-  testTIP4 = hUpdateByType myTipyCow Sheep
+  testTIP3 = hExtend Sheep $ tipyDelete myTipyCow (Proxy::Proxy Breed)
+  testTIP4 = tipyUpdate myTipyCow Sheep
 
 testSimpleRecords = [ show test1 
                     , show test2

@@ -26,11 +26,11 @@ class HLookupByHNat l i e | l i -> e
  where
   hLookupByHNat :: l -> i -> e
 
-instance HList l => HLookupByHNat (HCons e l) HZero e
+instance HLookupByHNat (HCons e l) HZero e
  where
   hLookupByHNat (HCons e _) _ = e
 
-instance (HList l, HNat n, HLookupByHNat l n e')
+instance HLookupByHNat l n e'
       => HLookupByHNat (HCons e l) (HSucc n) e'
  where
   hLookupByHNat (HCons _ l) (HSucc n) = hLookupByHNat l n
@@ -44,18 +44,14 @@ class HDeleteByHNat l i l' | l i -> l'
  where
   hDeleteByHNat :: l -> i -> l'
 
-instance HList l => HDeleteByHNat (HCons e l) HZero l
+instance HDeleteByHNat (HCons e l) HZero l
  where
   hDeleteByHNat (HCons _ l) HZero = l
 
-instance ( HDeleteByHNat l n l'
-         , HList l
-         , HList l'
-         , HNat n
-         )
-           => HDeleteByHNat (HCons e l) (HSucc n) (HCons e l')
+instance HDeleteByHNat l n l'
+      => HDeleteByHNat (HCons e l) (HSucc n) (HCons e l')
  where
-  hDeleteByHNat (HCons e l) (HSucc n) = hCons e (hDeleteByHNat l n)
+  hDeleteByHNat (HCons e l) (HSucc n) = HCons e (hDeleteByHNat l n)
 
 
 {-----------------------------------------------------------------------------}
@@ -66,11 +62,11 @@ class HUpdateByHNat l i e l' | l i e -> l', l' i -> e
  where
   hUpdateByHNat :: l -> i -> e -> l'
 
-instance HList l => HUpdateByHNat (HCons e l) HZero e' (HCons e' l)
+instance HUpdateByHNat (HCons e l) HZero e' (HCons e' l)
  where
   hUpdateByHNat (HCons e l) _ e' = HCons e' l
 
-instance (HList l, HList l', HNat n, HUpdateByHNat l n e' l')
+instance HUpdateByHNat l n e' l'
       => HUpdateByHNat (HCons e l) (HSucc n) e' (HCons e l')
  where
   hUpdateByHNat (HCons e l) (HSucc n) e'
@@ -79,72 +75,32 @@ instance (HList l, HList l', HNat n, HUpdateByHNat l n e' l')
 
 {-----------------------------------------------------------------------------}
 
--- Projection as iterated deletion
+-- Splitting an array according to indices
 
-hSplitByHNats l il = (ly,ln)
- where
-    l'         = toHJust l
-    (l'',l''') = hSplitByHNats' l' il
-    ly         = fromHJust l''
-    ln         = fromHJust l'''
+hSplitByHNats l = hSplitByHNats' (hFlag l)
 
 class HSplitByHNats' l il l' l'' | l il -> l' l''
  where
   hSplitByHNats' :: l -> il -> (l',l'')
 
-instance HSplitByHNats' l HNil HNil l
+instance HSplit l l' l''
+      => HSplitByHNats' l HNil HNil l'
  where
-  hSplitByHNats' l HNil = (HNil,l)
-
-instance ( HLookupByHNat l i e
-         , HUpdateByHNat l i HNothing l'
-         , HSplitByHNats' l' il l'' l'''
-         )
-      =>   HSplitByHNats' l (HCons i il) (HCons e l'') l'''
- where
-  hSplitByHNats' l (HCons i il) = (HCons e l'',l''')
+  hSplitByHNats' l HNil = (HNil,l')
    where
-    e          = hLookupByHNat l i
-    l'         = hUpdateByHNat l i HNothing
-    (l'',l''') = hSplitByHNats' l' il
+    (l',l'') = hSplit l
 
-
-{-----------------------------------------------------------------------------}
-
--- Turn list in a list of justs
-
-class ToHJust l l' | l -> l'
- where 
-  toHJust :: l -> l'
-
-instance ToHJust HNil HNil
+instance ( HLookupByHNat l i (e,b)
+         , HUpdateByHNat l i (e,HFalse) l'''
+         , HSplitByHNats' l''' il l' l''
+         )
+      =>   HSplitByHNats' l (HCons i il) (HCons e l') l''
  where
-  toHJust HNil = HNil
-
-instance ToHJust l l' => ToHJust (HCons e l) (HCons (HJust e) l')
- where
-  toHJust (HCons e l) = HCons (HJust e) (toHJust l)
-
-
-{-----------------------------------------------------------------------------}
-
--- Extract justs from list of maybes
-
-class FromHJust l l' | l -> l'
- where
-  fromHJust :: l -> l'
-
-instance FromHJust HNil HNil
- where
-  fromHJust HNil = HNil
-
-instance FromHJust l l' => FromHJust (HCons HNothing l) l'
- where
-  fromHJust (HCons _ l) = fromHJust l
-
-instance FromHJust l l' => FromHJust (HCons (HJust e) l) (HCons e l')
- where
-  fromHJust (HCons (HJust e) l) = HCons e (fromHJust l)
+  hSplitByHNats' l (HCons i il) = (HCons e l',l'')
+   where
+    (e,_)    = hLookupByHNat  l i
+    l'''     = hUpdateByHNat  l i (e,HFalse)
+    (l',l'') = hSplitByHNats' l''' il
 
 
 {-----------------------------------------------------------------------------}
@@ -165,9 +121,6 @@ instance HProjectByHNats (HCons e l) HNil HNil
 
 instance ( HLookupByHNat (HCons e l) i e'
          , HProjectByHNats (HCons e l) il l'
-         , HList il
-         , HList l
-         , HList l'
          )
          => HProjectByHNats (HCons e l) (HCons i il) (HCons e' l')
  where
@@ -185,7 +138,6 @@ class HProjectAwayByHNats l il l' | l il -> l'
   hProjectAwayByHNats :: l -> il -> l'
 
 instance ( HLength l len
-         , HNat len
          , HBetween len nats
          , HDiff nats il il'
          , HProjectByHNats l il' l'
@@ -204,7 +156,7 @@ instance ( HLength l len
 
 -- Generate naturals from 1 to x - 1
 
-class HNat x => HBetween x y | x -> y
+class HBetween x y | x -> y
  where
   hBetween :: x -> y
 
@@ -234,8 +186,6 @@ instance HDiff HNil x HNil
 instance ( HOrdMember e y b
          , HDiff x y z
          , HCond b z (HCons e z) z'
-         , HList x
-         , HList z
          )
            => HDiff (HCons e x) y z'
  where
@@ -259,7 +209,6 @@ instance HOrdMember e HNil HFalse
 instance ( HEq e e' b1
          , HOrdMember e l b2
          , HOr b1 b2 b
-         , HList l
          )
            => HOrdMember e (HCons e' l) b
  where
@@ -281,11 +230,8 @@ instance HLength HNil HZero
  where
   hLength _ = HZero
 
-instance ( HLength l n
-         , HList l
-         , HNat n
-         )
-           => HLength (HCons a l) (HSucc n)
+instance HLength l n
+      => HLength (HCons a l) (HSucc n)
  where
   hLength (HCons _ l) = HSucc (hLength l)
 
