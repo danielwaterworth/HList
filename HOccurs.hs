@@ -90,7 +90,7 @@ class HOccurs e l
   hOccurs :: l -> e
 
 instance ( HList l
-         , HFreeType e l
+         , HOccursNot e l
          )
            => HOccurs e (HCons e l)
  where
@@ -127,7 +127,7 @@ class HOccursBool b e l
   hOccursBool :: b -> l -> e
 
 instance ( HList l
-         , HFreeType e l
+         , HOccursNot e l
          )
            => HOccursBool HTrue e (HCons e l)
  where
@@ -169,7 +169,7 @@ class HLookup' e l
  where
   hLookup' :: l -> e
 
-instance HFreeType e l
+instance HOccursNot e l
       => HLookup' e (HCons e l)
  where
   hLookup' (HCons e _) = e
@@ -206,10 +206,11 @@ instance HOccursOpt e l
 
 -- Class to test that a type is "free" in a type sequence
 
-class HFreeType e l
-instance HFreeType e HNil
-instance (TypeNotEq e e', HFreeType e l)
-      =>  HFreeType e (HCons e' l)
+data HOccursNotError e
+class HOccursNot e l
+instance HOccursNot e HNil
+instance Fail (HOccursNotError e) => HOccursNot e (HCons e l)
+instance HOccursNot e' l => HOccursNot e (HCons e' l)
 
 
 {-----------------------------------------------------------------------------}

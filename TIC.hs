@@ -64,7 +64,7 @@ unTIC (TIC i) = fromDynamic i
 class HTypeIndexed l => HTypeProxied l
 instance HTypeProxied HNil
 instance ( HTypeProxied l
-         , HFreeType (Proxy e) l
+         , HOccursNot (Proxy e) l
          )
            => HTypeProxied (HCons (Proxy e) l)
 

@@ -46,14 +46,14 @@ emptyTIP = mkTIP HNil
 
 class HList l => HTypeIndexed l
 instance HTypeIndexed HNil
-instance (HFreeType e l,HTypeIndexed l) => HTypeIndexed (HCons e l)
+instance (HOccursNot e l,HTypeIndexed l) => HTypeIndexed (HCons e l)
 
 
 {-----------------------------------------------------------------------------}
 
--- HFreeType lifted to TIPs
+-- HOccursNot lifted to TIPs
 
-instance HFreeType p l => HFreeType p (TIP l)
+instance HOccursNot p l => HOccursNot p (TIP l)
 
 
 {-----------------------------------------------------------------------------}
@@ -66,7 +66,7 @@ hExtend' e (TIP l) = mkTIP (HCons e l)
 
 Valid type I
 
-hExtend' :: (HTypeIndexed l, HFreeType (HProxy e) l)
+hExtend' :: (HTypeIndexed l, HOccursNot (HProxy e) l)
          => e -> TIP l -> TIP (HCons e l)  
 
 Valid type II
@@ -159,7 +159,7 @@ tipySplit (TIP l) ps = (mkTIP l',mkTIP l'')
 
 {-----------------------------------------------------------------------------}
 
--- Complement of the HFreeType class
+-- Complement of the HOccursNot class
 
 class HBoundType e r
 instance HBoundType e (HCons e l)
@@ -168,16 +168,16 @@ instance HBoundType e l => HBoundType e (HCons e' l)
 
 -- Class to compute a Boolean for "free type" status
 
-class HBool b => HFreeTypeStatus e l b | e l -> b
-class (HBool b, HBool b') => HFreeTypeStatus' b e l b' | b e l -> b'
-instance HFreeTypeStatus e HNil HTrue
+class HBool b => HOccursNotStatus e l b | e l -> b
+class (HBool b, HBool b') => HOccursNotStatus' b e l b' | b e l -> b'
+instance HOccursNotStatus e HNil HTrue
 instance ( TypeEqBool e e' b
-         , HFreeTypeStatus' b e l b'
+         , HOccursNotStatus' b e l b'
          )
-      =>   HFreeTypeStatus e (HCons e' l) b'
-instance HFreeTypeStatus' HTrue e l HFalse
-instance HFreeTypeStatus e l b
-      => HFreeTypeStatus' HFalse e l b
+      =>   HOccursNotStatus e (HCons e' l) b'
+instance HOccursNotStatus' HTrue e l HFalse
+instance HOccursNotStatus e l b
+      => HOccursNotStatus' HFalse e l b
 
 
 {-----------------------------------------------------------------------------}

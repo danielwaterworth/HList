@@ -107,10 +107,10 @@ instance HList l => HAppend HNil l l
  where
   hAppend HNil l = l
 
-instance (HAppend l l' l'', HList l'')
+instance (HList l, HAppend l l' l'')
       => HAppend (HCons x l) l' (HCons x l'')
  where
-  hAppend (HCons x l) l' = hCons x (hAppend l l')
+  hAppend (HCons x l) l' = HCons x (hAppend l l')
 
    
 {-----------------------------------------------------------------------------}

@@ -46,7 +46,7 @@ class (HBool b, HNat n) => HType2HNat' b l e n | b l e -> n
  where
   hType2HNat' :: b -> l -> Proxy e -> n
 
-instance HFreeType e l
+instance HOccursNot e l
       => HType2HNat' HTrue l e HZero
  where
   hType2HNat' _ _ _ = HZero
