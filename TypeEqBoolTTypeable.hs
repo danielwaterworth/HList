@@ -14,7 +14,7 @@
 -}
 
   
-module TTypeableTypeEqBool where
+module TypeEqBoolTTypeable where
 
 import FakePrelude
 import TTypeable

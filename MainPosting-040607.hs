@@ -14,7 +14,7 @@ Ralf
 
 -}
 
-import MainGhcGeneric
+import MainGhcGeneric1
 import Data.Typeable
 
 -- These are your two "implementations".

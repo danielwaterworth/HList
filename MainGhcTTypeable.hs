@@ -18,8 +18,8 @@
 import Datatypes1
 import CommonMain
 import GhcSyntax
-import TTypeableTypeEq
-import TTypeableTypeEqBool
+import TypeEqTTypeable
+import TypeEqBoolTTypeable
 import Label1
 
 

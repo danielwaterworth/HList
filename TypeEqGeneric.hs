@@ -12,7 +12,7 @@
 
 -}
 
-module GenericTypeEq where
+module TypeEqGeneric where
 
 import FakePrelude
 

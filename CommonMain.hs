@@ -24,7 +24,7 @@ module CommonMain (
  , module TIP
  , module TIC
  , module HZip
- , module GenericTypeUnify
+ , module TypeUnify
 ) where
 
 import FakePrelude
@@ -35,4 +35,4 @@ import HTypeIndexed
 import TIP
 import TIC
 import HZip
-import GenericTypeUnify
+import TypeUnify

@@ -14,10 +14,16 @@
    of the constraints of the more specific instance is assumed for
    the more general instance.
 
+   The specific encoding given here makes use of TypeUnify,
+   and by transitive closure therefore relies on separate compilation
+   of TypeUnify clients and the TypeUnify instance.
+
+   There is another encoding in TypeEqBoolGeneric2.hs.
+
 -}
 
   
-module GenericTypeEqBool where
+module TypeEqBoolGeneric1 where
 
 import FakePrelude
 

@@ -12,8 +12,8 @@
 
 import Datatypes1
 import CommonMain
-import TTypeableTypeEq
-import TTypeableTypeEqBool
+import TypeEqTTypeable
+import TypeEqBoolTTypeable
 import Label2
 
 

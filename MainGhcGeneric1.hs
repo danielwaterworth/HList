@@ -12,13 +12,13 @@
 
 -}
 
-module MainGhcGeneric (
+module MainGhcGeneric1 (
 
  module Datatypes2,
  module CommonMain,
  module GhcSyntax,
- module GenericTypeEq,
- module GenericTypeEqBool,
+ module TypeEqGeneric,
+ module TypeEqBoolGeneric1,
  module Label3
 
 ) where
@@ -26,8 +26,8 @@ module MainGhcGeneric (
 import Datatypes2
 import CommonMain
 import GhcSyntax
-import GenericTypeEq
-import GenericTypeEqBool
+import TypeEqGeneric
+import TypeEqBoolGeneric1
 import Label3
 
 

@@ -12,11 +12,11 @@
 
 -}
 
-module TTypeableTypeEq where
+module TypeEqTTypeable where
 
 import FakePrelude
 import TTypeable
-import TTypeableTypeEqBool
+import TypeEqBoolTTypeable
 
 instance TypeEqBool x y HTrue  => TypeEq x y
 instance TypeEqBool x y HFalse => TypeNotEq x y
