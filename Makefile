@@ -13,7 +13,7 @@ index.html: pre.html README post.html
 
 HList.zip: *.hs *.html Makefile
 	mkdir -p HList
-	cp --preserve *.hs *.lhs Makefile Main.in README LICENSE HList
+	cp --preserve *.hs *.lhs Makefile Main.in *.ref README LICENSE HList
 	zip -r HList.zip HList
 	rm -rf HList
 

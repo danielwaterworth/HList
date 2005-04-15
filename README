@@ -13,4 +13,4 @@ The code works --- within the limits exercised in the source files ---
 for both GHC (6.4) and Hugs (Nov 2003). See the Makefile for ways of
 running test cases.
 
-Last updated; January 1, 2005
+Last updated; April 14, 2005
