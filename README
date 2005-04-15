@@ -10,7 +10,7 @@ think of an elaborated distribution of the HList library, or a
 corresponding contribution to the Haskell libraries project.
 
 The code works --- within the limits exercised in the source files ---
-for both GHC (6.2) and Hugs (Nov 2003). See the Makefile for ways of
+for both GHC (6.4) and Hugs (Nov 2003). See the Makefile for ways of
 running test cases.
 
 Last updated; January 1, 2005

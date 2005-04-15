@@ -1,7 +1,5 @@
 ##############################################################################
 
-#ghci = /home/ralf/cvs/software/ghc-fptools/ghc/compiler/stage2/ghc-inplace --interactive
-#ghci = /home/ralf/software/ghc-6.4.20050301/bin/i386-unknown-linux/ghc --interactive
 ghci = ghci
 ghc-favourite  = MainGhcGeneric1.hs
 hugs-favourite = MainHugsTTypeable.hs
@@ -44,32 +42,32 @@ test:
 # The favoured GHC model
 #
 	${ghci} ${ghc-favourite} -v0 < Main.in > MainGhcGeneric1.out
-	diff MainGhcGeneric1.out MainGhcGeneric1.ref
+	diff -b MainGhcGeneric1.out MainGhcGeneric1.ref
 #
 # The GHC model with TTypeable-based type equality
 #
 	${ghci} MainGhcTTypeable.hs -v0 < Main.in > MainGhcTTypeable.out
-	diff MainGhcTTypeable.out MainGhcTTypeable.ref
+	diff -b MainGhcTTypeable.out MainGhcTTypeable.ref
 #
 # The Hugs model with TTypeable-based type equality
 #
 	runhugs -98 +o ${hugs-favourite} < Main.in > MainHugsTTypeable.out
-	diff MainHugsTTypeable.out MainHugsTTypeable.ref
+	diff -b MainHugsTTypeable.out MainHugsTTypeable.ref
 #
 # Run a test case as posed on Glasgow Haskell Users
 #
 	${ghci} MainPosting-040607.hs -v0 < Main.in > MainPosting-040607.out
-	diff MainPosting-040607.out MainPosting-040607.ref
+	diff -b MainPosting-040607.out MainPosting-040607.ref
 #
 # Yet another generic type equality
 #
 	${ghci} MainGhcGeneric2.hs -v0 < Main.in > MainGhcGeneric2.out
-	diff MainGhcGeneric2.out MainGhcGeneric2.ref
+	diff -b MainGhcGeneric2.out MainGhcGeneric2.ref
 #
 # Yet another generic type cast
 #
 	${ghci} MainGhcGeneric3.hs -v0 < Main.in > MainGhcGeneric3.out
-	diff MainGhcGeneric3.out MainGhcGeneric3.ref
+	diff -b MainGhcGeneric3.out MainGhcGeneric3.ref
 
 
 ##############################################################################
