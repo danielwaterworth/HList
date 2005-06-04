@@ -14,7 +14,7 @@ module GhcSyntax where
 import FakePrelude
 import HListPrelude
 import HOccurs
-import Record hiding (hLookupByLabel)
+import Record
 import GhcRecord
 import TIP
 import TIC

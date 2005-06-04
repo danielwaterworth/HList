@@ -21,11 +21,11 @@ import FakePrelude
 import HListPrelude
 import HArray
 import HZip
-import Record hiding (hLookupByLabel)
-import qualified Record (hLookupByLabel)
-
+import Record 
 
 {-----------------------------------------------------------------------------}
+{-
+  The following is no longer needed: see HasField class in Record.hs
 
 -- A look-up operation with A shielding class
 -- Hugs cannot deal with such shield.
@@ -39,6 +39,8 @@ instance (HLookupByHNat n y v, HFind l x n, HZip x y r)
       => Hash l (Record r) v
  where
   hLookupByLabel l r = Record.hLookupByLabel l r
+
+-}
 
 
 {-----------------------------------------------------------------------------}

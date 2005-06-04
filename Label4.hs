@@ -35,7 +35,10 @@ instance Typeable x => ShowLabel (Proxy x)
             . reverse
             . takeWhile (not . (==) '.')
             . reverse
+	    . show
+{-
             . tyConString
             . typeRepTyCon
+-}
             . typeOf
             . unProxy
