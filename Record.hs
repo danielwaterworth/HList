@@ -44,15 +44,15 @@ emptyRecord = mkRecord HNil
 -- Propery of a proper label set for a record: no duplication of labels
  
 class HRLabelSet ps
-{-
 instance HRLabelSet HNil
 instance HRLabelSet (HCons x HNil)
-instance (TypeEq l1 l2 HFalse, 
+instance (HEq l1 l2 HFalse, 
 	  HRLabelSet (HCons (l2,v2) r),
 	  HRLabelSet (HCons (l1,v1) r))
     => HRLabelSet (HCons (l1,v1) (HCons (l2,v2) r))
--}
+{-
 instance (HZip ls vs ps, HLabelSet ls) => HRLabelSet ps
+-}
 
 class HLabelSet ls
 instance HLabelSet HNil
