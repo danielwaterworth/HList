@@ -463,6 +463,51 @@ hMember :: HMember e l b => e -> l -> b
 hMember _ _ = undefined
 
 
+-- Membership test based on type equality
+
+class HBool b => HTMember e l b | e l -> b
+instance HTMember e HNil HFalse
+instance (TypeEq e e' b, HTMember e l b', HOr b b' b'')
+      =>  HTMember e (HCons e' l) b''
+
+hTMember :: HTMember e l b => e -> l -> b
+hTMember _ _ = undefined
+
+
+-- Intersection based on HTMember
+
+class HTIntersect l1 l2 l3 | l1 l2 -> l3
+ where
+  hTIntersect :: l1 -> l2 -> l3
+
+instance HTIntersect HNil l HNil
+ where
+  hTIntersect _ _ = HNil
+
+instance ( HTMember h l1 b
+         , HTIntersectBool b h t l1 l2
+         )
+         => HTIntersect (HCons h t) l1 l2
+ where
+  hTIntersect (HCons h t) l1 = hTIntersectBool b h t l1
+   where
+    b = hTMember h l1
+
+class HBool b => HTIntersectBool b h t l1 l2 | b h t l1 -> l2
+ where
+ hTIntersectBool :: b -> h -> t -> l1 -> l2
+
+instance HTIntersect t l1 l2
+      => HTIntersectBool HTrue h t l1 (HCons h l2)
+ where
+  hTIntersectBool _ h t l1 = HCons h (hTIntersect t l1)
+
+instance HTIntersect t l1 l2
+      => HTIntersectBool HFalse h t l1 l2
+ where
+  hTIntersectBool _ _ t l1 = hTIntersect t l1
+
+
 -- Turn a heterogeneous list into a homogeneous one
 
 class HList2List l e
