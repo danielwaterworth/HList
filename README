@@ -1,4 +1,4 @@
-(C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
+(C) 2004--2005, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
 The HList library and samples
 
@@ -13,4 +13,4 @@ The code works --- within the limits exercised in the source files ---
 for both GHC (6.4) and Hugs (Nov 2003). See the Makefile for ways of
 running test cases.
 
-Last updated; June 10, 2005
+Last updated; July 24, 2005

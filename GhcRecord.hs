@@ -24,8 +24,10 @@ import HZip
 import Record 
 
 {-----------------------------------------------------------------------------}
+
 {-
-  The following is no longer needed: see HasField class in Record.hs
+
+-- The following is no longer needed: see HasField class in Record.hs
 
 -- A look-up operation with A shielding class
 -- Hugs cannot deal with such shield.
@@ -63,6 +65,7 @@ hasNoProxies :: ( HZip ls vs r
              => Record r -> ()
 hasNoProxies = const ()
 
+
 data ProxyFound x
 class HasNoProxies l
 instance HasNoProxies HNil
@@ -92,13 +95,43 @@ instance ( Narrow r r'
 
 {-----------------------------------------------------------------------------}
 
+-- Do a type-level narrow test
+
 constrain :: Narrow r l => Record r -> Proxy l
 constrain = const proxy
 
 
 {-----------------------------------------------------------------------------}
 
+-- Narrow two records to their least-upper bound
+
+class LubNarrow a b c | a b -> c
+ where
+  lubNarrow :: a -> b -> (c,c)
+
+instance ( HZip la va a
+         , HZip lb vb b
+         , HTIntersect la lb lc
+         , H2ProjectByLabels lc a c aout
+         , H2ProjectByLabels lc b c bout
+         , HRLabelSet c
+         )
+      => LubNarrow (Record a) (Record b) (Record c)
+ where
+  lubNarrow ra@(Record a) rb@(Record b) =
+     ( hProjectByLabels lc ra
+     , hProjectByLabels lc rb
+     )
+   where
+    lc = hTIntersect la lb
+    (la,_) = hUnzip a
+    (lb,_) = hUnzip b
+
+
+{-----------------------------------------------------------------------------}
+
 -- Helper of narrow
+-- This is essentially a variation on projection.
 
 class  HExtract r l v
  where hExtract :: r -> (l,v)
