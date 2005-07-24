@@ -130,6 +130,37 @@ instance ( HZip la va a
 
 {-----------------------------------------------------------------------------}
 
+-- Extension of lubNarrow to a heterogeneous list
+
+class HLubNarrow l e | l -> e
+ where
+  hLubNarrow :: l -> [e]
+
+instance ( LubNarrow h h' e
+         )
+      => HLubNarrow (HCons h (HCons h' HNil)) e
+ where
+  hLubNarrow (HCons h (HCons h' _)) = [fst ee, snd ee]
+   where
+    ee = lubNarrow h h'
+
+instance ( HLubNarrow (HCons h (HCons h'' t)) e'
+         , HLubNarrow (HCons h' (HCons h'' t)) e''
+         , LubNarrow e' e'' e
+         , HLubNarrow (HCons e (HCons h'' t)) e
+         )
+      => HLubNarrow (HCons h (HCons h' (HCons h'' t))) e
+ where
+  hLubNarrow (HCons h (HCons h' t)) = fst e : ( snd e : tail r )
+   where
+    e' = hLubNarrow (HCons h t)
+    e'' = hLubNarrow (HCons h' t)
+    e = lubNarrow (head e') (head e'')
+    r = hLubNarrow (HCons (fst e) t)
+
+
+{-----------------------------------------------------------------------------}
+
 -- Helper of narrow
 -- This is essentially a variation on projection.
 
