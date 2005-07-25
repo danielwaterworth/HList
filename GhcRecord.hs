@@ -95,14 +95,6 @@ instance ( Narrow r r'
 
 {-----------------------------------------------------------------------------}
 
--- Do a type-level narrow test
-
-constrain :: Narrow r l => Record r -> Proxy l
-constrain = const proxy
-
-
-{-----------------------------------------------------------------------------}
-
 -- Narrow two records to their least-upper bound
 
 class LubNarrow a b c | a b -> c
