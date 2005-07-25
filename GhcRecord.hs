@@ -8,7 +8,7 @@
 
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
-   Extensible records -- operations that require GHC
+   Extensible records -- operations that (may) require GHC
 
    See Record.hs for the base module.
 
