@@ -22,6 +22,7 @@ import HListPrelude
 import HArray
 import HZip
 import Record 
+import Data.Typeable
 
 {-----------------------------------------------------------------------------}
 
@@ -179,6 +180,34 @@ instance HExtract r l v
       => HExtractBool HFalse (HCons (l1,v1) r) l v
   where 
    hExtractBool _ (HCons _ r) = hExtract r
+
+
+{-----------------------------------------------------------------------------}
+
+-- Typeable instances
+
+hNilTcName = mkTyCon "HList.HNil"
+instance Typeable HNil
+ where
+  typeOf _ = mkTyConApp hNilTcName []
+
+hConsTcName = mkTyCon "HList.HCons"
+instance (Typeable x, Typeable y) => Typeable (HCons x y)
+ where
+  typeOf (HCons x y)
+   = mkTyConApp hConsTcName [ typeOf x, typeOf y ]
+
+recordTcName = mkTyCon "HList.Record"
+instance Typeable x => Typeable (Record x)
+ where
+  typeOf (Record x)
+   = mkTyConApp recordTcName [ typeOf x ]
+
+proxyTcName = mkTyCon "HList.Proxy"
+instance Typeable x => Typeable (Proxy x)
+ where
+  typeOf (_::Proxy x)
+   = mkTyConApp proxyTcName [ typeOf (undefined::x) ]
 
 
 {-----------------------------------------------------------------------------}
