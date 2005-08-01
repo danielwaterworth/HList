@@ -1,26 +1,44 @@
 ##############################################################################
+#
+# Useful make targets
+#
+# make test        -- run all GHC- and Hugs-based test cases.
+# make clean       -- remove all generated and temporary and backup files
+# make ghci        -- start an HList ghci session
+#
 
-ghci = ghci
+
+##############################################################################
+#
+# Some variables
+#
+
+ghci = ghci -fglasgow-exts \
+		-fallow-overlapping-instances \
+		-fallow-undecidable-instances
 ghc-favourite  = MainGhcGeneric1.hs
 hugs-favourite = MainHugsTTypeable.hs
 
+
 ##############################################################################
+#
+# By default tell user to have a look at the Makefile's header.
+#
 
-all: index.html HList.zip
+all:
+	@echo
+	@echo "*****************************************************"
+	@echo "* See the Makefile's header for reasonable targets. *"
+	@echo "* Perhaps, you may want to run make test?           *"
+	@echo "*****************************************************"
+	@echo
 
-index.html: pre.html README post.html
-	cat pre.html README post.html > index.html
-
-HList.zip: *.hs *.html Makefile
-	mkdir -p HList
-	cp --preserve *.hs *.lhs Makefile Main.in *.ref README LICENSE HList
-	zip -r HList.zip HList
-	rm -rf HList
 
 ##############################################################################
 #
 # Start a GHCI session for the favoured GHC model
 #
+
 ghci:
 	ghci ${ghc-favourite}
 
@@ -29,6 +47,7 @@ ghci:
 #
 # Start a Hugs session for the favoured Hugs model
 #
+
 hugs:
 	hugs -98 +o ${hugs-favourite}
 
@@ -37,7 +56,9 @@ hugs:
 #
 # Run test cases for both GHCI and Hugs
 #
+
 test:
+
 #
 # The favoured GHC model
 #
@@ -74,6 +95,7 @@ test:
 #
 # Approve generated output as test results
 #
+
 copy:
 	cp MainGhcGeneric1.out MainGhcGeneric1.ref
 	cp MainGhcTTypeable.out MainGhcTTypeable.ref
@@ -87,11 +109,27 @@ copy:
 #
 # Clean up directory
 #
+
 clean:
 	rm -f *~
 	rm -f *.out
 	rm -f *.o
 	rm -f *.hi
 	rm -f index.html HList.zip
+
+
+##############################################################################
+#
+# Target used by the authors for distributing OOHaskell.
+#
+
+distr:
+	cat pre.html README post.html > index.html
+	rm -rf HList.zip
+	rm -rf HList
+	mkdir -p HList
+	cp --preserve *.hs *.lhs Makefile Main.in *.ref README LICENSE HList
+	zip -r HList.zip HList
+
 
 ##############################################################################
