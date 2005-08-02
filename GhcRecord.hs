@@ -123,6 +123,28 @@ instance ( HZip la va a
 
 {-----------------------------------------------------------------------------}
 
+-- A vararg function for LUBing together a list
+
+data NilLub
+nilLub = undefined :: NilLub
+
+class ConsLub h t l | h t -> l
+ where
+  consLub :: h -> t -> l
+
+instance ConsLub e  NilLub [e]
+ where
+  consLub h _ = [h]
+
+instance LubNarrow e0 e1 e2 => ConsLub e0 [e1] [e2]
+ where
+  consLub h t = fst (head z) : map snd (tail z)
+   where
+    z = map (lubNarrow h) (undefined:t)
+
+
+{-----------------------------------------------------------------------------}
+
 -- Extension of lubNarrow to a heterogeneous list
 
 class HLubNarrow l e | l -> e
