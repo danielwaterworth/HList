@@ -147,31 +147,31 @@ instance LubNarrow e0 e1 e2 => ConsLub e0 [e1] [e2]
 
 -- Extension of lubNarrow to a heterogeneous list
 
-class HLubNarrow l e | l -> e
+class HLub l e | l -> e
  where
-  hLubNarrow :: l -> [e]
+  hLub :: l -> [e]
 
 instance ( LubNarrow h h' e
          )
-      => HLubNarrow (HCons h (HCons h' HNil)) e
+      => HLub (HCons h (HCons h' HNil)) e
  where
-  hLubNarrow (HCons h (HCons h' _)) = [fst ee, snd ee]
+  hLub (HCons h (HCons h' _)) = [fst ee, snd ee]
    where
     ee = lubNarrow h h'
 
-instance ( HLubNarrow (HCons h (HCons h'' t)) e'
-         , HLubNarrow (HCons h' (HCons h'' t)) e''
+instance ( HLub (HCons h (HCons h'' t)) e'
+         , HLub (HCons h' (HCons h'' t)) e''
          , LubNarrow e' e'' e
-         , HLubNarrow (HCons e (HCons h'' t)) e
+         , HLub (HCons e (HCons h'' t)) e
          )
-      => HLubNarrow (HCons h (HCons h' (HCons h'' t))) e
+      => HLub (HCons h (HCons h' (HCons h'' t))) e
  where
-  hLubNarrow (HCons h (HCons h' t)) = fst e : ( snd e : tail r )
+  hLub (HCons h (HCons h' t)) = fst e : ( snd e : tail r )
    where
-    e' = hLubNarrow (HCons h t)
-    e'' = hLubNarrow (HCons h' t)
+    e' = hLub (HCons h t)
+    e'' = hLub (HCons h' t)
     e = lubNarrow (head e') (head e'')
-    r = hLubNarrow (HCons (fst e) t)
+    r = hLub (HCons (fst e) t)
 
 
 {-----------------------------------------------------------------------------}
