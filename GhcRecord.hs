@@ -123,7 +123,7 @@ instance ( HZip la va a
 
 {-----------------------------------------------------------------------------}
 
--- A vararg function for LUBing together a list
+-- List constructors that also LUB together
 
 data NilLub
 nilLub = undefined :: NilLub
