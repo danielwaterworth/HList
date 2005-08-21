@@ -132,6 +132,7 @@ hLookupByLabel l (Record r) = v
 
 -}
 
+
 -- Because hLookupByLabel is so frequent and important, we
 -- implement it separately. The algorithm is familiar assq,
 -- only the comparison operation is done at compile-time
