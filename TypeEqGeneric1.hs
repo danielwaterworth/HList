@@ -30,3 +30,12 @@ import FakePrelude
 instance TypeEq x x HTrue
 instance (HBool b, TypeCast HFalse b) => TypeEq x y b
 -- instance TypeEq x y HFalse -- would violate functional dependency
+
+
+class HBool b => TupleType t b | t -> b
+instance TupleType () HTrue
+instance TupleType (x,y) HTrue
+instance TupleType (x,y,z) HTrue
+-- Continue for a while
+instance (HBool b, TypeCast HFalse b) => TupleType x b
+-- instance TupleType x HFalse -- would violate functional dependency
