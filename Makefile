@@ -114,8 +114,11 @@ copy:
 # BEWARE!!!
 # This may not work even if interpretation works.
 # Depending on versions and platforms.
-# For example, the non-optimizing compiler crashes badly
-# under Ralf's various windows setups.
+# Here is one scenario that leads to crashes:
+#  - Tested under GHC 6.4 and Windows XP
+#  - Compile CommonMain.hs *without* -O
+#  - Run test cases with "make test"
+#  - Runtime crashes in the middle of printing main's output.
 #
 
 CommonMain.o: *.hs Makefile
