@@ -26,7 +26,8 @@ module MainGhcGeneric1 (
  module TypeEqBoolGeneric,
  module TypeEqGeneric1,
  module TypeCastGeneric1,
- module Label3
+ module Label3,
+ mainExport
 
 ) where
 
@@ -210,7 +211,9 @@ testVariant = (testVar1,(testVar2,(testVar3)))
 
 {-----------------------------------------------------------------------------}
 
-main = print $   ( testHArray
+main = mainExport
+mainExport
+   = print $   ( testHArray
                , ( testHOccurs
                , ( testTypeIndexed
                , ( testTuple

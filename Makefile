@@ -75,10 +75,12 @@ test:
 	runhugs -98 +o ${hugs-favourite} < Main.in > MainHugsTTypeable.out
 	diff -b MainHugsTTypeable.out MainHugsTTypeable.ref
 #
-# Run a test case as posed on Glasgow Haskell Users
+# Run test cases as posted on mailing lists
 #
 	${ghci} MainPosting-040607.hs -v0 < Main.in > MainPosting-040607.out
 	diff -b MainPosting-040607.out MainPosting-040607.ref
+	${ghci} MainPosting-051106.hs -v0 < Main.in > MainPosting-051106.out
+	diff -b MainPosting-051106.out MainPosting-051106.ref
 #
 # Yet another generic type equality
 #
@@ -107,6 +109,38 @@ copy:
 
 ##############################################################################
 #
+# Precompilation of HList.
+#
+# BEWARE!!!
+# This may not work even if interpretation works.
+# Depending on versions and platforms.
+# For example, the non-optimizing compiler crashes badly
+# under Ralf's various windows setups.
+#
+
+CommonMain.o: *.hs Makefile
+	rm -f *.o
+	ghc  \
+		-fglasgow-exts \
+		-fallow-overlapping-instances \
+		-fallow-undecidable-instances \
+		-c -O \
+		--make \
+		CommonMain.hs
+
+Main.exe: *.hs Makefile
+	rm -f *.o
+	ghc  \
+		-fglasgow-exts \
+		-fallow-overlapping-instances \
+		-fallow-undecidable-instances \
+		-o Main.exe -O \
+		--make \
+		Main.hs
+
+
+##############################################################################
+#
 # Clean up directory
 #
 
@@ -114,6 +148,7 @@ clean:
 	rm -f *~
 	rm -f *.out
 	rm -f *.o
+	rm -f *.exe
 	rm -f *.hi
 	rm -f index.html HList.zip
 
