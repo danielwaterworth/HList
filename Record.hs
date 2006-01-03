@@ -235,6 +235,16 @@ hTPupdateAtLabel l (v::v) r = hUpdateAtLabel l v r
  where
   (_::v) = hLookupByLabel l r
 
+{-
+
+-- We could also say:
+
+hTPupdateAtLabel l (v::v) r = hUpdateAtLabel l v r `asTypeOf` r
+
+-- Then we were taking a dependency on Haskell's type equivalence.
+-- This would also constrain the actual implementation of hUpdateAtLabel.
+
+-}
 
 {-----------------------------------------------------------------------------}
 
