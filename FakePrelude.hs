@@ -136,6 +136,19 @@ data HJust x   = HJust x   deriving Show
 
 {-----------------------------------------------------------------------------}
 
+-- Test for arrow type
+
+class FunType t b | t -> b
+instance (HBool b', TypeCast HTrue b') => FunType (a -> b) b'
+instance (HBool b', TypeCast HFalse b') => FunType x b'
+
+
+funType :: FunType t b => t -> b
+funType = undefined
+
+
+{-----------------------------------------------------------------------------}
+
 -- Equality for types
 
 class HBool b => HEq x y b | x y -> b
