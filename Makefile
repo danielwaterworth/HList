@@ -166,7 +166,7 @@ distr:
 	rm -rf HList.zip
 	rm -rf HList
 	mkdir -p HList
-	cp --preserve *.hs *.lhs Makefile Main.in *.ref README LICENSE HList
+	cp --preserve *.hs *.lhs Makefile Main.in *.ref README LICENSE ChangeLog HList
 	zip -r HList.zip HList
 
 

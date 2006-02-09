@@ -50,3 +50,17 @@ instance ( HList l
   hDeleteMany p (HCons e' l)
    =
      typeCast (HCons e' (hDeleteMany p l))
+
+
+{-----------------------------------------------------------------------------}
+
+-- Test for arrow type
+
+class FunType t b | t -> b
+instance (HBool b', TypeCast HTrue b') => FunType (a -> b) b'
+instance (HBool b', TypeCast HFalse b') => FunType x b'
+
+
+funType :: FunType t b => t -> b
+funType = undefined
+

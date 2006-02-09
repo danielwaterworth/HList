@@ -266,6 +266,24 @@ instance ( HFoldr f v l r
 
 {-----------------------------------------------------------------------------}
 
+class HMap f l l' | f l -> l'
+ where
+  hMap :: f -> l -> l'
+
+instance HMap f HNil HNil
+ where
+  hMap f HNil = HNil
+
+instance (
+           Apply f x y,
+           HMap f xs ys
+         )
+      => HMap f (HCons x xs) (HCons y ys)
+ where
+  hMap f (HCons x xs) = HCons (apply f x) (hMap f xs)
+
+{-----------------------------------------------------------------------------}
+
 -- Map a heterogeneous list to a homogeneous one
 
 class HMapOut f r e
@@ -325,14 +343,14 @@ instance HList l => Apply ApplyHCons (e,l) (HCons e l)
 
 -- A heterogeneous map for all types
 
-data HMap f = HMap f
+data HMap' f = HMap' f
 
-hMap f = hFoldr (HMap f) hNil 
+hMap' f = hFoldr (HMap' f) hNil 
 
 instance Apply f e e'
-      => Apply (HMap f) (e,l) (HCons e' l)
+      => Apply (HMap' f) (e,l) (HCons e' l)
  where
-  apply (HMap f) (e,l) = HCons e' l
+  apply (HMap' f) (e,l) = HCons e' l
    where
     e' = apply f e
 
