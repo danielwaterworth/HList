@@ -77,6 +77,8 @@ test:
 #
 # Run test cases as posted on mailing lists
 #
+	${ghci} MainPatternMatch.hs -v0 < Main.in > MainPatternMatch.out
+	diff -b MainPatternMatch.out MainPatternMatch.ref
 	${ghci} MainPosting-040607.hs -v0 < Main.in > MainPosting-040607.out
 	diff -b MainPosting-040607.out MainPosting-040607.ref
 	${ghci} MainPosting-051106.hs -v0 < Main.in > MainPosting-051106.out
