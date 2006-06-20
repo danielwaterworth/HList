@@ -39,6 +39,7 @@ import TypeEqBoolGeneric
 import TypeEqGeneric1
 import TypeCastGeneric1
 import Label3
+import RecordP
 
 
 {-----------------------------------------------------------------------------}
@@ -174,6 +175,25 @@ testRecords =   ( test1
   test5 = price .=. 8.8 .*. test1
   test6 = hProjectByLabels (HCons breed (HCons price HNil)) test5
 
+testRecordsP =   ( shp $ test1 
+		 , ( test2
+		 , ( shp $ test3 
+		 , ( shp $ test4
+		 , ( shp $ test5
+		 , ( shp $ test6
+                   ))))))
+ where
+  shp (RecordP vs) = vs
+--  test1 = mkRecordP (undefined::Animal) angus
+  test1 = record_r2p unpricedAngus
+  test2 = test1 .!. breed
+  test3 = hDeleteAtLabelP breed test1
+--  test4 = test1 .@. breed .=. Sheep
+  test4 = hExtend (breed,Sheep) test3
+  test5 = hExtend (price,8.8) test1
+--  test5 = price .=. 8.8 .*. test1
+  test6 = fst $ h2projectByLabels (HCons breed (HCons price HNil)) test5
+
 type AnimalCol = Key :+: Name :+: Breed :+: Price :+: HNil
 
 testTIC = (myCol,test2,test3)
@@ -219,9 +239,10 @@ mainExport
                , ( testTuple
                , ( testTIP
                , ( testRecords
+               , ( testRecordsP
                , ( testTIC
                , ( testVariant
-               ))))))))
+               )))))))))
 
 
 {-----------------------------------------------------------------------------}

@@ -197,8 +197,11 @@ instance H2ProjectByLabels ls HNil HNil HNil where
 instance (HMember l' ls b, 
 	  H2ProjectByLabels' b ls (HCons (l',v') r') rin rout)
     => H2ProjectByLabels ls (HCons (l',v') r') rin rout where
-    h2projectByLabels ls r@(HCons (l',_) _) =
-	h2projectByLabels' (hMember l' ls) ls r
+    -- h2projectByLabels = h2projectByLabels' (undefined::b)
+    -- The latter is solely for the Hugs benefit
+    h2projectByLabels ls (r::(HCons (l',v') r')) = 
+			  h2projectByLabels' (undefined `asTypeOf` b) ls r
+      where b = hMember (undefined::l') ls
 
 class H2ProjectByLabels' b ls r rin rout | b ls r -> rin rout where
     h2projectByLabels' :: b -> ls -> r -> (rin,rout)
