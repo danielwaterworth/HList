@@ -1,13 +1,13 @@
 {-# OPTIONS -fglasgow-exts #-}
 {-# OPTIONS -fallow-undecidable-instances #-}
 
--- Modeling of an extensible sum datatype
+-- Modeling of an extensible, recursive sum datatype (recursive open union)
 --    data List a = Nil | Cons a (List a)
 -- which is later extended with two more variants,
---    Unit a | App (List a) (List a)
+--    ... | Unit a | App (List a) (List a)
 -- 
 -- Our goals:
---   - any function that accepts that accepts the extended data list
+--   - any function that accepts the extended data list
 --     must also accept the unextended list.
 --   - it should be possible to `extend' the function that operates
 --     on plain lists to operate on extended list. We should be able
@@ -15,7 +15,12 @@
 -- It seems, we have achieved our goals.
 
 -- Method: duality rules! Curry-Howard correspondence and logic 
--- give the wonderful guidance.
+-- give the wonderful guidance. In particular, we take advantage
+-- of the fact that the deMorgan law
+--  	NOT (A | B) -> (NOT A & NOT B)
+-- holds both in classical, and, more importantly, intuitionistic
+-- logics. Our encoding of sums is the straightforward Curry-Howard
+-- image of the law.
 
 -- Note, the code below has no type classes, no type-level programming
 -- or any other type hacking. In fact, there are no type annotations,
@@ -119,6 +124,30 @@ lengthA () =  l_unit .=. const 1
 
 test_lL4 = tekiyou lengthA tl3
 test_lL5 = tekiyou lengthA tl4
+
+
+-- A few methods to show that our extensible lists indeed act
+-- as regular lists (that is, support the regular list API).
+
+-- check if the (extensible list) is null:
+el_null l = l (l_nil .=. True .*. l_cons .=. (\x a -> False) 
+	       .*. emptyRecord)
+
+el_head l = l (l_nil .=. undefined .*. l_cons .=. (\x a -> x)
+	       .*. emptyRecord)
+
+el_tail l = l (    l_nil .=. (\f -> if f then undefined else nil) 
+	       .*. l_cons .=. (\x a f -> if f then a False else
+			       cons x (a False))
+	       .*. emptyRecord) True
+
+test_ell = (el_null tl1, el_head tl1, tekiyou to_list $ el_tail tl1)
+
+
+-- convert from the regular list
+from_list l = foldr cons nil l
+
+test_ft1 = tekiyou to_list $ from_list "abcd"
 
 
 -- Binary methods.
