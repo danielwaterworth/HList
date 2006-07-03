@@ -198,6 +198,9 @@ instance H2ProjectByLabels ls (RecordP ls' vs') rin (RecordP lo vo) =>
 
 -- Subtyping for records
 
-instance (HProject ls ls') =>  SubType (RecordP ls vs) (RecordP ls' vs')
+-- Hmm, a bit too conservative. It works for all our examples,
+-- where the record extension is by simple extension. In the future,
+-- we should account for possible field permutation.
 
-
+instance H2ProjectByLabels ls' (RecordP ls vs) (RecordP ls' vs') rout
+    =>  SubType (RecordP ls vs) (RecordP ls' vs')
