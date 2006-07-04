@@ -58,7 +58,10 @@ hugs:
 #
 
 test:
+	make test-ghc
+	make test-hugs
 
+test-ghc:
 #
 # The favoured GHC model
 #
@@ -69,11 +72,6 @@ test:
 #
 	${ghci} MainGhcTTypeable.hs -v0 < Main.in > MainGhcTTypeable.out
 	diff -b MainGhcTTypeable.out MainGhcTTypeable.ref
-#
-# The Hugs model with TTypeable-based type equality
-#
-	runhugs -98 +o ${hugs-favourite} < Main.in > MainHugsTTypeable.out
-	diff -b MainHugsTTypeable.out MainHugsTTypeable.ref
 #
 # Run test cases as posted on mailing lists
 #
@@ -93,6 +91,13 @@ test:
 #
 	${ghci} MainGhcGeneric3.hs -v0 < Main.in > MainGhcGeneric3.out
 	diff -b MainGhcGeneric3.out MainGhcGeneric3.ref
+
+test-hugs:
+#
+# The Hugs model with TTypeable-based type equality
+#
+	runhugs -98 +o ${hugs-favourite} < Main.in > MainHugsTTypeable.out
+	diff -b MainHugsTTypeable.out MainHugsTTypeable.ref
 
 
 ##############################################################################
