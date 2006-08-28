@@ -1,69 +1,75 @@
 {-# OPTIONS -fglasgow-exts #-}
-{-# OPTIONS -fallow-undecidable-instances #-}
 
 {- 
 
    The HList library
 
-   (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
+   (C) 2004-2006, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
-   A model of labels as needed for extensible records.
+   A model of labels as needed for extensible records. As before,
+   all the information about labels is recorded in their type, so
+   the labels of records may be purely phantom. In general,
+   Labels are exclusively type-level entities and have no run-time
+   representation.
 
-   Record labels are triplets of type-level naturals, namespace and string.
-   The namespace part helps with avoiding confusions between labels from
-   different Haskell modules. The string part is simple for an improved
-   instance of ShowLabel.
+   Record labels are triplets of type-level naturals, namespace,
+   and description. The namespace part helps avoid confusions between
+   labels from different Haskell modules. The description is
+   an arbitrary nullary type constructor.
+   For the sake of printing, the description is required to be the
+   instance of Show. One must make sure that the show functions does
+   not examine the value, as descr is purely phantom. Here's an
+   example of the good Label description:
+	data MyLabelDescr; instance Show MyLabelDescr where show _ = "descr"
+   which obviously can be automated with Template Haskell.
 
    This model even allows the labels in a record to belong to different
    namespaces. To this end, the model employs the predicate for type
    equality.
-
 -}
 
- 
 module Label3 where
 
 import FakePrelude
 import HListPrelude
-import Record
+import Record (ShowLabel(..))
 
 
 -- Labels are type-level naturals
-
-data Label x ns = Label x ns String
-
-instance ShowLabel (Label x ns) => Show (Label x ns)
- where
-  show = showLabel
+data HNat x => Label x ns desc  -- labels are exclusively type-level entities 
 
 
 -- Public constructors for labels
 
-label :: HNat x => x -> ns -> String -> Label x ns
-label =  Label
-
-
 -- Construct the first label
-
-firstLabel = label hZero
+firstLabel :: ns -> desc -> Label HZero ns desc
+firstLabel = undefined
 
 
 -- Construct the next label
+nextLabel :: Label x ns desc -> desc' -> Label (HSucc x) ns desc'
+nextLabel = undefined
 
-nextLabel (Label x ns _) = label (hSucc x) ns
 
-
--- Equality on labels
+-- Equality on labels (descriptions are ignored)
 
 instance ( HEq x x' b
          , TypeEq ns ns' b'
          , HAnd b b' b''
          )
-      =>   HEq (Label x ns) (Label x' ns') b''
+      =>   HEq (Label x ns desc) (Label x' ns' desc') b''
 
 
 -- Show label
 
-instance Show x => ShowLabel (Label x ns)
+instance (HNat x, Show desc) => ShowLabel (Label x ns desc) where
+  showLabel = show . getd
+      where getd :: Label x ns desc -> desc -- for the sake of Hugs
+	    getd = undefined
+
+instance (HNat x, Show desc) => Show (Label x ns desc)
  where
-  showLabel (Label _ _ s) = s
+  show = show . getd
+      where getd :: Label x ns desc -> desc -- for the sake of Hugs
+	    getd = undefined
+

@@ -149,14 +149,19 @@ testTIP = (testTIP1,testTIP2,testTIP3,testTIP4)
 
 data MyNS = MyNS -- a name space for record labels
 
-key   = firstLabel MyNS  "key"
-name  = nextLabel  key   "name"
-breed = nextLabel  name  "breed"
-price = nextLabel  breed "price"
+key   = firstLabel MyNS  (undefined::DKey)
+name  = nextLabel  key   (undefined::DName)
+breed = nextLabel  name  (undefined::DBreed)
+price = nextLabel  breed (undefined::DPrice)
 unpricedAngus =  key    .=. (42::Integer)
              .*. name   .=. "Angus"
              .*. breed  .=. Cow
              .*. emptyRecord
+
+data DKey;   instance Show DKey   where show _ = "key"
+data DName;  instance Show DName  where show _ = "name"
+data DBreed; instance Show DBreed where show _ = "breed"
+data DPrice; instance Show DPrice where show _ = "price"
 
 getKey l = hLookupByLabel key l
 

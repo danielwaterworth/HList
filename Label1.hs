@@ -1,11 +1,10 @@
 {-# OPTIONS -fglasgow-exts #-}
-{-# OPTIONS -fallow-undecidable-instances #-}
 
 {- 
 
    The HList library
 
-   (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
+   (C) 2004-2006, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
    A model of label as needed for extensible records.
 
@@ -19,7 +18,7 @@ module Label1 where
 
 import FakePrelude
 import HListPrelude
-import Record
+import Record (ShowLabel(..))
 
 
 -- Labels are type-level naturals

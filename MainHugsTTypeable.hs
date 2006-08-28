@@ -106,6 +106,7 @@ testTIP = [show testTIP1, show testTIP2, show testTIP3, show testTIP4]
   testTIP4 = tipyUpdate Sheep myTipyCow
 
 data MyNS = MyNS -- a name space for record labels
+instance Show MyNS where show _ = "myNS"
 
 testRecords =   ( test1 
               , ( test2
@@ -115,10 +116,10 @@ testRecords =   ( test1
               , ( test6
                 ))))))
  where
-  key   = firstLabel MyNS  "key"
-  name  = nextLabel  key   "name"
-  breed = nextLabel  name  "breed"
-  price = nextLabel  breed "price"
+  key   = firstLabel MyNS  (undefined::DKey)
+  name  = nextLabel  key   (undefined::DName)
+  breed = nextLabel  name  (undefined::DBreed)
+  price = nextLabel  breed (undefined::DPrice)
   test1 = mkRecord $ HCons (key,42::Integer)
                    $ HCons (name,"Angus")
                    $ HCons (breed,Cow)
@@ -129,6 +130,10 @@ testRecords =   ( test1
   test5 = hExtend (price,8.8) test1
   test6 = hProjectByLabels (HCons breed (HCons price HNil)) test5
 
+data DKey;   instance Show DKey   where show _ = "key"
+data DName;  instance Show DName  where show _ = "name"
+data DBreed; instance Show DBreed where show _ = "breed"
+data DPrice; instance Show DPrice where show _ = "price"
 
 {-----------------------------------------------------------------------------}
 
