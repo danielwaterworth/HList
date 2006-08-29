@@ -38,10 +38,10 @@ type e :*: l = HCons e l
 -- Convenience notation for records
  
 infixr 4 :=:
-type l :=: v = (l,v)
+type l :=: v = F l v
  
 infixr 4 .=.
-l .=. v = (l,v)
+l .=. v = newF l v
 
 infixr 3 .!.
 r .!. l =  hLookupByLabel l r
@@ -50,13 +50,13 @@ infixl 1 .-.
 r .-. l =  hDeleteAtLabel l r
 
 infixl 1 .@.
-r .@. (l,v) =  hUpdateAtLabel l v r
+r .@. f@(F v) =  hUpdateAtLabel (labelF f) v r
 
 infixr 1 .^.
-(l,v) .^. r = hUnproxyLabel l v r
+f@(F v) .^. r = hUnproxyLabel (labelF f) v r
 
 infixr 1 .<.
-(l,v) .<. r = hTPupdateAtLabel l v r
+f@(F v) .<. r = hTPupdateAtLabel (labelF f) v r
 
 infixl 1 .<++.
 r .<++. r' = hLeftUnion r r'

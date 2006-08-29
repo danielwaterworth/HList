@@ -48,7 +48,7 @@ m # field = (m .!. field)
 
 accessor r f = r # f
 
-setter r f v = (f,v) .<. r 
+setter r f v = (newF f v) .<. r 
 
 -- 1D points
 point1 x = 

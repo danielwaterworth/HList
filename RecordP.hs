@@ -5,7 +5,7 @@
 
    The HList library
 
-   (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
+   (C) 2004-2006, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
    Extensible records: labels are phantom, so at run-time, the record
    is just a heterogenous list of field values.
@@ -24,7 +24,6 @@ module RecordP where
 import FakePrelude
 import HListPrelude
 import Record
-import HZip
 import HArray
 import HOccurs
 
@@ -53,14 +52,24 @@ emptyRecordP = mkRecordP HNil HNil
 
 -- Converting between RecordP and Record (label/value pairs)
 
-record_r2p :: (HZip ls vs r) => Record r -> RecordP ls vs
-record_r2p (Record r) = let (_,vs) = hUnzip r in RecordP vs
+-- The following class declares a bijection between Record and recordP
+class HRLabelSet r => RecordR2P r ls vs | r -> ls vs, ls vs -> r where
+    record_r2p :: Record r -> RecordP ls vs
+    record_p2r :: RecordP ls vs -> Record r
+
+instance RecordR2P HNil HNil HNil where
+    record_r2p _ = emptyRecordP
+    record_p2r _ = emptyRecord
+
+instance (RecordR2P r ls vs, HRLabelSet (HCons (F l v) r),
+	  HLabelSet (HCons l ls), HSameLength ls vs)
+    => RecordR2P (HCons (F l v) r) (HCons l ls) (HCons v vs) where
+    record_r2p (Record (HCons f r)) = hExtend f (record_r2p (Record r))
+    record_p2r (RecordP (HCons v r)) = hExtend (F v) (record_p2r (RecordP r))
 
 labels_of_recordp :: RecordP ls vs -> ls
 labels_of_recordp = undefined
 
-record_p2r :: (HZip ls vs r, HRLabelSet r) => RecordP ls vs -> Record r
-record_p2r rp@(RecordP vs) = mkRecord $ hZip (labels_of_recordp rp) vs
 
 {-----------------------------------------------------------------------------}
 
@@ -68,7 +77,7 @@ record_p2r rp@(RecordP vs) = mkRecord $ hZip (labels_of_recordp rp) vs
 -- to save the coding time (rather than run-time), we just
 -- convert RecordP to regular Record, which we know how to show
 
-instance (HZip ls vs r, ShowComponents r, HRLabelSet r) => 
+instance (RecordR2P r ls vs, ShowComponents r, HRLabelSet r) => 
     Show (RecordP ls vs) where show rp = show $ record_p2r rp
 
 
@@ -77,9 +86,9 @@ instance (HZip ls vs r, ShowComponents r, HRLabelSet r) =>
 -- Extension for records
 
 instance (HLabelSet (HCons l ls), HSameLength ls vs)
-    => HExtend (l,v) (RecordP ls vs) (RecordP (HCons l ls) (HCons v vs))
+    => HExtend (F l v) (RecordP ls vs) (RecordP (HCons l ls) (HCons v vs))
  where
-  hExtend (_,v) (RecordP vs) = mkRecordP undefined (HCons v vs)
+  hExtend (F v) (RecordP vs) = mkRecordP undefined (HCons v vs)
 
 
 {-----------------------------------------------------------------------------}

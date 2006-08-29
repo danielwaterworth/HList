@@ -17,6 +17,8 @@
    with maybies for the values. Only one value will actually hold
    non-Nothing, as guaranteed by the constructor.
 
+   See VariantP.hs for a different approach to open sums.
+
 -}
 
  
@@ -26,7 +28,6 @@ import FakePrelude
 import HListPrelude
 import HArray
 import HOccurs
-import HZip
 import Record
 import TIC
 
@@ -35,66 +36,59 @@ import TIC
 
 -- Variant types on the basis of label-maybe pairs.
 
-data Variant mr = Variant mr
+newtype Variant mr = Variant mr
 
 
 {-----------------------------------------------------------------------------}
 
 -- Turn proxy sequence into sequence of Nothings
 
-class HMaybied l l' | l -> l', l' -> l
+class HMaybied r r' | r -> r'
  where
-  hMaybied :: l -> l'
+  hMaybied :: r -> r'
 
 instance HMaybied HNil HNil
  where 
   hMaybied _ = HNil
 
-instance HMaybied l l'
-      => HMaybied (HCons (Proxy e) l) (HCons (Maybe e) l')
+instance HMaybied r r'
+      => HMaybied (HCons (F l (Proxy v)) r) (HCons (F l (Maybe v)) r')
  where
-  hMaybied (HCons _ l) = HCons Nothing (hMaybied l)
+  hMaybied (HCons _ r) = HCons (F Nothing) (hMaybied r)
 
 
 {-----------------------------------------------------------------------------}
 
 -- Public constructor
 
-mkVariant :: ( HZip ls ps v
-             , HLabelSet ls
-             , HTypeProxied ps
+mkVariant :: ( RecordLabels v ls
              , HFind x ls n
-             , HLookupByHNat n ps (Proxy y)
-             , HMaybied ps ms
-             , HUpdateAtHNat n (Maybe y) ms ms
-             , HZip ls ms v'
+             , HMaybied v v'
+             , HUpdateAtHNat n (F x (Maybe y)) v' v'
              ) 
           => x -> y -> (Record v) -> Variant v'
 
 mkVariant x y (Record v) = Variant v'
  where
-  (ls,ps) = hUnzip v
-  n       = hFind x ls
-  ms      = hMaybied ps
-  ms'     = hUpdateAtHNat n (Just y) ms
-  v'      = hZip ls ms'
+  n       = hFind x (recordLabels v)
+  ms      = hMaybied v
+  v'      = hUpdateAtHNat n (newF x (Just y)) ms
 
 
 {-----------------------------------------------------------------------------}
 
 -- Public destructor
 
-unVariant :: ( HZip ls ms v
+unVariant :: ( RecordLabels v ls
              , HFind x ls n
-             , HLookupByHNat n ms (Maybe y)
+             , HLookupByHNat n v (F x (Maybe y))
              )
           => x -> Variant v -> Maybe y
 
 unVariant x (Variant v) = y
  where
-  (ls,ms) = hUnzip v
-  n       = hFind x ls
-  y       = hLookupByHNat n ms
+  n       = hFind x (recordLabels v)
+  F y     = hLookupByHNat n v
 
 
 {-----------------------------------------------------------------------------}

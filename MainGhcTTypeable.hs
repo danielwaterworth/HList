@@ -133,14 +133,14 @@ testRecords =   ( test1
   name  = nextLabel key
   breed = nextLabel name
   price = nextLabel breed
-  test1 = mkRecord $ HCons (key,42::Integer)
-                   $ HCons (name,"Angus")
-                   $ HCons (breed,Cow)
+  test1 = mkRecord $ HCons (newF key (42::Integer))
+                   $ HCons (newF name "Angus")
+                   $ HCons (newF breed Cow)
                    $ HNil 
   test2 = hLookupByLabel breed test1
   test3 = hDeleteAtLabel breed test1
   test4 = hUpdateAtLabel breed Sheep test1
-  test5 = hExtend (price,8.8) test1
+  test5 = hExtend (newF price 8.8) test1
   test6 = hProjectByLabels (HCons breed (HCons price HNil)) test5
 
 
