@@ -20,7 +20,6 @@ module GhcRecord where
 import FakePrelude
 import HListPrelude
 import HArray
-import HZip
 import Record 
 import Data.Typeable
 
@@ -60,9 +59,7 @@ hUnproxyLabel l (v::v) r = hUpdateAtLabel l v r
 
 -- Test for values; refuse proxies
 
-hasNoProxies :: ( HZip ls vs r
-                , HasNoProxies vs
-                )
+hasNoProxies :: HasNoProxies r
              => Record r -> ()
 hasNoProxies = const ()
 
@@ -71,6 +68,7 @@ data ProxyFound x
 class HasNoProxies l
 instance HasNoProxies HNil
 instance Fail (ProxyFound x) => HasNoProxies (HCons (Proxy x) l)
+instance Fail (ProxyFound x) => HasNoProxies (HCons (F lab (Proxy x)) l)
 instance HasNoProxies l => HasNoProxies (HCons e l)
 
 
@@ -84,14 +82,14 @@ class  Narrow a b
 instance Narrow a HNil
  where   narrow _ = emptyRecord
 
-instance ( Narrow r r'
-         , HExtract r l v
-         ) => Narrow r (HCons (l,v) r')
+instance ( Narrow rout r'
+	 , H2ProjectByLabels (HCons l HNil) r (HCons (F l v) HNil) rout
+         ) => Narrow r (HCons (F l v) r')
   where
-    narrow (Record r) = Record (HCons (l,v) r')
+    narrow (Record r) = Record (HCons f r')
       where
-        (Record r')    = narrow (Record r)
-        ((l,v)::(l,v)) = hExtract r
+        (HCons f HNil,rout) = h2projectByLabels (undefined::(HCons l HNil)) r
+        (Record r')    = narrow (Record rout)
 
 
 {-----------------------------------------------------------------------------}
@@ -102,8 +100,8 @@ class LubNarrow a b c | a b -> c
  where
   lubNarrow :: a -> b -> (c,c)
 
-instance ( HZip la va a
-         , HZip lb vb b
+instance ( RecordLabels a la
+	 , RecordLabels b lb
          , HTIntersect la lb lc
          , H2ProjectByLabels lc a c aout
          , H2ProjectByLabels lc b c bout
@@ -112,13 +110,9 @@ instance ( HZip la va a
       => LubNarrow (Record a) (Record b) (Record c)
  where
   lubNarrow ra@(Record a) rb@(Record b) =
-     ( hProjectByLabels lc ra
-     , hProjectByLabels lc rb
+     ( hProjectByLabels (undefined::lc) ra
+     , hProjectByLabels (undefined::lc) rb
      )
-   where
-    lc = hTIntersect la lb
-    (la,_) = hUnzip a
-    (lb,_) = hUnzip b
 
 
 {-----------------------------------------------------------------------------}
@@ -176,36 +170,6 @@ instance ( HLub (HCons h (HCons h'' t)) e'
 
 {-----------------------------------------------------------------------------}
 
--- Helper of narrow
--- This is essentially a variation on projection.
-
-class  HExtract r l v
- where hExtract :: r -> (l,v)
-
-instance ( TypeEq l l1 b
-         , HExtractBool b (HCons (l1,v1) r) l v
-         ) => HExtract (HCons (l1,v1) r) l v
-  where
-   hExtract = hExtractBool (undefined::b)
-
-class HBool b
-   => HExtractBool b r l v
-  where
-   hExtractBool :: b -> r -> (l,v)
-
-instance TypeCast v1 v
-      => HExtractBool HTrue (HCons (l,v1) r) l v
-  where
-   hExtractBool _ (HCons (l,v) _) = (l,typeCast v)
-
-instance HExtract r l v
-      => HExtractBool HFalse (HCons (l1,v1) r) l v
-  where 
-   hExtractBool _ (HCons _ r) = hExtract r
-
-
-{-----------------------------------------------------------------------------}
-
 -- Typeable instances
 
 hNilTcName = mkTyCon "HList.HNil"
@@ -224,6 +188,12 @@ instance Typeable x => Typeable (Record x)
  where
   typeOf (Record x)
    = mkTyConApp recordTcName [ typeOf x ]
+
+hFieldTcName = mkTyCon "HList.F"
+instance (Typeable x, Typeable y) => Typeable (F x y)
+ where
+  typeOf _
+   = mkTyConApp hFieldTcName [ typeOf (undefined::x), typeOf (undefined::y)  ]
 
 proxyTcName = mkTyCon "HList.Proxy"
 instance Typeable x => Typeable (Proxy x)
