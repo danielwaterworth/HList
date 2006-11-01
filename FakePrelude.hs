@@ -110,7 +110,7 @@ instance HNat n => HNat (HSucc n)
 instance Show HZero where show _ = "HZero"
 instance Show (HSucc HZero)
  where show _ = "HSucc HZero"
-instance (HNat n, Show n) => Show (HSucc n)
+instance (HNat n, Show (HSucc n)) => Show (HSucc (HSucc n))
  where show n = "HSucc (" ++ show (hPred n) ++ ")"
 
 class HNat n => HNat2Integral n
