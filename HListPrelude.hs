@@ -10,12 +10,10 @@
    Basic declarations for typeful heterogeneous lists.
 
  -}
-
  
 module HListPrelude where
 
 import FakePrelude
-
 
 {-----------------------------------------------------------------------------}
 
@@ -223,15 +221,15 @@ True
 
 -- A heterogeneous apply operator
 
-class Apply f a r | f a -> r
- where
+class Apply f a r | f a -> r where
   apply :: f -> a -> r
+  apply = undefined			-- In case we use Apply for
+                                        -- type-level computations only
 
 
 -- Normal function application
 
-instance Apply (x -> y) x y
- where
+instance Apply (x -> y) x y where
   apply f x = f x
 
 
@@ -239,8 +237,7 @@ instance Apply (x -> y) x y
 
 data Id = Id
 
-instance Apply Id x x
- where
+instance Apply Id x x where
   apply _ x = x
 
 
