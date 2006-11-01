@@ -1,0 +1,2 @@
+Just (HCons 1 (HCons 'c' HNil))
+[HCons 1 (HCons 'c' HNil)]

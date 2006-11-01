@@ -1,19 +1,39 @@
-ChangeLog finally started 08 February 2006
 
-20 June     2006
+31 October 2006
+	Added HSequence.hs: (monadic) `sequence' for heterogeneous lists.
+	It is also the illustration of TypeCast.
+	
+26 October 2006
+	Added CHList.hs: Potentially infinite, open, statically
+	constrained HLists.
+	
+30 August 2006
+	Record.hs: Labels now are exclusively type-level entities with no
+	run-time representation. The Record API remains the same (although
+	the implementation had to be adjusted).
+	
+31 July	2006
+	TAG Release-2.0. The HList DARCS repository announced.
+	
+22 June	2006
+	VariantP.hs: Our extensible (variant) list supports the regular
+	list API.
+	
+20 June	2006
 	Added VariantP.hs -- polymorphic variants as dual of records.
-	The extenbsibility problem solved? We can re-use as much as old
+	The extensibility problem solved? We can re-use as much as old
 	code as possible, when extending the variant and extending
 	the functions to the extended variant (and get the subtyping for
 	free).
 	
-	
-19 June     2006
+19 June	2006
 	Added RecordP.hs -- records with unzipped and fully phantom
 	labels. Added tests as well.
 	
-08 May      2006
+08 May	2006
 	MainPatternMatch.hs -- example of pattern-matching on HList's
 	Records
+	
 08 February 2006
 	Primed hMap/HMap as to enable a new native definition
+	Started ChangeLog, finally.
