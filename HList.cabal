@@ -1,0 +1,13 @@
+Name:                HList
+Version:             0.1
+Description:         Record system
+License:             OtherLicense
+Author:              2004 Oleg Kiselyov (FNMOC, Monterey), Ralf Laemmel (CWI/VU, Amsterdam), Keean Schupke (Imperial College, London)
+Maintainer:          Musasabi <ekarttun@cs.helsinki.fi>
+Build-Depends:       base
+Hs-Source-Dir:       src
+Exposed-modules:     HList
+Other-modules:       Label4, CommonMain, Variant, GhcSyntax, GhcRecord, Record, HZip, TIC, TIP, HTypeIndexed, HOccurs, HArray, GhcExperiments, HListPrelude, TypeEqBoolGeneric, TypeEqGeneric1, TypeCastGeneric1, FakePrelude
+extensions:          OverlappingInstances, RankNTypes, FlexibleInstances,
+                     TypeSynonymInstances, UndecidableInstances
+ghc-options:         -O2
