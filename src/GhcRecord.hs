@@ -50,9 +50,11 @@ instance (HLookupByHNat n y v, HFind l x n, HZip x y r)
 -- A variation on update.
 -- Replace a proxy by a value of the proxied type.
 
-hUnproxyLabel l (v::v) r = hUpdateAtLabel l v r
+hUnproxyLabel l v r = hUpdateAtLabel l v r
  where
-  (_::Proxy v) = hLookupByLabel l r
+  tpe :: a -> Proxy a -> ()
+  tpe _ _ = ()
+  _ = tpe v (hLookupByLabel l r)
 
 
 {-----------------------------------------------------------------------------}

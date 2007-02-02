@@ -248,9 +248,11 @@ hRenameLabel l l' r = r''
 
 -- A variation on update: type-preserving update.
 
-hTPupdateAtLabel l (v::v) r = hUpdateAtLabel l v r
+hTPupdateAtLabel l v r = hUpdateAtLabel l v r
  where
-  (_::v) = hLookupByLabel l r
+   te :: a -> a -> ()
+   te _ _ = ()
+   _ = te v (hLookupByLabel l r)
 
 {-
 
