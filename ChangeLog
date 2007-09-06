@@ -1,4 +1,13 @@
-
+05 September 2007
+	Added ConsUnion.hs -- building homogeneous lists of heterogeneous
+	components by constructing the union on-the-fly.
+	
+12 February 2007
+	Added patches by Einar Karttunen:
+	Move files to subdirectories
+	Add Cabal infrastructure and HList.hs
+	Make it compile with GHC 6.6
+	
 31 October 2006
 	Added HSequence.hs: (monadic) `sequence' for heterogeneous lists.
 	It is also the illustration of TypeCast.
