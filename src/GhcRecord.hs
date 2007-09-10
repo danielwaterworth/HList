@@ -70,7 +70,7 @@ data ProxyFound x
 class HasNoProxies l
 instance HasNoProxies HNil
 instance Fail (ProxyFound x) => HasNoProxies (HCons (Proxy x) l)
-instance Fail (ProxyFound x) => HasNoProxies (HCons (F lab (Proxy x)) l)
+instance Fail (ProxyFound x) => HasNoProxies (HCons (LVPair lab (Proxy x)) l)
 instance HasNoProxies l => HasNoProxies (HCons e l)
 
 
@@ -85,8 +85,8 @@ instance Narrow a HNil
  where   narrow _ = emptyRecord
 
 instance ( Narrow rout r'
-	 , H2ProjectByLabels (HCons l HNil) r (HCons (F l v) HNil) rout
-         ) => Narrow r (HCons (F l v) r')
+	 , H2ProjectByLabels (HCons l HNil) r (HCons (LVPair l v) HNil) rout
+         ) => Narrow r (HCons (LVPair l v) r')
   where
     narrow (Record r) = Record (HCons f r')
       where
@@ -192,7 +192,7 @@ instance Typeable x => Typeable (Record x)
    = mkTyConApp recordTcName [ typeOf x ]
 
 hFieldTcName = mkTyCon "HList.F"
-instance (Typeable x, Typeable y) => Typeable (F x y)
+instance (Typeable x, Typeable y) => Typeable (LVPair x y)
  where
   typeOf _
    = mkTyConApp hFieldTcName [ typeOf (undefined::x), typeOf (undefined::y)  ]

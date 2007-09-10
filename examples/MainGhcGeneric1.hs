@@ -193,7 +193,7 @@ testRecordsP =   ( test1
   test2 = test1 .!. breed
   test3 = hDeleteAtLabelP breed test1
 --  test4 = test1 .@. breed .=. Sheep
-  test4 = hExtend (newF breed Sheep) test3
+  test4 = hExtend (newLVPair breed Sheep) test3
   test5 = price .=. 8.8 .*. test1
   test6 = fst $ h2projectByLabels (HCons breed (HCons price HNil)) test5
 

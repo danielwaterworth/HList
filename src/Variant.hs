@@ -52,9 +52,9 @@ instance HMaybied HNil HNil
   hMaybied _ = HNil
 
 instance HMaybied r r'
-      => HMaybied (HCons (F l (Proxy v)) r) (HCons (F l (Maybe v)) r')
+      => HMaybied (HCons (LVPair l (Proxy v)) r) (HCons (LVPair l (Maybe v)) r')
  where
-  hMaybied (HCons _ r) = HCons (F Nothing) (hMaybied r)
+  hMaybied (HCons _ r) = HCons (LVPair Nothing) (hMaybied r)
 
 
 {-----------------------------------------------------------------------------}
@@ -64,7 +64,7 @@ instance HMaybied r r'
 mkVariant :: ( RecordLabels v ls
              , HFind x ls n
              , HMaybied v v'
-             , HUpdateAtHNat n (F x (Maybe y)) v' v'
+             , HUpdateAtHNat n (LVPair x (Maybe y)) v' v'
              ) 
           => x -> y -> (Record v) -> Variant v'
 
@@ -72,7 +72,7 @@ mkVariant x y (Record v) = Variant v'
  where
   n       = hFind x (recordLabels v)
   ms      = hMaybied v
-  v'      = hUpdateAtHNat n (newF x (Just y)) ms
+  v'      = hUpdateAtHNat n (newLVPair x (Just y)) ms
 
 
 {-----------------------------------------------------------------------------}
@@ -81,14 +81,14 @@ mkVariant x y (Record v) = Variant v'
 
 unVariant :: ( RecordLabels v ls
              , HFind x ls n
-             , HLookupByHNat n v (F x (Maybe y))
+             , HLookupByHNat n v (LVPair x (Maybe y))
              )
           => x -> Variant v -> Maybe y
 
 unVariant x (Variant v) = y
  where
   n       = hFind x (recordLabels v)
-  F y     = hLookupByHNat n v
+  LVPair y     = hLookupByHNat n v
 
 
 {-----------------------------------------------------------------------------}

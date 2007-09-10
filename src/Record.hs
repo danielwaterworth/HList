@@ -30,10 +30,10 @@ import HArray
 -- the HList of field values. At run-time, all information about the
 -- labels is erased.
 
-newtype F l v = F v			-- Field of label l with value type v
-labelF :: F l v -> l; labelF = undefined  -- label accessor
-newF :: l -> v -> F l v
-newF _ = F
+newtype LVPair l v = LVPair v			-- Field of label l with value type v
+labelLVPair :: LVPair l v -> l; labelLVPair = undefined  -- label accessor
+newLVPair :: l -> v -> LVPair l v
+newLVPair _ = LVPair
 
 newtype Record r = Record r
 
@@ -55,9 +55,9 @@ class HRLabelSet ps
 instance HRLabelSet HNil
 instance HRLabelSet (HCons x HNil)
 instance (HEq l1 l2 HFalse, 
-	  HRLabelSet (HCons (F l2 v2) r),
-	  HRLabelSet (HCons (F l1 v1) r))
-    => HRLabelSet (HCons (F l1 v1) (HCons (F l2 v2) r))
+	  HRLabelSet (HCons (LVPair l2 v2) r),
+	  HRLabelSet (HCons (LVPair l1 v1) r))
+    => HRLabelSet (HCons (LVPair l1 v1) (HCons (LVPair l2 v2) r))
 {-
 instance (HZip ls vs ps, HLabelSet ls) => HRLabelSet ps
 -}
@@ -72,7 +72,7 @@ instance (HMember x ls HFalse, HLabelSet ls)
 -- This is a type-level only function
 class RecordLabels r ls | r -> ls
 instance RecordLabels HNil HNil
-instance RecordLabels r' ls => RecordLabels (HCons (F l v) r') (HCons l ls)
+instance RecordLabels r' ls => RecordLabels (HCons (LVPair l v) r') (HCons l ls)
 
 recordLabels :: RecordLabels r ls => r -> ls
 recordLabels = undefined
@@ -100,11 +100,11 @@ instance ( ShowLabel l
          , Show v
          , ShowComponents r
          )
-      =>   ShowComponents (HCons (F l v) r)
+      =>   ShowComponents (HCons (LVPair l v) r)
  where
-  showComponents comma (HCons f@(F v) r)
+  showComponents comma (HCons f@(LVPair v) r)
      =  comma
-     ++ showLabel (labelF f)
+     ++ showLabel (labelLVPair f)
      ++ "="
      ++ show v
      ++ showComponents "," r
@@ -118,8 +118,8 @@ class ShowLabel l
 
 -- Extension for records
 
-instance HRLabelSet (HCons (F l v) r)
-    => HExtend (F l v) (Record r) (Record (HCons (F l v) r))
+instance HRLabelSet (HCons (LVPair l v) r)
+    => HExtend (LVPair l v) (Record r) (Record (HCons (LVPair l v) r))
  where
   hExtend f (Record r) = mkRecord (HCons f r)
 
@@ -139,21 +139,30 @@ instance ( HRLabelSet r''
 {-----------------------------------------------------------------------------}
 
 -- Lookup operation
+ 
+-- This is a baseline implementation.
+-- We use a helper class, HasField, to abstract from the implementation.
 
-{- 
-   The first version:
-hLookupByLabel l (Record r) = v
- where
-   (ls,vs) = hUnzip r
-   n       = hFind l ls
-   v       = hLookupByHNat n vs
+class HasField l r v | l r -> v
+  where
+    hLookupByLabel:: l -> r -> v
 
--}
+instance ( RecordLabels r ls
+         , HFind l ls n
+         , HLookupByHNat n r (LVPair l v)
+         ) => HasField l (Record r) v
+  where
+    hLookupByLabel l (Record r) = v
+      where
+        n = hFind l (recordLabels r)
+        (LVPair v) = hLookupByHNat n r
 
 
--- Because hLookupByLabel is so frequent and important, we
--- implement it separately. The algorithm is familiar assq,
--- only the comparison operation is done at compile-time
+{-
+
+-- Because hLookupByLabel is so frequent and important, we implement
+-- it separately, more efficiently. The algorithm is familiar assq, only
+-- the comparison operation is done at compile-time
 
 class HasField l r v | l r -> v where
     hLookupByLabel:: l -> r -> v
@@ -164,15 +173,16 @@ instance HasField l r v => HasField l (Record r) v where
 class HasField' b l r v | b l r -> v where
     hLookupByLabel':: b -> l -> r -> v
 
-instance (HEq l l' b, HasField' b l (HCons (F l' v') r) v)
-    => HasField l (HCons (F l' v') r) v where
-    hLookupByLabel l r@(HCons f' _) = hLookupByLabel' (hEq l (labelF f')) l r
+instance (HEq l l' b, HasField' b l (HCons (LVPair l' v') r) v)
+    => HasField l (HCons (LVPair l' v') r) v where
+    hLookupByLabel l r@(HCons f' _) = hLookupByLabel' (hEq l (labelLVPair f')) l r
 
-instance HasField' HTrue l (HCons (F l v) r) v where 
-    hLookupByLabel' _ _ (HCons (F v) _) = v
+instance HasField' HTrue l (HCons (LVPair l v) r) v where 
+    hLookupByLabel' _ _ (HCons (LVPair v) _) = v
 instance HasField l r v => HasField' HFalse l (HCons fld r) v where
     hLookupByLabel' _ l (HCons _ r) = hLookupByLabel l r
 
+-}
 
 
 {-----------------------------------------------------------------------------}
@@ -191,7 +201,7 @@ hDeleteAtLabel l (Record r) = Record r'
 hUpdateAtLabel l v (Record r) = Record r'
  where
   n    = hFind l (recordLabels r)
-  r'   = hUpdateAtHNat n (newF l v) r
+  r'   = hUpdateAtHNat n (newLVPair l v) r
 
 
 {-----------------------------------------------------------------------------}
@@ -212,12 +222,12 @@ instance H2ProjectByLabels ls HNil HNil HNil where
     h2projectByLabels _ _ = (HNil,HNil)
 
 instance (HMember l' ls b, 
-	  H2ProjectByLabels' b ls (HCons (F l' v') r') rin rout)
-    => H2ProjectByLabels ls (HCons (F l' v') r') rin rout where
+	  H2ProjectByLabels' b ls (HCons (LVPair l' v') r') rin rout)
+    => H2ProjectByLabels ls (HCons (LVPair l' v') r') rin rout where
     -- h2projectByLabels = h2projectByLabels' (undefined::b)
     -- The latter is solely for the Hugs benefit
     h2projectByLabels ls r@(HCons f' _) = h2projectByLabels' b ls r
-      where b = hMember (labelF f') ls
+      where b = hMember (labelLVPair f') ls
 
 class H2ProjectByLabels' b ls r rin rout | b ls r -> rin rout where
     h2projectByLabels' :: b -> ls -> r -> (rin,rout)
@@ -241,7 +251,7 @@ hRenameLabel l l' r = r''
  where
   v   = hLookupByLabel l r
   r'  = hDeleteAtLabel l r
-  r'' = hExtend (newF l' v) r'
+  r'' = hExtend (newLVPair l' v) r'
 
 
 {-----------------------------------------------------------------------------}
@@ -285,14 +295,14 @@ instance HLeftUnion r (Record HNil) r
 
 instance ( RecordLabels r ls
          , HMember l ls b
-         , HLeftUnionBool b r (F l v) r'''
+         , HLeftUnionBool b r (LVPair l v) r'''
          , HLeftUnion (Record r''') (Record r') r''
          )
-           => HLeftUnion (Record r) (Record (HCons (F l v) r')) r''
+           => HLeftUnion (Record r) (Record (HCons (LVPair l v) r')) r''
   where
    hLeftUnion (Record r) (Record (HCons f r')) = r''
     where
-     b       = hMember (labelF f) (recordLabels r)
+     b       = hMember (labelLVPair f) (recordLabels r)
      r'''    = hLeftUnionBool b r f
      r''     = hLeftUnion (Record r''') (Record r')
 

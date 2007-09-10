@@ -61,11 +61,11 @@ instance RecordR2P HNil HNil HNil where
     record_r2p _ = emptyRecordP
     record_p2r _ = emptyRecord
 
-instance (RecordR2P r ls vs, HRLabelSet (HCons (F l v) r),
+instance (RecordR2P r ls vs, HRLabelSet (HCons (LVPair l v) r),
 	  HLabelSet (HCons l ls), HSameLength ls vs)
-    => RecordR2P (HCons (F l v) r) (HCons l ls) (HCons v vs) where
+    => RecordR2P (HCons (LVPair l v) r) (HCons l ls) (HCons v vs) where
     record_r2p (Record (HCons f r)) = hExtend f (record_r2p (Record r))
-    record_p2r (RecordP (HCons v r)) = hExtend (F v) (record_p2r (RecordP r))
+    record_p2r (RecordP (HCons v r)) = hExtend (LVPair v) (record_p2r (RecordP r))
 
 labels_of_recordp :: RecordP ls vs -> ls
 labels_of_recordp = undefined
@@ -86,9 +86,9 @@ instance (RecordR2P r ls vs, ShowComponents r, HRLabelSet r) =>
 -- Extension for records
 
 instance (HLabelSet (HCons l ls), HSameLength ls vs)
-    => HExtend (F l v) (RecordP ls vs) (RecordP (HCons l ls) (HCons v vs))
+    => HExtend (LVPair l v) (RecordP ls vs) (RecordP (HCons l ls) (HCons v vs))
  where
-  hExtend (F v) (RecordP vs) = mkRecordP undefined (HCons v vs)
+  hExtend (LVPair v) (RecordP vs) = mkRecordP undefined (HCons v vs)
 
 
 {-----------------------------------------------------------------------------}
