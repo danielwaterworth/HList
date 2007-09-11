@@ -54,10 +54,11 @@ emptyRecord = mkRecord HNil
 class HRLabelSet ps
 instance HRLabelSet HNil
 instance HRLabelSet (HCons x HNil)
-instance (HEq l1 l2 HFalse, 
-	  HRLabelSet (HCons (LVPair l2 v2) r),
-	  HRLabelSet (HCons (LVPair l1 v1) r))
-    => HRLabelSet (HCons (LVPair l1 v1) (HCons (LVPair l2 v2) r))
+instance ( HEq l1 l2 HFalse
+	 , HRLabelSet (HCons (LVPair l2 v2) r)
+	 , HRLabelSet (HCons (LVPair l1 v1) r)
+         ) => HRLabelSet (HCons (LVPair l1 v1) (HCons (LVPair l2 v2) r))
+
 {-
 instance (HZip ls vs ps, HLabelSet ls) => HRLabelSet ps
 -}
@@ -72,7 +73,8 @@ instance (HMember x ls HFalse, HLabelSet ls)
 -- This is a type-level only function
 class RecordLabels r ls | r -> ls
 instance RecordLabels HNil HNil
-instance RecordLabels r' ls => RecordLabels (HCons (LVPair l v) r') (HCons l ls)
+instance RecordLabels r' ls
+      => RecordLabels (HCons (LVPair l v) r') (HCons l ls)
 
 recordLabels :: RecordLabels r ls => r -> ls
 recordLabels = undefined
@@ -154,7 +156,8 @@ instance ( RecordLabels r ls
   where
     hLookupByLabel l (Record r) = v
       where
-        n = hFind l (recordLabels r)
+        ls = recordLabels r
+        n = hFind l ls
         (LVPair v) = hLookupByHNat n r
 
 
