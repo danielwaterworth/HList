@@ -1,3 +1,8 @@
+12 September 2007
+	Added MakeLabels -- Template Haskell code for automatically
+	generating Labels (as in Label4.hs).
+	Renaming of (data) types in Records, to more meaningful names.
+	
 05 September 2007
 	Added ConsUnion.hs -- building homogeneous lists of heterogeneous
 	components by constructing the union on-the-fly.
