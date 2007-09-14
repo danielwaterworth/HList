@@ -149,6 +149,7 @@ class HasField l r v | l r -> v
   where
     hLookupByLabel:: l -> r -> v
 
+{-
 instance ( RecordLabels r ls
          , HFind l ls n
          , HLookupByHNat n r (LVPair l v)
@@ -160,15 +161,12 @@ instance ( RecordLabels r ls
         n = hFind l ls
         (LVPair v) = hLookupByHNat n r
 
+-}
 
-{-
 
 -- Because hLookupByLabel is so frequent and important, we implement
 -- it separately, more efficiently. The algorithm is familiar assq, only
 -- the comparison operation is done at compile-time
-
-class HasField l r v | l r -> v where
-    hLookupByLabel:: l -> r -> v
 
 instance HasField l r v => HasField l (Record r) v where
     hLookupByLabel l (Record r) = hLookupByLabel l r
@@ -178,14 +176,14 @@ class HasField' b l r v | b l r -> v where
 
 instance (HEq l l' b, HasField' b l (HCons (LVPair l' v') r) v)
     => HasField l (HCons (LVPair l' v') r) v where
-    hLookupByLabel l r@(HCons f' _) = hLookupByLabel' (hEq l (labelLVPair f')) l r
+    hLookupByLabel l r@(HCons f' _) = 
+             hLookupByLabel' (hEq l (labelLVPair f')) l r
 
 instance HasField' HTrue l (HCons (LVPair l v) r) v where 
     hLookupByLabel' _ _ (HCons (LVPair v) _) = v
 instance HasField l r v => HasField' HFalse l (HCons fld r) v where
     hLookupByLabel' _ l (HCons _ r) = hLookupByLabel l r
 
--}
 
 
 {-----------------------------------------------------------------------------}
@@ -271,7 +269,7 @@ hTPupdateAtLabel l v r = hUpdateAtLabel l v r
 
 -- We could also say:
 
-hTPupdateAtLabel l (v::v) r = hUpdateAtLabel l v r `asTypeOf` r
+hTPupdateAtLabel l v r = hUpdateAtLabel l v r `asTypeOf` r
 
 -- Then we were taking a dependency on Haskell's type equivalence.
 -- This would also constrain the actual implementation of hUpdateAtLabel.
@@ -317,6 +315,68 @@ instance HLeftUnionBool HTrue r f r
 
 instance HLeftUnionBool HFalse r f (HCons f r)
    where hLeftUnionBool _ r f = HCons f r
+
+
+{-----------------------------------------------------------------------------}
+-- Compute the symmetric union of two records r1 and r2 and
+-- return the pair of records injected into the union (ru1, ru2).
+-- To be more precise, we compute the symmetric union _type_ ru
+-- of two record _types_ r1 and r2. The emphasis on types is important.
+-- The two records (ru1,ru2) in the result of unionSR have the same
+-- type ru, but they are generally different values.
+-- Here the simple example: suppose
+--   r1 = (Label .=. True)  .*. emptyRecord
+--   r2 = (Label .=. False) .*. emptyRecord
+-- Then unionSR r1 r2 will return (r1,r2). Both components of the result
+-- are different records of the same type.
+
+-- To project from the union ru, use hProjectByLabels.
+-- It is possible to project from the union obtaining a record
+-- that was not used at all when creating the union.
+-- We do assure however that if (unionSR r1 r2) gave (r1u,r2u),
+-- then projecting r1u onto the type of r1 gives the _value_ identical
+-- to r1. Ditto for r2.
+
+class UnionSymRec r1 r2 ru | r1 r2 -> ru where
+    unionSR :: r1 -> r2 -> (ru, ru)
+
+instance UnionSymRec r1 (Record HNil) r1 where
+    unionSR r1 _ = (r1, r1)
+
+instance ( RecordLabels r1 ls
+         , HMember l ls b
+         , UnionSymRec' b (Record r1) (LVPair l v) (Record r2') ru
+         )
+    => UnionSymRec (Record r1) (Record (HCons (LVPair l v) r2')) ru
+    where
+    unionSR r1 (Record (HCons f r2')) = 
+	unionSR' (undefined::b) r1 f (Record r2')
+
+class UnionSymRec' b r1 f2 r2' ru | b r1 f2 r2' -> ru where
+    unionSR' :: b -> r1 -> f2 -> r2'  -> (ru, ru)
+
+-- Field f2 is already in r1, so it will be in the union of r1
+-- with the rest of r2.
+-- To inject (HCons f2 r2) in that union, we should replace the
+-- field f2
+instance (UnionSymRec r1 r2' (Record ru),
+	  HasField l2 ru v2,
+	  HUpdateAtHNat n (LVPair l2 v2) ru ru,
+	  RecordLabels ru ls,
+	  HFind l2 ls n)
+    => UnionSymRec' HTrue r1 (LVPair l2 v2) r2' (Record ru) where
+    unionSR' _ r1 (LVPair v2) r2' = (ul, ur')
+       where (ul,ur) = unionSR r1 r2'
+             ur' = hTPupdateAtLabel (undefined::l2) v2 ur
+
+
+instance (UnionSymRec r1 r2' (Record ru),
+	  HExtend f2 (Record ru) (Record (HCons f2 ru)))
+    => UnionSymRec' HFalse r1 f2 r2' (Record (HCons f2 ru)) where
+    unionSR' _ r1 f2 r2' = (ul', ur')
+       where (ul,ur) = unionSR r1 r2'
+             ul' = hExtend f2 ul
+             ur' = hExtend f2 ur
 
 
 {-----------------------------------------------------------------------------}

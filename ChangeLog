@@ -1,3 +1,7 @@
+13 September 2007
+	Added UnionSymRec, the symmetric union of two records. The code
+	is not very optimal though.
+  
 12 September 2007
 	Added MakeLabels -- Template Haskell code for automatically
 	generating Labels (as in Label4.hs).
