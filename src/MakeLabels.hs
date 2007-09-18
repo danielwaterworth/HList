@@ -15,7 +15,7 @@ data Draw;     draw     = proxy::Proxy Draw
 
 -}
 
-module MakeLabels (makeLabels) where
+module MakeLabels (makeLabels,label) where
 
 import FakePrelude
 
@@ -86,6 +86,10 @@ makeLabels = liftM concat . sequence . map repl
  repl n = liftM (replace_name from (to n)) dcl_template
  from = (make_tname "foo",make_dname "foo")
  to n = (make_tname n,make_dname n)
+
+label :: String -> Q [Dec]
+label s = makeLabels [s]
+
 
 -- Show the code expression
 show_code cde = runQ cde >>= putStrLn . pprint
