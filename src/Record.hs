@@ -219,27 +219,30 @@ hProjectByLabels ls (Record r)
 class H2ProjectByLabels ls r rin rout | ls r -> rin rout where
     h2projectByLabels :: ls -> r -> (rin,rout)
 
-instance H2ProjectByLabels ls HNil HNil HNil where
+instance H2ProjectByLabels HNil r HNil r where
+    h2projectByLabels _ r = (HNil,r)
+
+instance H2ProjectByLabels (HCons l ls) HNil HNil HNil where
     h2projectByLabels _ _ = (HNil,HNil)
 
-instance (HMember l' ls b, 
-	  H2ProjectByLabels' b ls (HCons (LVPair l' v') r') rin rout)
-    => H2ProjectByLabels ls (HCons (LVPair l' v') r') rin rout where
+instance (HMemberM l' (HCons l ls) b, 
+	  H2ProjectByLabels' b (HCons l ls) (HCons (LVPair l' v') r') rin rout)
+    => H2ProjectByLabels (HCons l ls) (HCons (LVPair l' v') r') rin rout where
     -- h2projectByLabels = h2projectByLabels' (undefined::b)
     -- The latter is solely for the Hugs benefit
-    h2projectByLabels ls r@(HCons f' _) = h2projectByLabels' b ls r
-      where b = hMember (labelLVPair f') ls
+    h2projectByLabels ls r@(HCons f' _) =h2projectByLabels' (undefined::b) ls r
+      -- where b = hMember (labelLVPair f') ls
 
 class H2ProjectByLabels' b ls r rin rout | b ls r -> rin rout where
     h2projectByLabels' :: b -> ls -> r -> (rin,rout)
     
-instance H2ProjectByLabels ls r' rin rout =>
-    H2ProjectByLabels' HTrue ls (HCons f' r') (HCons f' rin) rout where
-    h2projectByLabels' _ ls (HCons x r) = (HCons x rin, rout)
-	where (rin,rout) = h2projectByLabels ls r
+instance H2ProjectByLabels ls' r' rin rout =>
+    H2ProjectByLabels' (HJust ls') ls (HCons f' r') (HCons f' rin) rout where
+    h2projectByLabels' _ _ (HCons x r) = (HCons x rin, rout)
+	where (rin,rout) = h2projectByLabels (undefined::ls') r
 
 instance H2ProjectByLabels ls r' rin rout =>
-    H2ProjectByLabels' HFalse ls (HCons f' r') rin (HCons f' rout) where
+    H2ProjectByLabels' HNothing ls (HCons f' r') rin (HCons f' rout) where
     h2projectByLabels' _ ls (HCons x r) = (rin, HCons x rout)
 	where (rin,rout) = h2projectByLabels ls r
 

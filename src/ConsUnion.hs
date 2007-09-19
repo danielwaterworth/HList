@@ -144,6 +144,7 @@ class TypeEqIncR atu at res | atu at -> res where
 instance TypeEqIncR (Record ru) (TOther b) TNone
 instance TypeEqIncR (TOther a)  b TNone
 
+{-
 instance 
     (RecordLabels ru ls1,
 		      RecordLabels r ls2,
@@ -156,6 +157,7 @@ instance
  -- (RecordEquiv ru r b, TypeEqIncR' b res)
     => TypeEqIncR (Record ru) (Record r) res where
     tsearchR ru r = tsearchR' (equivR ru r)
+-}
 
 class TypeEqIncR' pjs res | pjs -> res where
     tsearchR' :: pjs -> res

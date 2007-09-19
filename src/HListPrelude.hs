@@ -479,6 +479,25 @@ hMember :: HMember e l b => e -> l -> b
 hMember _ _ = undefined
 
 
+-- Another type-level membership test
+-- Check to see if an element e occurs in a list l
+-- If not, return HNothing
+-- If the element does occur, return HJust l'
+-- where l' is a type-level list without e
+
+class HMemberM e l r | e l -> r
+instance HMemberM e HNil HNothing
+instance (HEq e e' b, HMemberM' b e (HCons e' l) res)
+      =>  HMemberM e (HCons e' l) res
+class HMemberM' b e l r | b e l -> r
+instance HMemberM' HTrue e (HCons e l) (HJust l)
+instance (HMemberM e l r, HMemberM' r e (HCons e' l) res)
+    => HMemberM' HFalse e (HCons e' l) res
+instance HMemberM' HNothing e l HNothing
+instance HMemberM' (HJust l') e (HCons e' l) (HJust (HCons e' l'))
+
+
+
 -- Membership test based on type equality
 
 class HBool b => HTMember e l b | e l -> b
