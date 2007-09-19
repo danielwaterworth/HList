@@ -38,6 +38,9 @@ module ConsUnion (NilEither, nilEither,
 
 import TypeCastGeneric2
 
+import FakePrelude (HNothing(..), HJust(..), HEq)
+import HListPrelude (HNil, HCons)
+import Record
 
 -- List constructors that union as well
 
@@ -96,7 +99,7 @@ class TypeEqInc' atu t res | atu t -> res where
     tsearch' :: atu -> t -> res
     tsearch' = undefined
 
-instance TypeEqInc' TNone t TNone
+-- instance TypeEqInc' (TOther tu)  t TNone
 instance (TypeEqInc tul t atul, TypeEqInc tur t atur,
 	  TypeEqInc'' atul atur tul tur res)
     => TypeEqInc' (Either tul tur) t res where
@@ -129,11 +132,53 @@ instance TypeEqInc'' TNone (TContains t tur) tul tur
 
 
 
--- Check to see if t is an Either type
+instance (IsRecord tu atu, IsRecord t at, TypeEqIncR atu at res)
+    => TypeEqInc' (TOther tu) t res where
+    tsearch' _ t = tsearchR (undefined::atu) (undefined::at)
+
+
+class TypeEqIncR atu at res | atu at -> res where
+    tsearchR :: atu -> at -> res
+    tsearchR = undefined
+
+instance TypeEqIncR (Record ru) (TOther b) TNone
+instance TypeEqIncR (TOther a)  b TNone
+
+instance 
+    (RecordLabels ru ls1,
+		      RecordLabels r ls2,
+		      H2ProjectByLabels ls1 r res21in res21out,
+		      H2ProjectByLabels ls2 ru res12in res12out,
+		      RecordEquiv'' (r -> (res21in, res21out))
+				    (ru -> (res12in, res12out))
+				    res',
+    TypeEqIncR' res' res)
+ -- (RecordEquiv ru r b, TypeEqIncR' b res)
+    => TypeEqIncR (Record ru) (Record r) res where
+    tsearchR ru r = tsearchR' (equivR ru r)
+
+class TypeEqIncR' pjs res | pjs -> res where
+    tsearchR' :: pjs -> res
+    tsearchR' = undefined
+
+instance TypeEqIncR' HNothing TNone
+
+instance TypeEqIncR' (HJust (ru->r,r->ru)) (TContains r ru) where
+    tsearchR' (HJust (pj,ij)) = TContains ij (Just . pj)
+
+
+
+-- Check to see if t is an Either type or a record type
+data TOther t
 class IsEither t res | t -> res
 instance IsEither (Either t1 t2) (Either t1 t2)
-instance TypeCast res TNone => IsEither t res
+instance TypeCast res (TOther t) => IsEither t res
 
+class IsRecord t res | t -> res
+-- instance IsRecord (Record t) (Record t)
+-- instance IsRecord (Record HNil) (Record HNil)
+-- instance IsRecord (Record (HCons a b)) HNothing
+instance TypeCast res (TOther t) => IsRecord t res
 
 -- A few tests of consEither
 
@@ -156,6 +201,7 @@ te6 = consEither 'a' (consEither True (consEither False nilEither))
 
 te7 = consEither True (consEither True (consEither () nilEither))
 -- [Left True,Left True,Right ()]
+
 
 -- Down-cast a value of a union type to a summand type.
 -- Make sure that the summand type occurs once at least.

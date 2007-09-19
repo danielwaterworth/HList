@@ -179,6 +179,12 @@ testRecords =   ( test1
   test4 = test1 .@. breed .=. Sheep
   test5 = price .=. 8.8 .*. test1
   test6 = hProjectByLabels (HCons breed (HCons price HNil)) test5
+  -- test7 should have the same type as test1 and test4 but
+  -- with the different order of labels
+  -- test7 is even the same value as test4, modulo field order
+  test7 = hExtend (newLVPair breed Sheep) test3
+  test81 = equivR test1 test3 -- HNothing
+  -- test82 = let HJust (r17,r71) = equivR test1 test7 in (r17 test1,r71 test7)
 
 testRecordsP =   ( test1 
 		 , ( test2
