@@ -39,8 +39,8 @@ module ConsUnion (NilEither, nilEither,
 import TypeCastGeneric2
 
 import FakePrelude (HNothing(..), HJust(..), HEq)
-import HListPrelude (HNil, HCons)
 import Record
+import GhcRecord
 
 -- List constructors that union as well
 
@@ -144,20 +144,19 @@ class TypeEqIncR atu at res | atu at -> res where
 instance TypeEqIncR (Record ru) (TOther b) TNone
 instance TypeEqIncR (TOther a)  b TNone
 
-{-
-instance 
-    (RecordLabels ru ls1,
-		      RecordLabels r ls2,
-		      H2ProjectByLabels ls1 r res21in res21out,
-		      H2ProjectByLabels ls2 ru res12in res12out,
-		      RecordEquiv'' (r -> (res21in, res21out))
-				    (ru -> (res12in, res12out))
-				    res',
-    TypeEqIncR' res' res)
- -- (RecordEquiv ru r b, TypeEqIncR' b res)
+
+instance (RecordEquiv' (Record ru -> r12)
+				   (Record r -> r21)
+				   b,
+		      NarrowM r ru r21,
+		      NarrowM ru r r12,
+	  RecordEquiv ru r b, TypeEqIncR' b res)
+  -- For some reason the compiler needs all the above constraints, rather
+  -- than the two below. Why does it need to `inline' the
+  -- RecordEquiv ru r b constraint? Seems like a bug...
+  -- (RecordEquiv ru r b, TypeEqIncR' b res)
     => TypeEqIncR (Record ru) (Record r) res where
     tsearchR ru r = tsearchR' (equivR ru r)
--}
 
 class TypeEqIncR' pjs res | pjs -> res where
     tsearchR' :: pjs -> res
@@ -177,9 +176,7 @@ instance IsEither (Either t1 t2) (Either t1 t2)
 instance TypeCast res (TOther t) => IsEither t res
 
 class IsRecord t res | t -> res
--- instance IsRecord (Record t) (Record t)
--- instance IsRecord (Record HNil) (Record HNil)
--- instance IsRecord (Record (HCons a b)) HNothing
+instance IsRecord (Record t) (Record t)
 instance TypeCast res (TOther t) => IsRecord t res
 
 -- A few tests of consEither

@@ -5,7 +5,9 @@
 	Added NarrowM, which reports both success and failure of narrowing
 	Added equivR, record equivalence modulo field order, with
 	witnessing conversions
-	
+	ConsUnion.hs now checks for record types and treat the latter
+	equivalent modulo the order of fields. This gives optimized,
+	shallower unions.
 	
 13 September 2007
 	Added UnionSymRec, the symmetric union of two records. The code
