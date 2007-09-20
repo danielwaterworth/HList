@@ -176,8 +176,9 @@ instance (HProjectByLabelP l ls vs lso' v vso')
 -- classes H2ProjectByLabels and H2ProjectByLabels' are declared in
 -- Record.hs
 
-instance H2ProjectByLabels ls (RecordP HNil HNil) (RecordP HNil HNil)
-                              (RecordP HNil HNil)
+instance H2ProjectByLabels (HCons l ls) 
+                           (RecordP HNil HNil) (RecordP HNil HNil)
+                           (RecordP HNil HNil)
     where
     h2projectByLabels _ _ = (emptyRecordP,emptyRecordP)
 

@@ -23,27 +23,6 @@ import HArray
 import Record 
 import Data.Typeable
 
-{-----------------------------------------------------------------------------}
-
-{-
-
--- The following is no longer needed: see HasField class in Record.hs
-
--- A look-up operation with A shielding class
--- Hugs cannot deal with such shield.
--- We get buggy "Outstanding context ..." for record access.
-
-class Hash l r v | l r -> v
- where
-  hLookupByLabel :: l -> r -> v
-
-instance (HLookupByHNat n y v, HFind l x n, HZip x y r)
-      => Hash l (Record r) v
- where
-  hLookupByLabel l r = Record.hLookupByLabel l r
-
--}
-
 
 {-----------------------------------------------------------------------------}
 
@@ -77,6 +56,44 @@ instance HasNoProxies l => HasNoProxies (HCons e l)
 {-----------------------------------------------------------------------------}
 
 -- Narrow a record to a different record type
+
+-- First is the `monadic' version, which returns the `failure indictator'
+-- (HNothing) if the narrowing fails because the source does not have
+-- all the fields for the target.
+class  NarrowM a b res | a b -> res where 
+    narrowM :: Record a -> Record b -> res
+
+instance NarrowM a HNil (HJust (Record HNil)) where 
+    narrowM _ _ = HJust emptyRecord
+
+instance (H2ProjectByLabels (HCons l HNil) a rin rout,
+	  NarrowM' rin rout b res)
+    => NarrowM a (HCons (LVPair l v) b) res where 
+    narrowM (Record a) _ = narrowM' rin rout (undefined::b)
+     where
+        (rin,rout) = h2projectByLabels (undefined::(HCons l HNil)) a
+
+class  NarrowM' rin rout b res | rin rout b -> res where 
+    narrowM' :: rin -> rout -> b -> res
+
+instance NarrowM' HNil rout b HNothing where
+    narrowM' _ _ _ = HNothing
+
+instance (NarrowM rout b res',
+	  NarrowM'' f res' res)
+    => NarrowM' (HCons f HNil) rout b res where
+    narrowM' (HCons f HNil) rout b = 
+	narrowM'' f (narrowM (Record rout) (Record b))
+
+class  NarrowM'' f r r' | f r -> r' where 
+    narrowM'' :: f -> r -> r'
+
+instance NarrowM'' f HNothing HNothing where
+    narrowM'' _ _ = HNothing
+
+instance NarrowM'' f (HJust (Record r)) (HJust (Record (HCons f r))) where
+    narrowM'' f (HJust (Record r)) = HJust (Record (HCons f r))
+
 
 class  Narrow a b
  where narrow :: Record a -> Record b
@@ -170,8 +187,65 @@ instance ( HLub (HCons h (HCons h'' t)) e'
     r = hLub (HCons (fst e) t)
 
 
-{-----------------------------------------------------------------------------}
 
+{-----------------------------------------------------------------------------}
+-- Record equivalence modulo field order
+-- Decide if two records r1 and r2 are identical or differ only in the order
+-- of their fields.
+-- If the two record types are indeed equivalent, return the witness of
+-- their equivalence, (HJust (r1->r2,r2->r1)). If they are not equivalent,
+-- return HNothing
+-- The function equivR does not examine the values of its arguments:
+-- it needs only their types.
+
+-- The algorithm is simple: two records are equivalent if one can be narrowed
+-- to the other, and vice versa. The narrowing coercions are the desired
+-- witnesses.
+-- The obvious optimization is to check first if two records are of the same
+-- type. That requires TypeEq however. Perhaps we shouldn't use it here.
+-- Use of the record narrowing tacitly assumes that the label of a record
+-- field uniquely determines the type of the field value. Therefore, we
+-- should not use equivR on two records with inconsistent labeling...
+
+class RecordEquiv r1 r2 res | r1 r2 -> res where
+    equivR :: Record r1 -> Record r2 -> res
+
+
+{-
+instance (TypeEq r1 r2 b, RecordEquiv' b r1 r2 res) 
+    => RecordEquiv r1 r2 res where
+    equivR _ _ = equivR' (undefined::b) (undefined::r1) (undefined::r2)
+-- Two records have the same type: the fast path
+instance RecordEquiv' HTrue r r 
+                      (HJust (Record r->Record r,Record r->Record r)) where
+    equivR' _ _ _ = HJust (id,id)
+-}
+
+instance (NarrowM r1 r2 r12, NarrowM r2 r1 r21, 
+	  RecordEquiv' (Record r1->r12) (Record r2->r21) res)
+    => RecordEquiv r1 r2 res where
+    equivR r1 r2 = equivR' r1p r2p
+     where r1p (r1::Record r1) = narrowM r1 r2
+	   r2p (r2::Record r2) = narrowM r2 r1
+
+class RecordEquiv' pj1 pj2 res | pj1 pj2 -> res where
+    equivR' :: pj1 -> pj2 -> res
+
+instance RecordEquiv' (r1->HJust r2) (r2->HJust r1) (HJust (r1->r2,r2->r1)) 
+    where
+    equivR' r12 r21 = HJust (unj.r12,unj.r21)
+     where unj (HJust x) = x
+
+-- r2 has something that r1 doesn't
+instance RecordEquiv' (r1->HNothing) pj2 HNothing where
+    equivR' _ _ = HNothing
+
+-- r1 is a strict superset of r2
+instance RecordEquiv' (r1->HJust r2) (r2->HNothing) HNothing where
+    equivR' _ _ = HNothing
+
+
+{-----------------------------------------------------------------------------}
 -- Typeable instances
 
 hNilTcName = mkTyCon "HList.HNil"
@@ -205,3 +279,4 @@ instance Typeable x => Typeable (Proxy x)
 
 
 {-----------------------------------------------------------------------------}
+

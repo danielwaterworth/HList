@@ -35,6 +35,7 @@ import Datatypes2
 import CommonMain hiding (HDeleteMany, hDeleteMany)
 import GhcSyntax
 import GhcExperiments
+import GhcRecord
 import TypeEqBoolGeneric
 import TypeEqGeneric1
 import TypeCastGeneric1
@@ -171,6 +172,7 @@ testRecords =   ( test1
               , ( test4
               , ( test5
               , ( test6
+	      , (test7, test81, test82, test83, test84, test85)
                 ))))))
  where
   test1 = unpricedAngus
@@ -184,7 +186,14 @@ testRecords =   ( test1
   -- test7 is even the same value as test4, modulo field order
   test7 = hExtend (newLVPair breed Sheep) test3
   test81 = equivR test1 test3 -- HNothing
-  -- test82 = let HJust (r17,r71) = equivR test1 test7 in (r17 test1,r71 test7)
+  test82 = let HJust (r17,r71) = equivR test1 test7 in (r17 test1,r71 test7)
+  test83 = let HJust (r17,r71) = 
+		   equivR test1 test7 in show (r17 test1) == show test7
+  test84 = let HJust (r47,r74) = 
+		   equivR test4 test7 in (show (r47 test4) == show test7,
+					  show (r74 test7) == show test4)
+  test85 = let HJust (r7,r7') = 
+		   equivR test7 test7 in show (r7 test7) == show (r7' test7)
 
 testRecordsP =   ( test1 
 		 , ( test2

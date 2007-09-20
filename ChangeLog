@@ -2,7 +2,11 @@
 	Added HMemberM
 	Optimized record projection in Record.hs. The optimization
 	should be especially noticeable for record narrowing.
-
+	Added NarrowM, which reports both success and failure of narrowing
+	Added equivR, record equivalence modulo field order, with
+	witnessing conversions
+	
+	
 13 September 2007
 	Added UnionSymRec, the symmetric union of two records. The code
 	is not very optimal though.
