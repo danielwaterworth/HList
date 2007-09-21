@@ -30,8 +30,13 @@ import HArray
 -- the HList of field values. At run-time, all information about the
 -- labels is erased.
 
-newtype LVPair l v = LVPair v		-- Field of label l with value type v
-labelLVPair :: LVPair l v -> l; labelLVPair = undefined  -- label accessor
+-- Field of label l with value type v
+newtype LVPair l v = LVPair { valueLVPair :: v }
+
+-- Label accessor
+labelLVPair :: LVPair l v -> l
+labelLVPair = undefined
+
 newLVPair :: l -> v -> LVPair l v
 newLVPair _ = LVPair
 

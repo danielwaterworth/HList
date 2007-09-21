@@ -183,5 +183,5 @@ distr:
 
 commit:
 	darcs record -a -m "Committed from the Makefile"
-	darcs push
+	darcs push -a
 

@@ -54,13 +54,18 @@ instance ( HList l
 
 {-----------------------------------------------------------------------------}
 
--- Test for arrow type
+-- Test for type constructors
 
-class FunType t b | t -> b
-instance (HBool b', TypeCast HTrue b') => FunType (a -> b) b'
-instance (HBool b', TypeCast HFalse b') => FunType x b'
+-- * -> *
+class IsTC1 x (f :: * -> *) b | x f -> b
+instance TypeCast HTrue b => IsTC1 (f a) f b
+instance TypeCast HFalse b => IsTC1 f x b
 
+-- * -> * -> *
+class IsTC2 x (f :: * -> * -> *) b | x f -> b
+instance TypeCast HTrue b => IsTC2 (f a b) f b
+instance TypeCast HFalse b => IsTC2 f x b
 
-funType :: FunType t b => t -> b
+-- Sample
+funType :: IsTC2 t (->) b => t -> b
 funType = undefined
-
