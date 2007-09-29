@@ -215,9 +215,11 @@ hUpdateAtLabel l v (Record r) = Record r'
 -- It is also an important operation: the basis of many
 -- deconstructors -- so we try to implement it efficiently.
 
-hProjectByLabels ls (Record r)
- = 
+hProjectByLabels ls (Record r) = 
    mkRecord (fst $ h2projectByLabels ls r)
+
+hProjectByLabels2 ls (Record r) = (mkRecord rin, mkRecord rout)
+   where (rin,rout) = h2projectByLabels ls r
 
 -- Invariant: r = rin `disjoint-union` rout
 --            labels(rin) = ls
