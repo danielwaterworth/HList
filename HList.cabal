@@ -2,8 +2,10 @@ Name:                HList
 Version:             0.1
 Description:         Record system
 License:             OtherLicense
+License-File:        LICENSE
 Author:              2004 Oleg Kiselyov (FNMOC, Monterey), Ralf Laemmel (CWI/VU, Amsterdam), Keean Schupke (Imperial College, London)
 Maintainer:          Musasabi <ekarttun@cs.helsinki.fi>
+
 Build-Depends:       base
 Hs-Source-Dir:       src
 Exposed-modules:     HList
