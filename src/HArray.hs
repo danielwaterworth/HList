@@ -2,7 +2,7 @@
 {-# OPTIONS -fallow-undecidable-instances #-}
 {-# OPTIONS -fallow-overlapping-instances #-}
 
-{- 
+{-
 
    The HList library
 
@@ -12,7 +12,7 @@
 
  -}
 
- 
+
 module HArray where
 
 import FakePrelude
@@ -65,7 +65,7 @@ class HNat n => HUpdateAtHNat n e l l' | n e l -> l', l' n -> e
 
 instance HUpdateAtHNat HZero e' (HCons e l) (HCons e' l)
  where
-  hUpdateAtHNat _ e' (HCons e l) = HCons e' l
+  hUpdateAtHNat _ e' (HCons _ l) = HCons e' l
 
 instance (HUpdateAtHNat n e' l l', HNat n)
       => HUpdateAtHNat (HSucc n) e' (HCons e l) (HCons e l')
@@ -77,7 +77,8 @@ instance (HUpdateAtHNat n e' l l', HNat n)
 {-----------------------------------------------------------------------------}
 
 -- Splitting an array according to indices
-
+hSplitByHNats :: (HSplitByHNats' ns l' l'1 l'', HMap (HAddTag HTrue) l l') =>
+                ns -> l -> (l'1, l'')
 hSplitByHNats ns l = hSplitByHNats' ns (hFlag l)
 
 class HNats ns => HSplitByHNats' ns l l' l'' | ns l -> l' l''
@@ -89,7 +90,7 @@ instance HSplit l l' l''
  where
   hSplitByHNats' HNil l = (HNil,l')
    where
-    (l',l'') = hSplit l
+    (l',_) = hSplit l
 
 instance ( HLookupByHNat n l (e,b)
          , HUpdateAtHNat n (e,HFalse) l l'''
@@ -128,7 +129,7 @@ instance ( HLookupByHNat n (HCons e l) e'
   hProjectByHNats (HCons n ns) l = HCons e' l'
    where e' = hLookupByHNat n l
          l' = hProjectByHNats ns l
- 
+
 
 {-----------------------------------------------------------------------------}
 
@@ -238,10 +239,10 @@ hLength _ =  undefined
 -- Bounded lists
 
 class HMaxLength l s
-instance (HLength l s', HLt s' (HSucc s) HTrue) => HMaxLength l s 
+instance (HLength l s', HLt s' (HSucc s) HTrue) => HMaxLength l s
 
 class HMinLength l s
-instance (HLength l s', HLt s (HSucc s') HTrue) => HMinLength l s 
+instance (HLength l s', HLt s (HSucc s') HTrue) => HMinLength l s
 
 class HSingleton l
 instance HLength l (HSucc HZero) => HSingleton l

@@ -2,7 +2,7 @@
 {-# OPTIONS -fallow-undecidable-instances #-}
 {-# OPTIONS -fallow-overlapping-instances #-}
 
-{- 
+{-
 
    The HList library
 
@@ -14,13 +14,13 @@
 
 -}
 
- 
+
 module GhcRecord where
 
 import FakePrelude
 import HListPrelude
 import HArray
-import Record 
+import Record
 import Data.Typeable
 
 
@@ -28,7 +28,10 @@ import Data.Typeable
 
 -- A variation on update.
 -- Replace a proxy by a value of the proxied type.
-
+hUnproxyLabel :: (HUpdateAtHNat n (LVPair l a) t l', HFind l ls n,
+                               RecordLabels t ls,
+                               HasField l t (Proxy a)) =>
+                                             l -> a -> Record t -> Record l'
 hUnproxyLabel l v r = hUpdateAtLabel l v r
  where
   tpe :: a -> Proxy a -> ()
@@ -60,32 +63,32 @@ instance HasNoProxies l => HasNoProxies (HCons e l)
 -- First is the `monadic' version, which returns the `failure indictator'
 -- (HNothing) if the narrowing fails because the source does not have
 -- all the fields for the target.
-class  NarrowM a b res | a b -> res where 
+class  NarrowM a b res | a b -> res where
     narrowM :: Record a -> Record b -> res
 
-instance NarrowM a HNil (HJust (Record HNil)) where 
+instance NarrowM a HNil (HJust (Record HNil)) where
     narrowM _ _ = HJust emptyRecord
 
 instance (H2ProjectByLabels (HCons l HNil) a rin rout,
-	  NarrowM' rin rout b res)
-    => NarrowM a (HCons (LVPair l v) b) res where 
+          NarrowM' rin rout b res)
+    => NarrowM a (HCons (LVPair l v) b) res where
     narrowM (Record a) _ = narrowM' rin rout (undefined::b)
      where
         (rin,rout) = h2projectByLabels (undefined::(HCons l HNil)) a
 
-class  NarrowM' rin rout b res | rin rout b -> res where 
+class  NarrowM' rin rout b res | rin rout b -> res where
     narrowM' :: rin -> rout -> b -> res
 
 instance NarrowM' HNil rout b HNothing where
     narrowM' _ _ _ = HNothing
 
 instance (NarrowM rout b res',
-	  NarrowM'' f res' res)
+          NarrowM'' f res' res)
     => NarrowM' (HCons f HNil) rout b res where
-    narrowM' (HCons f HNil) rout b = 
-	narrowM'' f (narrowM (Record rout) (Record b))
+    narrowM' (HCons f HNil) rout b =
+        narrowM'' f (narrowM (Record rout) (Record b))
 
-class  NarrowM'' f r r' | f r -> r' where 
+class  NarrowM'' f r r' | f r -> r' where
     narrowM'' :: f -> r -> r'
 
 instance NarrowM'' f HNothing HNothing where
@@ -102,7 +105,7 @@ instance Narrow a HNil
  where   narrow _ = emptyRecord
 
 instance ( Narrow rout r'
-	 , H2ProjectByLabels (HCons l HNil) r (HCons (LVPair l v) HNil) rout
+         , H2ProjectByLabels (HCons l HNil) r (HCons (LVPair l v) HNil) rout
          ) => Narrow r (HCons (LVPair l v) r')
   where
     narrow (Record r) = Record (HCons f r')
@@ -120,7 +123,7 @@ class LubNarrow a b c | a b -> c
   lubNarrow :: a -> b -> (c,c)
 
 instance ( RecordLabels a la
-	 , RecordLabels b lb
+         , RecordLabels b lb
          , HTIntersect la lb lc
          , H2ProjectByLabels lc a c aout
          , H2ProjectByLabels lc b c bout
@@ -128,7 +131,7 @@ instance ( RecordLabels a la
          )
       => LubNarrow (Record a) (Record b) (Record c)
  where
-  lubNarrow ra@(Record a) rb@(Record b) =
+  lubNarrow ra@(Record _) rb@(Record _) =
      ( hProjectByLabels (undefined::lc) ra
      , hProjectByLabels (undefined::lc) rb
      )
@@ -139,6 +142,7 @@ instance ( RecordLabels a la
 -- List constructors that also LUB together
 
 data NilLub
+nilLub :: NilLub
 nilLub = undefined :: NilLub
 
 class ConsLub h t l | h t -> l
@@ -212,26 +216,26 @@ class RecordEquiv r1 r2 res | r1 r2 -> res where
 
 
 {-
-instance (TypeEq r1 r2 b, RecordEquiv' b r1 r2 res) 
+instance (TypeEq r1 r2 b, RecordEquiv' b r1 r2 res)
     => RecordEquiv r1 r2 res where
     equivR _ _ = equivR' (undefined::b) (undefined::r1) (undefined::r2)
 -- Two records have the same type: the fast path
-instance RecordEquiv' HTrue r r 
+instance RecordEquiv' HTrue r r
                       (HJust (Record r->Record r,Record r->Record r)) where
     equivR' _ _ _ = HJust (id,id)
 -}
 
-instance (NarrowM r1 r2 r12, NarrowM r2 r1 r21, 
-	  RecordEquiv' (Record r1->r12) (Record r2->r21) res)
+instance (NarrowM r1 r2 r12, NarrowM r2 r1 r21,
+          RecordEquiv' (Record r1->r12) (Record r2->r21) res)
     => RecordEquiv r1 r2 res where
     equivR r1 r2 = equivR' r1p r2p
-     where r1p (r1::Record r1) = narrowM r1 r2
-	   r2p (r2::Record r2) = narrowM r2 r1
+     where r1p (r1 :: Record r1) = narrowM r1 r2
+           r2p (r2 :: Record r2) = narrowM r2 r1
 
 class RecordEquiv' pj1 pj2 res | pj1 pj2 -> res where
     equivR' :: pj1 -> pj2 -> res
 
-instance RecordEquiv' (r1->HJust r2) (r2->HJust r1) (HJust (r1->r2,r2->r1)) 
+instance RecordEquiv' (r1->HJust r2) (r2->HJust r1) (HJust (r1->r2,r2->r1))
     where
     equivR' r12 r21 = HJust (unj.r12,unj.r21)
      where unj (HJust x) = x
@@ -248,29 +252,34 @@ instance RecordEquiv' (r1->HJust r2) (r2->HNothing) HNothing where
 {-----------------------------------------------------------------------------}
 -- Typeable instances
 
+hNilTcName :: TyCon
 hNilTcName = mkTyCon "HList.HNil"
 instance Typeable HNil
  where
   typeOf _ = mkTyConApp hNilTcName []
 
+hConsTcName :: TyCon
 hConsTcName = mkTyCon "HList.HCons"
 instance (Typeable x, Typeable y) => Typeable (HCons x y)
  where
   typeOf (HCons x y)
    = mkTyConApp hConsTcName [ typeOf x, typeOf y ]
 
+recordTcName :: TyCon
 recordTcName = mkTyCon "HList.Record"
 instance Typeable x => Typeable (Record x)
  where
   typeOf (Record x)
    = mkTyConApp recordTcName [ typeOf x ]
 
+hFieldTcName :: TyCon
 hFieldTcName = mkTyCon "HList.F"
 instance (Typeable x, Typeable y) => Typeable (LVPair x y)
  where
   typeOf _
    = mkTyConApp hFieldTcName [ typeOf (undefined::x), typeOf (undefined::y)  ]
 
+proxyTcName :: TyCon
 proxyTcName = mkTyCon "HList.Proxy"
 instance Typeable x => Typeable (Proxy x)
  where

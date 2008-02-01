@@ -2,7 +2,7 @@
 {-# OPTIONS -fallow-undecidable-instances #-}
 {-# OPTIONS -fallow-overlapping-instances #-}
 
-{- 
+{-
 
    The HList library
 
@@ -98,37 +98,31 @@ instance ( HType2HNat   e l n
 {-----------------------------------------------------------------------------}
 
 -- Define type-indexed delete in terms of the natural-based primitive
-
-hDeleteAtProxy p l
- =
-   hDeleteAtHNat (hType2HNat p l) l
+hDeleteAtProxy :: (HDeleteAtHNat n l l', HType2HNat e l n) => Proxy e -> l -> l'
+hDeleteAtProxy p l = hDeleteAtHNat (hType2HNat p l) l
 
 
 {-----------------------------------------------------------------------------}
 
 -- Define type-indexed update in terms of the natural-based update
-
-hUpdateAtType e l
- =
-   hUpdateAtHNat (hType2HNat (toProxy e) l) e l
+hUpdateAtType :: (HUpdateAtHNat n e l l', HType2HNat e l n) => e -> l -> l'
+hUpdateAtType e l = hUpdateAtHNat (hType2HNat (toProxy e) l) e l
 
 
 {-----------------------------------------------------------------------------}
 
 -- Projection based on proxies
-
-hProjectByProxies ps l
- =
-   hProjectByHNats (hTypes2HNats ps l) l
+hProjectByProxies :: (HProjectByHNats ns l l', HTypes2HNats ps l ns) => ps -> l -> l'
+hProjectByProxies ps l = hProjectByHNats (hTypes2HNats ps l) l
 
 
 {-----------------------------------------------------------------------------}
 
 -- Splitting based on proxies
-
-hSplitByProxies ps l
- =
-   hSplitByHNats (hTypes2HNats ps l) l
+hSplitByProxies :: (HMap (HAddTag HTrue) l l', HSplitByHNats' ns l' l'1 l'',
+                   HTypes2HNats ps l ns) =>
+                  ps -> l -> (l'1, l'')
+hSplitByProxies ps l = hSplitByHNats (hTypes2HNats ps l) l
 
 
 {-----------------------------------------------------------------------------}

@@ -1,7 +1,7 @@
 {-# OPTIONS -fglasgow-exts #-}
 {-# OPTIONS -fallow-undecidable-instances #-}
 
-{- 
+{-
 
    The HList library
 
@@ -9,7 +9,7 @@
 
    Variants, i.e., labelled sums.
 
-   One approach to their implementation would be to consider both 
+   One approach to their implementation would be to consider both
    the favoured label and the corresponding value as dynamics upon
    variant construction. Since we are too lazy to programme some
    Typeable instances for non-ghc systems (NB: in GHC, Typeable
@@ -21,15 +21,13 @@
 
 -}
 
- 
+
 module Variant where
 
 import FakePrelude
 import HListPrelude
 import HArray
-import HOccurs
 import Record
-import TIC
 
 
 {-----------------------------------------------------------------------------}
@@ -48,7 +46,7 @@ class HMaybied r r' | r -> r'
   hMaybied :: r -> r'
 
 instance HMaybied HNil HNil
- where 
+ where
   hMaybied _ = HNil
 
 instance HMaybied r r'
@@ -65,7 +63,7 @@ mkVariant :: ( RecordLabels v ls
              , HFind x ls n
              , HMaybied v v'
              , HUpdateAtHNat n (LVPair x (Maybe y)) v' v'
-             ) 
+             )
           => x -> y -> (Record v) -> Variant v'
 
 mkVariant x y (Record v) = Variant v'

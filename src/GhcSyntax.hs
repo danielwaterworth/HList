@@ -1,6 +1,6 @@
 {-# OPTIONS -fglasgow-exts #-}
 
-{- 
+{-
 
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
@@ -26,9 +26,9 @@ import TIC
 
 infixr 2 :*:
 infixr 2 .*.
- 
+
 type e :*: l = HCons e l
- 
+
 (.*.) :: HExtend e l l' => e -> l -> l'
 (.*.) =  hExtend
 
@@ -36,20 +36,25 @@ type e :*: l = HCons e l
 {-----------------------------------------------------------------------------}
 
 -- Convenience notation for records
- 
+
 infixr 4 :=:
 type l :=: v = LVPair l v
- 
+
 infixr 4 .=.
+(.=.) :: l -> v -> LVPair l v
 l .=. v = newLVPair l v
 
 infixr 3 .!.
+(.!.) :: (HasField l r v) => r -> l -> v
 r .!. l =  hLookupByLabel l r
 
 infixl 1 .-.
+(.-.) :: (H2ProjectByLabels (HCons e HNil) t t1 t2) => Record t -> e -> Record t2
 r .-. l =  hDeleteAtLabel l r
 
 infixl 1 .@.
+-- (.@.) :: (HUpdateAtHNat n (LVPair t t1) t2 l', HFind t ls n, RecordLabels t2 ls) =>
+--      Record t2 -> LVPair t t1 -> Record l'
 r .@. f@(LVPair v) =  hUpdateAtLabel (labelLVPair f) v r
 
 infixr 1 .^.
@@ -59,6 +64,7 @@ infixr 1 .<.
 f@(LVPair v) .<. r = hTPupdateAtLabel (labelLVPair f) v r
 
 infixl 1 .<++.
+(.<++.) :: (HLeftUnion r r' r'') => r -> r' -> r''
 r .<++. r' = hLeftUnion r r'
 
 

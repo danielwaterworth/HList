@@ -2,7 +2,7 @@
 {-# OPTIONS -fallow-undecidable-instances #-}
 {-# OPTIONS -fallow-overlapping-instances #-}
 
-{- 
+{-
 
    The HList library
 
@@ -17,9 +17,6 @@ module HOccurs where
 
 import FakePrelude
 import HListPrelude
-import HArray
-
-
 
 {-----------------------------------------------------------------------------}
 
@@ -74,7 +71,7 @@ class HOccursFst e l
 instance HList l
       => HOccursFst e (HCons e l)
  where
-  hOccursFst (HCons e l) = e
+  hOccursFst (HCons e _) = e
 
 instance ( HOccursFst e l, HList l )
       =>   HOccursFst e (HCons e' l)
@@ -116,11 +113,11 @@ instance ( HOccurs e l
 
 -- One occurrence and nothing is left
 -- A variation that avoids overlapping instances
-                                                                               
+
 class HOccurs' e l
  where
   hOccurs' :: l -> e
-                                                                               
+
 instance ( TypeEq e e' b
          , HOccursBool b e (HCons e' l) )
       =>   HOccurs' e (HCons e' l)
@@ -129,7 +126,7 @@ instance ( TypeEq e e' b
    where
     e = hOccursBool b (HCons e' l)
     b = proxyEq (toProxy e) (toProxy e')
-                                                                               
+
 class HOccursBool b e l
  where
   hOccursBool :: b -> l -> e
@@ -140,7 +137,7 @@ instance ( HList l
            => HOccursBool HTrue e (HCons e l)
  where
   hOccursBool _ (HCons e _) = e
-                                                                               
+
 instance ( HOccurs' e l
          , HList l
          )
@@ -163,7 +160,7 @@ instance HOccursOpt e HNil
 
 instance HOccursOpt e (HCons e l)
  where
-  hOccursOpt (HCons e l) = Just e
+  hOccursOpt (HCons e _) = Just e
 
 instance HOccursOpt e l
       => HOccursOpt e (HCons e' l)
@@ -190,7 +187,7 @@ class HProject l l'
 
 instance HProject l HNil
  where
-  hProject l = HNil
+  hProject _ = HNil
 
 instance ( HList l'
          , HOccurs e l

@@ -10,5 +10,5 @@ data Breed     = Cow | Sheep
                 deriving (Show,Eq)
 newtype Price  = Price Float
                 deriving (Show,Eq,Ord)
-data Disease   = BSE | FM 
+data Disease   = BSE | FM
                 deriving (Show,Eq)

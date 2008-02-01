@@ -1,7 +1,7 @@
 {-# OPTIONS -fglasgow-exts #-}
 {-# OPTIONS -fallow-undecidable-instances #-}
 
-{- 
+{-
 
    The HList library
 
@@ -21,7 +21,7 @@
    instance of Show. One must make sure that the show functions does
    not examine the value, as descr is purely phantom. Here's an
    example of the good Label description:
-	data MyLabelDescr; instance Show MyLabelDescr where show _ = "descr"
+        data MyLabelDescr; instance Show MyLabelDescr where show _ = "descr"
    which obviously can be automated with Template Haskell.
 
    This model even allows the labels in a record to belong to different
@@ -32,12 +32,11 @@
 module Label3 where
 
 import FakePrelude
-import HListPrelude
 import Record (ShowLabel(..))
 
 
 -- Labels are type-level naturals
-data HNat x => Label x ns desc  -- labels are exclusively type-level entities 
+data HNat x => Label x ns desc  -- labels are exclusively type-level entities
 
 
 -- Public constructors for labels
@@ -66,11 +65,11 @@ instance ( HEq x x' b
 instance (HNat x, Show desc) => ShowLabel (Label x ns desc) where
   showLabel = show . getd
       where getd :: Label x ns desc -> desc -- for the sake of Hugs
-	    getd = undefined
+            getd = undefined
 
 instance (HNat x, Show desc) => Show (Label x ns desc)
  where
   show = show . getd
       where getd :: Label x ns desc -> desc -- for the sake of Hugs
-	    getd = undefined
+            getd = undefined
 

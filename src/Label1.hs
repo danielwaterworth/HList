@@ -1,7 +1,7 @@
 {-# OPTIONS -fglasgow-exts #-}
 {-# OPTIONS -fallow-undecidable-instances #-}
 
-{- 
+{-
 
    The HList library
 
@@ -14,11 +14,10 @@
 
 -}
 
- 
+
 module Label1 where
 
 import FakePrelude
-import HListPrelude
 import Record (ShowLabel(..))
 
 
@@ -34,12 +33,12 @@ label =  Label
 
 
 -- Construct the first label
-
+firstLabel :: Label HZero
 firstLabel = label hZero
 
 
 -- Construct the next label
-
+nextLabel ::( HNat t) => Label t -> Label (HSucc t)
 nextLabel (Label n) = label (hSucc n)
 
 

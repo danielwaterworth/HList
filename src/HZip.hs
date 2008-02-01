@@ -1,13 +1,11 @@
 {-# OPTIONS -fglasgow-exts #-}
 {-# OPTIONS -fallow-undecidable-instances #-}
- 
+
 module HZip where
 
 import HListPrelude
-import HArray
 
-
-{- 
+{-
 
    The HList library
 
@@ -58,13 +56,13 @@ instance HZippable x y => HZip x y (x,y)
 instance HZip HNil HNil (HNil,HNil)
  where
   hZip x y = (x,y)
-  hUnzip = id 
+  hUnzip = id
 
 instance HZip xt yt zt
       => HZip (HCons xh xt) (HCons yh yt) (HCons xh xt,HCons yh yt)
  where
   hZip x y = (x,y)
-  hUnzip = id 
+  hUnzip = id
 
 -}
 

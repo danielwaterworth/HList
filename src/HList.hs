@@ -45,13 +45,6 @@ import CommonMain hiding ( HDeleteMany
 import GhcSyntax
 import GhcRecord
 import GhcExperiments
-import TypeEqBoolGeneric
-import TypeEqGeneric1
-import TypeCastGeneric1
-import Label4
---import DeepNarrow
---import Nominal
---import New
 
 import Data.STRef
 import Data.IORef
@@ -59,11 +52,13 @@ import Data.Typeable
 import Control.Monad
 import Control.Monad.ST
 import Control.Monad.Fix
-import GHC.IOBase hiding (stToIO, writeIORef, readIORef, newIORef, IORef,unsafeIOToST)
+import GHC.IOBase hiding (stToIO, writeIORef, readIORef, newIORef, IORef,unsafeIOToST,unsafeSTToIO)
 
 infixr 9 #
-m # field = (m .!. field) 
+-- (#) :: (HasField l r v) => r -> l -> v
+m # field = (m .!. field)
 
+concrete :: (MonadFix m) => (a -> m a) -> a -> m a
 concrete generator self = generator self
  where
   _ = mfix generator

@@ -1,7 +1,7 @@
 {-# OPTIONS -fglasgow-exts #-}
 {-# OPTIONS -fallow-undecidable-instances #-}
 
-{- 
+{-
 
    The HList library
 
@@ -14,7 +14,7 @@
 
 -}
 
- 
+
 module Record where
 
 import FakePrelude
@@ -44,24 +44,23 @@ newtype Record r = Record r
 
 
 -- Build a record
-
 mkRecord :: HRLabelSet r => r -> Record r
 mkRecord = Record
 
 
 -- Build an empty record
-
+emptyRecord :: Record HNil
 emptyRecord = mkRecord HNil
 
 
 -- Propery of a proper label set for a record: no duplication of labels
- 
+
 class HRLabelSet ps
 instance HRLabelSet HNil
 instance HRLabelSet (HCons x HNil)
 instance ( HEq l1 l2 HFalse
-	 , HRLabelSet (HCons (LVPair l2 v2) r)
-	 , HRLabelSet (HCons (LVPair l1 v1) r)
+         , HRLabelSet (HCons (LVPair l2 v2) r)
+         , HRLabelSet (HCons (LVPair l1 v1) r)
          ) => HRLabelSet (HCons (LVPair l1 v1) (HCons (LVPair l2 v2) r))
 
 {-
@@ -136,7 +135,7 @@ instance HRLabelSet (HCons (LVPair l v) r)
 -- Record concatenation
 
 instance ( HRLabelSet r''
-	 , HAppend r r' r''
+         , HAppend r r' r''
          )
     => HAppend (Record r) (Record r') (Record r'')
  where
@@ -146,7 +145,7 @@ instance ( HRLabelSet r''
 {-----------------------------------------------------------------------------}
 
 -- Lookup operation
- 
+
 -- This is a baseline implementation.
 -- We use a helper class, HasField, to abstract from the implementation.
 
@@ -181,10 +180,10 @@ class HasField' b l r v | b l r -> v where
 
 instance (HEq l l' b, HasField' b l (HCons (LVPair l' v') r) v)
     => HasField l (HCons (LVPair l' v') r) v where
-    hLookupByLabel l r@(HCons f' _) = 
+    hLookupByLabel l r@(HCons f' _) =
              hLookupByLabel' (hEq l (labelLVPair f')) l r
 
-instance HasField' HTrue l (HCons (LVPair l v) r) v where 
+instance HasField' HTrue l (HCons (LVPair l v) r) v where
     hLookupByLabel' _ _ (HCons (LVPair v) _) = v
 instance HasField l r v => HasField' HFalse l (HCons fld r) v where
     hLookupByLabel' _ l (HCons _ r) = hLookupByLabel l r
@@ -194,7 +193,7 @@ instance HasField l r v => HasField' HFalse l (HCons fld r) v where
 {-----------------------------------------------------------------------------}
 
 -- Delete operation
-
+hDeleteAtLabel :: (H2ProjectByLabels (HCons e HNil) t t1 t2) => e -> Record t -> Record t2
 hDeleteAtLabel l (Record r) = Record r'
  where
   (_,r')  = h2projectByLabels (HCons l HNil) r
@@ -203,7 +202,8 @@ hDeleteAtLabel l (Record r) = Record r'
 {-----------------------------------------------------------------------------}
 
 -- Update operation
-
+hUpdateAtLabel ::( RecordLabels t ls, HFind e ls n, HUpdateAtHNat n (LVPair e v) t l') =>
+                e -> v -> Record t -> Record l'
 hUpdateAtLabel l v (Record r) = Record r'
  where
   n    = hFind l (recordLabels r)
@@ -214,10 +214,11 @@ hUpdateAtLabel l v (Record r) = Record r'
 -- Projection for records
 -- It is also an important operation: the basis of many
 -- deconstructors -- so we try to implement it efficiently.
+hProjectByLabels :: (HRLabelSet a, H2ProjectByLabels ls t a b) => ls -> Record t -> Record a
+hProjectByLabels ls (Record r) = mkRecord (fst $ h2projectByLabels ls r)
 
-hProjectByLabels ls (Record r) = 
-   mkRecord (fst $ h2projectByLabels ls r)
-
+hProjectByLabels2 :: (HRLabelSet t2, HRLabelSet t1, H2ProjectByLabels ls t t1 t2) =>
+                                                 ls -> Record t -> (Record t1, Record t2)
 hProjectByLabels2 ls (Record r) = (mkRecord rin, mkRecord rout)
    where (rin,rout) = h2projectByLabels ls r
 
@@ -232,32 +233,34 @@ instance H2ProjectByLabels HNil r HNil r where
 instance H2ProjectByLabels (HCons l ls) HNil HNil HNil where
     h2projectByLabels _ _ = (HNil,HNil)
 
-instance (HMemberM l' (HCons l ls) b, 
-	  H2ProjectByLabels' b (HCons l ls) (HCons (LVPair l' v') r') rin rout)
+instance (HMemberM l' (HCons l ls) b,
+          H2ProjectByLabels' b (HCons l ls) (HCons (LVPair l' v') r') rin rout)
     => H2ProjectByLabels (HCons l ls) (HCons (LVPair l' v') r') rin rout where
     -- h2projectByLabels = h2projectByLabels' (undefined::b)
     -- The latter is solely for the Hugs benefit
-    h2projectByLabels ls r@(HCons f' _) =h2projectByLabels' (undefined::b) ls r
+    h2projectByLabels ls r@(HCons _ _) =h2projectByLabels' (undefined::b) ls r
       -- where b = hMember (labelLVPair f') ls
 
 class H2ProjectByLabels' b ls r rin rout | b ls r -> rin rout where
     h2projectByLabels' :: b -> ls -> r -> (rin,rout)
-    
+
 instance H2ProjectByLabels ls' r' rin rout =>
     H2ProjectByLabels' (HJust ls') ls (HCons f' r') (HCons f' rin) rout where
     h2projectByLabels' _ _ (HCons x r) = (HCons x rin, rout)
-	where (rin,rout) = h2projectByLabels (undefined::ls') r
+        where (rin,rout) = h2projectByLabels (undefined::ls') r
 
 instance H2ProjectByLabels ls r' rin rout =>
     H2ProjectByLabels' HNothing ls (HCons f' r') rin (HCons f' rout) where
     h2projectByLabels' _ ls (HCons x r) = (rin, HCons x rout)
-	where (rin,rout) = h2projectByLabels ls r
+        where (rin,rout) = h2projectByLabels ls r
 
 
 {-----------------------------------------------------------------------------}
 
 -- Rename the label of record
- 
+hRenameLabel :: (H2ProjectByLabels (HCons e HNil) t t1 t2, HasField e t v,
+                HRLabelSet (HCons (LVPair l v) t2)) =>
+               e -> l -> Record t -> Record (HCons (LVPair l v) t2)
 hRenameLabel l l' r = r''
  where
   v   = hLookupByLabel l r
@@ -268,7 +271,9 @@ hRenameLabel l l' r = r''
 {-----------------------------------------------------------------------------}
 
 -- A variation on update: type-preserving update.
-
+hTPupdateAtLabel :: (HUpdateAtHNat n (LVPair l a) t l', HFind l ls n, RecordLabels t ls,
+                    HasField l t a) =>
+                   l -> a -> Record t -> Record l'
 hTPupdateAtLabel l v r = hUpdateAtLabel l v r
  where
    te :: a -> a -> ()
@@ -359,8 +364,8 @@ instance ( RecordLabels r1 ls
          )
     => UnionSymRec (Record r1) (Record (HCons (LVPair l v) r2')) ru
     where
-    unionSR r1 (Record (HCons f r2')) = 
-	unionSR' (undefined::b) r1 f (Record r2')
+    unionSR r1 (Record (HCons f r2')) =
+        unionSR' (undefined::b) r1 f (Record r2')
 
 class UnionSymRec' b r1 f2 r2' ru | b r1 f2 r2' -> ru where
     unionSR' :: b -> r1 -> f2 -> r2'  -> (ru, ru)
@@ -370,10 +375,10 @@ class UnionSymRec' b r1 f2 r2' ru | b r1 f2 r2' -> ru where
 -- To inject (HCons f2 r2) in that union, we should replace the
 -- field f2
 instance (UnionSymRec r1 r2' (Record ru),
-	  HasField l2 ru v2,
-	  HUpdateAtHNat n (LVPair l2 v2) ru ru,
-	  RecordLabels ru ls,
-	  HFind l2 ls n)
+          HasField l2 ru v2,
+          HUpdateAtHNat n (LVPair l2 v2) ru ru,
+          RecordLabels ru ls,
+          HFind l2 ls n)
     => UnionSymRec' HTrue r1 (LVPair l2 v2) r2' (Record ru) where
     unionSR' _ r1 (LVPair v2) r2' = (ul, ur')
        where (ul,ur) = unionSR r1 r2'
@@ -381,7 +386,7 @@ instance (UnionSymRec r1 r2' (Record ru),
 
 
 instance (UnionSymRec r1 r2' (Record ru),
-	  HExtend f2 (Record ru) (Record (HCons f2 ru)))
+          HExtend f2 (Record ru) (Record (HCons f2 ru)))
     => UnionSymRec' HFalse r1 f2 r2' (Record (HCons f2 ru)) where
     unionSR' _ r1 f2 r2' = (ul', ur')
        where (ul,ur) = unionSR r1 r2'

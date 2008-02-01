@@ -29,22 +29,23 @@ heterogeneous/homogeneous mediation.''
 -}
 
 module ConsUnion (NilEither, nilEither,
-		  consEither,
+                  consEither,
 
                   -- Union injection/projection
-		  TSame, TNone, TContains(..),
-		  tsearch,
-		  downCast ) where
+                  TSame, TNone, TContains(..),
+                  tsearch,
+                  downCast ) where
 
 import TypeCastGeneric2
 
-import FakePrelude (HNothing(..), HJust(..), HEq)
+import FakePrelude (HNothing(..), HJust(..))
 import Record
 import GhcRecord
 
 -- List constructors that union as well
 
 data NilEither
+nilEither :: NilEither
 nilEither = undefined :: NilEither
 
 class ConsEither h t l | h t -> l
@@ -75,13 +76,13 @@ instance ConsEither' (TContains e eu) e eu [eu] where
 
 -- Compare the type t with the type tu and return:
 --  TSame -- if t = tu
---  TContains t tu -- if tu is the type Either tul tur and 
+--  TContains t tu -- if tu is the type Either tul tur and
 --                      either tul or tur is or includes t
 --  TNone -- otherwise
 
-data TSame				-- outcomes of the comparison
+data TSame                              -- outcomes of the comparison
 data TContains t tu = TContains (t->tu)       -- injection function
-		                (tu->Maybe t) -- projection function
+                                (tu->Maybe t) -- projection function
 data TNone
 
 class TypeEqInc tu t res | tu t -> res where
@@ -90,10 +91,10 @@ class TypeEqInc tu t res | tu t -> res where
 
 
 instance TypeEqInc tu tu TSame
-instance (IsEither tu atu, TypeEqInc' atu t res) 
+instance (IsEither tu atu, TypeEqInc' atu t res)
     => TypeEqInc tu t res
   where
-    tsearch tu = tsearch' (undefined::atu)
+    tsearch _ = tsearch' (undefined::atu)
 
 class TypeEqInc' atu t res | atu t -> res where
     tsearch' :: atu -> t -> res
@@ -101,12 +102,12 @@ class TypeEqInc' atu t res | atu t -> res where
 
 -- instance TypeEqInc' (TOther tu)  t TNone
 instance (TypeEqInc tul t atul, TypeEqInc tur t atur,
-	  TypeEqInc'' atul atur tul tur res)
+          TypeEqInc'' atul atur tul tur res)
     => TypeEqInc' (Either tul tur) t res where
-    tsearch' atu t = tsearch'' (tsearch (undefined::tul) t)
+    tsearch' _ t = tsearch'' (tsearch (undefined::tul) t)
                                (tsearch (undefined::tur) t)
-			       (undefined::tul)
-			       (undefined::tur)
+                               (undefined::tul)
+                               (undefined::tur)
 
 class TypeEqInc'' atul atur tul tur res | atul atur tul tur -> res where
     tsearch'' :: atul -> atur -> tul -> tur -> res
@@ -122,19 +123,19 @@ instance TypeEqInc'' TNone TSame tul t (TContains t (Either tul t)) where
 
 instance TypeEqInc'' (TContains t tul) TNone tul tur
     (TContains t (Either tul tur)) where
-    tsearch'' (TContains inj prj)  _ _ _ = 
-	TContains (Left . inj) (either prj (const Nothing))
+    tsearch'' (TContains inj prj)  _ _ _ =
+        TContains (Left . inj) (either prj (const Nothing))
 
 instance TypeEqInc'' TNone (TContains t tur) tul tur
     (TContains t (Either tul tur)) where
-    tsearch'' _ (TContains inj prj) _ _ = 
-	TContains (Right . inj) (either (const Nothing) prj)
+    tsearch'' _ (TContains inj prj) _ _ =
+        TContains (Right . inj) (either (const Nothing) prj)
 
 
 
 instance (IsRecord tu atu, IsRecord t at, TypeEqIncR atu at res)
     => TypeEqInc' (TOther tu) t res where
-    tsearch' _ t = tsearchR (undefined::atu) (undefined::at)
+    tsearch' _ _ = tsearchR (undefined::atu) (undefined::at)
 
 
 class TypeEqIncR atu at res | atu at -> res where
@@ -146,11 +147,11 @@ instance TypeEqIncR (TOther a)  b TNone
 
 
 instance (RecordEquiv' (Record ru -> r12)
-				   (Record r -> r21)
-				   b,
-		      NarrowM r ru r21,
-		      NarrowM ru r r12,
-	  RecordEquiv ru r b, TypeEqIncR' b res)
+                                   (Record r -> r21)
+                                   b,
+                      NarrowM r ru r21,
+                      NarrowM ru r r12,
+          RecordEquiv ru r b, TypeEqIncR' b res)
   -- For some reason the compiler needs all the above constraints, rather
   -- than the two below. Why does it need to `inline' the
   -- RecordEquiv ru r b constraint? Seems like a bug...

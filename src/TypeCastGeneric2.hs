@@ -1,7 +1,7 @@
 {-# OPTIONS -fglasgow-exts #-}
 {-# OPTIONS -fallow-undecidable-instances #-}
 
-{- 
+{-
 
    The HList library
 
@@ -14,13 +14,13 @@
 
 -}
 
-  
+
 module TypeCastGeneric2 where
 
 -- We make everything self-contained to show that separate compilation
 -- is not needed.
 
-import FakePrelude hiding (TypeCast,typeCast)
+import FakePrelude () -- hiding (TypeCast,typeCast)
 
 
 {-----------------------------------------------------------------------------}

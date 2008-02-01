@@ -1,7 +1,7 @@
 {-# OPTIONS -fglasgow-exts #-}
 {-# OPTIONS -fallow-undecidable-instances #-}
 
-{- 
+{-
 
    The HList library
 
@@ -10,7 +10,7 @@
    Basic declarations for typeful heterogeneous lists.
 
  -}
- 
+
 module HListPrelude where
 
 import FakePrelude
@@ -111,7 +111,7 @@ instance (HList l, HAppend l l' l'')
  where
   hAppend (HCons x l) l' = HCons x (hAppend l l')
 
-   
+
 {-----------------------------------------------------------------------------}
 
 -- Reversing HLists
@@ -131,11 +131,11 @@ instance (HReverse' HNil l2 l3, HReverse' HNil l3 l2)
 class HReverse' l1 l2 l3 | l1 l2 -> l3
  where
   hReverse':: l1 -> l2 -> l3
-    
+
 instance HReverse' l1 HNil l1
  where
   hReverse' l1 HNil = l1
-    
+
 instance HReverse' (HCons a l1) l2' l3
       => HReverse' l1 (HCons a l2') l3
  where
@@ -168,10 +168,11 @@ instance ( NaiveHReverse l l'
 --
 
 -- List termination
-hEnd t@(HCons x y) = t
+hEnd :: HCons t t1 -> HCons t t1
+hEnd t@(HCons _ _) = t
 
 {-
-   Note: 
+   Note:
         - x :: HCons a b
             means: forall a b. x :: HCons a b
         - hEnd x
@@ -223,7 +224,7 @@ True
 
 class Apply f a r | f a -> r where
   apply :: f -> a -> r
-  apply = undefined			-- In case we use Apply for
+  apply = undefined                     -- In case we use Apply for
                                         -- type-level computations only
 
 
@@ -269,7 +270,7 @@ class HMap f l l' | f l -> l'
 
 instance HMap f HNil HNil
  where
-  hMap f HNil = HNil
+  hMap _ HNil = HNil
 
 instance (
            Apply f x y,
@@ -312,7 +313,7 @@ hMapM f =  hMapOut f
 -- hMapM_  :: forall m a f e. (Monad m, HMapOut f a (m e)) => f -> a -> m ()
 -- Without explicit type signature, it's Ok. Sigh.
 -- Anyway, Hugs does insist on a better type. So we restrict as follows:
--- 
+--
 hMapM_   :: (Monad m, HMapOut f l (m ())) => f -> l -> m ()
 hMapM_ f =  sequence_ .  disambiguate . hMapM f
  where
@@ -327,6 +328,7 @@ hMapM_ f =  sequence_ .  disambiguate . hMapM f
 append' :: [a] -> [a] -> [a]
 append' l l' = foldr (:) l' l
 
+hAppend' :: (HFoldr ApplyHCons v l r) => l -> v -> r
 hAppend' l l' = hFoldr ApplyHCons l' l
 
 data ApplyHCons = ApplyHCons
@@ -342,7 +344,8 @@ instance HList l => Apply ApplyHCons (e,l) (HCons e l)
 
 data HMap' f = HMap' f
 
-hMap' f = hFoldr (HMap' f) hNil 
+hMap' :: (HFoldr (HMap' f) HNil l r) => f -> l -> r
+hMap' f = hFoldr (HMap' f) hNil
 
 instance Apply f e e'
       => Apply (HMap' f) (e,l) (HCons e' l)
@@ -363,7 +366,7 @@ instance Show x => Apply HShow x (IO ())
  where
   apply _ x = do putStrLn $ show x
 
-instance ( Monad m 
+instance ( Monad m
          , Apply f x (m ())
          )
       => Apply (HSeq f) (x,m ()) (m ())
@@ -389,11 +392,11 @@ instance (HList l, HList l', HEq e e' b, HEq l l' b', HAnd b b' b'')
 instance HStagedEq HNil HNil
  where
   hStagedEq _ _ = True
- 
+
 instance HStagedEq HNil (HCons e l)
  where
   hStagedEq _ _ = False
- 
+
 instance HStagedEq (HCons e l) HNil
  where
   hStagedEq _ _ = False
@@ -564,7 +567,7 @@ instance HList2List l e
 -- Turn list in a list of justs
 
 class ToHJust l l' | l -> l'
- where 
+ where
   toHJust :: l -> l'
 
 instance ToHJust HNil HNil
@@ -604,7 +607,9 @@ instance FromHJust l l' => FromHJust (HCons (HJust e) l) (HCons e l')
 data HAddTag t = HAddTag t
 data HRmTag    = HRmTag
 
+hAddTag :: (HMap (HAddTag t) l l') => t -> l -> l'
 hAddTag t l = hMap (HAddTag t) l
+hRmTag :: (HMap HRmTag l l') => l -> l'
 hRmTag l    = hMap HRmTag l
 
 instance Apply (HAddTag t) e (e,t)
@@ -613,11 +618,11 @@ instance Apply (HAddTag t) e (e,t)
 
 instance Apply HRmTag (e,t) e
  where
-  apply HRmTag (e,t) = e
+  apply HRmTag (e,_) = e
 
 
 -- Annotate list with a type-level Boolean
-
+hFlag :: (HMap (HAddTag HTrue) l l') => l -> l'
 hFlag l = hAddTag hTrue l
 
 

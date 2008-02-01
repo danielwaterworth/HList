@@ -1,6 +1,7 @@
+{-# LANGUAGE UndecidableInstances #-}
 {-# OPTIONS -fglasgow-exts #-}
 
-{- 
+{-
 
    The HList library
 
@@ -18,25 +19,24 @@
    an arbitrary nullary type constructor.
    For the sake of printing, the namespace part and the description
    are required to be the instance of Show. One must make sure that
-   the show functions does not examine the value, as descr is purely phantom. 
+   the show functions does not examine the value, as descr is purely phantom.
    Here's an example of the good Label description:
-	data MyLabelDescr; instance Show MyLabelDescr where show _ = "descr"
+        data MyLabelDescr; instance Show MyLabelDescr where show _ = "descr"
    which obviously can be automated with Template Haskell.
 
    This model requires all labels in a record to inhabit the same namespace.
 -}
 
- 
+
 module Label2 where
 
 import FakePrelude
-import HListPrelude
 import Record (ShowLabel(..))
 
 
 -- Labels are type-level naturals
 
-data HNat x => Label x ns desc  -- labels are exclusively type-level entities 
+data HNat x => Label x ns desc  -- labels are exclusively type-level entities
 
 
 -- Construct the first label
@@ -61,10 +61,10 @@ instance HEq x x' b
 instance (HNat x, Show desc) => ShowLabel (Label x ns desc) where
   showLabel = show . getd
       where getd :: Label x ns desc -> desc
-	    getd = undefined
+            getd = undefined
 
 instance (HNat x, HNat2Integral x,Show ns) => Show (Label x ns desc) where
   show l = unwords ["L",show ((hNat2Integral x)::Integer), show ns]
       where geti :: Label x ns desc -> (x,ns) -- for the sake of Hugs
-	    geti = undefined
+            geti = undefined
             (x,ns) = geti l

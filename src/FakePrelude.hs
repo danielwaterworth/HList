@@ -2,7 +2,7 @@
 {-# OPTIONS -fallow-undecidable-instances #-}
 {-# OPTIONS -fallow-overlapping-instances #-}
 
-{- 
+{-
 
    The HList library
 
@@ -12,7 +12,7 @@
 
 -}
 
-  
+
 module FakePrelude where
 
 
@@ -78,11 +78,11 @@ instance HOr HTrue HTrue HTrue
 class HBool t => HCond t x y z | t x y -> z
  where
   hCond :: t -> x -> y -> z
- 
+
 instance HCond HFalse x y y
  where
   hCond _ _ y = y
- 
+
 instance HCond HTrue x y x
  where
   hCond _ x _ = x
@@ -116,11 +116,11 @@ instance (HNat n, Show (HSucc n)) => Show (HSucc (HSucc n))
 class HNat n => HNat2Integral n
  where
   hNat2Integral :: Integral i => n -> i
- 
+
 instance HNat2Integral HZero
  where
   hNat2Integral _ = 0
- 
+
 instance HNat2Integral n => HNat2Integral (HSucc n)
  where
   hNat2Integral n = hNat2Integral (hPred n) + 1
@@ -162,7 +162,7 @@ hEq =  undefined
 class HStagedEq x y
  where
   hStagedEq :: x -> y -> Bool
- 
+
 
 {-----------------------------------------------------------------------------}
 
@@ -199,7 +199,7 @@ typeEq = undefined
 
 -- A more disciplined version: based on proxies
 proxyEq :: TypeEq t t' b => Proxy t -> Proxy t' -> b
-proxyEq x y = undefined
+proxyEq _ _ = undefined
 
 
 {-----------------------------------------------------------------------------}
@@ -212,9 +212,9 @@ class TypeCast x y | x -> y, y -> x
 
 
 {-----------------------------------------------------------------------------}
- 
+
 -- A phantom type for type proxies
- 
+
 data Proxy e
 instance Show (Proxy e) where show _ = "Proxy"
 
@@ -253,7 +253,7 @@ subType _ _ = ()
 
 
 {-----------------------------------------------------------------------------}
- 
+
 -- A class without instances for explicit failure
 class Fail x
 
