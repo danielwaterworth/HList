@@ -52,16 +52,16 @@ instance ( HList l
      typeCast (HCons e' (hDeleteMany p l))
 
 
-{-----------------------------------------------------------------------------}
+-----------------------------------------------------------------------------
 
 -- Test for type constructors
 
--- * -> *
+-- signature: * -> *
 class IsTC1 x (f :: * -> *) b | x f -> b
 instance TypeCast HTrue b => IsTC1 (f a) f b
 instance TypeCast HFalse b => IsTC1 f x b
 
--- * -> * -> *
+-- signature: * -> * -> *
 class IsTC2 x (f :: * -> * -> *) b | x f -> b
 instance TypeCast HTrue b => IsTC2 (f a b) f b
 instance TypeCast HFalse b => IsTC2 f x b
