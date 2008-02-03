@@ -21,4 +21,4 @@ Other-modules:       Data.HList.Label4, Data.HList.CommonMain, Data.HList.Varian
 
 extensions:          OverlappingInstances, RankNTypes, FlexibleInstances,
                      TypeSynonymInstances, UndecidableInstances
-ghc-options:         -O2
+ghc-options:         -O2 -Wall

@@ -15,13 +15,11 @@
 
 module Data.HList.TIC where
 
-import Data.Typeable
 import Data.Dynamic
 
 import Data.HList.FakePrelude
 import Data.HList.HListPrelude
 import Data.HList.HOccurs
-import Data.HList.HTypeIndexed
 import Data.HList.TIP
 
 

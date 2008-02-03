@@ -1,7 +1,4 @@
-{-# OPTIONS -fglasgow-exts #-}
-{-# OPTIONS -fallow-undecidable-instances #-}
-{-# OPTIONS -fallow-overlapping-instances #-}
-
+{-# LANGUAGE MagicHash #-}
 {-
 
 OOHaskell (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
@@ -32,7 +29,8 @@ module Data.HList (
 -- module Nominal,
 -- module New,
 -- module Data.HList.HList
-
+ concrete,
+ (#)
 ) where
 
 
@@ -55,7 +53,7 @@ import Control.Monad.Fix
 import GHC.IOBase hiding (stToIO, writeIORef, readIORef, newIORef, IORef,unsafeIOToST,unsafeSTToIO)
 
 infixr 9 #
--- (#) :: (HasField l r v) => r -> l -> v
+(#) :: (HasField l r v) => r -> l -> v
 m # field = (m .!. field)
 
 concrete :: (MonadFix m) => (a -> m a) -> a -> m a
