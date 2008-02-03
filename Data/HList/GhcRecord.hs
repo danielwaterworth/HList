@@ -1,9 +1,8 @@
-{-# OPTIONS -fglasgow-exts #-}
-{-# OPTIONS -fallow-undecidable-instances #-}
-{-# OPTIONS -fallow-overlapping-instances #-}
+{-# LANGUAGE PatternSignatures, ScopedTypeVariables, EmptyDataDecls,
+  FunctionalDependencies, FlexibleInstances, FlexibleContexts,
+  MultiParamTypeClasses, UndecidableInstances #-}
 
 {-
-
    The HList library
 
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
@@ -11,7 +10,6 @@
    Extensible records -- operations that (may) require GHC
 
    See Record.hs for the base module.
-
 -}
 
 module Data.HList.GhcRecord where

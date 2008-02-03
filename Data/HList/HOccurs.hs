@@ -1,17 +1,13 @@
-{-# OPTIONS -fglasgow-exts #-}
-{-# OPTIONS -fallow-undecidable-instances #-}
-{-# OPTIONS -fallow-overlapping-instances #-}
+{-# LANGUAGE EmptyDataDecls, MultiParamTypeClasses, FlexibleInstances,
+  FlexibleContexts, UndecidableInstances #-}
 
 {-
-
    The HList library
 
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
    Result-type-driven operations on typeful heterogeneous lists.
-
 -}
-
 
 module Data.HList.HOccurs where
 

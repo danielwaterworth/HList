@@ -1,13 +1,9 @@
-{-# OPTIONS -fglasgow-exts #-}
-{-# OPTIONS -fallow-overlapping-instances #-}
-{-# OPTIONS -fallow-undecidable-instances #-}
+{-# LANGUAGE KindSignatures,MultiParamTypeClasses,FunctionalDependencies,FlexibleInstances, FlexibleContexts, UndecidableInstances #-}
 
 {-
-
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
    This module gathers experiments that do not work with Hugs.
-
 -}
 
 module Data.HList.GhcExperiments where

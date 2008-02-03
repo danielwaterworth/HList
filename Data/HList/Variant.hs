@@ -1,8 +1,7 @@
-{-# OPTIONS -fglasgow-exts #-}
-{-# OPTIONS -fallow-undecidable-instances #-}
+{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances,
+  UndecidableInstances, FlexibleContexts #-}
 
 {-
-
    The HList library
 
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
@@ -18,9 +17,7 @@
    non-Nothing, as guaranteed by the constructor.
 
    See VariantP.hs for a different approach to open sums.
-
 -}
-
 
 module Data.HList.Variant where
 

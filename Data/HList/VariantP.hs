@@ -1,6 +1,3 @@
-{-# OPTIONS -fglasgow-exts #-}
-{-# OPTIONS -fallow-undecidable-instances #-}
-
 -- Modeling of an extensible, recursive sum datatype (recursive open union)
 --    data List a = Nil | Cons a (List a)
 -- which is later extended with two more variants,
@@ -17,7 +14,7 @@
 -- Method: duality rules! Curry-Howard correspondence and logic
 -- give the wonderful guidance. In particular, we take advantage
 -- of the fact that the deMorgan law
---  	NOT (A | B) -> (NOT A & NOT B)
+--      NOT (A | B) -> (NOT A & NOT B)
 -- holds both in classical, and, more importantly, intuitionistic
 -- logics. Our encoding of sums is the straightforward Curry-Howard
 -- image of the law.
@@ -54,7 +51,7 @@ tl2 c = cons 10 (cons 1 (cons 2 (cons 3 nil))) c
 
 *Variants> :t tl1
 tl1 :: (HasField (Label (HSucc HZero)) r (Char -> v -> v),
-	HasField (Label HZero) r v) =>
+        HasField (Label HZero) r v) =>
        r -> v
 
 which basically says that tl1 accepts any consumer that has at least
@@ -66,8 +63,8 @@ may have more fields
 -- First polymorphic function: provide a regular list "view" of our list
 
 to_list () =     l_nil  .=. []
-	     .*. l_cons .=. (:)
-	     .*. emptyRecord
+             .*. l_cons .=. (:)
+             .*. emptyRecord
 
 -- I wish GHC supported unicode in identifiers
 tekiyou consumer lst = lst (consumer ())
@@ -78,8 +75,8 @@ test2 = tekiyou to_list tl2
 -- another function, length
 
 lengthL () =  l_nil  .=. 0
-	  .*. l_cons .=. (\x a -> a + 1)
-	  .*. emptyRecord
+          .*. l_cons .=. (\x a -> a + 1)
+          .*. emptyRecord
 
 test_lL1 = tekiyou lengthL tl1
 test_lL2 = tekiyou lengthL tl2
@@ -119,8 +116,8 @@ test_sum2 = tekiyou sumA tl4
 -- functionality as possible
 
 lengthA () =  l_unit .=. const 1
-	  .*. l_app  .=. (+)
-	  .*. (lengthL ())
+          .*. l_app  .=. (+)
+          .*. (lengthL ())
 
 test_lL4 = tekiyou lengthA tl3
 test_lL5 = tekiyou lengthA tl4
@@ -130,16 +127,16 @@ test_lL5 = tekiyou lengthA tl4
 -- as regular lists (that is, support the regular list API).
 
 -- check if the (extensible list) is null:
-el_null l = l (l_nil .=. True .*. l_cons .=. (\x a -> False)
-	       .*. emptyRecord)
+el_null l = l (l_nil .=. True .*. l_cons .=. (\_ _ -> False)
+               .*. emptyRecord)
 
-el_head l = l (l_nil .=. undefined .*. l_cons .=. (\x a -> x)
-	       .*. emptyRecord)
+el_head l = l (l_nil .=. undefined .*. l_cons .=. (\x _ -> x)
+               .*. emptyRecord)
 
 el_tail l = l (    l_nil .=. (\f -> if f then undefined else nil)
-	       .*. l_cons .=. (\x a f -> if f then a False else
-			       cons x (a False))
-	       .*. emptyRecord) True
+               .*. l_cons .=. (\x a f -> if f then a False else
+                               cons x (a False))
+               .*. emptyRecord) True
 
 test_ell = (el_null tl1, el_head tl1, tekiyou to_list $ el_tail tl1)
 
@@ -163,11 +160,12 @@ test_eq3 = eqL tl1 nil
 -- we can extend to_list as usual
 
 to_listA () =  l_unit .=. (:[])
-	   .*. l_app  .=. (++)
-	   .*. (to_list ())
+           .*. l_app  .=. (++)
+           .*. (to_list ())
 
 -- And we can arbitrary mix old and extended lists
 eqA l1 l2 = tekiyou to_listA l1 == tekiyou to_listA l2
+test_eq4, test_eq5, test_eq6 :: Bool
 test_eq4 = eqA tl1 tl1
 test_eq5 = eqA tl2 tl3
 test_eq6 = eqA tl3 tl4

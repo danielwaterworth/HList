@@ -1,11 +1,7 @@
+{-# LANGUAGE EmptyDataDecls, MultiParamTypeClasses,
+  FunctionalDependencies,FlexibleInstances, UndecidableInstances, OverlappingInstances #-}
 {-# OPTIONS -fglasgow-exts #-}
-{-# OPTIONS -fallow-undecidable-instances #-}
-{-# OPTIONS -fallow-overlapping-instances #-}
-
-{-
-
--- (C) 2004-2007, Oleg Kiselyov & Ralf Laemmel
-
+{- (C) 2004-2007, Oleg Kiselyov & Ralf Laemmel
 Creating a regular (homogeneous) Haskell list by consing values
 of generally different types. The consing operation builds a union as it
 adds more elements to the list.
@@ -28,7 +24,7 @@ heterogeneous/homogeneous mediation.''
 
 -}
 
-module ConsUnion (NilEither, nilEither,
+module Data.HList.ConsUnion (NilEither, nilEither,
                   consEither,
 
                   -- Union injection/projection
@@ -36,11 +32,11 @@ module ConsUnion (NilEither, nilEither,
                   tsearch,
                   downCast ) where
 
-import TypeCastGeneric2
+import Data.HList.TypeCastGeneric2
 
-import FakePrelude (HNothing(..), HJust(..))
-import Record
-import GhcRecord
+import Data.HList.FakePrelude (HNothing(..), HJust(..))
+import Data.HList.Record
+import Data.HList.GhcRecord
 
 -- List constructors that union as well
 

@@ -1,17 +1,12 @@
-{-# OPTIONS -fglasgow-exts #-}
-{-# OPTIONS -fallow-undecidable-instances #-}
-
+{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, UndecidableInstances, EmptyDataDecls #-}
 {-
-
    The HList library
 
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
    Yet another model of labels.
    Labels are type proxies.
-
 -}
-
 
 module Data.HList.Label4 where
 

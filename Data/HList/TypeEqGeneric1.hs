@@ -1,9 +1,6 @@
-{-# OPTIONS -fglasgow-exts #-}
-{-# OPTIONS -fallow-overlapping-instances #-}
-{-# OPTIONS -fallow-undecidable-instances #-}
-
+{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances,
+  FlexibleContexts, UndecidableInstances #-}
 {-
-
    The HList library
 
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
@@ -19,9 +16,7 @@
    of TypeCast clients and the TypeCast instance.
 
    There is another encoding in TypeEqGeneric2.hs.
-
 -}
-
 
 module Data.HList.TypeEqGeneric1 where
 

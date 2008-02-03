@@ -1,16 +1,13 @@
-{-# OPTIONS -fglasgow-exts #-}
-{-# OPTIONS -fallow-undecidable-instances #-}
+{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances,
+  FlexibleContexts, UndecidableInstances #-}
 
 {-
-
    The HList library
 
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
    Typeable at the type level.
-
 -}
-
 
 module Data.HList.TTypeable where
 

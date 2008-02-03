@@ -1,8 +1,6 @@
-{-# OPTIONS -fglasgow-exts #-}
-{-# OPTIONS -fallow-undecidable-instances #-}
+{-# LANGUAGE FlexibleInstances, UndecidableInstances, MultiParamTypeClasses #-}
 
 {-
-
    The HList library
 
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
@@ -11,9 +9,7 @@
    This model allow us to use any type as label type.
    As a result, we need some generic instances.
    Also, type errors may be more confusing now.
-
 -}
-
 
 module Data.HList.Label5 where
 
@@ -36,7 +32,7 @@ instance Typeable x => ShowLabel x
             . reverse
             . takeWhile (not . (==) '.')
             . reverse
-	    . show
+            . show
 {-
             . tyConString
             . typeRepTyCon

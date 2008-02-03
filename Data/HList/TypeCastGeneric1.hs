@@ -1,8 +1,6 @@
-{-# OPTIONS -fglasgow-exts #-}
-{-# OPTIONS -fallow-undecidable-instances #-}
+{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses #-}
 
 {-
-
    The HList library
 
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
@@ -13,7 +11,6 @@
    inline TypeCast x y, which implies compile-time unification of x and y.
 
    This technique works fine for ghc, and within limits for hugs.
-
 -}
 
 module Data.HList.TypeCastGeneric1 where

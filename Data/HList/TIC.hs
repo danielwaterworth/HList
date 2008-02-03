@@ -1,17 +1,12 @@
-{-# OPTIONS -fglasgow-exts #-}
-{-# OPTIONS -fallow-undecidable-instances #-}
-{-# OPTIONS -fallow-overlapping-instances #-}
+{-# LANGUAGE FlexibleInstances, FlexibleContexts #-}
 
 {-
-
    The HList library
 
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
    Type-indexed co-products.
-
 -}
-
 
 module Data.HList.TIC where
 

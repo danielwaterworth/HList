@@ -1,6 +1,3 @@
-{-# OPTIONS -fglasgow-exts #-}
-{-# OPTIONS -fallow-undecidable-instances #-}
-
 {-
    The HList library
 

@@ -1,8 +1,6 @@
-{-# OPTIONS -fglasgow-exts #-}
-{-# OPTIONS -fallow-undecidable-instances #-}
+{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, UndecidableInstances #-}
 
 {-
-
    The HList library
 
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
@@ -10,9 +8,7 @@
    An implementation of a type equality predicate in terms
    of type-level type representations and their comparison.
    This approach works for GHC and Hugs.
-
 -}
-
 
 module Data.HList.TypeEqTTypeable where
 
@@ -31,6 +27,7 @@ instance ( TTypeable t tt
 -- For conciseness
 type Integer3 = Integer->Integer->Integer
 
+testTTypeable :: [String]
 testTTypeable
     = [
         show$ typeEq not (&&),

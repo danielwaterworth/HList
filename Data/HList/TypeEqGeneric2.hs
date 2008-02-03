@@ -1,9 +1,6 @@
-{-# OPTIONS -fglasgow-exts #-}
-{-# OPTIONS -fallow-overlapping-instances #-}
-{-# OPTIONS -fallow-undecidable-instances #-}
+{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleContexts, FlexibleInstances, UndecidableInstances #-}
 
 {-
-
    The HList library
 
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
@@ -14,11 +11,9 @@
    TypeEqGeneric1.hs for its conciseness. The specific coding here
    does not rely on separate compilation (while TypeEqGeneric1.hs
    does), but on some other tricks.
-
 -}
 
-
-module TypeEqGeneric2 where
+module Data.HList.TypeEqGeneric2 where
 
 -- We make everything self-contained to show that separate compilation
 -- is not needed. Also, we need a new class constraint for TypeEqBool,

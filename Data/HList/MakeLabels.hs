@@ -1,5 +1,4 @@
-{-# OPTIONS -fth #-}
-{-# OPTIONS -fglasgow-exts #-}
+{-# LANGUAGE TemplateHaskell, FlexibleInstances, EmptyDataDecls #-}
 
 -- Making labels
 
@@ -19,7 +18,7 @@ module Data.HList.MakeLabels (makeLabels,label) where
 
 import Data.HList.FakePrelude
 
-import Language.Haskell.TH.Ppr
+import Language.Haskell.TH.Ppr (pprint)
 import Language.Haskell.TH.Syntax
 
 import Data.Char (toUpper, toLower)
@@ -52,32 +51,32 @@ instance ReplaceSyntax [Dec] where
 
 instance ReplaceSyntax Dec where
     replace_name (tfrom,dfrom) (tto,dto)
-		 dcl@(DataD ctx n parms con othern) =
-		     if tfrom == n then
-			DataD ctx tto parms con othern
-			else dcl
+                 dcl@(DataD ctx n parms con othern) =
+                     if tfrom == n then
+                        DataD ctx tto parms con othern
+                        else dcl
     replace_name (tfrom,dfrom) (tto,dto)
-		 dcl@(ValD (VarP n) (NormalB body) []) =
-	  let n' = if n == dfrom then dto else n
-	  in ValD (VarP n')
-		  (NormalB (replace_name (tfrom,dfrom) (tto,dto) body)) []
+                 dcl@(ValD (VarP n) (NormalB body) []) =
+          let n' = if n == dfrom then dto else n
+          in ValD (VarP n')
+                  (NormalB (replace_name (tfrom,dfrom) (tto,dto) body)) []
 
     replace_name (tfrom,dfrom) (tto,dto) dcl =
-	error $ "Can't handle: " ++ show dcl
+        error $ "Can't handle: " ++ show dcl
 
 
 instance ReplaceSyntax Exp where
     replace_name from to (SigE exp tp) =
-		     SigE (replace_name from to exp)
-			  (replace_name from to tp)
+                     SigE (replace_name from to exp)
+                          (replace_name from to tp)
     replace_name from to exp = exp
 
 
 instance ReplaceSyntax Type where
     replace_name (tfrom,dfrom) (tto,dto) tp@(ConT n) =
-	if n == tfrom then (ConT tto) else tp
+        if n == tfrom then (ConT tto) else tp
     replace_name from to (AppT t1 t2) =
-	(AppT (replace_name from to t1) (replace_name from to t2))
+        (AppT (replace_name from to t1) (replace_name from to t2))
 
 -- Our main function
 makeLabels :: [String] -> Q [Dec]
@@ -101,6 +100,6 @@ t2 = showName $ mkName "Foo"
 t3 = show_code $
      liftM (replace_name
             (make_tname "foo",make_dname "foo")
-	    (make_tname "bar",make_dname "bar")) dcl_template
+            (make_tname "bar",make_dname "bar")) dcl_template
 
 t4 = show_code $ makeLabels ["getX","getY","draw"]

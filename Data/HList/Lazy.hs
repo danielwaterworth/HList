@@ -1,5 +1,3 @@
-{-# OPTIONS -fglasgow-exts #-}
-{-# OPTIONS -fallow-undecidable-instances #-}
 
 -- Lazy HLists: potentially infinite heterogeneous streams...
 -- Based on the suggestion by Chung-chieh Shan, posted on the
@@ -50,9 +48,7 @@ instance (Apply g x l, Apply (HTake (HSucc n)) l r)
     => Apply (HTake (HSucc n)) (Thunk g x) r where
     apply n (Thunk g x) = apply n (apply g x)
 
-htake :: forall n a r.
-                                     (Apply (HTake n) a r) =>
-                                     n -> a ->r
+htake :: (Apply (HTake n) a r) => n -> a ->r
 htake n l = apply (HTake n) l
 
 

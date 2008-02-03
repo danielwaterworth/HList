@@ -1,14 +1,12 @@
-{-# OPTIONS -fglasgow-exts #-}
-{-# OPTIONS -fallow-undecidable-instances #-}
+{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances,
+  UndecidableInstances, FlexibleContexts #-}
 
 {-
-
    The HList library
 
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
    Basic declarations for typeful heterogeneous lists.
-
  -}
 
 module Data.HList.HListPrelude where
@@ -182,7 +180,7 @@ hEnd t@(HCons _ _) = t
 
 -- Building non-empty lists
 
-hBuild   :: forall r a. (HBuild' HNil a r) => a -> r
+hBuild   :: (HBuild' HNil a r) => a -> r
 hBuild x =  hBuild' HNil x
 
 class HBuild' l a r | r-> a l

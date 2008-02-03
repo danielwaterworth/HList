@@ -1,8 +1,6 @@
-{-# LANGUAGE UndecidableInstances #-}
-{-# OPTIONS -fglasgow-exts #-}
+{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, UndecidableInstances, EmptyDataDecls #-}
 
 {-
-
    The HList library
 
    (C) 2004-2006, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
@@ -26,7 +24,6 @@
 
    This model requires all labels in a record to inhabit the same namespace.
 -}
-
 
 module Data.HList.Label2 where
 

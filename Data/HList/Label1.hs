@@ -1,8 +1,6 @@
-{-# OPTIONS -fglasgow-exts #-}
-{-# OPTIONS -fallow-undecidable-instances #-}
+{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, UndecidableInstances #-}
 
 {-
-
    The HList library
 
    (C) 2004-2006, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
@@ -11,9 +9,7 @@
 
    Record labels are simply type-level naturals.
    This models is as simple and as portable as it could be.
-
 -}
-
 
 module Data.HList.Label1 where
 

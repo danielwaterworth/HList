@@ -1,7 +1,5 @@
-{-# OPTIONS -fglasgow-exts #-}
-{-# OPTIONS -fallow-undecidable-instances #-}
-
-{-# OPTIONS -fallow-overlapping-instances #-}
+{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances,
+  UndecidableInstances, OverlappingInstances #-}
 
 -- Yet another representation of records: records as TIC (type-indexed
 -- collections), or, to be precise, records are lists of objects
@@ -15,7 +13,7 @@ module RecordD where
 
 import Data.HList.FakePrelude hiding (TypeEq)
 import Data.HList.HListPrelude
-import Data.HList.qualified Record
+import qualified Data.HList.Record
 import Data.HList.Record (HLabelSet, HasField(..))
 
 -- for the test
@@ -95,8 +93,8 @@ instance (AllFieldish (HCons f r), HLabelSet (HCons f r))
 -- Record concatenation
 
 instance ( HLabelSet r''
-	 , AllFieldish r''
-	 , HAppend r r' r''
+         , AllFieldish r''
+         , HAppend r r' r''
          )
     => HAppend (Record r) (Record r') (Record r'')
  where

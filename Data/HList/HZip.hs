@@ -1,20 +1,16 @@
-{-# OPTIONS -fglasgow-exts #-}
-{-# OPTIONS -fallow-undecidable-instances #-}
+{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances, UndecidableInstances #-}
 
 module Data.HList.HZip where
 
 import Data.HList.HListPrelude
 
 {-
-
    The HList library
 
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
    Zipping and unzipping for (conceptually) lists of pairs.
-
  -}
-
 
 {-----------------------------------------------------------------------------}
 

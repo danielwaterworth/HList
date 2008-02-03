@@ -1,13 +1,9 @@
-{-# OPTIONS -fglasgow-exts #-}
-
+{-# LANGUAGE FlexibleContexts #-}
 {-
-
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
    Some dedicated infix operators at the type and the value level.
-
 -}
-
 
 module Data.HList.GhcSyntax where
 

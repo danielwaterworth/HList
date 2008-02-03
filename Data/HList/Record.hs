@@ -1,8 +1,9 @@
+{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances,
+  FlexibleContexts, UndecidableInstances #-}
 {-# OPTIONS -fglasgow-exts #-}
-{-# OPTIONS -fallow-undecidable-instances #-}
+
 
 {-
-
    The HList library
 
    (C) 2004-2006, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
@@ -11,9 +12,7 @@
 
    The are different models of labels that go with this module;
    see the files Label?.hs.
-
 -}
-
 
 module Data.HList.Record where
 

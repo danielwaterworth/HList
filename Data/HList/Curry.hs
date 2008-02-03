@@ -1,7 +1,3 @@
-{-# OPTIONS -fglasgow-exts #-}
-{-# OPTIONS -fallow-overlapping-instances #-}
-{-# OPTIONS -fallow-undecidable-instances #-}
-
 module Curry where
 
 import MainGhcGeneric1
@@ -27,7 +23,7 @@ instance HUncurry y d c => HUncurry' HTrue x y (x,d) c
   hUncurry' _ (f::x->y) (x,d) = hUncurry (f x) d
 
 fun1 :: Int -> Int -> Int
-fun1 = (+) 
+fun1 = (+)
 
 fun2 = hUncurry fun1
 
