@@ -1,6 +1,5 @@
 {-# LANGUAGE MagicHash #-}
 {-
-
 OOHaskell (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
 This module gathers the API that we need for OOP in Haskell.  We
@@ -8,7 +7,6 @@ basically select a certain configuration of the HList library, and we
 also import modules that are needed for mutable data and monads. Note
 on overlapping: Needed for the chosen model of labels. Other models
 can be used instead, but the chosen look better in types.
-
 -}
 
 
