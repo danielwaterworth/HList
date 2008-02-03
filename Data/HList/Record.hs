@@ -2,7 +2,6 @@
   FlexibleContexts, UndecidableInstances #-}
 {-# OPTIONS -fglasgow-exts #-}
 
-
 {-
    The HList library
 

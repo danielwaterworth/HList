@@ -19,6 +19,15 @@ Other-modules:       Data.HList.Label4, Data.HList.CommonMain, Data.HList.Varian
                      Data.HList.HListPrelude, Data.HList.TypeEqBoolGeneric, Data.HList.TypeEqGeneric1, Data.HList.TypeCastGeneric1,
                      Data.HList.FakePrelude
 
-extensions:          OverlappingInstances, RankNTypes, FlexibleInstances,
-                     TypeSynonymInstances, UndecidableInstances
+extensions:          EmptyDataDecls,
+                     FlexibleContexts,
+                     FlexibleInstances,
+                     FunctionalDependencies,
+                     MultiParamTypeClasses,
+                     OverlappingInstances,
+                     PatternSignatures,
+                     RankNTypes,
+                     ScopedTypeVariables,
+                     TypeSynonymInstances,
+                     UndecidableInstances
 ghc-options:         -O2 -Wall
