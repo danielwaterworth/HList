@@ -2,7 +2,7 @@
 
 The HList library and samples
 
-This distribution covers all esential issues discussed in the HList paper.
+This distribution covers all essential issues discussed in the HList paper.
 Additional examples and HList operations are provided.
 The code from the database section of the HList paper is not included
 since doing so would have implied inclusion of substantial packages,
