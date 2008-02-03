@@ -8,7 +8,7 @@ License:             OtherLicense
 License-File:        LICENSE
 Author:              2004 Oleg Kiselyov (FNMOC, Monterey), Ralf Laemmel (CWI/VU, Amsterdam),
                      Keean Schupke (Imperial College, London)
-Maintainer:          Musasabi <ekarttun@cs.helsinki.fi>
+Maintainer:          oleg@pobox.com
 
 Tested-With:         GHC==6.8.2
 Build-Depends:       base
