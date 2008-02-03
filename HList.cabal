@@ -1,6 +1,9 @@
 Name:                HList
 Version:             0.1
-Description:         Record system
+Category:            Data
+Synopsis:            Heterogeneous lists
+Description:         Record system providing strongly typed heterogenous lists, records,
+                     type-indexed products (TIP) and co-products; licensed under the MIT X License.
 License:             OtherLicense
 License-File:        LICENSE
 Author:              2004 Oleg Kiselyov (FNMOC, Monterey), Ralf Laemmel (CWI/VU, Amsterdam), Keean Schupke (Imperial College, London)
