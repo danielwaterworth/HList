@@ -8,6 +8,10 @@ The code from the database section of the HList paper is not included
 since doing so would have implied inclusion of substantial packages,
 namely the underlying infrastructure for database access library.
 
+You can get HList from Hackage or from Darcs:
+
+$ darcs get --partial http://darcs.haskell.org/HList/
+
 The code works --- within the limits exercised in the source files ---
 for both GHC (6.4) and Hugs (Nov 2003). See the Makefile for ways of
 running test cases.
