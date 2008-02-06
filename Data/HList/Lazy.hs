@@ -1,3 +1,5 @@
+{-# LANGUAGE EmptyDataDecls, FlexibleInstances, UndecidableInstances,
+  MultiParamTypeClasses #-}
 
 -- Lazy HLists: potentially infinite heterogeneous streams...
 -- Based on the suggestion by Chung-chieh Shan, posted on the
@@ -9,7 +11,7 @@ import Data.HList.FakePrelude
 import Data.HList.HListPrelude
 
 -- our dream is to write something similar to
--- fib = 1 : 1 : zipWith (+) fib (tail fib)
+fib = 1 : 1 : zipWith (+) fib (tail fib)
 
 
 -- The denotation of the application of the `function' f to the
@@ -48,7 +50,6 @@ instance (Apply g x l, Apply (HTake (HSucc n)) l r)
     => Apply (HTake (HSucc n)) (Thunk g x) r where
     apply n (Thunk g x) = apply n (apply g x)
 
-htake :: (Apply (HTake n) a r) => n -> a ->r
 htake n l = apply (HTake n) l
 
 
@@ -58,15 +59,13 @@ htail l = b where HCons _ b = force l
 -- First stream: all zeros
 -- Note the mutual dependency between a term and an instance
 
-
-lzeros :: Thunk LZeros (d)ata LZeros
+data LZeros
 lzeros = Thunk (undefined::LZeros) ()
 
 instance Apply LZeros () (HCons HZero (Thunk LZeros ())) where
     apply _ _ = HCons hZero lzeros
 
 
-tzeros ::r
 tzeros = htake four lzeros
 {-
 *HLazy> tzeros
@@ -76,14 +75,20 @@ HCons HZero (HCons HZero (HCons HZero (HCons HZero HNil)))
 
 -- Second stream: of natural numbers
 
-lnats :: forall x. x -> Thunk LNats dxata LNats
+data LNats
 lnats = Thunk (undefined::LNats)
 
 instance HNat n => Apply LNats n (HCons n (Thunk LNats (HSucc n))) where
     apply _ n = HCons n (lnats (hSucc n))
 
-tnats ::r
 tnats = htake five . htail $ lnats hZero
+{-
+ *Data.HList.HLazy> tnats
+  HCons HSucc HZero (HCons HSucc (HSucc HZero) 
+    (HCons HSucc (HSucc (HSucc HZero)) 
+      (HCons HSucc (HSucc (HSucc (HSucc HZero))) 
+        (HCons HSucc (HSucc (HSucc (HSucc (HSucc HZero)))) HNil))))
+-}
 
 
 -- Extend HFold, HMap and HZip for the Lazy lists.
@@ -115,21 +120,30 @@ instance (HNat n, HNat m, Apply Add (n,m) r)
 data Incr = Incr
 instance Apply Incr n (HSucc n)
 
-lones :: Thunk (HMapC Incr) (Thunk LZeros ())
 lones = hMap Incr lzeros
 
-tones ::r
 tones = htake five lones
+{-
+ *Data.HList.HLazy> tones
+  HCons HSucc HZero (HCons HSucc HZero 
+   (HCons HSucc HZero (HCons HSucc HZero (HCons HSucc HZero HNil))))
+-}
 
 -- and the list of evens by doubling the list of naturals
 
 data Twice = Twice
 instance Apply Add (n,n) r => Apply Twice n r
 
-levens :: Thunk (HMapC Twice) (Thunk LNats HZer)o
-
--- tevens :: lrevens = hMap Twice (lnats hZero)
+levens = hMap Twice (lnats hZero)
 tevens = htake five levens
+{-
+ *Data.HList.HLazy> tevens
+ HCons HZero (HCons HSucc (HSucc HZero) 
+    (HCons HSucc (HSucc (HSucc (HSucc HZero))) 
+     (HCons HSucc (HSucc (HSucc (HSucc (HSucc (HSucc HZero)))))
+      (HCons HSucc (HSucc (HSucc (HSucc (HSucc (HSucc 
+              (HSucc (HSucc HZero))))))) HNil))))
+-}
 
 
 
@@ -177,11 +191,8 @@ instance (Force l1 r1, Force l2 r2, LZip r1 r2 r) =>
 
 data LFibs = LFibs
 
-lfibs :: HCons
-                                       (HSucc HZero) (HCons (HSucc HZero) (Thunk LFibs ()))
 lfibs = HCons hone (HCons hone (Thunk LFibs ()))
 
--- lfibs' :: 'l
 lfibs' = hMap Add (lzip lfibs (htail lfibs))
 
 instance Apply LFibs ()
@@ -196,17 +207,30 @@ instance Apply LFibs ()
     apply _ _ = lfibs'
 
 
--- tfibs :: HCons (HSucc HZero) 'b
 tfibs = htake seven lfibs
 
+{-
+  *Data.HList.HLazy> tfibs
+  HCons HSucc HZero 
+   (HCons HSucc HZero 
+    (HCons HSucc (HSucc HZero) 
+      (HCons HSucc (HSucc (HSucc HZero))
+        (HCons HSucc (HSucc (HSucc (HSucc (HSucc HZero))))
+          (HCons HSucc (HSucc (HSucc (HSucc (HSucc 
+                              (HSucc (HSucc (HSucc HZero)))))))
+            (HCons HSucc (HSucc (HSucc (HSucc (HSucc (HSucc 
+                         (HSucc (HSucc (HSucc (HSucc (HSucc 
+                         (HSucc (HSucc HZero)))))))))))) HNil))))))
+-}
 
-hone :: HSucc HZeor
+
+
 hone = hSucc hZero
 four :: HSucc (HSucc (HSucc (HSucc HZero)))     -- A few sample numbers
+four = undefined
 
 -- five :: HSucc (HSucc (HSucc (HSucc (HSucc HZero)))f)our = undefined
 five = hSucc four
-seven :: HSucc (HSucc (HSucc (HSucc (HSucc (HSucc (HSucc HZero))))))
 seven = hSucc $ hSucc $ five
 
 

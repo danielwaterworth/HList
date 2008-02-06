@@ -72,8 +72,9 @@ instance (HUpdateAtHNat n e' l l', HNat n)
 {-----------------------------------------------------------------------------}
 
 -- Splitting an array according to indices
-hSplitByHNats :: (HSplitByHNats' ns l' l'1 l'', HMap (HAddTag HTrue) l l') =>
-                ns -> l -> (l'1, l'')
+-- Signature is inferred:
+-- hSplitByHNats :: (HSplitByHNats' ns l' l'1 l'', HMap (HAddTag HTrue) l l') =>
+--                ns -> l -> (l'1, l'')
 hSplitByHNats ns l = hSplitByHNats' ns (hFlag l)
 
 class HNats ns => HSplitByHNats' ns l l' l'' | ns l -> l' l''

@@ -73,7 +73,8 @@ instance HOccursNot e l => HOccursNot e (TIP l)
 {-----------------------------------------------------------------------------}
 
 -- Type-indexed extension
-hExtend' :: (HTypeIndexed t, HOccursNot e t) => e -> TIP t -> TIP (HCons e t)
+-- signature is inferred
+-- hExtend' :: (HTypeIndexed t, HOccursNot e t) => e -> TIP t -> TIP (HCons e t)
 hExtend' e (TIP l) = mkTIP (HCons e l)
 
 {-
@@ -145,22 +146,16 @@ instance HOccursOpt e l
 {-----------------------------------------------------------------------------}
 
 -- Shielding type-indexed operations
+-- The absence of signatures is deliberate! They all must be inferred.
 
-onTIP :: HTypeIndexed a => (b -> a) -> TIP b -> TIP a
 onTIP f (TIP l) = mkTIP (f l)
 
-tipyDelete :: (HTypeIndexed l',HType2HNat e b n,HDeleteAtHNat n b l') => Proxy e -> TIP b -> TIP l'
 tipyDelete  p t  = onTIP (hDeleteAtProxy p) t
-tipyUpdate :: (HTypeIndexed l',HType2HNat e b n,HUpdateAtHNat n e b l') => e -> TIP b -> TIP l'
 tipyUpdate  e t  = onTIP (hUpdateAtType e) t
-tipyProject :: (HTypeIndexed l',HTypes2HNats ps b ns,HProjectByHNats ns b l') => ps -> TIP b -> TIP l'
 tipyProject ps t = onTIP (hProjectByProxies ps) t
 
 
 -- Split produces two TIPs
-tipySplit :: (HTypeIndexed t2,HTypeIndexed t1,HTypes2HNats ps t ns,HSplitByHNats' ns l' t1 t2,
-             HMap (HAddTag HTrue) t l') =>
-            ps -> TIP t -> (TIP t1, TIP t2)
 tipySplit ps (TIP l) = (mkTIP l',mkTIP l'')
  where
   (l',l'') = hSplitByProxies ps l

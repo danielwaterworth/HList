@@ -1,3 +1,7 @@
+3 February 2008
+	Fifteen patches by gwern0@gmail.com: Data.HList hierarchy,
+	use of LANGUAGE, -Wall, changes to Cabal files
+	
 19 September 2007
 	Added HMemberM
 	Optimized record projection in Record.hs. The optimization

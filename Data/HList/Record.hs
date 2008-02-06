@@ -191,7 +191,6 @@ instance HasField l r v => HasField' HFalse l (HCons fld r) v where
 {-----------------------------------------------------------------------------}
 
 -- Delete operation
-hDeleteAtLabel :: (H2ProjectByLabels (HCons e HNil) t t1 t2) => e -> Record t -> Record t2
 hDeleteAtLabel l (Record r) = Record r'
  where
   (_,r')  = h2projectByLabels (HCons l HNil) r
@@ -200,8 +199,6 @@ hDeleteAtLabel l (Record r) = Record r'
 {-----------------------------------------------------------------------------}
 
 -- Update operation
-hUpdateAtLabel ::( RecordLabels t ls, HFind e ls n, HUpdateAtHNat n (LVPair e v) t l') =>
-                e -> v -> Record t -> Record l'
 hUpdateAtLabel l v (Record r) = Record r'
  where
   n    = hFind l (recordLabels r)
@@ -215,8 +212,6 @@ hUpdateAtLabel l v (Record r) = Record r'
 hProjectByLabels :: (HRLabelSet a, H2ProjectByLabels ls t a b) => ls -> Record t -> Record a
 hProjectByLabels ls (Record r) = mkRecord (fst $ h2projectByLabels ls r)
 
-hProjectByLabels2 :: (HRLabelSet t2, HRLabelSet t1, H2ProjectByLabels ls t t1 t2) =>
-                                                 ls -> Record t -> (Record t1, Record t2)
 hProjectByLabels2 ls (Record r) = (mkRecord rin, mkRecord rout)
    where (rin,rout) = h2projectByLabels ls r
 
@@ -256,9 +251,6 @@ instance H2ProjectByLabels ls r' rin rout =>
 {-----------------------------------------------------------------------------}
 
 -- Rename the label of record
-hRenameLabel :: (H2ProjectByLabels (HCons e HNil) t t1 t2, HasField e t v,
-                HRLabelSet (HCons (LVPair l v) t2)) =>
-               e -> l -> Record t -> Record (HCons (LVPair l v) t2)
 hRenameLabel l l' r = r''
  where
   v   = hLookupByLabel l r
@@ -269,9 +261,6 @@ hRenameLabel l l' r = r''
 {-----------------------------------------------------------------------------}
 
 -- A variation on update: type-preserving update.
-hTPupdateAtLabel :: (HUpdateAtHNat n (LVPair l a) t l', HFind l ls n, RecordLabels t ls,
-                    HasField l t a) =>
-                   l -> a -> Record t -> Record l'
 hTPupdateAtLabel l v r = hUpdateAtLabel l v r
  where
    te :: a -> a -> ()

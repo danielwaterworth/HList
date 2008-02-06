@@ -1,3 +1,5 @@
+{-# LANGUAGE EmptyDataDecls #-}
+
 {-
    The HList library
 
@@ -23,7 +25,7 @@ module Data.HList.HSequence (hSequence) where
 import Data.HList.HListPrelude -- (Apply(..), HCons(..), apply, hFoldr, HNil)
 import Control.Monad (liftM2)
 
-import TypeCastGeneric2                 -- For tests
+import Data.HList.TypeCastGeneric2                 -- For tests
 
 
 data ConsM
@@ -34,18 +36,16 @@ instance (TypeCast (m1 l) (m l), Monad m)
 
 -- Inferred type:
 -- hSequence :: (Monad m, HFoldr ConsM (m HNil) l r) => l -> r
--- hSequence :: (HFoldr ConsM (m HNil) l r, Monad m) => l -> r
 hSequence l = hFoldr (undefined::ConsM) (return HNil) l
 
 
 -- Tests
 
--- hlist = HCons (Just (1 :: Integer)) (HCons (Just 'c') HNil) -- Maybe monad
--- hlist2 = HCons ([1]) (HCons (['c']) HNil)      -- List monad
+hlist = HCons (Just (1 :: Integer)) (HCons (Just 'c') HNil) -- Maybe monad
+hlist2 = HCons ([1]) (HCons (['c']) HNil)      -- List monad
 
--- -- testHSequence, testHSequence2 :: r
--- testHSequence  = hSequence hlist
--- testHSequence2 = hSequence hlist2
+testHSequence  = hSequence hlist
+testHSequence2 = hSequence hlist2
 
 -- main :: IO ()
 -- main = do

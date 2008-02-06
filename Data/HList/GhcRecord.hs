@@ -1,6 +1,8 @@
-{-# LANGUAGE PatternSignatures, ScopedTypeVariables, EmptyDataDecls,
-  FunctionalDependencies, FlexibleInstances, FlexibleContexts,
-  MultiParamTypeClasses, UndecidableInstances #-}
+{-# LANGUAGE ScopedTypeVariables, EmptyDataDecls, FunctionalDependencies, 
+             FlexibleInstances, FlexibleContexts, MultiParamTypeClasses, 
+             UndecidableInstances #-}
+
+-- PatternSignatures,  GHC 6.6 complains of this pragma
 
 {-
    The HList library
@@ -25,6 +27,7 @@ import Data.Typeable
 
 -- A variation on update.
 -- Replace a proxy by a value of the proxied type.
+-- The signature is inferred
 hUnproxyLabel :: (HUpdateAtHNat n (LVPair l a) t l', HFind l ls n,
                                RecordLabels t ls,
                                HasField l t (Proxy a)) =>
@@ -140,7 +143,7 @@ instance ( RecordLabels a la
 
 data NilLub
 nilLub :: NilLub
-nilLub = undefined :: NilLub
+nilLub = undefined
 
 class ConsLub h t l | h t -> l
  where
