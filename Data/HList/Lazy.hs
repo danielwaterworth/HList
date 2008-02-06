@@ -1,5 +1,4 @@
-{-# LANGUAGE EmptyDataDecls, FlexibleInstances, UndecidableInstances,
-  MultiParamTypeClasses #-}
+{-# LANGUAGE EmptyDataDecls, UndecidableInstances, MultiParamTypeClasses #-}
 
 -- Lazy HLists: potentially infinite heterogeneous streams...
 -- Based on the suggestion by Chung-chieh Shan, posted on the

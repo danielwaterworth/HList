@@ -1,6 +1,5 @@
 {-# LANGUAGE ScopedTypeVariables, EmptyDataDecls, FunctionalDependencies, 
-             FlexibleInstances, FlexibleContexts, MultiParamTypeClasses, 
-             UndecidableInstances #-}
+             MultiParamTypeClasses, UndecidableInstances #-}
 
 -- PatternSignatures,  GHC 6.6 complains of this pragma
 
