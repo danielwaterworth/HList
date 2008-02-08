@@ -1,6 +1,6 @@
 {-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances,
   FlexibleContexts, UndecidableInstances #-}
-{-# OPTIONS -fglasgow-exts #-}
+{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 
 {-
    The HList library

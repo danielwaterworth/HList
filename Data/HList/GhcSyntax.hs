@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke

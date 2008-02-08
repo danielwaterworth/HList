@@ -1,6 +1,7 @@
 {-# LANGUAGE EmptyDataDecls, MultiParamTypeClasses,
-  FunctionalDependencies,FlexibleInstances, UndecidableInstances, OverlappingInstances #-}
-{-# OPTIONS -fglasgow-exts #-}
+  FunctionalDependencies, UndecidableInstances, OverlappingInstances #-}
+{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
+
 {- (C) 2004-2007, Oleg Kiselyov & Ralf Laemmel
 Creating a regular (homogeneous) Haskell list by consing values
 of generally different types. The consing operation builds a union as it

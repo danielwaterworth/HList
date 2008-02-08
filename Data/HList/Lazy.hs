@@ -1,3 +1,4 @@
+{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 {-# LANGUAGE EmptyDataDecls, UndecidableInstances, MultiParamTypeClasses #-}
 
 -- Lazy HLists: potentially infinite heterogeneous streams...
