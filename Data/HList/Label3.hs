@@ -27,7 +27,7 @@
    equality.
 -}
 
-module Label3 where
+module Data.HList.Label3 where
 
 import Data.HList.FakePrelude
 import Data.HList.Record (ShowLabel(..))

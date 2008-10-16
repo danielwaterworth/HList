@@ -32,15 +32,15 @@ module MainGhcGeneric1 (
 ) where
 
 import Datatypes2
-import CommonMain hiding (HDeleteMany, hDeleteMany)
-import GhcSyntax
-import GhcExperiments
-import GhcRecord
-import TypeEqBoolGeneric
-import TypeEqGeneric1
-import TypeCastGeneric1
-import Label3
-import RecordP
+import Data.HList.CommonMain hiding (HDeleteMany, hDeleteMany)
+import Data.HList.GhcSyntax
+import Data.HList.GhcExperiments
+import Data.HList.GhcRecord
+import Data.HList.TypeEqBoolGeneric
+import Data.HList.TypeEqGeneric1
+import Data.HList.TypeCastGeneric1
+import Data.HList.Label3
+import Data.HList.RecordP
 
 
 {-----------------------------------------------------------------------------}
