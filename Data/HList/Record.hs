@@ -1,5 +1,5 @@
 {-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances,
-  FlexibleContexts, UndecidableInstances #-}
+  FlexibleContexts, UndecidableInstances, ScopedTypeVariables #-}
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 
 {-

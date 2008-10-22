@@ -1,5 +1,5 @@
 {-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances,
-  FlexibleContexts, UndecidableInstances #-}
+  FlexibleContexts, OverlappingInstances, UndecidableInstances #-}
 {-
    The HList library
 

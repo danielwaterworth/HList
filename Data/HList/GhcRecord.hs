@@ -1,8 +1,7 @@
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 {-# LANGUAGE ScopedTypeVariables, EmptyDataDecls, FunctionalDependencies, 
-             MultiParamTypeClasses, UndecidableInstances #-}
-
--- PatternSignatures,  GHC 6.6 complains of this pragma
+  MultiParamTypeClasses, UndecidableInstances, PatternSignatures,
+  FlexibleInstances, FlexibleContexts #-}
 
 {-
    The HList library
