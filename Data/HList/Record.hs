@@ -29,7 +29,7 @@ import Data.HList.HArray
 -- labels is erased.
 
 -- Field of label l with value type v
-newtype LVPair l v = LVPair { valueLVPair :: v }
+newtype LVPair l v = LVPair { valueLVPair :: v } deriving Eq
 
 -- Label accessor
 labelLVPair :: LVPair l v -> l
@@ -38,7 +38,7 @@ labelLVPair = undefined
 newLVPair :: l -> v -> LVPair l v
 newLVPair _ = LVPair
 
-newtype Record r = Record r
+newtype Record r = Record r deriving Eq
 
 
 -- Build a record
@@ -56,10 +56,15 @@ emptyRecord = mkRecord HNil
 class HRLabelSet ps
 instance HRLabelSet HNil
 instance HRLabelSet (HCons x HNil)
-instance ( HEq l1 l2 HFalse
-         , HRLabelSet (HCons (LVPair l2 v2) r)
-         , HRLabelSet (HCons (LVPair l1 v1) r)
+instance ( HEq l1 l2 leq
+         , HRLabelSet' l1 v1 l2 v2 leq r
          ) => HRLabelSet (HCons (LVPair l1 v1) (HCons (LVPair l2 v2) r))
+
+class HRLabelSet' l1 v1 l2 v2 leq r
+instance ( HRLabelSet (HCons (LVPair l2 v2) r)
+         , HRLabelSet (HCons (LVPair l1 v1) r)
+         ) => HRLabelSet' l1 v1 l2 v2 HFalse r
+instance ( Fail (DuplicatedLabel l1) ) => HRLabelSet' l1 v1 l2 v2 HTrue r
 
 {-
 instance (HZip ls vs ps, HLabelSet ls) => HRLabelSet ps
@@ -67,9 +72,13 @@ instance (HZip ls vs ps, HLabelSet ls) => HRLabelSet ps
 
 class HLabelSet ls
 instance HLabelSet HNil
-instance (HMember x ls HFalse, HLabelSet ls)
-      =>  HLabelSet (HCons x ls)
+instance (HMember x ls xmem, HLabelSet' x ls xmem) => HLabelSet (HCons x ls)
 
+class HLabelSet' x ls xmem
+instance HLabelSet ls => HLabelSet' x ls HFalse
+
+data DuplicatedLabel l = DuplicatedLabel l
+instance Fail (DuplicatedLabel x) => HLabelSet' x ls HTrue
 
 -- Construct the (phantom) list of labels of the record.
 class RecordLabels r ls | r -> ls
@@ -395,4 +404,39 @@ instance (UnionSymRec r1 r2' (Record ru),
              ul' = hExtend f2 ul
              ur' = hExtend f2 ur
 
+{-----------------------------------------------------------------------------}
+-- Rearranges a record by labels. Returns the record r, rearranged such that
+-- the labels are in the order given by ls. (recordLabels r) must be a
+-- permutation of ls.
+hRearrange :: (HLabelSet ls, HRearrange ls r r') => ls -> Record r -> Record r'
+hRearrange ls (Record r) = Record $ hRearrange2 ls r
 
+-- Helper class for hRearrange
+class HRearrange ls r r' | ls r -> r' where
+    hRearrange2 :: ls -> r -> r'
+
+instance HRearrange HNil HNil HNil where
+   hRearrange2 _ _ = HNil
+
+instance (H2ProjectByLabels (HCons l HNil) r rin rout,
+          HRearrange' l ls rin rout r') =>
+        HRearrange (HCons l ls) r r' where
+   hRearrange2 (HCons l ls) r = hRearrange2' l ls rin rout
+      where (rin, rout) = h2projectByLabels (HCons l HNil) r
+
+-- Helper class 2 for hRearrange
+class HRearrange' l ls rin rout r' | l ls rin rout -> r' where
+    hRearrange2' :: l -> ls -> rin -> rout -> r'
+instance HRearrange ls rout r' =>
+        HRearrange' l ls (HCons (LVPair l v) HNil) rout (HCons (LVPair l v) r') where
+   hRearrange2' _ ls (HCons lv@(LVPair v) HNil) rout = HCons (LVPair v `asTypeOf` lv) (hRearrange2 ls rout)
+
+data ExtraField l = ExtraField
+data FieldNotFound l = FieldNotFound
+
+instance Fail (FieldNotFound l) => 
+        HRearrange' l ls HNil rout (FieldNotFound l) where
+   hRearrange2' _ _ _ _ = FieldNotFound
+instance Fail (ExtraField l) => 
+          HRearrange HNil (HCons (LVPair l v) a) (ExtraField l) where
+   hRearrange2 _ _ = ExtraField
