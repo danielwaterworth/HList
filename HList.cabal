@@ -15,13 +15,12 @@ Cabal-version:       >= 1.4
 Tested-With:         GHC==6.8.2
 Build-Depends:       base >= 3 && < 5
 Build-Type:          Simple
-Exposed-modules:     Data.HList, Data.HList.CommonMain, Data.HList.Variant, Data.HList.GhcSyntax,
+Exposed-modules:     Data.HList
+Other-modules:       Data.HList.Label4, Data.HList.CommonMain, Data.HList.Variant, Data.HList.GhcSyntax,
                      Data.HList.GhcRecord, Data.HList.Record, Data.HList.HZip, Data.HList.TIC, Data.HList.TIP,
                      Data.HList.HTypeIndexed, Data.HList.HOccurs, Data.HList.HArray, Data.HList.GhcExperiments,
                      Data.HList.HListPrelude, Data.HList.TypeEqBoolGeneric, Data.HList.TypeEqGeneric1,
-                     Data.HList.TypeCastGeneric1, Data.HList.TypeCastGeneric2, Data.HList.FakePrelude, 
-                     Data.HList.RecordP, Data.HList.TypeEqGeneric2,
-                     Data.HList.Label1, Data.HList.Label2, Data.HList.Label3, Data.HList.Label4, Data.HList.Label5
+                     Data.HList.TypeCastGeneric1, Data.HList.FakePrelude
 
 extensions:          EmptyDataDecls, FlexibleContexts, FlexibleInstances, FunctionalDependencies,
                      MultiParamTypeClasses, OverlappingInstances, ScopedTypeVariables, RankNTypes,
