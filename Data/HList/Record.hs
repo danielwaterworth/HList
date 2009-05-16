@@ -72,14 +72,29 @@ instance (HMember x ls HFalse, HLabelSet ls)
 
 
 -- Construct the (phantom) list of labels of the record.
--- This is a type-level only function
 class RecordLabels r ls | r -> ls
+    where recordLabels' :: r -> ls
 instance RecordLabels HNil HNil
+    where recordLabels' _ = HNil
 instance RecordLabels r' ls
       => RecordLabels (HCons (LVPair l v) r') (HCons l ls)
+    where recordLabels' ~(HCons _ r') = HCons undefined (recordLabels' r')
 
-recordLabels :: RecordLabels r ls => r -> ls
-recordLabels = undefined
+recordLabels :: RecordLabels r ls => Record r -> ls
+recordLabels (Record r) = recordLabels' r
+
+-- Construct the list of values of the record.
+class RecordValues r ls | r -> ls
+    where recordValues' :: r -> ls
+instance RecordValues HNil HNil
+    where recordValues' _ = HNil
+instance RecordValues r' vs
+      => RecordValues (HCons (LVPair l v) r') (HCons v vs)
+    where recordValues' ~(HCons (LVPair v) r') = HCons v (recordValues' r')
+
+recordValues :: RecordValues r vs => Record r -> vs
+recordValues (Record r) = recordValues' r
+
 
 
 {-----------------------------------------------------------------------------}
@@ -159,7 +174,7 @@ instance ( RecordLabels r ls
   where
     hLookupByLabel l (Record r) = v
       where
-        ls = recordLabels r
+        ls = recordLabels' r
         n = hFind l ls
         (LVPair v) = hLookupByHNat n r
 
@@ -201,7 +216,7 @@ hDeleteAtLabel l (Record r) = Record r'
 -- Update operation
 hUpdateAtLabel l v (Record r) = Record r'
  where
-  n    = hFind l (recordLabels r)
+  n    = hFind l (recordLabels' r)
   r'   = hUpdateAtHNat n (newLVPair l v) r
 
 
@@ -305,7 +320,7 @@ instance ( RecordLabels r ls
   where
    hLeftUnion (Record r) (Record (HCons f r')) = r''
     where
-     b       = hMember (labelLVPair f) (recordLabels r)
+     b       = hMember (labelLVPair f) (recordLabels' r)
      r'''    = hLeftUnionBool b r f
      r''     = hLeftUnion (Record r''') (Record r')
 

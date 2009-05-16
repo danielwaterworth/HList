@@ -65,7 +65,7 @@ mkVariant :: ( RecordLabels v ls
 
 mkVariant x y (Record v) = Variant v'
  where
-  n       = hFind x (recordLabels v)
+  n       = hFind x (recordLabels' v)
   ms      = hMaybied v
   v'      = hUpdateAtHNat n (newLVPair x (Just y)) ms
 
@@ -82,7 +82,7 @@ unVariant :: ( RecordLabels v ls
 
 unVariant x (Variant v) = y
  where
-  n       = hFind x (recordLabels v)
+  n       = hFind x (recordLabels' v)
   LVPair y     = hLookupByHNat n v
 
 

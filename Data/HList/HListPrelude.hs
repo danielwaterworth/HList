@@ -268,7 +268,7 @@ class HMap f l l' | f l -> l'
 
 instance HMap f HNil HNil
  where
-  hMap _ HNil = HNil
+  hMap _ _ = HNil
 
 instance (
            Apply f x y,
@@ -276,7 +276,7 @@ instance (
          )
       => HMap f (HCons x xs) (HCons y ys)
  where
-  hMap f (HCons x xs) = HCons (apply f x) (hMap f xs)
+  hMap f ~(HCons x xs) = HCons (apply f x) (hMap f xs)
 
 {-----------------------------------------------------------------------------}
 
@@ -295,7 +295,7 @@ instance ( HMapOut f l e'
          )
       =>   HMapOut f (HCons e l) e'
  where
-  hMapOut f (HCons e l) = apply f e : hMapOut f l
+  hMapOut f ~(HCons e l) = apply f e : hMapOut f l
 
 
 {-----------------------------------------------------------------------------}
