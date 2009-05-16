@@ -22,7 +22,7 @@ module Data.HList (
  module Control.Monad,
  module Control.Monad.ST,
  module Control.Monad.Fix,
- module GHC.IOBase,
+-- module GHC.IOBase,
 -- module DeepNarrow,
 -- module Nominal,
 -- module New,
@@ -48,7 +48,7 @@ import Data.Typeable
 import Control.Monad
 import Control.Monad.ST
 import Control.Monad.Fix
-import GHC.IOBase hiding (stToIO, writeIORef, readIORef, newIORef, IORef,unsafeIOToST,unsafeSTToIO)
+--import GHC.IOBase hiding (stToIO, writeIORef, readIORef, newIORef, IORef,unsafeIOToST,unsafeSTToIO)
 
 infixr 9 #
 (#) :: (HasField l r v) => r -> l -> v
