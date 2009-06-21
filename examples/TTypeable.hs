@@ -9,9 +9,9 @@
    Typeable at the type level.
 -}
 
-module Data.HList.TTypeable where
+module TTypeable where
 
-import Data.HList.Datatypes1
+import Datatypes1
 import Data.HList.FakePrelude
 import Data.HList.HListPrelude
 
