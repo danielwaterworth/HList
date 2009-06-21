@@ -10,6 +10,8 @@ Author:              2004 Oleg Kiselyov (FNMOC, Monterey), Ralf Laemmel (CWI/VU,
                      Keean Schupke (Imperial College, London)
 Maintainer:          oleg@pobox.com
 
+Data-files:          README, keyword-arguments.lhs
+cabal-version: >= 1.4
 Tested-With:         GHC==6.8.2
 Build-Depends:       base
 Build-Type:          Simple
