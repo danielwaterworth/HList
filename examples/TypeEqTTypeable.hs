@@ -10,7 +10,7 @@
    This approach works for GHC and Hugs.
 -}
 
-module Data.HList.TypeEqTTypeable where
+module TypeEqTTypeable where
 
 import Data.HList.FakePrelude
 import Data.HList.TTypeable
