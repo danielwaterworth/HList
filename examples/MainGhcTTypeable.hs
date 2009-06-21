@@ -16,12 +16,12 @@
 
 
 import Datatypes1
-import CommonMain
-import GhcSyntax
+import Data.HList.CommonMain
+import Data.HList.GhcSyntax
 import TypeEqBoolTTypeable
 import TypeEqTTypeable
-import TypeCastGeneric1
-import Label1
+import Data.HList.TypeCastGeneric1
+import Data.HList.Label1
 
 
 {-----------------------------------------------------------------------------}

@@ -1,4 +1,4 @@
-module Data.HList.Datatypes1 where
+module Datatypes1 where
 
 -- The fout-n-mouth example
 

@@ -11,7 +11,7 @@
 
 module ExplosiveTypeEq where
 
-import FakePrelude
+import Data.HList.FakePrelude
 
 instance TypeEqTrue Integer Integer
 instance TypeEqTrue Char Char

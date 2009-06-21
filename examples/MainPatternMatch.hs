@@ -28,12 +28,12 @@ happens to have the field names PtX.
 
 module Main where
 
-import CommonMain
-import GhcSyntax
+import Data.HList.CommonMain
+import Data.HList.GhcSyntax
 
-import TypeEqGeneric1
-import TypeCastGeneric1
-import Label4
+import Data.HList.TypeEqGeneric1
+import Data.HList.TypeCastGeneric1
+import Data.HList.Label4
 
 -- Labels
 -- The more convenient labels, Label4.hs, need -fallow-overlapping-instances

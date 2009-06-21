@@ -4,7 +4,7 @@
 
 -- Needed for a reply to the Haskell mailing list
 
-import CommonMain
+import Data.HList.CommonMain
 
 main = print $ comp "abc"
 

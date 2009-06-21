@@ -20,13 +20,13 @@
 module MainGhcGeneric1 (
 
  module Datatypes2,
- module CommonMain,
- module GhcSyntax,
- module GhcExperiments,
- module TypeEqBoolGeneric,
- module TypeEqGeneric1,
- module TypeCastGeneric1,
- module Label3,
+ module Data.HList.CommonMain,
+ module Data.HList.GhcSyntax,
+ module Data.HList.GhcExperiments,
+ module Data.HList.TypeEqBoolGeneric,
+ module Data.HList.TypeEqGeneric1,
+ module Data.HList.TypeCastGeneric1,
+ module Data.HList.Label3,
  mainExport
 
 ) where

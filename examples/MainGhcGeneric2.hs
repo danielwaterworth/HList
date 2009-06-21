@@ -13,8 +13,8 @@
 
 module MainGhcGeneric2 where
 
-import FakePrelude hiding (TypeEq,typeEq,proxyEq)
-import TypeEqGeneric2
+import Data.HList.FakePrelude hiding (TypeEq,typeEq,proxyEq)
+import Data.HList.TypeEqGeneric2
 
 
 {-----------------------------------------------------------------------------}

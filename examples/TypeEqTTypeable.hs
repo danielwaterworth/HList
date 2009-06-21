@@ -13,7 +13,7 @@
 module TypeEqTTypeable where
 
 import Data.HList.FakePrelude
-import Data.HList.TTypeable
+import TTypeable
 
 
 -- Generic implementation of the type equality predicate

@@ -11,11 +11,11 @@
 
 
 import Datatypes1
-import CommonMain
+import Data.HList.CommonMain
 import TypeEqTTypeable
 import TypeEqBoolTTypeable
-import TypeCastGeneric1
-import Label2
+import Data.HList.TypeCastGeneric1
+import Data.HList.Label2
 
 
 {-----------------------------------------------------------------------------}

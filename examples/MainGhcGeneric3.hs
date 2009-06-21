@@ -13,8 +13,8 @@
 
 module MainGhcGeneric3 where
 
-import FakePrelude hiding (TypeCast,typeCast)
-import TypeCastGeneric2
+import Data.HList.FakePrelude hiding (TypeCast,typeCast)
+import Data.HList.TypeCastGeneric2
 
 
 {-----------------------------------------------------------------------------}
