@@ -8,7 +8,7 @@
    This approach works for GHC and Hugs.
 -}
 
-module Data.HList.TypeEqBoolTTypeable where
+module TypeEqBoolTTypeable where
 
 import Data.HList.FakePrelude
 -- import Data.HList.TTypeable
