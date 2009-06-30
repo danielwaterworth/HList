@@ -1,3 +1,7 @@
+29 June 2008
+	Apply the set of patches by gwern0@gmail.com: moving a few
+	files around, cleaning up hlist.cabal
+	
 3 February 2008
 	Fifteen patches by gwern0@gmail.com: Data.HList hierarchy,
 	use of LANGUAGE, -Wall, changes to Cabal files
