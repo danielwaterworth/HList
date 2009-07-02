@@ -1,3 +1,12 @@
+1 July 2009
+	Applied a set of four patches by Brian Bloniarz:
+	Improve error messages from Record functions using the Fail
+	type class trick
+	Add hRearrange, to permute a Record by labels
+	Expose a few hidden modules, needed for HaskellDB
+	Make hMap, hMapOut & recordLabels maximally lazy
+	Add recordValues, analagous to recordLabels
+	
 29 June 2008
 	Apply the set of patches by gwern0@gmail.com: moving a few
 	files around, cleaning up hlist.cabal
