@@ -81,13 +81,14 @@ data DuplicatedLabel l = DuplicatedLabel l
 instance Fail (DuplicatedLabel x) => HLabelSet' x ls HTrue
 
 -- Construct the (phantom) list of labels of the record.
+-- This is a purely type-level function.
 class RecordLabels r ls | r -> ls
-    where recordLabels' :: r -> ls
 instance RecordLabels HNil HNil
-    where recordLabels' _ = HNil
 instance RecordLabels r' ls
       => RecordLabels (HCons (LVPair l v) r') (HCons l ls)
-    where recordLabels' ~(HCons _ r') = HCons undefined (recordLabels' r')
+
+recordLabels' :: RecordLabels r ls => r -> ls
+recordLabels' r = undefined
 
 recordLabels :: RecordLabels r ls => Record r -> ls
 recordLabels (Record r) = recordLabels' r
@@ -421,7 +422,7 @@ instance HRearrange HNil HNil HNil where
 instance (H2ProjectByLabels (HCons l HNil) r rin rout,
           HRearrange' l ls rin rout r') =>
         HRearrange (HCons l ls) r r' where
-   hRearrange2 (HCons l ls) r = hRearrange2' l ls rin rout
+   hRearrange2 ~(HCons l ls) r = hRearrange2' l ls rin rout
       where (rin, rout) = h2projectByLabels (HCons l HNil) r
 
 -- Helper class 2 for hRearrange
