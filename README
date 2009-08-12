@@ -13,10 +13,10 @@ You can get HList from Hackage or from Darcs:
 $ darcs get --partial http://darcs.haskell.org/HList/
 
 The code works --- within the limits exercised in the source files ---
-for both GHC (6.4) and Hugs (Nov 2003). See the Makefile for ways of
-running test cases.
+for both GHC (6.4) and Hugs (Nov 2003). See the 
+examples/Makefile for ways of running test cases.
 
-One may run "make test" to check the distribution.
+One may run "cd examples; make test" to check the distribution.
 
-Last updated; February 08, 2006
+See ChangeLog for updates.
 

@@ -13,7 +13,7 @@
 # Some variables
 #
 
-ghci = ghci -fglasgow-exts \
+ghci = ghci -i.. -fglasgow-exts \
 		-fallow-overlapping-instances \
 		-fallow-undecidable-instances
 ghc-favourite  = MainGhcGeneric1.hs
@@ -81,7 +81,7 @@ test-ghc:
 	diff -b MainPosting-040607.out MainPosting-040607.ref
 	${ghci} MainPosting-051106.hs -v0 < Main.in > MainPosting-051106.out
 	diff -b MainPosting-051106.out MainPosting-051106.ref
-	${ghci} HSequence.hs -v0 < Main.in > HSequence.out
+	${ghci} HSequenceTest.hs -v0 < Main.in > HSequence.out
 	diff -b HSequence.out HSequence.ref 
 #
 # Yet another generic type equality

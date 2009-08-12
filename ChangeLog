@@ -1,3 +1,15 @@
+11 August 2009
+	Made the regression tests run again.
+	Please do "cd examples; make test-ghc"
+	after any changes.
+	
+11 August 2009
+	Applied a patch from Justin Bailey:
+	Updated fixity declarations for record operators for
+	usability and to better match familiar list and 
+	arithmetic operators.
+	Added Haddock comments for these operators
+
 1 July 2009
 	Applied a set of four patches by Brian Bloniarz:
 	Improve error messages from Record functions using the Fail

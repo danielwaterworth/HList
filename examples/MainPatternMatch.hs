@@ -44,11 +44,9 @@ data PtX; px = proxy::Proxy PtX
 data PtY; py = proxy::Proxy PtY
 
 infixr 9 #
-m # field = (m .!. field) 
+m # field = m .!. field
 
 accessor r f = r # f
-
-setter r f v = (newF f v) .<. r 
 
 -- 1D points
 point1 x = 

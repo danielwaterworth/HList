@@ -48,7 +48,3 @@ hlist2 = HCons ([1]) (HCons (['c']) HNil)      -- List monad
 testHSequence  = hSequence hlist
 testHSequence2 = hSequence hlist2
 
--- main :: IO ()
--- main = do
---        print testHSequence
---        print testHSequence2
