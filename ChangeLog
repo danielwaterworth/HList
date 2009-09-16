@@ -1,3 +1,6 @@
+15 September 2009
+	Release 0.2 by Gwern Branwen
+
 11 August 2009
 	Made the regression tests run again.
 	Please do "cd examples; make test-ghc"
@@ -17,7 +20,7 @@
 	Add hRearrange, to permute a Record by labels
 	Expose a few hidden modules, needed for HaskellDB
 	Make hMap, hMapOut & recordLabels maximally lazy
-	Add recordValues, analagous to recordLabels
+	Add recordValues, analogous to recordLabels
 	
 29 June 2008
 	Apply the set of patches by gwern0@gmail.com: moving a few
