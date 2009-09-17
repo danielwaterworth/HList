@@ -1,5 +1,5 @@
 {-# LANGUAGE EmptyDataDecls, MultiParamTypeClasses, FlexibleInstances,
-  FlexibleContexts, UndecidableInstances #-}
+  FlexibleContexts, OverlappingInstances, UndecidableInstances #-}
 
 {-
    The HList library

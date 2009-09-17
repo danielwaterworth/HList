@@ -13,9 +13,7 @@
 # Some variables
 #
 
-ghci = ghci -i.. -fglasgow-exts \
-		-fallow-overlapping-instances \
-		-fallow-undecidable-instances
+ghci = ghci -i..
 ghc-favourite  = MainGhcGeneric1.hs
 hugs-favourite = MainHugsTTypeable.hs
 
@@ -65,33 +63,35 @@ test-ghc:
 #
 # The favoured GHC model
 #
-	${ghci} ${ghc-favourite} -v0 < Main.in > MainGhcGeneric1.out
+	ghci -i.. ${ghc-favourite} -v0 < Main.in > MainGhcGeneric1.out
 	diff -b MainGhcGeneric1.out MainGhcGeneric1.ref
 #
 # The GHC model with TTypeable-based type equality
 #
-	${ghci} MainGhcTTypeable.hs -v0 < Main.in > MainGhcTTypeable.out
+	ghci -i.. MainGhcTTypeable.hs -v0 < Main.in > MainGhcTTypeable.out
 	diff -b MainGhcTTypeable.out MainGhcTTypeable.ref
 #
 # Run test cases as posted on mailing lists
 #
-	${ghci} MainPatternMatch.hs -v0 < Main.in > MainPatternMatch.out
+	ghci -i.. MainPatternMatch.hs -v0 < Main.in > MainPatternMatch.out
 	diff -b MainPatternMatch.out MainPatternMatch.ref
-	${ghci} MainPosting-040607.hs -v0 < Main.in > MainPosting-040607.out
+	ghci -i.. MainPosting-040607.hs -v0 < Main.in > MainPosting-040607.out
 	diff -b MainPosting-040607.out MainPosting-040607.ref
-	${ghci} MainPosting-051106.hs -v0 < Main.in > MainPosting-051106.out
+	ghci -i.. MainPosting-051106.hs -v0 < Main.in > MainPosting-051106.out
 	diff -b MainPosting-051106.out MainPosting-051106.ref
-	${ghci} HSequenceTest.hs -v0 < Main.in > HSequence.out
+	ghci -i.. HSequenceTest.hs -v0 < Main.in > HSequence.out
 	diff -b HSequence.out HSequence.ref 
+	ghci -i.. TIPTransform.hs -v0 < Main.in > TIPTransform.out
+	diff -b TIPTransform.out TIPTransform.ref
 #
 # Yet another generic type equality
 #
-	${ghci} MainGhcGeneric2.hs -v0 < Main.in > MainGhcGeneric2.out
+	ghci -i.. MainGhcGeneric2.hs -v0 < Main.in > MainGhcGeneric2.out
 	diff -b MainGhcGeneric2.out MainGhcGeneric2.ref
 #
 # Yet another generic type cast
 #
-	${ghci} MainGhcGeneric3.hs -v0 < Main.in > MainGhcGeneric3.out
+	ghci -i.. MainGhcGeneric3.hs -v0 < Main.in > MainGhcGeneric3.out
 	diff -b MainGhcGeneric3.out MainGhcGeneric3.ref
 
 test-hugs:

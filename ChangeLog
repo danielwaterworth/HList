@@ -1,3 +1,13 @@
+16 September 2009
+	Added TypeCastGeneric3, TypeEqGeneric3 -- the instances of
+	typeCast and TypeEq that don't require separate compilation.
+	They are like TypeCastGeneric2, TypeEqGeneric2, but integrated
+	with the FakePrelude.
+	Added the example file TIPTransform.hs, a variation on the
+	keyword argument problem posed by Andrew U. Frank.
+	Adjusted the LANGUAGE pragmas, made the examples run without
+	the global -fglasgow-exts
+	
 15 September 2009
 	Release 0.2 by Gwern Branwen
 

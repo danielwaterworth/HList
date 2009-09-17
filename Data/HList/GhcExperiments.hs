@@ -1,4 +1,4 @@
-{-# LANGUAGE KindSignatures,MultiParamTypeClasses,FunctionalDependencies,FlexibleInstances, FlexibleContexts, UndecidableInstances #-}
+{-# LANGUAGE KindSignatures,MultiParamTypeClasses,FunctionalDependencies,FlexibleInstances, FlexibleContexts, UndecidableInstances, OverlappingInstances #-}
 
 {-
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
