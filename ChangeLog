@@ -1,3 +1,7 @@
+10 January 2010
+	Changed fixity level of <++
+	Pushed uses of LANGUAGE pragmas further for OOHaskell examples
+
 16 September 2009
 	Added TypeCastGeneric3, TypeEqGeneric3 -- the instances of
 	typeCast and TypeEq that don't require separate compilation.
