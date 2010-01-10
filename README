@@ -1,6 +1,25 @@
-(C) 2004--2005, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
+(C) 2004--2010, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
 The HList library and samples
+
+----------------------------------------------------------------------
+
+Getting the code
+
+> darcs get http://darcs.haskell.org/HList
+
+----------------------------------------------------------------------
+
+Pushing changes
+
+You need an account at darcs.haskell.org
+
+> cd HList
+> darcs pull user@darcs.haskell.org:/srv/darcs/HList
+> darcs record
+> darcs push
+
+----------------------------------------------------------------------
 
 This distribution covers all essential issues discussed in the HList paper.
 Additional examples and HList operations are provided.
