@@ -1,7 +1,11 @@
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
-{-# LANGUAGE ScopedTypeVariables, EmptyDataDecls, FunctionalDependencies, 
-  MultiParamTypeClasses, UndecidableInstances, PatternSignatures,
-  FlexibleInstances, FlexibleContexts #-}
+{-# LANGUAGE EmptyDataDecls #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FunctionalDependencies #-}
 
 {-
    The HList library

@@ -131,12 +131,12 @@ infixr 2 .<.
 -}
 f@(LVPair v) .<. r = hTPupdateAtLabel (labelLVPair f) v r
 
-infixl 2 .<++.
+infixl 1 .<++.
 {-|
   (.<++.) -- Similar to list append, so give this slightly lower fixity than
              (.*.), so we can write:
 
-   record1 .*. field1 .<++. record2 .*. field2
+   field1 .=. value .*. record1 .<++. record2
 -}
 r .<++. r' = hLeftUnion r r'
 

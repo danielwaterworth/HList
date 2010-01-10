@@ -1,10 +1,17 @@
-{-# LANGUAGE EmptyDataDecls, MultiParamTypeClasses,
-  FunctionalDependencies, UndecidableInstances, OverlappingInstances #-}
-{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
+{-# LANGUAGE EmptyDataDecls #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE OverlappingInstances #-}
+{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FunctionalDependencies #-}
 
-{- (C) 2004-2007, Oleg Kiselyov & Ralf Laemmel
-Creating a regular (homogeneous) Haskell list by consing values
-of generally different types. The consing operation builds a union as it
+{- 
+
+-- (C) 2004-2007, Oleg Kiselyov & Ralf Laemmel
+
+Creating a regular (homogeneous) Haskell list by consing values of
+generally different types. The consing operation builds a union as it
 adds more elements to the list.
 
 The operations consEither, nilEither are generalizations of ((:),[]).
