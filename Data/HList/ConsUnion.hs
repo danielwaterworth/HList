@@ -228,6 +228,10 @@ instance DownCast' (TContains s u) u s where
     downCast' (TContains _ prj) = prj
 
 
+--
 -- The following is deliberately omitted. That means attempting to
 -- project a type that is not in the union should give a type error.
+--
 -- instance DownCast' TNone s s
+--
+
