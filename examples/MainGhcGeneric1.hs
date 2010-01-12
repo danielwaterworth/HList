@@ -178,7 +178,7 @@ testRecords =   ( test1
   test1 = unpricedAngus
   test2 = test1 .!. breed
   test3 = hDeleteAtLabel breed test1
-  test4 = test1 .@. breed .=. Sheep
+  test4 = breed .=. Sheep .@. test1
   test5 = price .=. 8.8 .*. test1
   test6 = hProjectByLabels (HCons breed (HCons price HNil)) test5
   -- test7 should have the same type as test1 and test4 but

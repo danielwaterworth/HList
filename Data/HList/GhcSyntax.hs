@@ -99,22 +99,17 @@ infixl 2 .-.
 --}
 r .-. l =  hDeleteAtLabel l r
 
-infixl 2 .@.
+infixr 2 .@.
 {-|
-  (.@.) -- Update a field with a particular value. Another record-level
-           operation, so it has the same fixity as (.*.) and (.-.). No
-           real list analogue, since there is no Prelude defined
+  (.@.) -- Update a field with a particular value.
+           Same fixity as (.*.) so that extensions and updates can be chained.
+           There is no real list analogue, since there is no Prelude defined
            update.
 
-  record1 .@. label1 .=. value1
+  label1 .=. value1 .@. record1 
 
-  record1 .@. label1 .=. record2 .!. label1
-
-  record1 .*. label1 .=. record2 .!. label1
-          .*. label2 .=. record2 .!. label2 
-          .@. label1 .=. value2
 -}
-r .@. f@(LVPair v) =  hUpdateAtLabel (labelLVPair f) v r
+f@(LVPair v) .@. r  =  hUpdateAtLabel (labelLVPair f) v r
 
 infixr 2 .^.
 {-|

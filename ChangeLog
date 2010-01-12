@@ -1,5 +1,6 @@
-10 January 2010
-	Changed fixity level of <++
+10-12 January 2010
+        Reverse parameter order for .@.
+	Changed fixity <++
 	Pushed uses of LANGUAGE pragmas further for OOHaskell examples
 
 16 September 2009
