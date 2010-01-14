@@ -1,5 +1,8 @@
-{-# OPTIONS -fglasgow-exts #-}
-{-# OPTIONS -fallow-overlapping-instances #-}
+{-# LANGUAGE ExistentialQuantification #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 
 {-
 

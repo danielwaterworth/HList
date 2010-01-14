@@ -1,6 +1,5 @@
-{-# OPTIONS -fglasgow-exts #-}
-{-# OPTIONS -fallow-undecidable-instances #-}
-{-# OPTIONS -fallow-overlapping-instances #-}
+{-# LANGUAGE EmptyDataDecls #-}
+{-# LANGUAGE PatternGuards #-}
 
 -- Pattern-matching on HList's Records
 

@@ -1,6 +1,8 @@
-{-# OPTIONS -fglasgow-exts #-}
-{-# OPTIONS -fallow-overlapping-instances #-}
-{-# OPTIONS -fallow-undecidable-instances #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE EmptyDataDecls #-}
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE OverlappingInstances#-}
+{-# LANGUAGE UndecidableInstances#-}
 
 {-
 
@@ -23,9 +25,7 @@ module MainGhcGeneric1 (
  module Data.HList.CommonMain,
  module Data.HList.GhcSyntax,
  module Data.HList.GhcExperiments,
- module Data.HList.TypeEqBoolGeneric,
  module Data.HList.TypeEqGeneric1,
- module Data.HList.TypeCastGeneric1,
  module Data.HList.Label3,
  mainExport
 

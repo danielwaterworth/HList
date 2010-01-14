@@ -8,14 +8,10 @@
 
 module Data.HList.GhcSyntax where
 
-import Data.HList.HArray (HUpdateAtHNat())
 import Data.HList.FakePrelude
 import Data.HList.HListPrelude
-import Data.HList.HOccurs
 import Data.HList.Record
 import Data.HList.GhcRecord
-import Data.HList.TIP
-import Data.HList.TIC
 
 
 {-----------------------------------------------------------------------------}

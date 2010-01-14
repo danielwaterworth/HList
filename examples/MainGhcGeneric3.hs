@@ -1,6 +1,3 @@
-{-# OPTIONS -fglasgow-exts #-}
-{-# OPTIONS -fallow-overlapping-instances #-}
-{-# OPTIONS -fallow-undecidable-instances #-}
 
 {-
 

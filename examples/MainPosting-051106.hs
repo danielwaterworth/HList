@@ -1,6 +1,6 @@
-{-# OPTIONS -fglasgow-exts #-}
-{-# OPTIONS -fallow-overlapping-instances #-}
-{-# OPTIONS -fallow-undecidable-instances #-}
+{-# LANGUAGE EmptyDataDecls #-}
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE MultiParamTypeClasses #-}
 
 -- Needed for a reply to the Haskell mailing list
 
