@@ -34,7 +34,7 @@ import Data.HList.Record (ShowLabel(..))
 
 
 -- Labels are type-level naturals
-data HNat x => Label x ns desc  -- labels are exclusively type-level entities
+data Label x ns desc  -- labels are exclusively type-level entities
 
 
 -- Public constructors for labels
