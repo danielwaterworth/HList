@@ -265,14 +265,14 @@ hConsTcName :: TyCon
 hConsTcName = mkTyCon "HList.HCons"
 instance (Typeable x, Typeable y) => Typeable (HCons x y)
  where
-  typeOf (HCons x y)
+  typeOf ~(HCons x y)
    = mkTyConApp hConsTcName [ typeOf x, typeOf y ]
 
 recordTcName :: TyCon
 recordTcName = mkTyCon "HList.Record"
 instance Typeable x => Typeable (Record x)
  where
-  typeOf (Record x)
+  typeOf ~(Record x)
    = mkTyConApp recordTcName [ typeOf x ]
 
 hFieldTcName :: TyCon
