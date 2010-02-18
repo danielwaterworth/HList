@@ -1,3 +1,7 @@
+17 February 2010
+	Two patches from Adam Vogt to get the code compile on ghc-6.12
+	and to make Record Typeable instances nonstrict
+	
 10-14 January 2010
         Reverse parameter order for .@.
 	Changed fixity <++

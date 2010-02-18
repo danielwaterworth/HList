@@ -89,10 +89,10 @@ makeLabels = liftM concat . sequence . map repl
 label :: String -> Q [Dec]
 label s = makeLabels [s]
 
-
 -- Show the code expression
 show_code cde = runQ cde >>= putStrLn . pprint
 
+{-
 t1 = show_code [d| data Foo |]
 
 t2 = showName $ mkName "Foo"
@@ -101,5 +101,6 @@ t3 = show_code $
      liftM (replace_name
             (make_tname "foo",make_dname "foo")
             (make_tname "bar",make_dname "bar")) dcl_template
+-}
 
 t4 = show_code $ makeLabels ["getX","getY","draw"]
