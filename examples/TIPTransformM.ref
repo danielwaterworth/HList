@@ -1,0 +1,8 @@
+TIP (HCons (MyVal 20) (HCons 1 (HCons True (HCons 3.5 HNil))))
+TIP (HCons (MyVal 20) (HCons 2 (HCons True (HCons 3.5 HNil))))
+TIP (HCons (MyVal 20) (HCons 1 (HCons False (HCons 3.5 HNil))))
+TIP (HCons (MyVal 20) (HCons 21 (HCons True (HCons 3.5 HNil))))
+TIP (HCons (MyVal 21) (HCons 1 (HCons True (HCons 3.5 HNil))))
+TIP (HCons (MyVal 21) (HCons 1 (HCons True (HCons 3.5 HNil))))
+MyVal is now MyVal 5
+tip2 isTIP (HCons (MyVal 5) (HCons 1 (HCons True (HCons 3.5 HNil))))

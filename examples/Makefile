@@ -83,6 +83,8 @@ test-ghc:
 	diff -b HSequence.out HSequence.ref 
 	ghci -i.. TIPTransform.hs -v0 < Main.in > TIPTransform.out
 	diff -b TIPTransform.out TIPTransform.ref
+	ghci -i.. TIPTransformM.hs -v0 < Main.in > TIPTransformM.out
+	diff -b TIPTransformM.out TIPTransformM.ref
 #
 # Yet another generic type equality
 #
