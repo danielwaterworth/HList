@@ -6,16 +6,16 @@ The HList library and samples
 
 Getting the code
 
-> darcs get http://darcs.haskell.org/HList
+> darcs get http://code.haskell.org/HList
 
 ----------------------------------------------------------------------
 
 Pushing changes
 
-You need an account at darcs.haskell.org
+You need an account at code.haskell.org
 
 > cd HList
-> darcs pull user@darcs.haskell.org:/srv/darcs/HList
+> darcs pull user@code.haskell.org:/srv/darcs/HList
 > darcs record
 > darcs push
 
@@ -29,7 +29,7 @@ namely the underlying infrastructure for database access library.
 
 You can get HList from Hackage or from Darcs:
 
-$ darcs get --partial http://darcs.haskell.org/HList/
+$ darcs get --partial http://code.haskell.org/HList/
 
 The code works --- within the limits exercised in the source files ---
 for both GHC (6.4) and Hugs (Nov 2003). See the 
