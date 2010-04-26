@@ -1,6 +1,6 @@
 {-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleContexts, FlexibleInstances, UndecidableInstances, OverlappingInstances #-}
 
-{-
+{- |
    The HList library
 
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
@@ -8,7 +8,7 @@
    A generic implementation of a type equality predicate. The given
    implementation only works for GHC. The specific coding here is only
    shown for completeness' sake. We actually favour the encoding from
-   TypeEqGeneric1.hs for its conciseness. The specific coding here
+   "Data.HList.TypeEqGeneric1" for its conciseness. The specific coding here
    does not rely on separate compilation (while TypeEqGeneric1.hs
    does), but on some other tricks.
 -}

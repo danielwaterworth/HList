@@ -1,7 +1,7 @@
 {-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances,
   UndecidableInstances, FlexibleContexts #-}
 
-{-
+{- |
    The HList library
 
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
@@ -29,14 +29,14 @@ import Data.HList.Record
 
 {-----------------------------------------------------------------------------}
 
--- Variant types on the basis of label-maybe pairs.
+-- | Variant types on the basis of label-maybe pairs.
 
 newtype Variant mr = Variant mr
 
 
 {-----------------------------------------------------------------------------}
 
--- Turn proxy sequence into sequence of Nothings
+-- | Turn proxy sequence into sequence of Nothings
 
 class HMaybied r r' | r -> r'
  where
@@ -54,7 +54,7 @@ instance HMaybied r r'
 
 {-----------------------------------------------------------------------------}
 
--- Public constructor
+-- | Public constructor
 
 mkVariant :: ( RecordLabels v ls
              , HFind x ls n
@@ -72,7 +72,7 @@ mkVariant x y (Record v) = Variant v'
 
 {-----------------------------------------------------------------------------}
 
--- Public destructor
+-- | Public destructor
 
 unVariant :: ( RecordLabels v ls
              , HFind x ls n
@@ -88,7 +88,7 @@ unVariant x (Variant v) = y
 
 {-----------------------------------------------------------------------------}
 
--- Variants are opaque
+-- | Variants are opaque
 
 instance Show (Variant v)
  where

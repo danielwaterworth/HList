@@ -1,6 +1,6 @@
 {-# LANGUAGE FlexibleInstances, FlexibleContexts #-}
 
-{-
+{- |
    The HList library
 
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
@@ -20,14 +20,14 @@ import Data.HList.TIP
 
 {-----------------------------------------------------------------------------}
 
--- A datatype for type-indexed co-products
+-- | A datatype for type-indexed co-products
 
 data TIC l = TIC Dynamic
 
 
 {-----------------------------------------------------------------------------}
 
--- Public constructor
+-- | Public constructor
 
 mkTIC :: ( HTypeIndexed l
          , HTypeProxied l
@@ -41,7 +41,7 @@ mkTIC i = TIC (toDyn i)
 
 {-----------------------------------------------------------------------------}
 
--- Public destructor
+-- | Public destructor
 
 unTIC :: ( HTypeIndexed l
          , HTypeProxied l
@@ -55,7 +55,7 @@ unTIC (TIC i) = fromDynamic i
 
 {-----------------------------------------------------------------------------}
 
--- A type-indexed type sequence that is a sequence of proxy types
+-- | A type-indexed type sequence that is a sequence of proxy types
 
 class HTypeProxied l
 instance HTypeProxied HNil
@@ -64,7 +64,7 @@ instance HTypeProxied l => HTypeProxied (HCons (Proxy e) l)
 
 {-----------------------------------------------------------------------------}
 
--- TICs are opaque
+-- | TICs are opaque
 
 instance Show (TIC l)
  where

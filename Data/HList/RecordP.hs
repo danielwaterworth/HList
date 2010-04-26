@@ -2,13 +2,14 @@
   UndecidableInstances, FlexibleInstances #-}
 {-# OPTIONS -fglasgow-exts #-}
 
-{-
+{- |
    The HList library
 
    (C) 2004-2006, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
    Extensible records: labels are phantom, so at run-time, the record
    is just a heterogenous list of field values.
+
    This sort of record is generalizable to `tables' (which are, at
    run-time, a list or a map containing the heterogenous lists
    of field values).

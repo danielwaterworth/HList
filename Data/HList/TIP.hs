@@ -2,15 +2,16 @@
 {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, UndecidableInstances,
     FlexibleContexts #-}
 
-module Data.HList.TIP where
-
-{-
+{- |
    The HList library
 
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
    Type-indexed products.
 -}
+
+module Data.HList.TIP where
+
 
 import Data.HList.FakePrelude
 import Data.HList.HListPrelude
@@ -21,7 +22,7 @@ import Data.HList.HTypeIndexed
 
 {-----------------------------------------------------------------------------}
 
--- The newtype for type-indexed products
+-- | The newtype for type-indexed products
 
 newtype TIP l = TIP l
         deriving (Read,Show)
@@ -39,7 +40,7 @@ emptyTIP = mkTIP HNil
 
 {-----------------------------------------------------------------------------}
 
--- Type-indexed type sequences
+-- | Type-indexed type sequences
 
 class HList l => HTypeIndexed l
 instance HTypeIndexed HNil
@@ -75,12 +76,14 @@ instance HOccursNot e l => HOccursNot e (TIP l)
 
 {-----------------------------------------------------------------------------}
 
--- Type-indexed extension
+-- | Type-indexed extension
+--
 -- signature is inferred
--- hExtend' :: (HTypeIndexed t, HOccursNot e t) => e -> TIP t -> TIP (HCons e t)
+--
+-- > hExtend' :: (HTypeIndexed t, HOccursNot e t) => e -> TIP t -> TIP (HCons e t)
 hExtend' e (TIP l) = mkTIP (HCons e l)
 
-{-
+{- $example
 
 Valid type I
 
@@ -148,7 +151,7 @@ instance HOccursOpt e l
 
 {-----------------------------------------------------------------------------}
 
--- Shielding type-indexed operations
+-- | Shielding type-indexed operations
 -- The absence of signatures is deliberate! They all must be inferred.
 
 onTIP f (TIP l) = mkTIP (f l)
@@ -175,56 +178,60 @@ instance (HOccurs e l, SubType (TIP l) (TIP l'))
 
 {-----------------------------------------------------------------------------}
 
--- Sample code
+-- * Sample code
 
-{-
+{- $sampleCode
 
 Assume
 
-myTipyCow = TIP myAnimal
+> myTipyCow = TIP myAnimal
 
-animalKey :: (HOccurs Key l, SubType l (TIP Animal)) => l -> Key
-animalKey = hOccurs
+> animalKey :: (HOccurs Key l, SubType l (TIP Animal)) => l -> Key
+> animalKey = hOccurs
 
 Session log
 
-*TIP> :t myTipyCow
-myTipyCow :: TIP Animal
+> *TIP> :t myTipyCow
+> myTipyCow :: TIP Animal
 
-*TIP> hOccurs myTipyCow :: Breed
-Cow
+> *TIP> hOccurs myTipyCow :: Breed
+> Cow
 
-*TIP> hExtend BSE myTipyCow
-TIP (HCons BSE
-    (HCons (Key 42)
-    (HCons (Name "Angus")
-    (HCons Cow
-    (HCons (Price 75.5)
-     HNil)))))
+> *TIP> hExtend BSE myTipyCow
+> TIP (HCons BSE
+>     (HCons (Key 42)
+>     (HCons (Name "Angus")
+>     (HCons Cow
+>     (HCons (Price 75.5)
+>      HNil)))))
 
-*TIP> BSE .*. myTipyCow
---- same as before ---
+> *TIP> BSE .*. myTipyCow
+> --- same as before ---
 
-*TIP> Sheep .*. myTipyCow
-Type error ...
+> *TIP> Sheep .*. myTipyCow
+> Type error ...
 
-*TIP> Sheep .*. tipyDelete myTipyCow (HProxy::HProxy Breed)
-TIP (HCons Sheep (HCons (Key 42) (HCons (Name "Angus") (HCons (Price 75.5) HNil))))
+> *TIP> Sheep .*. tipyDelete myTipyCow (HProxy::HProxy Breed)
+>TIP (HCons Sheep (HCons (Key 42) (HCons (Name "Angus") (HCons (Price 75.5) HNil))))
 
-*TIP> tipyUpdate myTipyCow Sheep
-TIP (HCons (Key 42) (HCons (Name "Angus") (HCons Sheep (HCons (Price 75.5) HNil))))
+> *TIP> tipyUpdate myTipyCow Sheep
+> TIP (HCons (Key 42) (HCons (Name "Angus") (HCons Sheep (HCons (Price 75.5) HNil))))
 
 -}
 
 {-----------------------------------------------------------------------------}
 
+-- * Sample 2
+
+-- |
 -- This example from the TIR paper challenges singleton lists.
 -- Thanks to the HW 2004 reviewer who pointed out the value of this example.
 -- We note that the explicit type below is richer than the inferred type.
 -- This richer type is needed for making this operation more polymorphic.
--- That is, a) would not work without the explicit type, while it would:
---  a)  ((+) (1::Int)) $ snd $ tuple oneTrue
---  b)  ((+) (1::Int)) $ fst $ tuple oneTrue
+-- That is, /a)/ would not work without the explicit type, while it would:
+--
+-- >  a)  ((+) (1::Int)) $ snd $ tuple oneTrue
+-- >  b)  ((+) (1::Int)) $ fst $ tuple oneTrue
 
 tuple :: ( HOccurs e1 (TIP l)
          , HType2HNat e1 l n
@@ -244,7 +251,7 @@ tuple (TIP l) = let
                 in (x,y)
 
 
--- A specific tuple
+-- | A specific tuple
 oneTrue :: TIP (HCons Int (HCons Bool HNil))
 oneTrue = hExtend (1::Int) (hExtend True emptyTIP)
 

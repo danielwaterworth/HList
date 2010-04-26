@@ -4,7 +4,7 @@ module Data.HList.HZip where
 
 import Data.HList.HListPrelude
 
-{-
+{- |
    The HList library
 
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
@@ -14,16 +14,7 @@ import Data.HList.HListPrelude
 
 {-----------------------------------------------------------------------------}
 
--- Test for zippability
-
-class HZippable x y
-instance HZippable HNil HNil
-instance HZippable l l' => HZippable (HCons e l) (HCons e' l')
-
-
-{-----------------------------------------------------------------------------}
-
--- Zip and unzip
+-- | Zip and unzip
 
 class HZip x y l | x y -> l, l -> x y
  where
@@ -33,6 +24,13 @@ class HZip x y l | x y -> l, l -> x y
 {-
 
 -- Zipping version I
+
+-- | Test for zippability: equal length.
+
+class HZippable x y
+instance HZippable HNil HNil
+instance HZippable l l' => HZippable (HCons e l) (HCons e' l')
+
 -- Somehow too polymorphic.
 -- Version II specialises for HNil and HCons.
 

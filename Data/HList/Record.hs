@@ -2,7 +2,7 @@
   FlexibleContexts, UndecidableInstances, ScopedTypeVariables #-}
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 
-{-
+{- |
    The HList library
 
    (C) 2004-2006, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
@@ -10,10 +10,103 @@
    Extensible records
 
    The are different models of labels that go with this module;
-   see the files Label?.hs.
+   see:
+
+   * "Data.HList.Label1"
+
+   * "Data.HList.Label2"
+
+   * "Data.HList.Label3"
+
+   * "Data.HList.Label4"
+
+   * "Data.HList.Label5"
 -}
 
-module Data.HList.Record where
+module Data.HList.Record
+(
+    -- * Records
+
+    -- ** Labels
+    -- $labels
+    LVPair(..),
+    labelLVPair,
+    newLVPair,
+
+    -- ** Record
+    Record(..),
+    mkRecord,
+    emptyRecord,
+
+    -- *** Getting Labels
+    RecordLabels,
+    recordLabels,
+    recordLabels',
+
+    -- *** Getting Values
+    RecordValues(..),
+    recordValues,
+
+    -- * Operations
+    -- ** Show
+    -- | A corresponding 'Show' instance exists as
+    --
+    -- > show x = "Record {" ++ showComponents "" x ++ "}"
+    ShowComponents(..),
+    ShowLabel(..),
+
+    -- ** Lookup
+    HasField(..),
+    HasField'(..),
+
+    -- ** Delete
+    -- | 'hDeleteAtLabel' @label record@
+    hDeleteAtLabel,
+
+    -- ** Update
+    -- | 'hUpdateAtLabel' @label value record@
+    hUpdateAtLabel,
+    hTPupdateAtLabel,
+
+    -- ** Rename Label
+    hRenameLabel,
+
+    -- ** Projection
+    -- $projection
+    hProjectByLabels,
+    hProjectByLabels2,
+
+    -- ** Unions
+    -- *** Left
+    HLeftUnion(hLeftUnion),
+    HLeftUnionBool(hLeftUnionBool),
+
+    -- *** Symmetric
+    -- $symmetricUnion
+    UnionSymRec(unionSR),
+
+    -- ** Reorder Labels
+    hRearrange,
+
+    -- ** Extension
+    -- | 'hExtend', 'hAppend'
+
+    -- * Unclassified
+    -- | Probably internals, that may not be useful
+    DuplicatedLabel(..),
+    ExtraField(..),
+    FieldNotFound(..),
+    H2ProjectByLabels(h2projectByLabels),
+    H2ProjectByLabels'(h2projectByLabels'),
+    HLabelSet,
+    HLabelSet',
+    HRLabelSet,
+    HRLabelSet',
+    HRearrange(hRearrange2),
+    HRearrange'(hRearrange2'),
+    UnionSymRec'(..)
+) where
+
 
 import Data.HList.FakePrelude
 import Data.HList.HListPrelude
@@ -22,16 +115,16 @@ import Data.HList.HArray
 
 {-----------------------------------------------------------------------------}
 
--- Record types as label-value pairs, where label is purely phantom.
+-- $labels Record types as label-value pairs, where label is purely phantom.
 -- Thus the run-time representation of a field is the same as that of
 -- its value, and the record, at run-time, is indistinguishable from
 -- the HList of field values. At run-time, all information about the
 -- labels is erased.
 
--- Field of label l with value type v
+-- | Field of label l with value type v
 newtype LVPair l v = LVPair { valueLVPair :: v } deriving Eq
 
--- Label accessor
+-- | Label accessor
 labelLVPair :: LVPair l v -> l
 labelLVPair = undefined
 
@@ -41,17 +134,17 @@ newLVPair _ = LVPair
 newtype Record r = Record r deriving Eq
 
 
--- Build a record
+-- | Build a record
 mkRecord :: HRLabelSet r => r -> Record r
 mkRecord = Record
 
 
--- Build an empty record
+-- | Build an empty record
 emptyRecord :: Record HNil
 emptyRecord = mkRecord HNil
 
 
--- Propery of a proper label set for a record: no duplication of labels
+-- | Propery of a proper label set for a record: no duplication of labels
 
 class HRLabelSet ps
 instance HRLabelSet HNil
@@ -80,7 +173,8 @@ instance HLabelSet ls => HLabelSet' x ls HFalse
 data DuplicatedLabel l = DuplicatedLabel l
 instance Fail (DuplicatedLabel x) => HLabelSet' x ls HTrue
 
--- Construct the (phantom) list of labels of the record.
+-- | Construct the (phantom) list of labels of the record.
+--
 -- This is a purely type-level function.
 class RecordLabels r ls | r -> ls
 instance RecordLabels HNil HNil
@@ -93,7 +187,7 @@ recordLabels' r = undefined
 recordLabels :: RecordLabels r ls => Record r -> ls
 recordLabels (Record r) = recordLabels' r
 
--- Construct the list of values of the record.
+-- | Construct the list of values of the record.
 class RecordValues r ls | r -> ls
     where recordValues' :: r -> ls
 instance RecordValues HNil HNil
@@ -109,7 +203,7 @@ recordValues (Record r) = recordValues' r
 
 {-----------------------------------------------------------------------------}
 
--- A Show instance to appeal to normal records
+-- 'Show' instance to appeal to normal records
 
 instance ShowComponents r => Show (Record r)
  where
@@ -145,7 +239,7 @@ class ShowLabel l
 
 {-----------------------------------------------------------------------------}
 
--- Extension for records
+-- Extension
 
 instance HRLabelSet (HCons (LVPair l v) r)
     => HExtend (LVPair l v) (Record r) (Record (HCons (LVPair l v) r))
@@ -155,7 +249,7 @@ instance HRLabelSet (HCons (LVPair l v) r)
 
 {-----------------------------------------------------------------------------}
 
--- Record concatenation
+-- Concatenation
 
 instance ( HRLabelSet r''
          , HAppend r r' r''
@@ -167,11 +261,15 @@ instance ( HRLabelSet r''
 
 {-----------------------------------------------------------------------------}
 
--- Lookup operation
-
+-- Lookup
+--
+-- |
 -- This is a baseline implementation.
 -- We use a helper class, HasField, to abstract from the implementation.
 
+-- | Because 'hLookupByLabel' is so frequent and important, we implement
+-- it separately, more efficiently. The algorithm is familiar assq, only
+-- the comparison operation is done at compile-time
 class HasField l r v | l r -> v
   where
     hLookupByLabel:: l -> r -> v
@@ -191,9 +289,6 @@ instance ( RecordLabels r ls
 -}
 
 
--- Because hLookupByLabel is so frequent and important, we implement
--- it separately, more efficiently. The algorithm is familiar assq, only
--- the comparison operation is done at compile-time
 
 instance HasField l r v => HasField l (Record r) v where
     hLookupByLabel l (Record r) = hLookupByLabel l r
@@ -215,7 +310,9 @@ instance HasField l r v => HasField' HFalse l (HCons fld r) v where
 
 {-----------------------------------------------------------------------------}
 
--- Delete operation
+-- Delete
+
+hDeleteAtLabel :: (H2ProjectByLabels (HCons e HNil) t t1 t2) =>e -> Record t -> Record t2
 hDeleteAtLabel l (Record r) = Record r'
  where
   (_,r')  = h2projectByLabels (HCons l HNil) r
@@ -223,7 +320,9 @@ hDeleteAtLabel l (Record r) = Record r'
 
 {-----------------------------------------------------------------------------}
 
--- Update operation
+-- Update
+
+hUpdateAtLabel :: (HUpdateAtHNat n (LVPair l v) t l',HFind l ls n,RecordLabels t ls) =>l -> v -> Record t -> Record l'
 hUpdateAtLabel l v (Record r) = Record r'
  where
   n    = hFind l (recordLabels' r)
@@ -231,17 +330,27 @@ hUpdateAtLabel l v (Record r) = Record r'
 
 
 {-----------------------------------------------------------------------------}
--- Projection for records
+-- Projection
+
+-- $projection
 -- It is also an important operation: the basis of many
 -- deconstructors -- so we try to implement it efficiently.
+
+
+-- | @hProjectByLabels ls r@ returns @r@ with only the labels in @ls@ remaining
 hProjectByLabels :: (HRLabelSet a, H2ProjectByLabels ls t a b) => ls -> Record t -> Record a
 hProjectByLabels ls (Record r) = mkRecord (fst $ h2projectByLabels ls r)
 
+-- | See 'H2ProjectByLabels'
+hProjectByLabels2 :: (H2ProjectByLabels ls t t1 t2, HRLabelSet t1, HRLabelSet t2) =>ls -> Record t -> (Record t1, Record t2)
 hProjectByLabels2 ls (Record r) = (mkRecord rin, mkRecord rout)
    where (rin,rout) = h2projectByLabels ls r
 
--- Invariant: r = rin `disjoint-union` rout
---            labels(rin) = ls
+-- | /Invariant/:
+--
+--  > r === rin `disjoint-union` rout
+--  > labels rin === ls
+--  >     where (rin,rout) = hProjectByLabels ls r
 class H2ProjectByLabels ls r rin rout | ls r -> rin rout where
     h2projectByLabels :: ls -> r -> (rin,rout)
 
@@ -275,7 +384,9 @@ instance H2ProjectByLabels ls r' rin rout =>
 
 {-----------------------------------------------------------------------------}
 
--- Rename the label of record
+-- | Rename the label of record
+hRenameLabel :: (HRLabelSet (HCons (LVPair l v) t2),HasField e t1 v,H2ProjectByLabels (HCons e HNil) t1 t t2) =>
+    e -> l -> Record t1 -> Record (HCons (LVPair l v) t2)
 hRenameLabel l l' r = r''
  where
   v   = hLookupByLabel l r
@@ -285,28 +396,29 @@ hRenameLabel l l' r = r''
 
 {-----------------------------------------------------------------------------}
 
--- A variation on update: type-preserving update.
+-- | A variation on 'hUpdateAtLabel': type-preserving update.
+hTPupdateAtLabel :: (HasField l t a,HUpdateAtHNat n (LVPair l a) t l',HFind l ls n,RecordLabels t ls) =>
+    l -> a -> Record t -> Record l'
 hTPupdateAtLabel l v r = hUpdateAtLabel l v r
  where
    te :: a -> a -> ()
    te _ _ = ()
    _ = te v (hLookupByLabel l r)
 
-{-
+{- ^
 
--- We could also say:
+We could also say:
 
-hTPupdateAtLabel l v r = hUpdateAtLabel l v r `asTypeOf` r
+> hTPupdateAtLabel l v r = hUpdateAtLabel l v r `asTypeOf` r
 
--- Then we were taking a dependency on Haskell's type equivalence.
--- This would also constrain the actual implementation of hUpdateAtLabel.
+Then we were taking a dependency on Haskell's type equivalence.
+This would also constrain the actual implementation of hUpdateAtLabel.
 
 -}
 
 {-----------------------------------------------------------------------------}
 
--- Subtyping for records
-
+-- | Subtyping for records
 instance ( RecordLabels r' ls
          , H2ProjectByLabels ls r r' rout
          )
@@ -314,6 +426,8 @@ instance ( RecordLabels r' ls
 
 
 {-----------------------------------------------------------------------------}
+
+-- Left Union
 
 class  HLeftUnion r r' r'' | r r' -> r''
  where hLeftUnion :: r -> r' -> r''
@@ -345,23 +459,30 @@ instance HLeftUnionBool HFalse r f (HCons f r)
 
 
 {-----------------------------------------------------------------------------}
+-- $symmetricUnion
 -- Compute the symmetric union of two records r1 and r2 and
 -- return the pair of records injected into the union (ru1, ru2).
--- To be more precise, we compute the symmetric union _type_ ru
--- of two record _types_ r1 and r2. The emphasis on types is important.
--- The two records (ru1,ru2) in the result of unionSR have the same
+--
+-- To be more precise, we compute the symmetric union /type/ @ru@
+-- of two record /types/ @r1@ and @r2@. The emphasis on types is important.
+--
+-- The two records (ru1,ru2) in the result of 'unionSR' have the same
 -- type ru, but they are generally different values.
 -- Here the simple example: suppose
---   r1 = (Label .=. True)  .*. emptyRecord
---   r2 = (Label .=. False) .*. emptyRecord
--- Then unionSR r1 r2 will return (r1,r2). Both components of the result
+--
+-- >  r1 = (Label .=. True)  .*. emptyRecord
+-- >  r2 = (Label .=. False) .*. emptyRecord
+--
+-- Then 'unionSR' r1 r2 will return (r1,r2). Both components of the result
 -- are different records of the same type.
-
--- To project from the union ru, use hProjectByLabels.
+--
+--
+-- To project from the union ru, use 'hProjectByLabels'.
 -- It is possible to project from the union obtaining a record
 -- that was not used at all when creating the union.
--- We do assure however that if (unionSR r1 r2) gave (r1u,r2u),
--- then projecting r1u onto the type of r1 gives the _value_ identical
+--
+-- We do assure however that if @unionSR r1 r2@ gave @(r1u,r2u)@,
+-- then projecting r1u onto the type of r1 gives the /value/ identical
 -- to r1. Ditto for r2.
 
 class UnionSymRec r1 r2 ru | r1 r2 -> ru where
@@ -382,8 +503,9 @@ instance ( RecordLabels r1 ls
 class UnionSymRec' b r1 f2 r2' ru | b r1 f2 r2' -> ru where
     unionSR' :: b -> r1 -> f2 -> r2'  -> (ru, ru)
 
--- Field f2 is already in r1, so it will be in the union of r1
+-- | Field f2 is already in r1, so it will be in the union of r1
 -- with the rest of r2.
+--
 -- To inject (HCons f2 r2) in that union, we should replace the
 -- field f2
 instance (UnionSymRec r1 r2' (Record ru),
@@ -406,13 +528,13 @@ instance (UnionSymRec r1 r2' (Record ru),
              ur' = hExtend f2 ur
 
 {-----------------------------------------------------------------------------}
--- Rearranges a record by labels. Returns the record r, rearranged such that
+-- | Rearranges a record by labels. Returns the record r, rearranged such that
 -- the labels are in the order given by ls. (recordLabels r) must be a
 -- permutation of ls.
 hRearrange :: (HLabelSet ls, HRearrange ls r r') => ls -> Record r -> Record r'
 hRearrange ls (Record r) = Record $ hRearrange2 ls r
 
--- Helper class for hRearrange
+-- | Helper class for 'hRearrange'
 class HRearrange ls r r' | ls r -> r' where
     hRearrange2 :: ls -> r -> r'
 
@@ -425,7 +547,7 @@ instance (H2ProjectByLabels (HCons l HNil) r rin rout,
    hRearrange2 ~(HCons l ls) r = hRearrange2' l ls rin rout
       where (rin, rout) = h2projectByLabels (HCons l HNil) r
 
--- Helper class 2 for hRearrange
+-- | Helper class 2 for 'hRearrange'
 class HRearrange' l ls rin rout r' | l ls rin rout -> r' where
     hRearrange2' :: l -> ls -> rin -> rout -> r'
 instance HRearrange ls rout r' =>
@@ -435,9 +557,12 @@ instance HRearrange ls rout r' =>
 data ExtraField l = ExtraField
 data FieldNotFound l = FieldNotFound
 
+-- | For improved error messages
 instance Fail (FieldNotFound l) => 
         HRearrange' l ls HNil rout (FieldNotFound l) where
    hRearrange2' _ _ _ _ = FieldNotFound
+
+-- | For improved error messages
 instance Fail (ExtraField l) => 
           HRearrange HNil (HCons (LVPair l v) a) (ExtraField l) where
    hRearrange2 _ _ = ExtraField

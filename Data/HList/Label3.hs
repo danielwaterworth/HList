@@ -1,6 +1,6 @@
 {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, UndecidableInstances, EmptyDataDecls #-}
 
-{-
+{- |
    The HList library
 
    (C) 2004-2006, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
@@ -15,11 +15,14 @@
    and description. The namespace part helps avoid confusions between
    labels from different Haskell modules. The description is
    an arbitrary nullary type constructor.
+
    For the sake of printing, the description is required to be the
    instance of Show. One must make sure that the show functions does
    not examine the value, as descr is purely phantom. Here's an
    example of the good Label description:
-        data MyLabelDescr; instance Show MyLabelDescr where show _ = "descr"
+
+   >     data MyLabelDescr; instance Show MyLabelDescr where show _ = "descr"
+
    which obviously can be automated with Template Haskell.
 
    This model even allows the labels in a record to belong to different
@@ -33,23 +36,23 @@ import Data.HList.FakePrelude
 import Data.HList.Record (ShowLabel(..))
 
 
--- Labels are type-level naturals
+-- | Labels are type-level naturals
 data Label x ns desc  -- labels are exclusively type-level entities
 
 
 -- Public constructors for labels
 
--- Construct the first label
+-- | Construct the first label
 firstLabel :: ns -> desc -> Label HZero ns desc
 firstLabel = undefined
 
 
--- Construct the next label
+-- | Construct the next label
 nextLabel :: Label x ns desc -> desc' -> Label (HSucc x) ns desc'
 nextLabel = undefined
 
 
--- Equality on labels (descriptions are ignored)
+-- | Equality on labels (descriptions are ignored)
 
 instance ( HEq x x' b
          , TypeEq ns ns' b'
@@ -58,7 +61,7 @@ instance ( HEq x x' b
       =>   HEq (Label x ns desc) (Label x' ns' desc') b''
 
 
--- Show label
+-- | Show label
 
 instance (HNat x, Show desc) => ShowLabel (Label x ns desc) where
   showLabel = show . getd

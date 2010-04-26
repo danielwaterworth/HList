@@ -1,6 +1,6 @@
 {-# LANGUAGE EmptyDataDecls, MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances, UndecidableInstances #-}
 
-{-
+{- |
    The HList library
 
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
@@ -13,7 +13,7 @@ module Data.HList.FakePrelude where
 
 {-----------------------------------------------------------------------------}
 
--- Type-level Booleans
+-- * Booleans
 
 data HTrue; hTrue :: HTrue; hTrue = undefined
 data HFalse; hFalse :: HFalse; hFalse = undefined
@@ -22,7 +22,7 @@ instance Show HTrue where show _ = "HTrue"
 instance Show HFalse where show _ = "HFalse"
 
 
--- Conjunction of type-level Booleans
+-- **  Conjunction
 
 class (HBool t, HBool t', HBool t'') => HAnd t t' t'' | t t' -> t''
  where
@@ -45,7 +45,7 @@ instance HAnd HTrue HTrue HTrue
   hAnd _ _ = hTrue
 
 
--- Disjunction of type-level Booleans
+-- ** Disjunction
 
 class (HBool t, HBool t', HBool t'') => HOr t t' t'' | t t' -> t''
  where
@@ -68,7 +68,7 @@ instance HOr HTrue HTrue HTrue
   hOr _ _ = hTrue
 
 
--- Type-level conditional
+-- ** Conditional
 
 class HBool t => HCond t x y z | t x y -> z
  where
@@ -89,7 +89,7 @@ instance HCond HTrue x y x
 
 {-----------------------------------------------------------------------------}
 
--- Type-level naturals
+-- * Naturals
 
 data HZero
 data HSucc n
@@ -123,7 +123,7 @@ instance HNat2Integral n => HNat2Integral (HSucc n)
 
 {-----------------------------------------------------------------------------}
 
--- Type-level maybies
+-- * Maybies
 
 data HNothing  = HNothing  deriving Show
 data HJust x   = HJust x   deriving Show
@@ -131,10 +131,9 @@ data HJust x   = HJust x   deriving Show
 
 {-----------------------------------------------------------------------------}
 
--- Equality for types
+-- * Equality for types
 
 class HBool b => HEq x y b | x y -> b
-
 
 -- Equality instances for naturals
 
@@ -150,9 +149,12 @@ hEq =  undefined
 
 {-----------------------------------------------------------------------------}
 
--- Staged equality
---  - Establish type equality statically
---  - Establish remaining value-level equality dynamically
+-- * Staged equality
+-- |
+--
+--  * Establish type equality statically
+--
+--  * Establish remaining value-level equality dynamically
 
 class HStagedEq x y
  where
@@ -161,7 +163,7 @@ class HStagedEq x y
 
 {-----------------------------------------------------------------------------}
 
--- Less than
+-- | Less than
 
 class HBool b => HLt x y b | x y -> b
 
@@ -180,8 +182,10 @@ hLt _ =  undefined
 
 {-----------------------------------------------------------------------------}
 
--- A predicate for type equality
+-- | A predicate for type equality
+--
 -- There are different implementations.
+--
 -- See imports in Main*.hs
 
 class HBool b => TypeEq x y b | x y -> b
@@ -199,7 +203,7 @@ proxyEq _ _ = undefined
 
 {-----------------------------------------------------------------------------}
 
--- Type-safe cast
+-- * Type-safe cast
 
 class TypeCast x y | x -> y, y -> x
  where
@@ -208,7 +212,7 @@ class TypeCast x y | x -> y, y -> x
 
 {-----------------------------------------------------------------------------}
 
--- A phantom type for type proxies
+-- * A phantom type for type proxies
 
 data Proxy e
 instance Show (Proxy e) where show _ = "Proxy"
@@ -225,7 +229,7 @@ unProxy =  undefined
 
 {-----------------------------------------------------------------------------}
 
--- Type equality and disequality
+-- * Type equality and disequality
 
 class TypeEqTrue x y
 class TypeEqFalse x y
@@ -239,7 +243,7 @@ typeEqFalse _ _ = ()
 
 {-----------------------------------------------------------------------------}
 
--- Subtyping
+-- * Subtyping
 
 class SubType l l'
 
@@ -249,7 +253,9 @@ subType _ _ = ()
 
 {-----------------------------------------------------------------------------}
 
--- A class without instances for explicit failure
+-- * Error messages
+
+-- | A class without instances for explicit failure
 class Fail x
 
 

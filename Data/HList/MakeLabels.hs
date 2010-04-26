@@ -1,16 +1,17 @@
 {-# LANGUAGE TemplateHaskell, FlexibleInstances, EmptyDataDecls #-}
 
--- Making labels
 
-{-
+{- | Making labels
+
  The following TH splice
-      $(makeLabels ["getX","getY","draw"])
+
+>  $(makeLabels ["getX","getY","draw"])
 
 should expand into the following declarations
 
-data GetX;     getX     = proxy::Proxy GetX
-data GetY;     getY     = proxy::Proxy GetY
-data Draw;     draw     = proxy::Proxy Draw
+> data GetX;     getX     = proxy::Proxy GetX
+> data GetY;     getY     = proxy::Proxy GetY
+> data Draw;     draw     = proxy::Proxy Draw
 
 -}
 
@@ -78,7 +79,7 @@ instance ReplaceSyntax Type where
     replace_name from to (AppT t1 t2) =
         (AppT (replace_name from to t1) (replace_name from to t2))
 
--- Our main function
+-- | Our main function
 makeLabels :: [String] -> Q [Dec]
 makeLabels = liftM concat . sequence . map repl
  where
@@ -86,6 +87,7 @@ makeLabels = liftM concat . sequence . map repl
  from = (make_tname "foo",make_dname "foo")
  to n = (make_tname n,make_dname n)
 
+-- | Make a single label
 label :: String -> Q [Dec]
 label s = makeLabels [s]
 

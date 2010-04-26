@@ -1,7 +1,7 @@
 {-# LANGUAGE EmptyDataDecls, MultiParamTypeClasses, FlexibleInstances,
   FlexibleContexts, OverlappingInstances, UndecidableInstances #-}
 
-{-
+{- |
    The HList library
 
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
@@ -9,7 +9,9 @@
    Result-type-driven operations on typeful heterogeneous lists.
 -}
 
-module Data.HList.HOccurs where
+module Data.HList.HOccurs (
+    module Data.HList.HOccurs,
+    ) where
 
 import Data.HList.FakePrelude
 import Data.HList.HListPrelude
@@ -196,35 +198,28 @@ instance ( HList l'
 
 {-----------------------------------------------------------------------------}
 
--- Illustration of typical test scenarios
-
-{-
+-- * Illustration of typical test scenarios
+{- $example
 
 Retrieve the Breed of an animal.
 
-ghci-or-hugs> hOccurs myAnimal :: Breed
-Cow
+> ghci-or-hugs> hOccurs myAnimal :: Breed
+> Cow
 
--}
-
-{-
 
 Normal hOccurs requires specification of the result type even if the result
 type is determined by the fact that we are faced with a singleton list.
 
-ghci-or-hugs> hOccurs (HCons 1 HNil)
+> ghci-or-hugs> hOccurs (HCons 1 HNil)
+>
+> <interactive>:1:
+>     No instance for (HOccurs e1 (HCons e HNil))
 
-<interactive>:1:
-    No instance for (HOccurs e1 (HCons e HNil))
-
--}
-
-{-
 
 However, hOccurs can be elaborated as improved as follows:
 
-ghci-or-hugs> hLookup (HCons 1 HNil)
-1
+> ghci-or-hugs> hLookup (HCons 1 HNil)
+> 1
 
 -}
 

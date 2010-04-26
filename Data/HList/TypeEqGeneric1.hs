@@ -1,6 +1,6 @@
 {-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances,
   FlexibleContexts, OverlappingInstances, UndecidableInstances #-}
-{-
+{- |
    The HList library
 
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
@@ -15,7 +15,7 @@
    and by transitive closure therefore relies on separate compilation
    of TypeCast clients and the TypeCast instance.
 
-   There is another encoding in TypeEqGeneric2.hs.
+   There is another encoding in "Data.Hlist.TypeEqGeneric2".
 -}
 
 module Data.HList.TypeEqGeneric1 where

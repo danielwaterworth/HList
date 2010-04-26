@@ -1,6 +1,7 @@
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 {-# LANGUAGE EmptyDataDecls, UndecidableInstances, MultiParamTypeClasses #-}
 
+-- |
 -- Lazy HLists: potentially infinite heterogeneous streams...
 -- Based on the suggestion by Chung-chieh Shan, posted on the
 -- Haskell mailing list on Sun Oct 29 13:51:58 EST 2006

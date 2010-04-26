@@ -2,7 +2,7 @@
 {-# LANGUAGE EmptyDataDecls,  UndecidableInstances, OverlappingInstances,
   MultiParamTypeClasses #-}
 
--- Potentially infinite, open, statically constrained HLists...
+-- | Potentially infinite, open, statically constrained HLists...
 
 module CHList where
 

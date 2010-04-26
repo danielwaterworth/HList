@@ -1,5 +1,5 @@
 {-# LANGUAGE MagicHash #-}
-{-
+{- |
 OOHaskell (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
 This module gathers the API that we need for OOP in Haskell.  We

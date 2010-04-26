@@ -1,11 +1,14 @@
 {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, UndecidableInstances, EmptyDataDecls #-}
-{-
+{- |
    The HList library
 
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
    Yet another model of labels.
+
    Labels are type proxies.
+
+   See "Data.HList.MakeLabels"
 -}
 
 module Data.HList.Label4 where
@@ -17,12 +20,12 @@ import Data.HList.FakePrelude
 import Data.HList.Record
 
 
--- Equality on labels
+-- | Equality on labels
 
 instance TypeEq x y b => HEq (Proxy x) (Proxy y) b
 
 
--- Show label
+-- | Show label
 
 instance Typeable x => ShowLabel (Proxy x)
  where

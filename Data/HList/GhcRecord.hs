@@ -7,14 +7,14 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FunctionalDependencies #-}
 
-{-
+{- |
    The HList library
 
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
    Extensible records -- operations that (may) require GHC
 
-   See Record.hs for the base module.
+   See "Data.HList.Record" for the base module.
 -}
 
 module Data.HList.GhcRecord where
@@ -28,7 +28,8 @@ import Data.Typeable
 
 {-----------------------------------------------------------------------------}
 
--- A variation on update.
+-- | A variation on update.
+--
 -- Replace a proxy by a value of the proxied type.
 -- The signature is inferred
 hUnproxyLabel :: (HUpdateAtHNat n (LVPair l a) t l', HFind l ls n,
@@ -44,7 +45,7 @@ hUnproxyLabel l v r = hUpdateAtLabel l v r
 
 {-----------------------------------------------------------------------------}
 
--- Test for values; refuse proxies
+-- | Test for values; refuse proxies
 
 hasNoProxies :: HasNoProxies r
              => Record r -> ()
@@ -61,8 +62,8 @@ instance HasNoProxies l => HasNoProxies (HCons e l)
 
 {-----------------------------------------------------------------------------}
 
--- Narrow a record to a different record type
-
+-- | Narrow a record to a different record type
+--
 -- First is the `monadic' version, which returns the `failure indictator'
 -- (HNothing) if the narrowing fails because the source does not have
 -- all the fields for the target.
@@ -119,7 +120,7 @@ instance ( Narrow rout r'
 
 {-----------------------------------------------------------------------------}
 
--- Narrow two records to their least-upper bound
+-- | Narrow two records to their least-upper bound
 
 class LubNarrow a b c | a b -> c
  where
@@ -142,7 +143,7 @@ instance ( RecordLabels a la
 
 {-----------------------------------------------------------------------------}
 
--- List constructors that also LUB together
+-- | List constructors that also LUB together
 
 data NilLub
 nilLub :: NilLub
@@ -165,7 +166,7 @@ instance LubNarrow e0 e1 e2 => ConsLub e0 [e1] [e2]
 
 {-----------------------------------------------------------------------------}
 
--- Extension of lubNarrow to a heterogeneous list
+-- | Extension of lubNarrow to a heterogeneous list
 
 class HLub l e | l -> e
  where
@@ -196,18 +197,23 @@ instance ( HLub (HCons h (HCons h'' t)) e'
 
 
 {-----------------------------------------------------------------------------}
--- Record equivalence modulo field order
+-- | Record equivalence modulo field order
+--
 -- Decide if two records r1 and r2 are identical or differ only in the order
 -- of their fields.
+--
 -- If the two record types are indeed equivalent, return the witness of
 -- their equivalence, (HJust (r1->r2,r2->r1)). If they are not equivalent,
 -- return HNothing
+--
 -- The function equivR does not examine the values of its arguments:
 -- it needs only their types.
-
+--
+--
 -- The algorithm is simple: two records are equivalent if one can be narrowed
 -- to the other, and vice versa. The narrowing coercions are the desired
 -- witnesses.
+--
 -- The obvious optimization is to check first if two records are of the same
 -- type. That requires TypeEq however. Perhaps we shouldn't use it here.
 -- Use of the record narrowing tacitly assumes that the label of a record

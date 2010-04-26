@@ -1,27 +1,37 @@
--- Modeling of an extensible, recursive sum datatype (recursive open union)
---    data List a = Nil | Cons a (List a)
--- which is later extended with two more variants,
---    ... | Unit a | App (List a) (List a)
---
--- Our goals:
---   - any function that accepts the extended data list
---     must also accept the unextended list.
---   - it should be possible to `extend' the function that operates
---     on plain lists to operate on extended list. We should be able
---     to reuse as much of the old code as possible.
--- It seems, we have achieved our goals.
+{- |
+Modeling of an extensible, recursive sum datatype (recursive open union)
 
--- Method: duality rules! Curry-Howard correspondence and logic
--- give the wonderful guidance. In particular, we take advantage
--- of the fact that the deMorgan law
---      NOT (A | B) -> (NOT A & NOT B)
--- holds both in classical, and, more importantly, intuitionistic
--- logics. Our encoding of sums is the straightforward Curry-Howard
--- image of the law.
+>  data List a = Nil | Cons a (List a)
 
--- Note, the code below has no type classes, no type-level programming
--- or any other type hacking. In fact, there are no type annotations,
--- type declarations, or any other mentioning of types, except in the comments
+which is later extended with two more variants,
+
+>  ... | Unit a | App (List a) (List a)
+
+Our goals:
+
+  * any function that accepts the extended data list
+    must also accept the unextended list.
+
+  * it should be possible to `extend' the function that operates
+    on plain lists to operate on extended list. We should be able
+    to reuse as much of the old code as possible.
+
+It seems, we have achieved our goals.
+
+/Method/: duality rules! Curry-Howard correspondence and logic
+give the wonderful guidance. In particular, we take advantage
+of the fact that the deMorgan law
+
+>     NOT (A | B) -> (NOT A & NOT B)
+
+holds both in classical, and, more importantly, intuitionistic
+logics. Our encoding of sums is the straightforward Curry-Howard
+image of the law.
+
+Note, the code below has no type classes, no type-level programming
+or any other type hacking. In fact, there are no type annotations,
+type declarations, or any other mentioning of types, except in the comments
+-}
 
 module Data.HList.VariantP where
 

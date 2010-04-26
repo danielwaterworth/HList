@@ -6,7 +6,7 @@
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FunctionalDependencies #-}
 
-{- 
+{- |
 
 -- (C) 2004-2007, Oleg Kiselyov & Ralf Laemmel
 
@@ -84,7 +84,7 @@ instance ConsEither' (TContains e eu) e eu [eu] where
 --                      either tul or tur is or includes t
 --  TNone -- otherwise
 
-data TSame                              -- outcomes of the comparison
+data TSame                              -- ^ outcomes of the comparison
 data TContains t tu = TContains (t->tu)       -- injection function
                                 (tu->Maybe t) -- projection function
 data TNone
@@ -207,6 +207,7 @@ te7 = consEither True (consEither True (consEither () nilEither))
 -- [Left True,Left True,Right ()]
 
 
+-- |
 -- Down-cast a value of a union type to a summand type.
 -- Make sure that the summand type occurs once at least.
 

@@ -1,4 +1,4 @@
-{-
+{- |
 
    The HList library
 

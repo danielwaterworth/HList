@@ -1,7 +1,7 @@
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 {-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances,
   FlexibleContexts, UndecidableInstances #-}
-{-
+{- |
    The HList library
 
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
@@ -17,7 +17,7 @@ import Data.HList.HListPrelude
 
 {-----------------------------------------------------------------------------}
 
--- A lookup operation
+-- * Lookup
 
 class HNat n => HLookupByHNat n l e | n l -> e
  where
@@ -35,7 +35,7 @@ instance (HLookupByHNat n l e', HNat n)
 
 {-----------------------------------------------------------------------------}
 
--- A delete operation
+-- * Delete
 
 class HNat n => HDeleteAtHNat n l l' | n l -> l'
  where
@@ -53,7 +53,7 @@ instance (HDeleteAtHNat n l l', HNat n)
 
 {-----------------------------------------------------------------------------}
 
--- An update operation
+-- * Update
 
 class HNat n => HUpdateAtHNat n e l l' | n e l -> l', l' n -> e
  where
@@ -72,10 +72,13 @@ instance (HUpdateAtHNat n e' l l', HNat n)
 
 {-----------------------------------------------------------------------------}
 
--- Splitting an array according to indices
+-- * Splitting
+-- | Splitting an array according to indices
+--
 -- Signature is inferred:
--- hSplitByHNats :: (HSplitByHNats' ns l' l'1 l'', HMap (HAddTag HTrue) l l') =>
---                ns -> l -> (l'1, l'')
+--
+--  > hSplitByHNats :: (HSplitByHNats' ns l' l'1 l'', HMap (HAddTag HTrue) l l') =>
+--  >               ns -> l -> (l'1, l'')
 hSplitByHNats ns l = hSplitByHNats' ns (hFlag l)
 
 class HNats ns => HSplitByHNats' ns l l' l'' | ns l -> l' l''
@@ -104,7 +107,7 @@ instance ( HLookupByHNat n l (e,b)
 
 {-----------------------------------------------------------------------------}
 
--- Another projection operation
+-- * Projection
 
 class HNats ns => HProjectByHNats ns l l' | ns l -> l'
  where
@@ -130,7 +133,7 @@ instance ( HLookupByHNat n (HCons e l) e'
 
 {-----------------------------------------------------------------------------}
 
--- The complement of projection
+-- * Complement of Projection
 
 class HProjectAwayByHNats ns l l' | ns l -> l'
  where
@@ -153,7 +156,8 @@ instance ( HLength l len
 
 {-----------------------------------------------------------------------------}
 
--- Generate naturals from 1 to x - 1
+-- * Enumerate naturals
+-- | from 1 to x - 1
 
 class HBetween x y | x -> y
  where
@@ -173,7 +177,7 @@ instance ( HNat x
   hBetween x = hBetween (hPred x) `hAppend` HCons (hPred x) HNil
 
 
--- Set-difference on naturals
+-- * Set-difference on naturals
 
 class HDiff x y z | x y -> z
  where
@@ -195,7 +199,8 @@ instance ( HOrdMember e y b
          z  = hDiff x y
 
 
--- Membership test for types with HOrd instances
+-- * Membership test for types with 'HOrd' instances
+-- |
 -- This special type equality/comparison is entirely pure!
 
 class HOrdMember e l b | e l -> b
@@ -220,7 +225,7 @@ instance ( HEq e e' b1
 
 {-----------------------------------------------------------------------------}
 
--- Length operation
+-- * Length
 
 class (HList l, HNat n) => HLength l n | l -> n
 instance HLength HNil HZero
@@ -233,7 +238,7 @@ hLength _ =  undefined
 
 {-----------------------------------------------------------------------------}
 
--- Bounded lists
+-- * Bounded lists
 
 class HMaxLength l s
 instance (HLength l s', HLt s' (HSucc s) HTrue) => HMaxLength l s

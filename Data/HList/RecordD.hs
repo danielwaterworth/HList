@@ -1,13 +1,17 @@
 {-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances,
   UndecidableInstances, OverlappingInstances #-}
 
--- Yet another representation of records: records as TIC (type-indexed
--- collections), or, to be precise, records are lists of objects
--- that support the Fieldish interface. So, we can build records like that
--- data Name = Name String String
--- newtype Salary = S Float
--- data Dept = D String Int
--- person = (Name "Joe" "Doe") .*. (S 1000) .*. (Dept "CIO" 123) .*. emptyRec
+{- |
+Yet another representation of records: records as TIC (type-indexed
+collections), or, to be precise, records are lists of objects
+that support the 'Fieldish' interface. So, we can build records like that
+
+> data Name = Name String String
+> newtype Salary = S Float
+> data Dept = D String Int
+> person = (Name "Joe" "Doe") .*. (S 1000) .*. (Dept "CIO" 123) .*. emptyRec
+
+-}
 
 module RecordD where
 
@@ -23,7 +27,7 @@ import Data.HList.TypeCastGeneric2
 
 instance (HBool b, TypeEq x y b) => HEq x y b
 
--- Define the interface of fields: basically a thing with a label
+-- | Define the interface of fields: basically a thing with a label
 -- and injection and projection methods
 class Fieldish l v | l -> v where
     fromField :: l -> v
@@ -32,28 +36,32 @@ class Fieldish l v | l -> v where
 newtype Record r = Record r
 
 
--- Build a record: a record is an HList of data items, provided
--- (i) the types of the data items are unique
--- (ii) each item satsifies the interface Fieldish
+-- | Build a record: a record is an HList of data items, provided
+--
+-- (1) the types of the data items are unique
+--
+-- (2) each item satsifies the interface 'Fieldish'
 
 mkRecord :: (HLabelSet r, AllFieldish r)  => r -> Record r
 mkRecord = Record
 
 
 
--- Build an empty record
+-- | Build an empty record
 
 emptyRecord = mkRecord HNil
 
 
--- make sure that all elements of an HList are Fieldish
+-- | make sure that all elements of an HList are Fieldish
 class AllFieldish r
 instance AllFieldish HNil
 instance (Fieldish e v, AllFieldish r) => AllFieldish (HCons e r)
 
 {-----------------------------------------------------------------------------}
 
--- A Show instance to appeal to normal records. Assume eacf Fieldish
+-- * Show
+
+-- | A Show instance to appeal to normal records. Assume each Fieldish
 -- is showable
 
 instance ShowComponents r => Show (Record r)
@@ -81,7 +89,7 @@ instance ( Show f, ShowComponents r )
 
 {-----------------------------------------------------------------------------}
 
--- Extension for records
+-- * Extension for records
 
 instance (AllFieldish (HCons f r), HLabelSet (HCons f r))
     => HExtend f (Record r) (Record (HCons f r))
@@ -103,7 +111,7 @@ instance ( HLabelSet r''
 
 {-----------------------------------------------------------------------------}
 
--- Lookup operation
+-- * Lookup operation
 
 instance (HEq l l' b, HasField' b l (HCons l' r) v)
     => HasField l (Record (HCons l' r)) v where
