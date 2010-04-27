@@ -1,3 +1,8 @@
+26 April 2010
+	Patches from Adam Vogt to format documentation for Haddoc and
+	to expose MakeLabels
+	Release 0.2.1 by Gwern Branwen
+	
 29 March 2010
 	examples/TIPTransformM.hs, the monadic version of
 	TIPTransform.hs

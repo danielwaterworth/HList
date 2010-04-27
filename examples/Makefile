@@ -88,8 +88,8 @@ test-ghc:
 #
 # Yet another generic type equality
 #
-	ghci -i.. MainGhcGeneric2.hs -v0 < Main.in > MainGhcGeneric2.out
-	diff -b MainGhcGeneric2.out MainGhcGeneric2.ref
+## 	ghci -i.. MainGhcGeneric2.hs -v0 < Main.in > MainGhcGeneric2.out
+## 	diff -b MainGhcGeneric2.out MainGhcGeneric2.ref
 #
 # Yet another generic type cast
 #

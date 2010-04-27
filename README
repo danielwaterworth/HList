@@ -1,5 +1,10 @@
 (C) 2004--2010, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
+Contributors:
+	Justin Bailey, Brian Bloniarz, Gwern Branwen, Einar Karttunen,
+	and Adam Vogt
+
+
 The HList library and samples
 
 ----------------------------------------------------------------------
@@ -34,6 +39,7 @@ $ darcs get --partial http://code.haskell.org/HList/
 The code works --- within the limits exercised in the source files ---
 for both GHC (6.4) and Hugs (Nov 2003). See the 
 examples/Makefile for ways of running test cases.
+The last GHC version tried: GHC 6.12
 
 One may run "cd examples; make test" to check the distribution.
 
