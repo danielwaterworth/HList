@@ -1,9 +1,5 @@
 {-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances, UndecidableInstances #-}
 
-module Data.HList.HZip where
-
-import Data.HList.HListPrelude
-
 {- |
    The HList library
 
@@ -11,6 +7,11 @@ import Data.HList.HListPrelude
 
    Zipping and unzipping for (conceptually) lists of pairs.
  -}
+
+module Data.HList.HZip where
+
+import Data.HList.HListPrelude
+
 
 {-----------------------------------------------------------------------------}
 
