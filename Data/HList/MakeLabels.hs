@@ -1,7 +1,7 @@
 {-# LANGUAGE TemplateHaskell, FlexibleInstances, EmptyDataDecls #-}
 
 
-{- | Making labels
+{- | Making labels in the style of "Data.HList.Label4"
 
  The following TH splice
 
