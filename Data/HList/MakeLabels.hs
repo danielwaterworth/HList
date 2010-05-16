@@ -1,3 +1,4 @@
+{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE TemplateHaskell, FlexibleInstances, EmptyDataDecls #-}
 
 
@@ -25,6 +26,8 @@ import Language.Haskell.TH.Syntax
 import Data.Char (toUpper, toLower)
 import Control.Monad (liftM)
 
+import Data.Typeable (Typeable)
+
 capitalize, uncapitalize :: String -> String
 capitalize   (c:rest) = toUpper c : rest
 uncapitalize (c:rest) = toLower c : rest
@@ -40,7 +43,7 @@ make_dname str = mkName $ uncapitalize str
 
 -- The template of our declaration. We will then replace all occurences
 -- of Foo with the desired name
-dcl_template = [d| data Foo; foo = proxy::Proxy Foo |]
+dcl_template = [d| data Foo deriving Typeable; foo = proxy::Proxy Foo |]
 
 -- A very dirty traversal/replacement...
 
