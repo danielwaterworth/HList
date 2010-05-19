@@ -1,5 +1,5 @@
 Name:                HList
-Version:             0.2.2
+Version:             0.2.3
 Category:            Data
 Synopsis:            Heterogeneous lists
 Description:         HList is a record system providing strongly typed heterogenous lists, records,
@@ -12,7 +12,7 @@ Maintainer:          oleg@pobox.com
 
 Data-files:          README
 Cabal-version:       >= 1.4
-Tested-With:         GHC==6.8.2
+Tested-With:         GHC==6.12.1
 Build-Depends:       base >= 3 && < 5, template-haskell
 Build-Type:          Simple
 Exposed-modules:     Data.HList, Data.HList.CommonMain, Data.HList.Variant, Data.HList.GhcSyntax,
