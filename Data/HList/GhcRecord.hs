@@ -238,8 +238,8 @@ instance (NarrowM r1 r2 r12, NarrowM r2 r1 r21,
           RecordEquiv' (Record r1->r12) (Record r2->r21) res)
     => RecordEquiv r1 r2 res where
     equivR r1 r2 = equivR' r1p r2p
-     where r1p (r1 :: Record r1) = narrowM r1 r2
-           r2p (r2 :: Record r2) = narrowM r2 r1
+     where r1p r1 = narrowM (r1 :: Record r1) r2
+           r2p r2 = narrowM (r2 :: Record r2) r1
 
 class RecordEquiv' pj1 pj2 res | pj1 pj2 -> res where
     equivR' :: pj1 -> pj2 -> res
@@ -292,7 +292,7 @@ proxyTcName :: TyCon
 proxyTcName = mkTyCon "HList.Proxy"
 instance Typeable x => Typeable (Proxy x)
  where
-  typeOf (_::Proxy x)
+  typeOf _
    = mkTyConApp proxyTcName [ typeOf (undefined::x) ]
 
 
