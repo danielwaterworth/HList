@@ -15,8 +15,7 @@ import Data.HList.FakePrelude
 import Data.HList.HListPrelude
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- * Lookup
 
 class HNat n => HLookupByHNat n l e | n l -> e
@@ -33,8 +32,7 @@ instance (HLookupByHNat n l e', HNat n)
   hLookupByHNat n (HCons _ l) = hLookupByHNat (hPred n) l
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- * Delete
 
 class HNat n => HDeleteAtHNat n l l' | n l -> l'
@@ -51,8 +49,7 @@ instance (HDeleteAtHNat n l l', HNat n)
   hDeleteAtHNat n (HCons e l) = HCons e (hDeleteAtHNat (hPred n) l)
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- * Update
 
 class HNat n => HUpdateAtHNat n e l l' | n e l -> l', l' n -> e
@@ -70,8 +67,7 @@ instance (HUpdateAtHNat n e' l l', HNat n)
    = HCons e (hUpdateAtHNat (hPred n) e' l)
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- * Splitting
 -- | Splitting an array according to indices
 --
@@ -105,8 +101,7 @@ instance ( HLookupByHNat n l (e,b)
     (l',l'') = hSplitByHNats' ns l'''
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- * Projection
 
 class HNats ns => HProjectByHNats ns l l' | ns l -> l'
@@ -131,8 +126,7 @@ instance ( HLookupByHNat n (HCons e l) e'
          l' = hProjectByHNats ns l
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- * Complement of Projection
 
 class HProjectAwayByHNats ns l l' | ns l -> l'
@@ -154,8 +148,7 @@ instance ( HLength l len
     l'   = hProjectByHNats ns' l
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- * Enumerate naturals
 -- | from 1 to x - 1
 
@@ -223,8 +216,7 @@ instance ( HEq e e' b1
     b2 = hOrdMember e l
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- * Length
 
 class (HList l, HNat n) => HLength l n | l -> n
@@ -236,8 +228,7 @@ hLength   :: HLength l n => l -> n
 hLength _ =  undefined
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- * Bounded lists
 
 class HMaxLength l s
@@ -252,5 +243,3 @@ instance HLength l (HSucc HZero) => HSingleton l
 hSingle :: (HSingleton l, HHead l e) => l -> e
 hSingle = hHead
 
-
-{-----------------------------------------------------------------------------}

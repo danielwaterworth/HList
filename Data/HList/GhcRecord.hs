@@ -25,6 +25,33 @@ import Data.HList.HArray
 import Data.HList.Record
 import Data.Typeable
 
+infixr 2 .^.
+{-|
+  This is a variation on updating (according to GhcRecord.hs),
+  so use the same fixity as (.\@.).
+-}
+(.^.) :: (HUpdateAtHNat n (LVPair t t1) t2 l',HFind t ls n,RecordLabels t2 ls,HasField t t2 (Proxy t1)) =>LVPair t t1 -> Record t2 -> Record l'
+f@(LVPair v) .^. r = hUnproxyLabel (labelLVPair f) v r
+
+infixr 2 .<.
+{-|
+  Another variation on update, so give it the same fixity as (.\@.).
+
+-}
+(.<.) :: (HasField t t2 t1,HUpdateAtHNat n (LVPair t t1) t2 l',HFind t ls n,RecordLabels t2 ls) =>LVPair t t1 -> Record t2 -> Record l'
+f@(LVPair v) .<. r = hTPupdateAtLabel (labelLVPair f) v r
+
+infixl 1 .<++.
+{-|
+  Similar to list append, so give this slightly lower fixity than
+  (.*.), so we can write:
+
+   > field1 .=. value .*. record1 .<++. record2
+
+-}
+(.<++.) ::  (HLeftUnion r r' r'') => r -> r' -> r''
+r .<++. r' = hLeftUnion r r'
+
 
 {-----------------------------------------------------------------------------}
 

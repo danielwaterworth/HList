@@ -1,6 +1,7 @@
 {-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleContexts,
-  UndecidableInstances, FlexibleInstances #-}
-{-# OPTIONS -fglasgow-exts #-}
+  FlexibleInstances #-}
+{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 {- |
    The HList library

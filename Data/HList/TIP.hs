@@ -1,6 +1,7 @@
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, UndecidableInstances,
     FlexibleContexts #-}
+{-# LANGUAGE TypeFamilies #-}
 
 {- |
    The HList library
@@ -20,12 +21,10 @@ import Data.HList.HOccurs
 import Data.HList.HTypeIndexed
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- | The newtype for type-indexed products
 
-newtype TIP l = TIP l
-        deriving (Read,Show)
+newtype TIP l = TIP l deriving (Read,Show)
 
 mkTIP :: HTypeIndexed l => l -> TIP l
 mkTIP = TIP
@@ -38,8 +37,7 @@ emptyTIP = mkTIP HNil
 
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- | Type-indexed type sequences
 
 class HList l => HTypeIndexed l
@@ -47,8 +45,7 @@ instance HTypeIndexed HNil
 instance (HOccursNot e l,HTypeIndexed l) => HTypeIndexed (HCons e l)
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 --
 -- One occurrence and nothing is left
 --
@@ -57,9 +54,9 @@ instance (HOccursNot e l,HTypeIndexed l) => HTypeIndexed (HCons e l)
 -- Hence the explicit provision of a result type can be omitted.
 --
 
-instance TypeCast e' e => HOccurs e (TIP (HCons e' HNil))
+instance e' ~ e => HOccurs e (TIP (HCons e' HNil))
  where
-  hOccurs (TIP (HCons e' _)) = typeCast e'
+  hOccurs (TIP (HCons e' _)) = e'
 
 instance HOccurs e (HCons x (HCons y l))
       => HOccurs e (TIP (HCons x (HCons y l)))
@@ -67,14 +64,13 @@ instance HOccurs e (HCons x (HCons y l))
   hOccurs (TIP l) = hOccurs l
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- HOccursNot lifted to TIPs
 
 instance HOccursNot e l => HOccursNot e (TIP l)
 
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
 -- | Type-indexed extension
 --
@@ -100,8 +96,7 @@ hExtend' :: forall l e.
 -}
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- Lift extension through HExtend
 
 instance ( HOccursNot e l
@@ -112,8 +107,7 @@ instance ( HOccursNot e l
   hExtend = hExtend'
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- Lifting previous operations
 
 
@@ -125,32 +119,12 @@ instance ( HAppend l l' l''
   hAppend (TIP l) (TIP l') = mkTIP (hAppend l l')
 
 
-instance HOccursMany e l
-      => HOccursMany e (TIP l)
+instance HOccurrence e l l' => HOccurrence e (TIP l) l'
  where
-  hOccursMany = hOccursMany . unTIP
+  hOccurrence e = hOccurrence e . unTIP
 
 
-instance HOccursMany1 e l
-      => HOccursMany1 e (TIP l)
- where
-  hOccursMany1 = hOccursMany1 . unTIP
-
-
-instance HOccursFst e l
-      => HOccursFst e (TIP l)
- where
-  hOccursFst = hOccursFst . unTIP
-
-
-instance HOccursOpt e l
-      => HOccursOpt e (TIP l)
- where
-  hOccursOpt = hOccursOpt . unTIP
-
-
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- | Shielding type-indexed operations
 -- The absence of signatures is deliberate! They all must be inferred.
 
@@ -167,7 +141,7 @@ tipySplit ps (TIP l) = (mkTIP l',mkTIP l'')
   (l',l'') = hSplitByProxies ps l
 
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
 -- Subtyping for TIPs
 
@@ -176,7 +150,7 @@ instance (HOccurs e l, SubType (TIP l) (TIP l'))
       =>  SubType (TIP l) (TIP (HCons e l'))
 
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
 -- * Sample code
 
@@ -219,41 +193,5 @@ Session log
 
 -}
 
-{-----------------------------------------------------------------------------}
-
--- * Sample 2
-
--- |
--- This example from the TIR paper challenges singleton lists.
--- Thanks to the HW 2004 reviewer who pointed out the value of this example.
--- We note that the explicit type below is richer than the inferred type.
--- This richer type is needed for making this operation more polymorphic.
--- That is, /a)/ would not work without the explicit type, while it would:
---
--- >  a)  ((+) (1::Int)) $ snd $ tuple oneTrue
--- >  b)  ((+) (1::Int)) $ fst $ tuple oneTrue
-
-tuple :: ( HOccurs e1 (TIP l)
-         , HType2HNat e1 l n
-         , HDeleteAtHNat n l l'
-         , HOccurs e2 (TIP l')
-         , HOccurs e2 (TIP l)
-         , HType2HNat e2 l n'
-         , HDeleteAtHNat n' l l''
-         , HOccurs e1 (TIP l'')
-         ) =>
-              TIP l -> (e1, e2)
-
-tuple (TIP l) = let
-                 x  = hOccurs (TIP l)
-                 l' = hDeleteAtProxy (toProxy x) l
-                 y  = hOccurs (TIP l')
-                in (x,y)
 
 
--- | A specific tuple
-oneTrue :: TIP (HCons Int (HCons Bool HNil))
-oneTrue = hExtend (1::Int) (hExtend True emptyTIP)
-
-
-{-----------------------------------------------------------------------------}

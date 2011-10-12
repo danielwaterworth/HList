@@ -1,5 +1,7 @@
-{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances,
-  UndecidableInstances, FlexibleContexts #-}
+{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies #-}
+{-# LANGUAGE FlexibleInstances, FlexibleContexts #-}
+{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE TypeOperators #-}
 
 {- |
    The HList library
@@ -17,16 +19,18 @@ module Data.HList.HListPrelude where
 
 import Data.HList.FakePrelude
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- * Heterogeneous type sequences
 
 data HNil      = HNil      deriving (Eq,Show,Read)
 data HCons e l = HCons e l deriving (Eq,Show,Read)
 
+infixr 2 :*:
 
-{-----------------------------------------------------------------------------}
+type e :*: l = HCons e l
 
+
+-- --------------------------------------------------------------------------
 -- * The set of all types of heterogeneous lists
 
 class HList l
@@ -34,8 +38,7 @@ instance HList HNil
 instance HList l => HList (HCons e l)
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- * Public constructors
 
 hNil  :: HNil
@@ -45,8 +48,7 @@ hCons :: HList l => e -> l -> HCons e l
 hCons e l = HCons e l
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- * Basic list functions
 
 class HHead l h | l -> h
@@ -67,8 +69,7 @@ instance HTail (HCons e l) l
 
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- * A class for extension
 
 class HExtend e l l' | e l -> l', l' -> e l
@@ -77,14 +78,14 @@ class HExtend e l l' | e l -> l', l' -> e l
 
 instance HExtend e HNil (HCons e HNil)
  where
-  hExtend e l = HCons e l
+  hExtend = HCons
 
 instance HList l => HExtend e (HCons e' l) (HCons e (HCons e' l))
  where
-  hExtend e l = HCons e l
+  hExtend = HCons
 
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
 -- * Appending HLists
 
@@ -114,8 +115,7 @@ instance (HList l, HAppend l l' l'')
   hAppend (HCons x l) l' = HCons x (hAppend l l')
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- * Reversing HLists
 
 class HReverse l1 l2 | l1 -> l2, l2 -> l1
@@ -163,7 +163,7 @@ instance ( NaiveHReverse l l'
    = hAppend (naiveHReverse l) (HCons e HNil)
 
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
 --
 -- * A nicer notation for lists
@@ -220,7 +220,7 @@ instance HBuild' (HCons a l) b r
 
 -}
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
 -- * A heterogeneous apply operator
 
@@ -244,7 +244,7 @@ instance Apply Id x x where
   apply _ x = x
 
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
 -- * A heterogeneous fold for all types
 
@@ -264,8 +264,7 @@ instance ( HFoldr f v l r
   hFoldr f v (HCons e l) = apply f (e,hFoldr f v l)
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- * Map
 
 class HMap f l l' | f l -> l'
@@ -284,28 +283,23 @@ instance (
  where
   hMap f ~(HCons x xs) = HCons (apply f x) (hMap f xs)
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- * Map a heterogeneous list to a homogeneous one
 
-class HMapOut f r e
- where
+class HMapOut f r e where
   hMapOut :: f -> r -> [e]
 
-instance HMapOut f HNil e
- where
+instance HMapOut f HNil e where
   hMapOut _ _ = []
 
 instance ( HMapOut f l e'
          , Apply f e e'
          )
-      =>   HMapOut f (HCons e l) e'
- where
+      =>   HMapOut f (HCons e l) e' where
   hMapOut f ~(HCons e l) = apply f e : hMapOut f l
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- * A heterogenous version of mapM.
 --
 -- > mapM :: forall b m a. (Monad m) => (a -> m b) -> [a] -> m [b]
@@ -329,7 +323,7 @@ hMapM_ f =  sequence_ .  disambiguate . hMapM f
   disambiguate =  id
 
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
 -- * A reconstruction of append
 
@@ -347,7 +341,7 @@ instance HList l => Apply ApplyHCons (e,l) (HCons e l)
   apply ApplyHCons (e,l) = hCons e l
 
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
 -- * A heterogeneous map for all types
 
@@ -365,8 +359,7 @@ instance Apply f e e'
     e' = apply f e
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- * A function for showing
 
 data HShow  = HShow
@@ -384,7 +377,7 @@ instance ( Monad m
   apply (HSeq f) (x,c) = do apply f x; c
 
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
 -- * Type-level equality for lists
 
@@ -395,7 +388,7 @@ instance (HList l, HList l', HEq e e' b, HEq l l' b', HAnd b b' b'')
       => HEq (HCons e l) (HCons e' l') b''
 
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
 -- * Staged equality for lists
 
@@ -435,9 +428,7 @@ instance Eq e => HStagedEq' HTrue e e
   hStagedEq' _ = (==)
 
 
-{-----------------------------------------------------------------------------}
-
-
+-- --------------------------------------------------------------------------
 -- * Ensure a list to contain HNats only
 
 class HList l => HNats l
@@ -446,7 +437,6 @@ instance (HNat n, HNats ns) => HNats (HCons n ns)
 
 
 -- * Static set property based on HEq
-
 class HSet l
 instance HSet HNil
 instance (HMember e l HFalse, HSet l) => HSet (HCons e l)
@@ -575,8 +565,7 @@ instance HList2List l e
   hList2List (HCons e l) = e:hList2List l
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- * With 'HMaybe'
 
 -- ** Turn list in a list of justs
@@ -594,8 +583,7 @@ instance ToHJust l l' => ToHJust (HCons e l) (HCons (HJust e) l')
   toHJust (HCons e l) = HCons (HJust e) (toHJust l)
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- ** Extract justs from list of maybes
 
 class FromHJust l l' | l -> l'
@@ -615,8 +603,7 @@ instance FromHJust l l' => FromHJust (HCons (HJust e) l) (HCons e l')
   fromHJust (HCons (HJust e) l) = HCons e (fromHJust l)
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- * Annotated lists
 
 data HAddTag t = HAddTag t
@@ -641,8 +628,7 @@ hFlag :: (HMap (HAddTag HTrue) l l') => l -> l'
 hFlag l = hAddTag hTrue l
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- * Splitting by HTrue and HFalse
 
 -- | Analogus to @Data.List.partition snd@
@@ -683,5 +669,3 @@ ERROR - Unresolved overloading
 
 -}
 
-
-{-----------------------------------------------------------------------------}

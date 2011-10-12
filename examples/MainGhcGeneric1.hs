@@ -23,27 +23,22 @@ module MainGhcGeneric1 (
 
  module Datatypes2,
  module Data.HList.CommonMain,
- module Data.HList.GhcSyntax,
- module Data.HList.GhcExperiments,
- module Data.HList.TypeEqGeneric1,
+ module Data.HList.TypeEqO,
  module Data.HList.Label3,
- mainExport
+-- mainExport
 
 ) where
 
 import Datatypes2
-import Data.HList.CommonMain hiding (HDeleteMany, hDeleteMany)
-import Data.HList.GhcSyntax
-import Data.HList.GhcExperiments
-import Data.HList.GhcRecord
-import Data.HList.TypeEqBoolGeneric
-import Data.HList.TypeEqGeneric1
-import Data.HList.TypeCastGeneric1
+import Data.HList.CommonMain -- hiding (HDeleteMany, hDeleteMany)
+-- import Data.HList.GhcExperiments
+-- import Data.HList.GhcRecord
+import Data.HList.TypeEqO
 import Data.HList.Label3
-import Data.HList.RecordP
+-- import Data.HList.RecordP
 
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
 type Animal =  HCons Key
               (HCons Name
@@ -85,7 +80,7 @@ testHArray = (myProj1,myProj2,myProj3,myProj4)
 HCons (Key 42) (HCons (Key 42) HNil)
 
 *HArray> myProj2
-HCons (Key 42) (HCons Cow HNil)
+HCons (Key 42) (HCons (Name "Angus") HNil)
 
 *HArray> myProj3
 HCons (Name "Angus") (HCons Cow (HCons (Price 75.5) HNil))
@@ -115,6 +110,40 @@ testTypeIndexed =   ( typeIdx1
   typeIdx4 = hDeleteAtProxy (proxy::Proxy Breed) typeIdx2
   typeIdx5 = hProjectByProxies (HCons (proxy::Proxy Breed) HNil) angus
   typeIdx6 = fst $ hSplitByProxies (HCons (proxy::Proxy Breed) HNil) angus
+
+-- |
+-- This example from the TIR paper challenges singleton lists.
+-- Thanks to the HW 2004 reviewer who pointed out the value of this example.
+-- We note that the explicit type below is richer than the inferred type.
+-- This richer type is needed for making this operation more polymorphic.
+-- That is, /a)/ would not work without the explicit type, while it would:
+--
+-- >  a)  ((+) (1::Int)) $ snd $ tuple oneTrue
+-- >  b)  ((+) (1::Int)) $ fst $ tuple oneTrue
+
+tuple :: ( HOccurs e1 (TIP l)
+         , HType2HNat e1 l n
+         , HDeleteAtHNat n l l'
+         , HOccurs e2 (TIP l')
+         , HOccurs e2 (TIP l)
+         , HType2HNat e2 l n'
+         , HDeleteAtHNat n' l l''
+         , HOccurs e1 (TIP l'')
+         ) =>
+              TIP l -> (e1, e2)
+
+tuple (TIP l) = let
+                 x  = hOccurs (TIP l)
+                 l' = hDeleteAtProxy (toProxy x) l
+                 y  = hOccurs (TIP l')
+                in (x,y)
+
+
+-- | A specific tuple
+-- Need to import an instance of TypeEq to be able to run the examples
+
+oneTrue :: TIP (HCons Int (HCons Bool HNil))
+oneTrue = hExtend (1::Int) (hExtend True emptyTIP)
 
 testTuple =   ( testTuple1
             , ( testTuple2
@@ -148,6 +177,7 @@ testTIP = (testTIP1,testTIP2,testTIP3,testTIP4)
   testTIP3 = hExtend Sheep $ tipyDelete (proxy::Proxy Breed) myTipyCow
   testTIP4 = tipyUpdate Sheep myTipyCow
 
+{-
 data MyNS = MyNS -- a name space for record labels
 
 key   = firstLabel MyNS  (undefined::DKey)
@@ -247,7 +277,7 @@ testVariant = (testVar1,(testVar2,(testVar3)))
   testVar2 = unVariant key testVar1
   testVar3 = unVariant name testVar1
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
 main = mainExport
 mainExport
@@ -263,4 +293,4 @@ mainExport
                )))))))))
 
 
-{-----------------------------------------------------------------------------}
+-}

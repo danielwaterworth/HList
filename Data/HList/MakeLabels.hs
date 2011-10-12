@@ -108,4 +108,4 @@ t3 = show_code $
             (make_tname "bar",make_dname "bar")) dcl_template
 -}
 
-t4 = show_code $ makeLabels ["getX","getY","draw"]
+-- t4 = show_code $ makeLabels ["getX","getY","draw"]

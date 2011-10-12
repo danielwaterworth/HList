@@ -1,5 +1,9 @@
-{-# LANGUAGE EmptyDataDecls, MultiParamTypeClasses, FlexibleInstances,
-  FlexibleContexts, OverlappingInstances, UndecidableInstances #-}
+{-# LANGUAGE EmptyDataDecls #-}
+{-# LANGUAGE MultiParamTypeClasses, FlexibleInstances, FlexibleContexts #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE UndecidableInstances #-}
 
 {- |
    The HList library
@@ -16,168 +20,124 @@ module Data.HList.HOccurs (
 import Data.HList.FakePrelude
 import Data.HList.HListPrelude
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
+-- Given an HList l and an element type e return the suffix of l
+-- whose head has the type e. Return HNil if l does not have
+-- an element of type e.
 
+class HOccurrence e l l' | e l -> l' where
+    hOccurrence :: e -> l -> l'
+
+instance HOccurrence e HNil HNil where
+    hOccurrence _ = id
+
+instance (TypeEq e e' b, HOccurrence' b e (HCons e' l) l')
+    => HOccurrence e (HCons e' l) l' where
+    hOccurrence = hOccurrence' (undefined::b)
+
+class HOccurrence' b e l l' | b e l -> l' where
+    hOccurrence' :: b -> e -> l -> l'
+
+instance HOccurrence' HTrue e (HCons e l) (HCons e l) where
+    hOccurrence' _ _ = id
+
+instance HOccurrence e l l' => HOccurrence' HFalse e (HCons e' l) l' where
+    hOccurrence' _ e (HCons _ l) = hOccurrence e l
+
+
+-- --------------------------------------------------------------------------
 -- Zero or more occurrences
 
-class HOccursMany e l
- where
+class HOccursMany e l where
   hOccursMany :: l -> [e]
 
-instance HOccursMany e HNil
+instance (HOccurrence e l l', HOccursMany' e l') 
+    => HOccursMany e l
  where
-  hOccursMany HNil = []
+  hOccursMany l = hOccursMany' (hOccurrence (undefined::e) l)
 
-instance ( HOccursMany e l, HList l )
-      =>   HOccursMany e (HCons e l)
- where
-  hOccursMany (HCons e l) = e:hOccursMany l
+class HOccursMany' e l where
+  hOccursMany' :: l -> [e]
 
-instance ( HOccursMany e l, HList l )
-      =>   HOccursMany e (HCons e' l)
- where
-  hOccursMany (HCons _ l) = hOccursMany l
+instance HOccursMany' e HNil where
+  hOccursMany' _ = []
+
+instance (e ~ e', HOccursMany e l) => HOccursMany' e (HCons e' l) where
+  hOccursMany' (HCons e l) = e : hOccursMany l
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- One or more occurrences
 
-class HOccursMany1 e l
- where
-  hOccursMany1 :: l -> (e,[e])
+hOccursMany1 :: forall e l l'.
+		(HOccurrence e l (HCons e l'), HOccursMany e l') =>
+		l -> (e,[e])
+hOccursMany1 l = let (HCons e l') = hOccurrence (undefined::e) l in
+		 (e,hOccursMany (l'::l'))
 
-instance ( HOccursMany e l, HList l )
-      =>   HOccursMany1 e (HCons e l)
- where
-  hOccursMany1 (HCons e l) = (e,hOccursMany l)
-
-instance ( HOccursMany1 e l, HList l )
-      => HOccursMany1 e (HCons e' l)
- where
-  hOccursMany1 (HCons _ l) = hOccursMany1 l
-
-
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- The first occurrence
 
-class HOccursFst e l
- where
-  hOccursFst :: l -> e
-
-instance HList l
-      => HOccursFst e (HCons e l)
- where
-  hOccursFst (HCons e _) = e
-
-instance ( HOccursFst e l, HList l )
-      =>   HOccursFst e (HCons e' l)
- where
-  hOccursFst (HCons _ l) = hOccursFst l
+hOccursFst :: HOccurrence e l (HCons e l') => l -> e
+hOccursFst l = let (HCons e _) = hOccurrence e l in e
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- One occurrence and nothing is left
+-- This constraint is used in many places
 
-class HOccurs e l
- where
+class HOccurs e l where
   hOccurs :: l -> e
 
 data TypeNotFound e
 
-instance Fail (TypeNotFound e)
-      => HOccurs e HNil
- where
-  hOccurs = undefined
+instance Fail (TypeNotFound e) => HOccurs e HNil where
+    hOccurs = undefined
 
-instance ( HList l
-         , HOccursNot e l
-         )
-           => HOccurs e (HCons e l)
- where
-  hOccurs (HCons e _) = e
+instance (HOccurrence e (HCons x y) l', HOccurs' e l') 
+    => HOccurs e (HCons x y) where
+    hOccurs = hOccurs' . hOccurrence (undefined::e)
 
-instance ( HOccurs e l
-         , HList l
-         )
-           => HOccurs e (HCons e' l)
- where
-  hOccurs (HCons _ l) = hOccurs l
+class HOccurs' e l where
+    hOccurs' :: l -> e
+
+instance Fail (TypeNotFound e) => HOccurs' e HNil where
+    hOccurs' = undefined
+
+instance (e ~ e', HOccursNot e l) => HOccurs' e (HCons e' l) where
+    hOccurs' (HCons e _) = e
 
 
-{-----------------------------------------------------------------------------}
-
--- One occurrence and nothing is left
--- A variation that avoids overlapping instances
-
-class HOccurs' e l
- where
-  hOccurs' :: l -> e
-
-instance ( TypeEq e e' b
-         , HOccursBool b e (HCons e' l) )
-      =>   HOccurs' e (HCons e' l)
- where
-  hOccurs' (HCons e' l) = e
-   where
-    e = hOccursBool b (HCons e' l)
-    b = proxyEq (toProxy e) (toProxy e')
-
-class HOccursBool b e l
- where
-  hOccursBool :: b -> l -> e
-
-instance ( HList l
-         , HOccursNot e l
-         )
-           => HOccursBool HTrue e (HCons e l)
- where
-  hOccursBool _ (HCons e _) = e
-
-instance ( HOccurs' e l
-         , HList l
-         )
-           => HOccursBool HFalse e (HCons e' l)
- where
-  hOccursBool _ (HCons _ l) = hOccurs' l
-
-
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- Zero or at least one occurrence
 
-class HOccursOpt e l
- where
-  hOccursOpt :: l -> Maybe e
+hOccursOpt :: forall e l l'. 
+	      (HOccurrence e l l', HOccursOpt' e l') => l -> Maybe e
+hOccursOpt = hOccursOpt' . hOccurrence (undefined::e)
 
-instance HOccursOpt e HNil
- where
-  hOccursOpt HNil = Nothing
+class HOccursOpt' e l where
+  hOccursOpt' :: l -> Maybe e
 
-instance HOccursOpt e (HCons e l)
- where
-  hOccursOpt (HCons e _) = Just e
+instance HOccursOpt' e HNil where
+  hOccursOpt' _ = Nothing
 
-instance HOccursOpt e l
-      => HOccursOpt e (HCons e' l)
- where
-  hOccursOpt (HCons _ l) = hOccursOpt l
+instance e ~ e' => HOccursOpt' e (HCons e' l) where
+  hOccursOpt' (HCons e _) = Just e
 
-
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- Class to test that a type is "free" in a type sequence
 
 data TypeFound e
 class HOccursNot e l
 instance HOccursNot e HNil
-instance Fail (TypeFound e) => HOccursNot e (HCons e l)
-instance HOccursNot e l => HOccursNot e (HCons e' l)
+instance (TypeEq e e' b, HOccursNot' b e l) => HOccursNot e (HCons e' l)
+class HOccursNot' b e l
+instance Fail (TypeFound e) => HOccursNot' HTrue e l
+instance HOccursNot' HFalse e HNil
+instance HOccursNot e (HCons e' l) => HOccursNot' HFalse e (HCons e' l)
 
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
 class HProject l l'
  where
@@ -196,7 +156,7 @@ instance ( HList l'
   hProject l = HCons (hOccurs l) (hProject l)
 
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
 -- * Illustration of typical test scenarios
 {- $example
@@ -223,4 +183,3 @@ However, hOccurs can be elaborated as improved as follows:
 
 -}
 
-{-----------------------------------------------------------------------------}

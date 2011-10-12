@@ -1,4 +1,5 @@
-{-# LANGUAGE EmptyDataDecls, MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances, UndecidableInstances #-}
+{-# LANGUAGE EmptyDataDecls, MultiParamTypeClasses, 
+  FunctionalDependencies, FlexibleInstances, UndecidableInstances #-}
 
 {- |
    The HList library
@@ -11,14 +12,20 @@
 module Data.HList.FakePrelude where
 
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
 -- * Booleans
 
-data HTrue; hTrue :: HTrue; hTrue = undefined
-data HFalse; hFalse :: HFalse; hFalse = undefined
-class HBool x; instance HBool HTrue; instance HBool HFalse
-instance Show HTrue where show _ = "HTrue"
+data HTrue
+hTrue :: HTrue; hTrue = undefined
+data HFalse
+hFalse :: HFalse; hFalse = undefined
+
+class HBool x
+instance HBool HTrue
+instance HBool HFalse
+
+instance Show HTrue  where show _ = "HTrue"
 instance Show HFalse where show _ = "HFalse"
 
 
@@ -87,7 +94,7 @@ instance HCond HTrue x y x
 -- We omit everything what's not needed for the code in the paper.
 
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
 -- * Naturals
 
@@ -121,7 +128,7 @@ instance HNat2Integral n => HNat2Integral (HSucc n)
   hNat2Integral n = hNat2Integral (hPred n) + 1
 
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
 -- * Maybies
 
@@ -129,7 +136,7 @@ data HNothing  = HNothing  deriving Show
 data HJust x   = HJust x   deriving Show
 
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
 -- * Equality for types
 
@@ -147,7 +154,7 @@ hEq :: HEq x y b => x -> y -> b
 hEq =  undefined
 
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
 -- * Staged equality
 -- |
@@ -161,7 +168,7 @@ class HStagedEq x y
   hStagedEq :: x -> y -> Bool
 
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
 -- | Less than
 
@@ -180,13 +187,11 @@ hLt   :: HLt x y b => x -> y -> b
 hLt _ =  undefined
 
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
 -- | A predicate for type equality
 --
--- There are different implementations.
---
--- See imports in Main*.hs
+-- There are different implementations: see TypeEq*.hs
 
 class HBool b => TypeEq x y b | x y -> b
 
@@ -201,16 +206,18 @@ proxyEq :: TypeEq t t' b => Proxy t -> Proxy t' -> b
 proxyEq _ _ = undefined
 
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
--- * Type-safe cast
+-- * Type-safe cast -- no longer need. We use a a ~ b
 
+{-
 class TypeCast x y | x -> y, y -> x
  where
   typeCast :: x -> y
+-}
 
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
 -- * A phantom type for type proxies
 
@@ -227,21 +234,7 @@ unProxy :: Proxy e -> e
 unProxy =  undefined
 
 
-{-----------------------------------------------------------------------------}
-
--- * Type equality and disequality
-
-class TypeEqTrue x y
-class TypeEqFalse x y
-
-typeEqTrue :: TypeEqTrue x y => x -> y -> ()
-typeEqTrue _ _ = ()
-
-typeEqFalse :: TypeEqFalse x y => x -> y -> ()
-typeEqFalse _ _ = ()
-
-
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
 -- * Subtyping
 
@@ -251,7 +244,7 @@ subType :: SubType l l' => l -> l' -> ()
 subType _ _ = ()
 
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
 -- * Error messages
 
@@ -259,4 +252,3 @@ subType _ _ = ()
 class Fail x
 
 
-{-----------------------------------------------------------------------------}

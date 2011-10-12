@@ -15,7 +15,7 @@
 
 ghci = ghci -i..
 ghc-favourite  = MainGhcGeneric1.hs
-hugs-favourite = MainHugsTTypeable.hs
+# hugs-favourite = MainHugsTTypeable.hs
 
 
 ##############################################################################
