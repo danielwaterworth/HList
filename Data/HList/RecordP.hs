@@ -26,8 +26,7 @@ import Data.HList.HListPrelude
 import Data.HList.Record
 import Data.HList.HArray
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- Record types as Phantom labels with values
 
 newtype RecordP ls vs = RecordP vs
@@ -69,8 +68,7 @@ labels_of_recordp :: RecordP ls vs -> ls
 labels_of_recordp = undefined
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- A Show instance to appeal to normal records
 -- to save the coding time (rather than run-time), we just
 -- convert RecordP to regular Record, which we know how to show
@@ -79,8 +77,7 @@ instance (RecordR2P r ls vs, ShowComponents r, HRLabelSet r) =>
     Show (RecordP ls vs) where show rp = show $ record_p2r rp
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- Extension for records
 
 instance (HLabelSet (HCons l ls), HSameLength ls vs)
@@ -89,8 +86,7 @@ instance (HLabelSet (HCons l ls), HSameLength ls vs)
   hExtend (LVPair v) (RecordP vs) = mkRecordP undefined (HCons v vs)
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- Record concatenation
 
 instance ( HLabelSet ls''
@@ -102,8 +98,7 @@ instance ( HLabelSet ls''
  where
   hAppend (RecordP vs) (RecordP vs') = mkRecordP undefined (hAppend vs vs')
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- Lookup operation
 
 -- Because hLookupByLabel is so frequent and important, we
@@ -126,23 +121,22 @@ instance HasField l (RecordP ls vs) v
         hLookupByLabel l ((RecordP vs)::RecordP ls vs)
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- Delete operation
 hDeleteAtLabelP :: HProjectByLabelP l ls vs lso v vso =>
                    l -> RecordP ls vs -> RecordP lso vso
 hDeleteAtLabelP l r = snd $ h2ProjectByLabelP l r
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- Update operation
-hUpdateAtLabelP :: (HUpdateAtHNat n e1 t1 l', HFind e t n) => e -> e1 -> RecordP t t1 -> RecordP ls l'
+hUpdateAtLabelP :: (HUpdateAtHNat n e1 t1 l', HFind e t n) => 
+		   e -> e1 -> RecordP t t1 -> RecordP ls l'
 hUpdateAtLabelP l v rp@(RecordP vs) = RecordP (hUpdateAtHNat n v vs)
  where
   n       = hFind l (labels_of_recordp rp)
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 -- Projection for records
 -- It is also an important operation: the basis of many
 -- deconstructors -- so we try to implement it efficiently.
@@ -202,8 +196,7 @@ instance H2ProjectByLabels ls (RecordP ls' vs') rin (RecordP lo vo) =>
                   h2projectByLabels ls ((RecordP vs')::RecordP ls' vs')
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- Subtyping for records
 
 -- Hmm, a bit too conservative. It works for all our examples,

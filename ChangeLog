@@ -1,7 +1,8 @@
 12 Oct 2011
 	Getting rid of overlapping instances in HOccurs
-	Using ~ operator instead of TypeCast. Deprecating TypeCast
 	Using only one TypeEq. This is the only place with overlapping instances
+	Using ~ operator instead of TypeCast. Deprecating TypeCast
+	Rearrangements of code, removing obsolete code
 	Making sure everything works under GHC 7.0.4
 	
 

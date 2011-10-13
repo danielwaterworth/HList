@@ -1,7 +1,10 @@
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
-{-# LANGUAGE EmptyDataDecls,  UndecidableInstances, OverlappingInstances,
-  MultiParamTypeClasses #-}
+{-# LANGUAGE EmptyDataDecls #-}
+{-# LANGUAGE MultiParamTypeClasses, FlexibleContexts, FlexibleInstances #-}
+{-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE UndecidableInstances #-}
 
+-- XXX Updates are delayed...
 -- | Potentially infinite, open, statically constrained HLists...
 
 module CHList where

@@ -34,6 +34,7 @@ module Data.HList.Record
     LVPair(..),
     labelLVPair,
     newLVPair,
+    (.=.), (:=:),
 
     -- ** Record
     Record(..),
@@ -60,6 +61,7 @@ module Data.HList.Record
     -- ** Lookup
     HasField(..),
     HasField'(..),
+    (.!.),
 
     -- ** Delete
     -- | 'hDeleteAtLabel' @label record@
@@ -69,6 +71,7 @@ module Data.HList.Record
     -- | 'hUpdateAtLabel' @label value record@
     hUpdateAtLabel,
     hTPupdateAtLabel,
+    (.@.), (.<.),
 
     -- ** Rename Label
     hRenameLabel,
@@ -82,6 +85,7 @@ module Data.HList.Record
     -- *** Left
     HLeftUnion(hLeftUnion),
     HLeftUnionBool(hLeftUnionBool),
+    (.<++.),
 
     -- *** Symmetric
     -- $symmetricUnion
@@ -92,6 +96,7 @@ module Data.HList.Record
 
     -- ** Extension
     -- | 'hExtend', 'hAppend'
+    (.*.),
 
     -- * Unclassified
     -- | Probably internals, that may not be useful
@@ -115,7 +120,7 @@ import Data.HList.HListPrelude
 import Data.HList.HArray
 
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
 -- $labels Record types as label-value pairs, where label is purely phantom.
 -- Thus the run-time representation of a field is the same as that of
@@ -223,7 +228,7 @@ recordValues (Record r) = recordValues' r
 
 
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
 -- 'Show' instance to appeal to normal records
 
@@ -259,7 +264,7 @@ class ShowLabel l
   showLabel :: l -> String
 
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
 -- Extension
 
@@ -286,7 +291,7 @@ infixr 2 .*.
 (.*.) =  hExtend
 
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
 -- Concatenation
 
@@ -298,7 +303,7 @@ instance ( HRLabelSet r''
   hAppend (Record r) (Record r') = mkRecord (hAppend r r')
 
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
 -- Lookup
 --
@@ -360,7 +365,7 @@ infixr 9 .!.
 r .!. l =  hLookupByLabel l r
 
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
 -- Delete
 
@@ -397,7 +402,7 @@ infixl 2 .-.
 r .-. l =  hDeleteAtLabel l r
 
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
 -- Update
 
@@ -418,11 +423,10 @@ infixr 2 .@.
   > label1 .=. value1 .@. record1
 
 -}
-(.@.) :: (HUpdateAtHNat n (LVPair t t1) t2 l',HFind t ls n,RecordLabels t2 ls) =>LVPair t t1 -> Record t2 -> Record l'
 f@(LVPair v) .@. r  =  hUpdateAtLabel (labelLVPair f) v r
 
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 -- Projection
 
 -- $projection
@@ -475,7 +479,7 @@ instance H2ProjectByLabels ls r' rin rout =>
         where (rin,rout) = h2projectByLabels ls r
 
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
 -- | Rename the label of record
 hRenameLabel :: (HRLabelSet (HCons (LVPair l v) t2),HasField e t1 v,H2ProjectByLabels (HCons e HNil) t1 t t2) =>
@@ -487,7 +491,7 @@ hRenameLabel l l' r = r''
   r'' = hExtend (newLVPair l' v) r'
 
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
 -- | A variation on 'hUpdateAtLabel': type-preserving update.
 hTPupdateAtLabel :: (HasField l t a,HUpdateAtHNat n (LVPair l a) t l',HFind l ls n,RecordLabels t ls) =>
@@ -509,7 +513,14 @@ This would also constrain the actual implementation of hUpdateAtLabel.
 
 -}
 
-{-----------------------------------------------------------------------------}
+infixr 2 .<.
+{-|
+  Another variation on update, so give it the same fixity as (.\@.).
+
+-}
+f@(LVPair v) .<. r = hTPupdateAtLabel (labelLVPair f) v r
+
+-- --------------------------------------------------------------------------
 
 -- | Subtyping for records
 instance ( RecordLabels r' ls
@@ -518,7 +529,7 @@ instance ( RecordLabels r' ls
     => SubType (Record r) (Record r')
 
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
 -- Left Union
 
@@ -550,8 +561,19 @@ instance HLeftUnionBool HTrue r f r
 instance HLeftUnionBool HFalse r f (HCons f r)
    where hLeftUnionBool _ r f = HCons f r
 
+infixl 1 .<++.
+{-|
+  Similar to list append, so give this slightly lower fixity than
+  (.*.), so we can write:
 
-{-----------------------------------------------------------------------------}
+   > field1 .=. value .*. record1 .<++. record2
+
+-}
+(.<++.) ::  (HLeftUnion r r' r'') => r -> r' -> r''
+r .<++. r' = hLeftUnion r r'
+
+
+-- --------------------------------------------------------------------------
 -- $symmetricUnion
 -- Compute the symmetric union of two records r1 and r2 and
 -- return the pair of records injected into the union (ru1, ru2).
@@ -620,7 +642,7 @@ instance (UnionSymRec r1 r2' (Record ru),
              ul' = hExtend f2 ul
              ur' = hExtend f2 ur
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 -- | Rearranges a record by labels. Returns the record r, rearranged such that
 -- the labels are in the order given by ls. (recordLabels r) must be a
 -- permutation of ls.

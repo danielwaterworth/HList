@@ -12,12 +12,13 @@
 
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
-   Extensible records -- operations that (may) require GHC
+   Extensible records -- advanced operations
+   These operations that (may) require GHC
 
    See "Data.HList.Record" for the base module.
 -}
 
-module Data.HList.GhcRecord where
+module Data.HList.RecordAdv where
 
 import Data.HList.FakePrelude
 import Data.HList.HListPrelude
@@ -25,35 +26,7 @@ import Data.HList.HArray
 import Data.HList.Record
 import Data.Typeable
 
-infixr 2 .^.
-{-|
-  This is a variation on updating (according to GhcRecord.hs),
-  so use the same fixity as (.\@.).
--}
-(.^.) :: (HUpdateAtHNat n (LVPair t t1) t2 l',HFind t ls n,RecordLabels t2 ls,HasField t t2 (Proxy t1)) =>LVPair t t1 -> Record t2 -> Record l'
-f@(LVPair v) .^. r = hUnproxyLabel (labelLVPair f) v r
-
-infixr 2 .<.
-{-|
-  Another variation on update, so give it the same fixity as (.\@.).
-
--}
-(.<.) :: (HasField t t2 t1,HUpdateAtHNat n (LVPair t t1) t2 l',HFind t ls n,RecordLabels t2 ls) =>LVPair t t1 -> Record t2 -> Record l'
-f@(LVPair v) .<. r = hTPupdateAtLabel (labelLVPair f) v r
-
-infixl 1 .<++.
-{-|
-  Similar to list append, so give this slightly lower fixity than
-  (.*.), so we can write:
-
-   > field1 .=. value .*. record1 .<++. record2
-
--}
-(.<++.) ::  (HLeftUnion r r' r'') => r -> r' -> r''
-r .<++. r' = hLeftUnion r r'
-
-
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
 -- | A variation on update.
 --
@@ -69,8 +42,14 @@ hUnproxyLabel l v r = hUpdateAtLabel l v r
   tpe _ _ = ()
   _ = tpe v (hLookupByLabel l r)
 
+infixr 2 .^.
+{-|
+  This is a variation on updating, so use the same fixity as (.\@.).
+-}
+f@(LVPair v) .^. r = hUnproxyLabel (labelLVPair f) v r
 
-{-----------------------------------------------------------------------------}
+
+-- --------------------------------------------------------------------------
 
 -- | Test for values; refuse proxies
 
@@ -87,7 +66,7 @@ instance Fail (ProxyFound x) => HasNoProxies (HCons (LVPair lab (Proxy x)) l)
 instance HasNoProxies l => HasNoProxies (HCons e l)
 
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
 -- | Narrow a record to a different record type
 --
@@ -145,7 +124,7 @@ instance ( Narrow rout r'
         (Record r')    = narrow (Record rout)
 
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
 -- | Narrow two records to their least-upper bound
 
@@ -168,7 +147,7 @@ instance ( RecordLabels a la
      )
 
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
 -- | List constructors that also LUB together
 
@@ -191,7 +170,7 @@ instance LubNarrow e0 e1 e2 => ConsLub e0 [e1] [e2]
     z = map (lubNarrow h) (undefined:t)
 
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
 -- | Extension of lubNarrow to a heterogeneous list
 
@@ -223,7 +202,7 @@ instance ( HLub (HCons h (HCons h'' t)) e'
 
 
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 -- | Record equivalence modulo field order
 --
 -- Decide if two records r1 and r2 are identical or differ only in the order
@@ -285,7 +264,7 @@ instance RecordEquiv' (r1->HJust r2) (r2->HNothing) HNothing where
     equivR' _ _ = HNothing
 
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 -- Typeable instances
 
 hNilTcName :: TyCon
@@ -323,5 +302,4 @@ instance Typeable x => Typeable (Proxy x)
    = mkTyConApp proxyTcName [ typeOf (undefined::x) ]
 
 
-{-----------------------------------------------------------------------------}
 

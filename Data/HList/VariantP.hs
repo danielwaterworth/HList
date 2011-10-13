@@ -36,7 +36,6 @@ type declarations, or any other mentioning of types, except in the comments
 module Data.HList.VariantP where
 
 import Data.HList.CommonMain
-import Data.HList.GhcSyntax
 import Data.HList.Label1
 
 
@@ -80,7 +79,10 @@ to_list () =     l_nil  .=. []
 tekiyou consumer lst = lst (consumer ())
 
 test1 = tekiyou to_list tl1
+-- "abc"
 test2 = tekiyou to_list tl2
+-- [10,1,2,3]
+
 
 -- another function, length
 
@@ -89,7 +91,9 @@ lengthL () =  l_nil  .=. 0
           .*. emptyRecord
 
 test_lL1 = tekiyou lengthL tl1
+-- 3
 test_lL2 = tekiyou lengthL tl2
+-- 4
 
 
 -- Now, add extension to our record -- and, dually, extend our variant
@@ -112,10 +116,11 @@ sumA () =  l_nil  .=. 0
 
 -- we can apply sum to an original (unextended) list
 test_sum1 = tekiyou sumA tl2
+-- 16
 
 -- now, we can apply sum to an extended list
 test_sum2 = tekiyou sumA tl4
-
+-- 29
 
 -- we can't pass extended lists tl3 and tl4 to a regular lenghtL
 -- The error message says that the field l_unit is missing
@@ -130,7 +135,9 @@ lengthA () =  l_unit .=. const 1
           .*. (lengthL ())
 
 test_lL4 = tekiyou lengthA tl3
+-- 2
 test_lL5 = tekiyou lengthA tl4
+-- 7
 
 
 -- A few methods to show that our extensible lists indeed act
@@ -155,6 +162,7 @@ test_ell = (el_null tl1, el_head tl1, tekiyou to_list $ el_tail tl1)
 from_list l = foldr cons nil l
 
 test_ft1 = tekiyou to_list $ from_list "abcd"
+-- "abcd"
 
 
 -- Binary methods.
@@ -163,9 +171,9 @@ test_ft1 = tekiyou to_list $ from_list "abcd"
 -- Laziness helps...
 
 eqL l1 l2 = tekiyou to_list l1 == tekiyou to_list l2
-test_eq1 = eqL tl1 tl1
-test_eq2 = eqL tl1 (cons 'a' nil)
-test_eq3 = eqL tl1 nil
+test_eq1 = eqL tl1 tl1             -- True
+test_eq2 = eqL tl1 (cons 'a' nil)  -- False
+test_eq3 = eqL tl1 nil             -- False
 
 -- we can extend to_list as usual
 
@@ -176,6 +184,7 @@ to_listA () =  l_unit .=. (:[])
 -- And we can arbitrary mix old and extended lists
 eqA l1 l2 = tekiyou to_listA l1 == tekiyou to_listA l2
 test_eq4, test_eq5, test_eq6 :: Bool
-test_eq4 = eqA tl1 tl1
-test_eq5 = eqA tl2 tl3
-test_eq6 = eqA tl3 tl4
+test_eq4 = eqA tl1 tl1   -- True
+test_eq5 = eqA tl2 tl3   -- False
+test_eq6 = eqA tl3 tl4   -- False
+

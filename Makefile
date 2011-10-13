@@ -1,7 +1,7 @@
 all:
 
 test:
-	cd examples; make test-ghc
+	cd examples; $(MAKE) test
 
 commit:
 	darcs record -a -m "See ChangeLog"

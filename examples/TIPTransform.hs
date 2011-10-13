@@ -20,8 +20,7 @@ module TIPTransform where
 import Data.HList
 import Data.HList.TIP
 
-import Data.HList.TypeEqGeneric3
-import Data.HList.TypeCastGeneric3
+import Data.HList.TypeEqO
 import Data.HList.Label5
 
 -- We start with the examples

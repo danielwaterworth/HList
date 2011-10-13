@@ -28,10 +28,8 @@ happens to have the field names PtX.
 module Main where
 
 import Data.HList.CommonMain
-import Data.HList.GhcSyntax
 
-import Data.HList.TypeEqGeneric1
-import Data.HList.TypeCastGeneric1
+import Data.HList.TypeEqO
 import Data.HList.Label4
 
 -- Labels
@@ -63,11 +61,11 @@ point2 x y =
 foo p | 0 <- p # px = "X is zero"
 foo _ = "something else"
 
-test1  = foo (point1 0)
-test1' = foo (point1 42)
-test2 = foo (point2 10 20)
+test1  = foo (point1 0)     -- X is zero
+test1' = foo (point1 42)    -- something else
+test2 = foo (point2 10 20)  -- something else
 -- inline construction of the record
-test3 = foo (py .=. False .*. px .=. 0 .*. emptyRecord)
+test3 = foo (py .=. False .*. px .=. 0 .*. emptyRecord) -- X is zero
 
 main = do
        putStrLn test1

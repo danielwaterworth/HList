@@ -47,6 +47,7 @@ hNil  =  HNil
 hCons :: HList l => e -> l -> HCons e l
 hCons e l = HCons e l
 
+infixr 2 `hCons`
 
 -- --------------------------------------------------------------------------
 -- * Basic list functions

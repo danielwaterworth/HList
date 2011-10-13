@@ -32,10 +32,10 @@ module MainGhcGeneric1 (
 import Datatypes2
 import Data.HList.CommonMain -- hiding (HDeleteMany, hDeleteMany)
 -- import Data.HList.GhcExperiments
--- import Data.HList.GhcRecord
+import Data.HList.RecordAdv
 import Data.HList.TypeEqO
 import Data.HList.Label3
--- import Data.HList.RecordP
+import Data.HList.RecordP
 
 
 -- --------------------------------------------------------------------------
@@ -177,7 +177,6 @@ testTIP = (testTIP1,testTIP2,testTIP3,testTIP4)
   testTIP3 = hExtend Sheep $ tipyDelete (proxy::Proxy Breed) myTipyCow
   testTIP4 = tipyUpdate Sheep myTipyCow
 
-{-
 data MyNS = MyNS -- a name space for record labels
 
 key   = firstLabel MyNS  (undefined::DKey)
@@ -266,7 +265,6 @@ Type error ...
 
 -}
 
-
 testVariant = (testVar1,(testVar2,(testVar3)))
  where
   animalVar =  key   .=. (proxy::Proxy Integer)
@@ -292,5 +290,3 @@ mainExport
                , ( testVariant
                )))))))))
 
-
--}

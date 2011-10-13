@@ -27,15 +27,13 @@ import Data.HList.HArray
 import Data.HList.Record
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- | Variant types on the basis of label-maybe pairs.
 
 newtype Variant mr = Variant mr
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- | Turn proxy sequence into sequence of Nothings
 
 class HMaybied r r' | r -> r'
@@ -52,8 +50,7 @@ instance HMaybied r r'
   hMaybied (HCons _ r) = HCons (LVPair Nothing) (hMaybied r)
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- | Public constructor
 
 mkVariant :: ( RecordLabels v ls
@@ -70,8 +67,7 @@ mkVariant x y (Record v) = Variant v'
   v'      = hUpdateAtHNat n (newLVPair x (Just y)) ms
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- | Public destructor
 
 unVariant :: ( RecordLabels v ls
@@ -86,8 +82,7 @@ unVariant x (Variant v) = y
   LVPair y     = hLookupByHNat n v
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- | Variants are opaque
 
 instance Show (Variant v)
@@ -95,4 +90,3 @@ instance Show (Variant v)
   show _ = "<Cannot show Variant content!>"
 
 
-{-----------------------------------------------------------------------------}

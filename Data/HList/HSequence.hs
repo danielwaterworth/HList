@@ -1,6 +1,6 @@
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
-{-# LANGUAGE EmptyDataDecls #-}
 {-# LANGUAGE FlexibleContexts, FlexibleInstances, MultiParamTypeClasses #-}
+{-# LANGUAGE TypeFamilies #-}
 
 {- |
    The HList library
@@ -31,25 +31,25 @@ module Data.HList.HSequence (hSequence) where
 import Data.HList.HListPrelude -- (Apply(..), HCons(..), apply, hFoldr, HNil)
 import Control.Monad (liftM2)
 
-import Data.HList.TypeCastGeneric2                 -- For tests
 
+data ConsM = ConsM
 
-data ConsM
-
-instance (TypeCast (m1 l) (m l), Monad m)
-    => Apply ConsM (m a, m1 l) (m (HCons a l)) where
-    apply _ (me,ml) = liftM2 HCons me (typeCast ml)
+instance (m1 ~ m, Monad m) => Apply ConsM (m a, m1 l) (m (HCons a l)) where
+    apply _ (me,ml) = liftM2 HCons me ml
 
 -- Inferred type:
 -- hSequence :: (Monad m, HFoldr ConsM (m HNil) l r) => l -> r
-hSequence l = hFoldr (undefined::ConsM) (return HNil) l
+hSequence l = hFoldr ConsM (return HNil) l
 
 
 -- Tests
 
-hlist = HCons (Just (1 :: Integer)) (HCons (Just 'c') HNil) -- Maybe monad
-hlist2 = HCons ([1]) (HCons (['c']) HNil)      -- List monad
+hlist  = Just (1 :: Integer) `hCons` (Just 'c') `hCons` hNil -- Maybe monad
+hlist2 = [1] `hCons` ['c'] `hCons` hNil                      -- List monad
 
 testHSequence  = hSequence hlist
+-- Just (HCons 1 (HCons 'c' HNil))
+
 testHSequence2 = hSequence hlist2
+-- [HCons 1 (HCons 'c' HNil)]
 

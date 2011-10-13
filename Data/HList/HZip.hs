@@ -13,8 +13,7 @@ module Data.HList.HZip where
 import Data.HList.HListPrelude
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- | Zip and unzip
 
 class HZip x y l | x y -> l, l -> x y

@@ -13,16 +13,13 @@ can be used instead, but the chosen look better in types.
 module Data.HList (
 
  module Data.HList.CommonMain,
- module Data.HList.GhcSyntax,
- module Data.HList.GhcRecord,
- module Data.HList.GhcExperiments,
+ module Data.HList.RecordAdv,
  module Data.STRef,
  module Data.IORef,
  module Data.Typeable,
  module Control.Monad,
  module Control.Monad.ST,
  module Control.Monad.Fix,
--- module GHC.IOBase,
 -- module DeepNarrow,
 -- module Nominal,
 -- module New,
@@ -34,13 +31,9 @@ module Data.HList (
 
 import Data.HList.CommonMain hiding ( HDeleteMany
                          , hDeleteMany
-                         , TypeCast
-                         , typeCast
                          )
 
-import Data.HList.GhcSyntax
-import Data.HList.GhcRecord
-import Data.HList.GhcExperiments
+import Data.HList.RecordAdv
 
 import Data.STRef
 import Data.IORef
@@ -48,7 +41,6 @@ import Data.Typeable
 import Control.Monad
 import Control.Monad.ST
 import Control.Monad.Fix
---import GHC.IOBase hiding (stToIO, writeIORef, readIORef, newIORef, IORef,unsafeIOToST,unsafeSTToIO)
 
 infixr 9 #
 (#) :: (HasField l r v) => r -> l -> v

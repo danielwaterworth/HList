@@ -1,10 +1,11 @@
 {-# LANGUAGE EmptyDataDecls #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE OverlappingInstances #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FunctionalDependencies #-}
+
+-- Updates delayed: need wildcard type comparison, to be implemented later
 
 {- |
 
@@ -40,11 +41,9 @@ module Data.HList.ConsUnion (NilEither, nilEither,
                   tsearch,
                   downCast ) where
 
-import Data.HList.TypeCastGeneric2
-
 import Data.HList.FakePrelude (HNothing(..), HJust(..))
 import Data.HList.Record
-import Data.HList.GhcRecord
+import Data.HList.RecordAdv
 
 -- List constructors that union as well
 

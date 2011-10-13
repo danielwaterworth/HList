@@ -4,18 +4,6 @@
 #
 # make test        -- run all GHC- and Hugs-based test cases.
 # make clean       -- remove all generated and temporary and backup files
-# make ghci        -- start an HList ghci session
-#
-
-
-##############################################################################
-#
-# Some variables
-#
-
-ghci = ghci -i..
-ghc-favourite  = MainGhcGeneric1.hs
-# hugs-favourite = MainHugsTTypeable.hs
 
 
 ##############################################################################
@@ -34,48 +22,26 @@ all:
 
 ##############################################################################
 #
-# Start a GHCI session for the favoured GHC model
-#
-
-ghci:
-	ghci ${ghc-favourite}
-
-
-##############################################################################
-#
-# Start a Hugs session for the favoured Hugs model
-#
-
-hugs:
-	hugs -98 +o -isrc ${hugs-favourite}
-
-
-##############################################################################
-#
 # Run test cases for both GHCI and Hugs
 #
 
 test:
-	make test-ghc
-	make test-hugs
-
-test-ghc:
 #
 # The favoured GHC model
 #
-	ghci -i.. ${ghc-favourite} -v0 < Main.in > MainGhcGeneric1.out
+	ghci -fcontext-stack=50 -i.. MainGhcGeneric1.hs -v0 < Main.in > MainGhcGeneric1.out
 	diff -b MainGhcGeneric1.out MainGhcGeneric1.ref
 #
 # The GHC model with TTypeable-based type equality
 #
-	ghci -i.. MainGhcTTypeable.hs -v0 < Main.in > MainGhcTTypeable.out
-	diff -b MainGhcTTypeable.out MainGhcTTypeable.ref
+# 	ghci -i.. MainGhcTTypeable.hs -v0 < Main.in > MainGhcTTypeable.out
+# 	diff -b MainGhcTTypeable.out MainGhcTTypeable.ref
 #
 # Run test cases as posted on mailing lists
 #
 	ghci -i.. MainPatternMatch.hs -v0 < Main.in > MainPatternMatch.out
 	diff -b MainPatternMatch.out MainPatternMatch.ref
-	ghci -i.. MainPosting-040607.hs -v0 < Main.in > MainPosting-040607.out
+	ghci -fcontext-stack=50 -i.. MainPosting-040607.hs -v0 < Main.in > MainPosting-040607.out
 	diff -b MainPosting-040607.out MainPosting-040607.ref
 	ghci -i.. MainPosting-051106.hs -v0 < Main.in > MainPosting-051106.out
 	diff -b MainPosting-051106.out MainPosting-051106.ref
@@ -85,23 +51,13 @@ test-ghc:
 	diff -b TIPTransform.out TIPTransform.ref
 	ghci -i.. TIPTransformM.hs -v0 < Main.in > TIPTransformM.out
 	diff -b TIPTransformM.out TIPTransformM.ref
-#
-# Yet another generic type equality
-#
-## 	ghci -i.. MainGhcGeneric2.hs -v0 < Main.in > MainGhcGeneric2.out
-## 	diff -b MainGhcGeneric2.out MainGhcGeneric2.ref
-#
-# Yet another generic type cast
-#
-	ghci -i.. MainGhcGeneric3.hs -v0 < Main.in > MainGhcGeneric3.out
-	diff -b MainGhcGeneric3.out MainGhcGeneric3.ref
 
-test-hugs:
-#
-# The Hugs model with TTypeable-based type equality
-#
-	runhugs -98 +o ${hugs-favourite} < Main.in > MainHugsTTypeable.out
-	diff -b MainHugsTTypeable.out MainHugsTTypeable.ref
+# test-hugs:
+# #
+# # The Hugs model with TTypeable-based type equality
+# #
+# 	runhugs -98 +o MainHugsTTypeable.hs < Main.in > MainHugsTTypeable.out
+# 	diff -b MainHugsTTypeable.out MainHugsTTypeable.ref
 
 
 ##############################################################################
@@ -111,11 +67,7 @@ test-hugs:
 
 copy:
 	cp MainGhcGeneric1.out MainGhcGeneric1.ref
-	cp MainGhcTTypeable.out MainGhcTTypeable.ref
-	cp MainHugsTTypeable.out MainHugsTTypeable.ref
 	cp MainPosting-040607.out MainPosting-040607.ref
-	cp MainGhcGeneric2.out MainGhcGeneric2.ref
-	cp MainGhcGeneric3.out MainGhcGeneric3.ref
 
 
 ##############################################################################
@@ -132,25 +84,25 @@ copy:
 #  - Runtime crashes in the middle of printing main's output.
 #
 
-CommonMain.o: *.hs Makefile
-	rm -f *.o
-	ghc  \
-		-fglasgow-exts \
-		-fallow-overlapping-instances \
-		-fallow-undecidable-instances \
-		-c -O \
-		--make \
-		CommonMain.hs
+# CommonMain.o: *.hs Makefile
+# 	rm -f *.o
+# 	ghc  \
+# 		-fglasgow-exts \
+# 		-fallow-overlapping-instances \
+# 		-fallow-undecidable-instances \
+# 		-c -O \
+# 		--make \
+# 		CommonMain.hs
 
-Main.exe: *.hs Makefile
-	rm -f *.o
-	ghc  \
-		-fglasgow-exts \
-		-fallow-overlapping-instances \
-		-fallow-undecidable-instances \
-		-o Main.exe -O \
-		--make \
-		Main.hs
+# Main.exe: *.hs Makefile
+# 	rm -f *.o
+# 	ghc  \
+# 		-fglasgow-exts \
+# 		-fallow-overlapping-instances \
+# 		-fallow-undecidable-instances \
+# 		-o Main.exe -O \
+# 		--make \
+# 		Main.hs
 
 
 ##############################################################################

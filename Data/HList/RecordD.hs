@@ -1,5 +1,5 @@
 {-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances,
-  UndecidableInstances, OverlappingInstances #-}
+  UndecidableInstances #-}
 
 {- |
 Yet another representation of records: records as TIC (type-indexed
@@ -15,15 +15,13 @@ that support the 'Fieldish' interface. So, we can build records like that
 
 module RecordD where
 
-import Data.HList.FakePrelude hiding (TypeEq)
+import Data.HList.FakePrelude
 import Data.HList.HListPrelude
 import qualified Data.HList.Record
 import Data.HList.Record (HLabelSet, HasField(..))
 
 -- for the test
-import Data.HList.TypeEqBoolGeneric
-import Data.HList.TypeEqGeneric2
-import Data.HList.TypeCastGeneric2
+import Data.HList.TypeEqO
 
 instance (HBool b, TypeEq x y b) => HEq x y b
 
@@ -57,7 +55,7 @@ class AllFieldish r
 instance AllFieldish HNil
 instance (Fieldish e v, AllFieldish r) => AllFieldish (HCons e r)
 
-{-----------------------------------------------------------------------------}
+-- --------------------------------------------------------------------------
 
 -- * Show
 
@@ -87,8 +85,7 @@ instance ( Show f, ShowComponents r )
      ++ showComponents "," r
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- * Extension for records
 
 instance (AllFieldish (HCons f r), HLabelSet (HCons f r))
@@ -96,8 +93,7 @@ instance (AllFieldish (HCons f r), HLabelSet (HCons f r))
  where
   hExtend f (Record r) = mkRecord (HCons f r)
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- Record concatenation
 
 instance ( HLabelSet r''
@@ -109,8 +105,7 @@ instance ( HLabelSet r''
   hAppend (Record r) (Record r') = mkRecord (hAppend r r')
 
 
-{-----------------------------------------------------------------------------}
-
+-- --------------------------------------------------------------------------
 -- * Lookup operation
 
 instance (HEq l l' b, HasField' b l (HCons l' r) v)
@@ -148,7 +143,11 @@ r .!. l =  hLookupByLabel l r
 person = (Name "Joe" "Doe") .*. (S 1000) .*. (D "CIO" 123) .*. emptyRecord
 
 test1 = show person
+-- "Record{Name \"Joe\" \"Doe\",S 1000.0,D \"CIO\" 123}"
 -- only the type of the label matters, not the contents
 test2 = person .!. (Name undefined undefined)
+-- ("Joe","Doe")
 test3 = person .!. (undefined::Salary)
+-- 1000.0
 test5 = person .!. (D "xxx" 111)
+-- ("CIO",123)

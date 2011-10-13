@@ -5,7 +5,6 @@ module HSequenceTest where
 import Data.HList.HSequence
 import Data.HList.HListPrelude -- (Apply(..), HCons(..), apply, hFoldr, HNil)
 import Control.Monad (liftM2)
-import Data.HList.TypeCastGeneric2                 -- For tests
 
 
 hlist = HCons (Just (1 :: Integer)) (HCons (Just 'c') HNil) -- Maybe monad
