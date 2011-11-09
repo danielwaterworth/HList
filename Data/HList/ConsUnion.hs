@@ -2,8 +2,10 @@
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE OverlappingInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE FunctionalDependencies #-}
+{-# LANGUAGE TypeFamilies #-}
 
 -- Updates delayed: need wildcard type comparison, to be implemented later
 
@@ -177,11 +179,11 @@ instance TypeEqIncR' (HJust (ru->r,r->ru)) (TContains r ru) where
 data TOther t
 class IsEither t res | t -> res
 instance IsEither (Either t1 t2) (Either t1 t2)
-instance TypeCast res (TOther t) => IsEither t res
+instance res ~ (TOther t) => IsEither t res
 
 class IsRecord t res | t -> res
 instance IsRecord (Record t) (Record t)
-instance TypeCast res (TOther t) => IsRecord t res
+instance res ~ (TOther t) => IsRecord t res
 
 -- A few tests of consEither
 

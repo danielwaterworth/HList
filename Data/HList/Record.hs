@@ -34,7 +34,7 @@ module Data.HList.Record
     LVPair(..),
     labelLVPair,
     newLVPair,
-    (.=.), (:=:),
+    (.=.), (:=:), (.-.),
 
     -- ** Record
     Record(..),
