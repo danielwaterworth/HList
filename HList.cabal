@@ -1,5 +1,5 @@
 Name:                HList
-Version:             0.2.3
+Version:             0.2.4
 Category:            Data
 Synopsis:            Heterogeneous lists
 Description:         HList is a record system providing strongly typed heterogenous lists, records,
@@ -7,7 +7,7 @@ Description:         HList is a record system providing strongly typed heterogen
 License:             MIT
 License-File:        LICENSE
 Author:              2004 Oleg Kiselyov (FNMOC, Monterey), Ralf Laemmel (CWI/VU, Amsterdam),
-                     Keean Schupke (Imperial College, London)
+                     Keean Schupke (London)
 Maintainer:          oleg@pobox.com
 
 Data-files:          README
@@ -15,16 +15,15 @@ Cabal-version:       >= 1.4
 Tested-With:         GHC==6.12.1
 Build-Depends:       base >= 3 && < 5, template-haskell
 Build-Type:          Simple
-Exposed-modules:     Data.HList, Data.HList.CommonMain, Data.HList.Variant, Data.HList.GhcSyntax,
-                     Data.HList.GhcRecord, Data.HList.Record, Data.HList.HZip, Data.HList.TIC, Data.HList.TIP,
-                     Data.HList.HTypeIndexed, Data.HList.HOccurs, Data.HList.HArray, Data.HList.GhcExperiments,
-                     Data.HList.HListPrelude, Data.HList.TypeEqBoolGeneric, Data.HList.TypeEqGeneric1,
-                     Data.HList.TypeCastGeneric1, Data.HList.TypeCastGeneric2, Data.HList.FakePrelude, 
-                     Data.HList.RecordP, Data.HList.TypeEqGeneric2,
-                     Data.HList.Label1, Data.HList.Label2, Data.HList.Label3, Data.HList.Label4, Data.HList.Label5,
-
-                     Data.HList.MakeLabels
-
+Exposed-modules:     Data.HList, Data.HList.CommonMain, Data.HList.Variant, 
+		     Data.HList.Record, Data.HList.HZip, Data.HList.TIC, 
+		     Data.HList.TIP, Data.HList.HTypeIndexed, 
+		     Data.HList.HOccurs, Data.HList.HArray,
+                     Data.HList.HListPrelude, Data.HList.TypeEqO,
+		     Data.HList.FakePrelude, 
+                     Data.HList.RecordP, Data.HList.RecordAdv,
+                     Data.HList.Label1, Data.HList.Label2, Data.HList.Label3, 
+		     Data.HList.Label4, Data.HList.Label5, Data.HList.MakeLabels
 extensions:          EmptyDataDecls, FlexibleContexts, FlexibleInstances, FunctionalDependencies,
                      MultiParamTypeClasses, OverlappingInstances, ScopedTypeVariables, RankNTypes,
                      ScopedTypeVariables, TypeSynonymInstances, UndecidableInstances
