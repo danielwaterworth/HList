@@ -2,6 +2,13 @@
 {-# LANGUAGE FlexibleInstances, FlexibleContexts #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE StandaloneDeriving #-}
 
 {- |
    The HList library
@@ -19,56 +26,39 @@ module Data.HList.HListPrelude where
 
 import Data.HList.FakePrelude
 
+
 -- --------------------------------------------------------------------------
 -- * Heterogeneous type sequences
+-- The easiest way to ensure that sequences can only be formed with Nil
+-- and Cons is to use GADTs
+-- The kind [*] is list kind (lists lifted to types)
 
-data HNil      = HNil      deriving (Eq,Show,Read)
-data HCons e l = HCons e l deriving (Eq,Show,Read)
+data HList (l::[*]) where
+    HNil  :: HList '[]
+    HCons :: e -> HList l -> HList (e ': l)
 
-infixr 2 :*:
+instance Show (HList '[]) where
+    show _ = "H[]"
 
-type e :*: l = HCons e l
+instance (Show e, Show (HList l)) => Show (HList (e ': l)) where
+    show (HCons x l) = let 'H':'[':s = show l
+		       in "H[" ++ show x ++ 
+			          (if s == "]" then s else ", " ++ s)
 
+infixr 2 `HCons`
 
--- --------------------------------------------------------------------------
--- * The set of all types of heterogeneous lists
-
-class HList l
-instance HList HNil
-instance HList l => HList (HCons e l)
-
-
--- --------------------------------------------------------------------------
--- * Public constructors
-
-hNil  :: HNil
-hNil  =  HNil
-
-hCons :: HList l => e -> l -> HCons e l
-hCons e l = HCons e l
-
-infixr 2 `hCons`
 
 -- --------------------------------------------------------------------------
 -- * Basic list functions
 
-class HHead l h | l -> h
- where
-  hHead :: l -> h
+hHead :: HList (e ': l) -> e
+hHead (HCons x _) = x
 
-instance HHead (HCons e l) e
- where
-  hHead (HCons e _) = e
-
-class HTail l l' | l -> l'
- where
-  hTail :: l -> l'
-
-instance HTail (HCons e l) l
- where
-  hTail (HCons _ l) = l
+hTail :: HList (e ': l) -> HList l
+hTail (HCons _ l) = l
 
 
+{-
 
 -- --------------------------------------------------------------------------
 -- * A class for extension
@@ -85,6 +75,7 @@ instance HList l => HExtend e (HCons e' l) (HCons e (HCons e' l))
  where
   hExtend = HCons
 
+-}
 
 -- --------------------------------------------------------------------------
 
@@ -97,6 +88,17 @@ append [] l = l
 append (x:l) l' = x : append l l'
 
 
+type family HAppend (l1 :: [*]) (l2 :: [*]) :: [*]
+type instance HAppend '[] l = l
+type instance HAppend (e ': l) l' = e ': HAppend l l'
+
+hAppend :: HList l1 -> HList l2 -> HList (HAppend l1 l2)
+hAppend HNil l = l
+hAppend (HCons x l) l' = HCons x (hAppend l l')
+
+-- The original HList code is given below. In both cases
+-- we had to program the algorithm twice, at the term and the type levels.
+{-
 -- | The class HAppend
 
 class HAppend l l' l'' | l l' -> l''
@@ -114,54 +116,22 @@ instance (HList l, HAppend l l' l'')
       => HAppend (HCons x l) l' (HCons x l'')
  where
   hAppend (HCons x l) l' = HCons x (hAppend l l')
-
+-}
 
 -- --------------------------------------------------------------------------
 -- * Reversing HLists
 
-class HReverse l1 l2 | l1 -> l2, l2 -> l1
- where
-  hReverse:: l1 -> l2
+-- Append the reversed l1 to l2
+type family HRevApp (l1 :: [*]) (l2 :: [*]) :: [*]
+type instance HRevApp '[] l = l
+type instance HRevApp (e ': l) l' = HRevApp l (e ': l')
 
-instance (HReverse' HNil l2 l3, HReverse' HNil l3 l2)
-      =>  HReverse l2 l3
- where
-  hReverse l1 = hReverse' HNil l1
+hRevApp :: HList l1 -> HList l2 -> HList (HRevApp l1 l2)
+hRevApp HNil l = l
+hRevApp (HCons x l) l' = hRevApp l (HCons x l')
 
+hReverse l = hRevApp l HNil
 
--- l3 = (reverse l2) ++ l1
-
-class HReverse' l1 l2 l3 | l1 l2 -> l3
- where
-  hReverse':: l1 -> l2 -> l3
-
-instance HReverse' l1 HNil l1
- where
-  hReverse' l1 HNil = l1
-
-instance HReverse' (HCons a l1) l2' l3
-      => HReverse' l1 (HCons a l2') l3
- where
-  hReverse' l1 (HCons a l2') = hReverse' (HCons a l1) l2'
-
-
--- ** Naive HReverse
-
-class NaiveHReverse l l' | l -> l'
- where
-  naiveHReverse :: l -> l'
-
-instance NaiveHReverse HNil HNil
- where
-  naiveHReverse HNil = HNil
-
-instance ( NaiveHReverse l l'
-         , HAppend l' (HCons e HNil) l''
-         )
-      =>   NaiveHReverse (HCons e l) l''
- where
-  naiveHReverse (HCons e l)
-   = hAppend (naiveHReverse l) (HCons e HNil)
 
 
 -- --------------------------------------------------------------------------
@@ -171,36 +141,42 @@ instance ( NaiveHReverse l l'
 --
 
 -- | List termination
-hEnd :: HCons t t1 -> HCons t t1
-hEnd t@(HCons _ _) = t
+hEnd :: HList l -> HList l
+hEnd = id
 
 {- ^
    Note:
 
-        [@x :: HCons a b@] means: @forall a b. x :: HCons a b@
+        [@x :: HList a@] means: @forall a. x :: HList a@
 
-        [@hEnd x@] means: @exists a b. x :: HCons a b@
+        [@hEnd x@] means: @exists a. x :: HList a@
 -}
 
 
--- **  Building non-empty lists
+-- **  Building lists
 
-hBuild   :: (HBuild' HNil a r) => a -> r
-hBuild x =  hBuild' HNil x
+hBuild :: (HBuild' '[] r) => r
+hBuild =  hBuild' HNil
 
-class HBuild' l a r | r-> a l
- where
-  hBuild' :: l -> a -> r
+class HBuild' l r where
+    hBuild' :: HList l -> r
 
-instance HReverse (HCons a l) (HCons a' l')
-      => HBuild' l a (HCons a' l')
- where
-  hBuild' l x = hReverse (HCons x l)
+instance (l' ~ HRevApp l '[])
+      => HBuild' l (HList l') where
+  hBuild' l = hReverse l
 
-instance HBuild' (HCons a l) b r
-      => HBuild' l a (b->r)
- where
-  hBuild' l x y = hBuild' (HCons x l) y
+instance HBuild' (a ': l) r
+      => HBuild' l (a->r) where
+  hBuild' l x = hBuild' (HCons x l)
+
+test_build1 = let x = hBuild True in hEnd x
+-- H[True]
+
+test_build2 = let x = hBuild True 'a' in hEnd x
+-- H[True, 'a']
+
+test_build3 = let x = hBuild True 'a' "ok" in hEnd x
+-- H[True, 'a', "ok"]
 
 {- $hbuild
 
@@ -225,79 +201,74 @@ instance HBuild' (HCons a l) b r
 
 -- * A heterogeneous apply operator
 
-class Apply f a r | f a -> r where
-  apply :: f -> a -> r
+class Apply f a where
+  type ApplyR f a :: *
+  apply :: f -> a -> ApplyR f a
   apply = undefined                     -- In case we use Apply for
                                         -- type-level computations only
 
 
 -- | Normal function application
 
-instance Apply (x -> y) x y where
+instance Apply (x -> y) x where
+  type ApplyR (x -> y) x = y
   apply f x = f x
-
-
--- | Identity
-
-data Id = Id
-
-instance Apply Id x x where
-  apply _ x = x
 
 
 -- --------------------------------------------------------------------------
 
 -- * A heterogeneous fold for all types
+-- GADTs and type-classes mix well
 
-class HList l => HFoldr f v l r | f v l -> r
- where
-  hFoldr :: f -> v -> l -> r
+class HFoldr f v (l :: [*]) where
+    type HFoldrR f v l :: *
+    hFoldr :: f -> v -> HList l -> HFoldrR f v l
 
-instance HFoldr f v HNil v
- where
-  hFoldr _ v _ = v
+instance HFoldr f v '[] where
+    type HFoldrR f v '[] = v
+    hFoldr       _ v _   = v
 
-instance ( HFoldr f v l r
-         , Apply f (e,r) r'
-         )
-      => HFoldr f v (HCons e l) r'
- where
-  hFoldr f v (HCons e l) = apply f (e,hFoldr f v l)
+instance (Apply f (e, HFoldrR f v l), HFoldr f v l)
+    => HFoldr f v (e ': l) where
+    type HFoldrR f v (e ': l) = ApplyR f (e, HFoldrR f v l)
+    hFoldr f v (HCons x l)    = apply  f (x, hFoldr  f v l)
+
 
 
 -- --------------------------------------------------------------------------
 -- * Map
+-- It could be implemented with hFoldR, as we show further below
 
-class HMap f l l' | f l -> l'
- where
-  hMap :: f -> l -> l'
+class HMap f (l :: [*]) where
+  type HMapR f l :: [*]
+  hMap :: f -> HList l -> HList (HMapR f l)
 
-instance HMap f HNil HNil
- where
-  hMap _ _ = HNil
+instance HMap f '[] where
+  type HMapR f '[] = '[]
+  hMap       _  _  = HNil
 
-instance (
-           Apply f x y,
-           HMap f xs ys
-         )
-      => HMap f (HCons x xs) (HCons y ys)
- where
-  hMap f ~(HCons x xs) = HCons (apply f x) (hMap f xs)
+instance (Apply f e, HMap f l) => HMap f (e ': l) where
+  type HMapR f (e ': l) = ApplyR f e ': HMapR f l
+  hMap f (HCons x l)    = apply f x `HCons` hMap f l
+
 
 -- --------------------------------------------------------------------------
 -- * Map a heterogeneous list to a homogeneous one
 
-class HMapOut f r e where
-  hMapOut :: f -> r -> [e]
+-- This one we implement via hFoldr
 
-instance HMapOut f HNil e where
-  hMapOut _ _ = []
+newtype Mapcar f = Mapcar f
 
-instance ( HMapOut f l e'
-         , Apply f e e'
-         )
-      =>   HMapOut f (HCons e l) e' where
-  hMapOut f ~(HCons e l) = apply f e : hMapOut f l
+instance (l ~ [ApplyR f e], Apply f e) => Apply (Mapcar f) (e, l) where
+    type ApplyR (Mapcar f) (e, l) = [ApplyR f e]
+    apply (Mapcar f) (e, l) = apply f e : l
+
+
+-- A synonym for the complex constraint
+type HMapOut f l e = (HFoldr (Mapcar f) [e] l, HFoldrR (Mapcar f) [e] l ~ [e])
+
+hMapOut :: forall f e l. HMapOut f l e => f -> HList l -> [e]
+hMapOut f l = hFoldr (Mapcar f) ([]::[e]) l
 
 
 -- --------------------------------------------------------------------------
@@ -309,7 +280,7 @@ instance ( HMapOut f l e'
 --
 -- See "Data.HList.HSequence" if the result list should also be heterogenous.
 
-hMapM   :: (Monad m, HMapOut f l (m e)) => f -> l -> [m e]
+hMapM   :: (Monad m, HMapOut f l (m e)) => f -> HList l -> [m e]
 hMapM f =  hMapOut f
 
 -- GHC doesn't like its own type.
@@ -317,7 +288,7 @@ hMapM f =  hMapOut f
 -- Without explicit type signature, it's Ok. Sigh.
 -- Anyway, Hugs does insist on a better type. So we restrict as follows:
 --
-hMapM_   :: (Monad m, HMapOut f l (m ())) => f -> l -> m ()
+hMapM_   :: (Monad m, HMapOut f l (m ())) => f -> HList l -> m ()
 hMapM_ f =  sequence_ .  disambiguate . hMapM f
  where
   disambiguate :: [q ()] -> [q ()]
@@ -332,49 +303,45 @@ append' :: [a] -> [a] -> [a]
 append' l l' = foldr (:) l' l
 
 -- | Alternative implementation of 'hAppend'. Demonstrates 'HFoldr'
-hAppend' :: (HFoldr ApplyHCons v l r) => l -> v -> r
+hAppend' :: (HFoldr ApplyHCons v l) => HList l -> v -> HFoldrR ApplyHCons v l
 hAppend' l l' = hFoldr ApplyHCons l' l
 
 data ApplyHCons = ApplyHCons
 
-instance HList l => Apply ApplyHCons (e,l) (HCons e l)
- where
-  apply ApplyHCons (e,l) = hCons e l
+instance Apply ApplyHCons (e,HList l) where
+    type  ApplyR ApplyHCons (e,HList l) =  HList (e ': l)
+    apply ApplyHCons (e,l) = HCons e l
 
 
 -- --------------------------------------------------------------------------
 
 -- * A heterogeneous map for all types
 
-data HMap' f = HMap' f
+newtype MapCar f = MapCar f
 
 -- | Same as 'hMap' only a different implementation.
-hMap' :: (HFoldr (HMap' f) HNil l r) => f -> l -> r
-hMap' f = hFoldr (HMap' f) hNil
+hMap' :: (HFoldr (MapCar f) (HList '[]) l) => 
+    f -> HList l -> HFoldrR (MapCar f) (HList '[]) l
+hMap' f = hFoldr (MapCar f) HNil
 
-instance Apply f e e'
-      => Apply (HMap' f) (e,l) (HCons e' l)
- where
-  apply (HMap' f) (e,l) = HCons e' l
-   where
-    e' = apply f e
+instance Apply f e => Apply (MapCar f) (e,HList l) where 
+    type ApplyR (MapCar f) (e,HList l) = HList (ApplyR f e ': l)
+    apply (MapCar f) (e,l) = HCons (apply f e) l
 
 
 -- --------------------------------------------------------------------------
 -- * A function for showing
 
 data HShow  = HShow
-data HSeq x = HSeq x
+newtype HSeq x = HSeq x
 
-instance Show x => Apply HShow x (IO ())
- where
-  apply _ x = do putStrLn $ show x
+instance Show x => Apply HShow x where
+  type ApplyR HShow x = IO ()
+  apply _ x = putStrLn $ show x
 
-instance ( Monad m
-         , Apply f x (m ())
-         )
-      => Apply (HSeq f) (x,m ()) (m ())
- where
+instance (Monad m, ApplyR f x ~ m (), Apply f x) => 
+    Apply (HSeq f) (x,m ()) where
+  type ApplyR (HSeq f) (x,m ()) = m ()
   apply (HSeq f) (x,c) = do apply f x; c
 
 
@@ -382,12 +349,17 @@ instance ( Monad m
 
 -- * Type-level equality for lists
 
-instance HEq HNil HNil HTrue
-instance HList l => HEq HNil (HCons e l) HFalse
-instance HList l => HEq (HCons e l) HNil HFalse
-instance (HList l, HList l', HEq e e' b, HEq l l' b', HAnd b b' b'')
-      => HEq (HCons e l) (HCons e' l') b''
+{-
+type instance HEq '[] '[]      = True
+type instance HEq '[] (e ': l) = False
+type instance HEq (e ': l) '[] = False
+type instance HEq 
 
+(HList l, HList l', HEq e e' b, HEq l l' b', HAnd b b' b'')
+      => HEq (HCons e l) (HCons e' l') b''
+-}
+
+{-
 
 -- --------------------------------------------------------------------------
 
@@ -432,9 +404,10 @@ instance Eq e => HStagedEq' HTrue e e
 -- --------------------------------------------------------------------------
 -- * Ensure a list to contain HNats only
 
-class HList l => HNats l
-instance HNats HNil
-instance (HNat n, HNats ns) => HNats (HCons n ns)
+-- No longer needed: we merely set the kind to be [HNat]
+-- class HList l => HNats l
+-- instance HNats HNil
+-- instance (HNat n, HNats ns) => HNats (HCons n ns)
 
 
 -- * Static set property based on HEq
@@ -670,3 +643,4 @@ ERROR - Unresolved overloading
 
 -}
 
+-}

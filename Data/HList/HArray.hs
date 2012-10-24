@@ -1,6 +1,13 @@
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 {-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances,
   FlexibleContexts, UndecidableInstances #-}
+
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE TypeOperators #-}
+
 {- |
    The HList library
 
@@ -18,53 +25,55 @@ import Data.HList.HListPrelude
 -- --------------------------------------------------------------------------
 -- * Lookup
 
-class HNat n => HLookupByHNat n l e | n l -> e
- where
-  hLookupByHNat :: n -> l -> e
+class HLookupByHNat (n :: HNat) (l :: [*]) where
+  type HLookupByHNatR (n :: HNat) (l :: [*]) :: *
+  hLookupByHNat :: P n -> HList l -> HLookupByHNatR n l
 
-instance HLookupByHNat HZero (HCons e l) e
- where
-  hLookupByHNat _ (HCons e _) = e
+instance HLookupByHNat HZero (e ': l) where
+  type HLookupByHNatR HZero (e ': l) = e
+  hLookupByHNat _ (HCons e _)        = e
 
-instance (HLookupByHNat n l e', HNat n)
-      => HLookupByHNat (HSucc n) (HCons e l) e'
- where
+instance HLookupByHNat n l => HLookupByHNat (HSucc n) (e ': l) where
+  type HLookupByHNatR (HSucc n) (e ': l) = HLookupByHNatR n l
   hLookupByHNat n (HCons _ l) = hLookupByHNat (hPred n) l
 
 
 -- --------------------------------------------------------------------------
 -- * Delete
 
-class HNat n => HDeleteAtHNat n l l' | n l -> l'
- where
-  hDeleteAtHNat :: n -> l -> l'
+class HDeleteAtHNat (n :: HNat) (l :: [*]) where
+  type HDeleteAtHNatR (n :: HNat) (l :: [*]) :: [*]
+  hDeleteAtHNat :: P n -> HList l -> HList (HDeleteAtHNatR n l)
 
-instance HDeleteAtHNat HZero (HCons e l) l
- where
-  hDeleteAtHNat _ (HCons _ l) = l
+instance HDeleteAtHNat HZero (e ': l) where
+  type HDeleteAtHNatR  HZero (e ': l) = l
+  hDeleteAtHNat _ (HCons _ l)         = l
 
-instance (HDeleteAtHNat n l l', HNat n)
-      => HDeleteAtHNat (HSucc n) (HCons e l) (HCons e l')
- where
+instance HDeleteAtHNat n l => HDeleteAtHNat (HSucc n) (e ': l) where
+  type HDeleteAtHNatR  (HSucc n) (e ': l) = e ': (HDeleteAtHNatR n l)
   hDeleteAtHNat n (HCons e l) = HCons e (hDeleteAtHNat (hPred n) l)
 
 
 -- --------------------------------------------------------------------------
 -- * Update
 
+class HUpdateAtHNat (n :: HNat) e (l :: [*]) where
+  type HUpdateAtHNatR (n :: HNat) e (l :: [*]) :: [*]
+  hUpdateAtHNat :: P n -> e -> HList l -> HList (HUpdateAtHNatR n e l)
+
+{-
 class HNat n => HUpdateAtHNat n e l l' | n e l -> l', l' n -> e
  where
   hUpdateAtHNat :: n -> e -> l -> l'
+-}
 
-instance HUpdateAtHNat HZero e' (HCons e l) (HCons e' l)
- where
-  hUpdateAtHNat _ e' (HCons _ l) = HCons e' l
+instance HUpdateAtHNat HZero e1 (e ': l) where
+  type HUpdateAtHNatR HZero e1 (e ': l) = e1 ': l
+  hUpdateAtHNat _ e1 (HCons _ l) = HCons e1 l
 
-instance (HUpdateAtHNat n e' l l', HNat n)
-      => HUpdateAtHNat (HSucc n) e' (HCons e l) (HCons e l')
- where
-  hUpdateAtHNat n e' (HCons e l)
-   = HCons e (hUpdateAtHNat (hPred n) e' l)
+instance HUpdateAtHNat n e1 l => HUpdateAtHNat (HSucc n) e1 (e ': l) where
+  type HUpdateAtHNatR  (HSucc n) e1 (e ': l) = e ': (HUpdateAtHNatR n e1 l)
+  hUpdateAtHNat n e1 (HCons e l) = HCons e (hUpdateAtHNat (hPred n) e1 l)
 
 
 -- --------------------------------------------------------------------------
@@ -75,6 +84,7 @@ instance (HUpdateAtHNat n e' l l', HNat n)
 --
 --  > hSplitByHNats :: (HSplitByHNats' ns l' l'1 l'', HMap (HAddTag HTrue) l l') =>
 --  >               ns -> l -> (l'1, l'')
+{-
 hSplitByHNats ns l = hSplitByHNats' ns (hFlag l)
 
 class HNats ns => HSplitByHNats' ns l l' l'' | ns l -> l' l''
@@ -99,35 +109,35 @@ instance ( HLookupByHNat n l (e,b)
     (e,_)    = hLookupByHNat  n l
     l'''     = hUpdateAtHNat  n (e,hFalse) l
     (l',l'') = hSplitByHNats' ns l'''
+-}
 
 
 -- --------------------------------------------------------------------------
 -- * Projection
 
-class HNats ns => HProjectByHNats ns l l' | ns l -> l'
- where
-  hProjectByHNats :: ns -> l -> l'
+hProjectByHNats ns l = hMap (FHLookupByHNat l) ns
 
-instance HProjectByHNats HNil HNil HNil
- where
-  hProjectByHNats _ _ = HNil
+newtype FHLookupByHNat (l :: [*]) = FHLookupByHNat (HList l)
 
-instance HProjectByHNats HNil (HCons e l) HNil
- where
-  hProjectByHNats _ _ = HNil
+instance HLookupByHNat n l => Apply (FHLookupByHNat l) (P (n :: HNat)) where
+  type ApplyR (FHLookupByHNat l) (P n) = HLookupByHNatR n l
+  apply (FHLookupByHNat l) n           = hLookupByHNat  n l
 
-instance ( HLookupByHNat n (HCons e l) e'
-         , HProjectByHNats ns (HCons e l) l'
-         )
-         => HProjectByHNats (HCons n ns) (HCons e l) (HCons e' l')
- where
-  hProjectByHNats (HCons n ns) l = HCons e' l'
-   where e' = hLookupByHNat n l
-         l' = hProjectByHNats ns l
 
 
 -- --------------------------------------------------------------------------
 -- * Complement of Projection
+
+-- The naive approach is repeated deletion (which is a bit subtle
+-- sine we need to adjust indices)
+-- Instead, we compute the complement of indices to project away
+-- to obtain the indices to project to, and then use hProjectByHNats.
+-- Only the latter requires run-time computation. The rest
+-- are done at compile-time only.
+
+{-
+hProjectAwayByHNats ns l = hFoldr () l ns
+
 
 class HProjectAwayByHNats ns l l' | ns l -> l'
  where
@@ -146,7 +156,9 @@ instance ( HLength l len
     nats = hBetween len
     ns'  = hDiff nats ns
     l'   = hProjectByHNats ns' l
+-}
 
+{-
 
 -- --------------------------------------------------------------------------
 -- * Enumerate naturals
@@ -243,3 +255,4 @@ instance HLength l (HSucc HZero) => HSingleton l
 hSingle :: (HSingleton l, HHead l e) => l -> e
 hSingle = hHead
 
+-}

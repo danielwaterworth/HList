@@ -21,67 +21,76 @@
 
 module MainGhcGeneric1 (
 
+{-
  module Datatypes2,
  module Data.HList.CommonMain,
  module Data.HList.TypeEqO,
  module Data.HList.Label3,
 -- mainExport
+-}
 
 ) where
 
 import Datatypes2
-import Data.HList.CommonMain -- hiding (HDeleteMany, hDeleteMany)
--- import Data.HList.GhcExperiments
+-- import Data.HList.CommonMain -- hiding (HDeleteMany, hDeleteMany)
+import Data.HList.FakePrelude
+import Data.HList.HListPrelude
+import Data.HList.HArray
+
+{-
 import Data.HList.RecordAdv
 import Data.HList.TypeEqO
 import Data.HList.Label3
 import Data.HList.RecordP
+-}
 
 
 -- --------------------------------------------------------------------------
 
-type Animal =  HCons Key
-              (HCons Name
-              (HCons Breed
-              (HCons Price
-               HNil)))
+type Animal =  '[Key,Name,Breed,Price]
 
-angus :: Animal
+angus :: HList Animal
 angus =  HCons (Key 42)
            (HCons (Name "Angus")
            (HCons  Cow
            (HCons (Price 75.5)
             HNil)))
 
+tList1 = hFoldr (HSeq HShow) (return () :: IO ()) angus
 {-
-
-HList> hFoldr (HSeq HShow) (return () :: IO ()) angus
-Key 42
-Name "Angus"
-Cow
-Price 75.5
-
-HList> hAppend angus angus
-HCons (Key 42) (HCons (Name "Angus") (HCons Cow (HCons (Price 75.5) (HCons (Key
-42) (HCons (Name "Angus") (HCons Cow (HCons (Price 75.5) HNil)))))))
-
+ Key 42
+ Name "Angus"
+ Cow
+ Price 75.5
 -}
 
-testHArray = (myProj1,myProj2,myProj3,myProj4)
- where
-  myProj1 = hProjectByHNats (HCons hZero (HCons hZero HNil)) angus
-  myProj2 = hProjectByHNats (HCons hZero (HCons (hSucc hZero) HNil)) angus
-  myProj3 = hProjectAwayByHNats (HCons hZero HNil) angus
-  myProj4 = hSplitByHNats (HCons hZero (HCons (hSucc hZero) HNil)) angus
+tList2 = print $ hAppend angus angus
+{-
+H[Key 42, Name "Angus", Cow, Price 75.5, Key 42, Name "Angus", Cow, Price 75.5]
+-}
+
+
+tListBasic = putStrLn "\nBasic HList tests" >>
+	     sequence_ [tList1, tList2]
+
+testHArray = putStrLn "\ntestHArray" >>
+  sequence_ [ myProj1
+  ]
+
+myProj1 = print $ hProjectByHNats (HCons hZero (HCons hZero HNil)) angus
+-- H[Key 42, Key 42]
+
+myProj2 = print $ hProjectByHNats (HCons hZero (HCons (hSucc hZero) HNil)) angus
+-- H[Key 42, Name "Angus"]
 
 {-
+testHArray = (myProj1,myProj2,myProj3,myProj4)
+ where
+  myProj3 = hProjectAwayByHNats (HCons hZero HNil) angus
+  myProj4 = hSplitByHNats (HCons hZero (HCons (hSucc hZero) HNil)) angus
+-}
 
-*HArray> myProj1
-HCons (Key 42) (HCons (Key 42) HNil)
-
-*HArray> myProj2
-HCons (Key 42) (HCons (Name "Angus") HNil)
-
+{-
 *HArray> myProj3
 HCons (Name "Angus") (HCons Cow (HCons (Price 75.5) HNil))
 
@@ -90,6 +99,7 @@ HCons (Name "Angus") (HCons Cow (HCons (Price 75.5) HNil))
 
 -}
 
+{-
 testHOccurs = (testHOccurs1,testHOccurs2,testHOccurs3,testHOccurs4)
  where
   testHOccurs1 = hOccurs angus :: Breed
@@ -290,3 +300,4 @@ mainExport
                , ( testVariant
                )))))))))
 
+-}
