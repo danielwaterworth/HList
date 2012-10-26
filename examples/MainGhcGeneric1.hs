@@ -77,16 +77,24 @@ testHArray = putStrLn "\ntestHArray" >>
   sequence_ [ myProj1
   ]
 
-myProj1 = print $ hProjectByHNats (HCons hZero (HCons hZero HNil)) angus
+myProj1 = print $ hProjectByHNats (hNats (HCons hZero (HCons hZero HNil))) angus
 -- H[Key 42, Key 42]
+-- XXX I don't duplicate at present!
 
-myProj2 = print $ hProjectByHNats (HCons hZero (HCons (hSucc hZero) HNil)) angus
+myProj2 = print $ 
+	  hProjectByHNats (hNats (HCons hZero (HCons (hSucc hZero) HNil))) angus
 -- H[Key 42, Name "Angus"]
+
+myProj2' = print $ 
+	  hProjectByHNats (undefined::Proxy ['HZero, 'HSucc 'HZero]) angus
+-- H[Key 42, Name "Angus"]
+
+myProj3 = hProjectAwayByHNats (hNats (HCons hZero HNil)) angus
+-- H[Name "Angus", Cow, Price 75.5]
 
 {-
 testHArray = (myProj1,myProj2,myProj3,myProj4)
  where
-  myProj3 = hProjectAwayByHNats (HCons hZero HNil) angus
   myProj4 = hSplitByHNats (HCons hZero (HCons (hSucc hZero) HNil)) angus
 -}
 

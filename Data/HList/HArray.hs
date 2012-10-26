@@ -6,6 +6,7 @@
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
 
 {- |
@@ -27,7 +28,7 @@ import Data.HList.HListPrelude
 
 class HLookupByHNat (n :: HNat) (l :: [*]) where
   type HLookupByHNatR (n :: HNat) (l :: [*]) :: *
-  hLookupByHNat :: P n -> HList l -> HLookupByHNatR n l
+  hLookupByHNat :: Proxy n -> HList l -> HLookupByHNatR n l
 
 instance HLookupByHNat HZero (e ': l) where
   type HLookupByHNatR HZero (e ': l) = e
@@ -43,7 +44,7 @@ instance HLookupByHNat n l => HLookupByHNat (HSucc n) (e ': l) where
 
 class HDeleteAtHNat (n :: HNat) (l :: [*]) where
   type HDeleteAtHNatR (n :: HNat) (l :: [*]) :: [*]
-  hDeleteAtHNat :: P n -> HList l -> HList (HDeleteAtHNatR n l)
+  hDeleteAtHNat :: Proxy n -> HList l -> HList (HDeleteAtHNatR n l)
 
 instance HDeleteAtHNat HZero (e ': l) where
   type HDeleteAtHNatR  HZero (e ': l) = l
@@ -59,13 +60,7 @@ instance HDeleteAtHNat n l => HDeleteAtHNat (HSucc n) (e ': l) where
 
 class HUpdateAtHNat (n :: HNat) e (l :: [*]) where
   type HUpdateAtHNatR (n :: HNat) e (l :: [*]) :: [*]
-  hUpdateAtHNat :: P n -> e -> HList l -> HList (HUpdateAtHNatR n e l)
-
-{-
-class HNat n => HUpdateAtHNat n e l l' | n e l -> l', l' n -> e
- where
-  hUpdateAtHNat :: n -> e -> l -> l'
--}
+  hUpdateAtHNat :: Proxy n -> e -> HList l -> HList (HUpdateAtHNatR n e l)
 
 instance HUpdateAtHNat HZero e1 (e ': l) where
   type HUpdateAtHNatR HZero e1 (e ': l) = e1 ': l
@@ -115,13 +110,57 @@ instance ( HLookupByHNat n l (e,b)
 -- --------------------------------------------------------------------------
 -- * Projection
 
-hProjectByHNats ns l = hMap (FHLookupByHNat l) ns
+
+-- One way of implementing it:
+
+hProjectByHNats' ns l = hMap (FHLookupByHNat l) ns
 
 newtype FHLookupByHNat (l :: [*]) = FHLookupByHNat (HList l)
 
-instance HLookupByHNat n l => Apply (FHLookupByHNat l) (P (n :: HNat)) where
-  type ApplyR (FHLookupByHNat l) (P n) = HLookupByHNatR n l
-  apply (FHLookupByHNat l) n           = hLookupByHNat  n l
+instance HLookupByHNat n l => 
+    Apply (FHLookupByHNat l) (Proxy (n :: HNat)) where
+  type ApplyR (FHLookupByHNat l) (Proxy n) = HLookupByHNatR n l
+  apply (FHLookupByHNat l) n               = hLookupByHNat  n l
+
+-- The drawback is that the list ns must be a constructed value.
+-- We cannot lazily pattern-match on GADTs. 
+
+hProjectByHNats (_ :: Proxy (ns :: [HNat])) l = 
+    hUnfold (FHUProj :: FHUProj True ns) (l,hZero)
+
+data FHUProj (sel :: Bool) (ns :: [HNat]) = FHUProj
+
+
+instance Apply (FHUProj sel ns) (HList '[],n) where
+    type ApplyR (FHUProj sel ns) (HList '[],n) = HNothing
+    apply _ _ = HNothing
+
+instance (ch ~ Proxy (HBoolEQ sel (KMember n ns)), 
+	  Apply (ch, FHUProj sel ns) (HList (e ': l),Proxy (n :: HNat))) =>
+    Apply (FHUProj sel ns) (HList (e ': l),Proxy (n :: HNat)) where
+    type ApplyR (FHUProj sel ns) (HList (e ': l),Proxy n) = 
+       ApplyR (Proxy (HBoolEQ sel (KMember n ns)), FHUProj sel ns)
+	      (HList (e ': l),Proxy n)
+    apply fn s = apply (undefined::ch,fn) s
+
+instance Apply (Proxy True, FHUProj sel ns) 
+               (HList (e ': l),Proxy (n::HNat)) where
+    type ApplyR (Proxy True, FHUProj sel ns) (HList (e ': l),Proxy n) = 
+	(HJust (e, (HList l,Proxy (HSucc n))))
+    apply (_,fn) (HCons e l,n) = (HJust (e,(l,hSucc n)))
+
+instance (Apply (FHUProj sel ns) (HList l, Proxy (HSucc n))) =>
+    Apply (Proxy False, FHUProj sel ns) 
+          (HList (e ': l),Proxy (n::HNat)) where
+    type ApplyR (Proxy False, FHUProj sel ns) (HList (e ': l),Proxy n) = 
+	ApplyR (FHUProj sel ns) (HList l, Proxy (HSucc n))
+    apply (_,fn) (HCons _ l,n) = apply fn (l,hSucc n)
+
+
+-- lifted member on naturals
+type family KMember (n :: HNat) (ns :: [HNat]) :: Bool
+type instance KMember n '[]       = False
+type instance KMember n (n1 ': l) = HOr (HNatEq n n1) (KMember n l)
 
 
 
@@ -133,12 +172,12 @@ instance HLookupByHNat n l => Apply (FHLookupByHNat l) (P (n :: HNat)) where
 -- Instead, we compute the complement of indices to project away
 -- to obtain the indices to project to, and then use hProjectByHNats.
 -- Only the latter requires run-time computation. The rest
--- are done at compile-time only.
+-- are done at compile-time only. 
+
+hProjectAwayByHNats (_ :: Proxy (ns :: [HNat])) l = 
+    hUnfold (FHUProj :: FHUProj False ns) (l,hZero)
 
 {-
-hProjectAwayByHNats ns l = hFoldr () l ns
-
-
 class HProjectAwayByHNats ns l l' | ns l -> l'
  where
   hProjectAwayByHNats :: ns -> l -> l'

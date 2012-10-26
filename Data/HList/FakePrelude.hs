@@ -19,9 +19,12 @@ module Data.HList.FakePrelude where
 -- Injection from algebraic kinds to *
 -- Algebraic kinds like Nat are not populated and we can't use 
 -- values of type Nat as function arguments. In contrast, we can use
--- (undefined :: P Z) as an argument, as a value proxy.
--- data P (tp :: k) :: *
-data P tp :: *
+-- (undefined :: Proxy Z) as an argument, as a value proxy.
+-- data Proxy (tp :: k) :: *
+data Proxy tp :: *
+
+proxy :: Proxy tp
+proxy =  undefined
 
 -- --------------------------------------------------------------------------
 
@@ -43,21 +46,21 @@ instance HBool HFalse
 -}
 
 -- Value-level proxies
-hTrue  :: P True ; hTrue = undefined
-hFalse :: P False; hFalse = undefined
+hTrue  :: Proxy True ; hTrue  = undefined
+hFalse :: Proxy False; hFalse = undefined
 
-instance Show (P True)  where show _ = "HTrue"
-instance Show (P False) where show _ = "HFalse"
+instance Show (Proxy True)  where show _ = "HTrue"
+instance Show (Proxy False) where show _ = "HFalse"
 
 
 -- **  Conjunction
 
 type family HAnd (t1 :: Bool) (t2 :: Bool) :: Bool
 type instance HAnd False t  = False
-type instance HAnd True  t  = True     
+type instance HAnd True  t  = t
 
 -- `demote' to values
-hAnd :: P t1 -> P t2 -> P (HAnd t1 t2)
+hAnd :: Proxy t1 -> Proxy t2 -> Proxy (HAnd t1 t2)
 hAnd = undefined
 
 
@@ -68,7 +71,7 @@ type instance HOr False t    = t
 type instance HOr True t     = True
 
 -- `demote' to values
-hOr :: P t1 -> P t2 -> P (HOr t1 t2)
+hOr :: Proxy t1 -> Proxy t2 -> Proxy (HOr t1 t2)
 hOr = undefined
 
 -- Compare with the original code based on functional dependencies:
@@ -94,12 +97,20 @@ instance HOr HTrue HTrue HTrue
   hOr _ _ = hTrue
 -}
 
+-- ** Boolean equivalence
+
+type family HBoolEQ (t1 :: Bool) (t2 :: Bool) :: Bool
+type instance HBoolEQ False False    = True
+type instance HBoolEQ False True     = False
+type instance HBoolEQ True  False    = False
+type instance HBoolEQ True  True     = True
+
 
 -- ** Conditional
 
 class HCond (t :: Bool) x y where
     type HCondR t x y :: *
-    hCond :: P t -> x -> y -> HCondR t x y
+    hCond :: Proxy t -> x -> y -> HCondR t x y
 
 instance HCond False x y where
     type HCondR False x y = y
@@ -121,12 +132,12 @@ instance HCond True x y where
 data HNat = HZero | HSucc HNat
 
 
-hZero :: P HZero; hZero = undefined
-hSucc :: P (n :: HNat) -> P (HSucc n); hSucc _ = undefined
-hPred :: P (HSucc n) -> P n; hPred _ = undefined
+hZero :: Proxy HZero; hZero = undefined
+hSucc :: Proxy (n :: HNat) -> Proxy (HSucc n); hSucc _ = undefined
+hPred :: Proxy (HSucc n) -> Proxy n; hPred _ = undefined
 
 class HNat2Integral (n::HNat) where
-    hNat2Integral :: Integral i => P n -> i
+    hNat2Integral :: Integral i => Proxy n -> i
 
 instance HNat2Integral HZero where
     hNat2Integral _ = 0
@@ -134,19 +145,38 @@ instance HNat2Integral HZero where
 instance HNat2Integral n => HNat2Integral (HSucc n) where
     hNat2Integral n = hNat2Integral (hPred n) + 1
 
-instance HNat2Integral n => Show (P (n :: HNat)) where 
+instance HNat2Integral n => Show (Proxy (n :: HNat)) where 
     show n = "H" ++ show (hNat2Integral n)
 
 
+-- Equality on natural numbers
+
+type family HNatEq (t1 :: HNat) (t2 :: HNat) :: Bool
+type instance HNatEq HZero HZero          = True
+type instance HNatEq HZero (HSucc n)      = False
+type instance HNatEq (HSucc n) HZero      = False
+type instance HNatEq (HSucc n) (HSucc n') = HNatEq  n n'
+
+
+-- | Less than
+
+type family HLt (x :: HNat) (y :: HNat) :: Bool
+
+type instance HLt HZero HZero          = False
+type instance HLt HZero (HSucc n)      = True
+type instance HLt (HSucc n) HZero      = False
+type instance HLt (HSucc n) (HSucc n') = HLt  n n'
+
+hLt :: Proxy x -> Proxy y -> Proxy (HLt x y)
+hLt = undefined
+
 
 -- --------------------------------------------------------------------------
-
 -- * Maybies
+-- We cannot use lifted Maybe since the latter are not populated
 
--- Lift Maybe?
-
--- data HNothing  = HNothing  deriving Show
--- data HJust x   = HJust x   deriving Show
+data    HNothing  = HNothing  deriving Show
+newtype HJust x   = HJust x   deriving Show
 
 
 -- --------------------------------------------------------------------------
@@ -162,7 +192,7 @@ instance HEq HZero (HSucc n) False
 instance HEq (HSucc n) HZero False
 instance HEq  n n' b => HEq (HSucc n) (HSucc n') b
 
-hEq :: HEq x y b => x -> y -> P b
+hEq :: HEq x y b => x -> y -> Proxy b
 hEq =  undefined
 
 {-
@@ -179,25 +209,6 @@ hEq =  undefined
 class HStagedEq x y
  where
   hStagedEq :: x -> y -> Bool
-
-
--- --------------------------------------------------------------------------
-
--- | Less than
-
-class HBool b => HLt x y b | x y -> b
-
-
--- Equality instances for naturals
-
-instance HLt HZero HZero HFalse
-instance HNat n => HLt HZero (HSucc n) HTrue
-instance HNat n => HLt (HSucc n) HZero HFalse
-instance (HNat n, HNat n', HLt  n n' b)
-      =>  HLt (HSucc n) (HSucc n') b
-
-hLt   :: HLt x y b => x -> y -> b
-hLt _ =  undefined
 
 
 -- --------------------------------------------------------------------------
@@ -236,9 +247,6 @@ class TypeCast x y | x -> y, y -> x
 
 data Proxy e
 instance Show (Proxy e) where show _ = "Proxy"
-
-proxy :: Proxy e
-proxy =  undefined
 
 toProxy :: e -> Proxy e
 toProxy _ = undefined

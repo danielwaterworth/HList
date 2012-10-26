@@ -1,19 +1,32 @@
+25 Oct 2012
+	hUnfold
+	hProjectByHNats and hProjectAwayByHNats now take type-level
+	list of naturals as the argument. More computation is made
+	purely type-level
+
+24 Oct 2012
+	Nat, Bool and [*] kinds
+	HList is now GADT
+	Rewriting FakePrelude, HListPrelude, HArray using type families
+	to a large extent, and getting rid of functional dependencies
+
+
 12 Oct 2011
 	Getting rid of overlapping instances in HOccurs
 	Using only one TypeEq. This is the only place with overlapping instances
 	Using ~ operator instead of TypeCast. Deprecating TypeCast
 	Rearrangements of code, removing obsolete code
 	Making sure everything works under GHC 7.0.4
-	
+
 
 19 May 2010
 	Beautification, release and tag 0.2.3 by Adam Vogt
-	
+
 26 April 2010
 	Patches from Adam Vogt to format documentation for Haddoc and
 	to expose MakeLabels
 	Release 0.2.1 by Gwern Branwen
-	
+
 29 March 2010
 	examples/TIPTransformM.hs, the monadic version of
 	TIPTransform.hs

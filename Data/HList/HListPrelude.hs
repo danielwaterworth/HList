@@ -234,6 +234,25 @@ instance (Apply f (e, HFoldrR f v l), HFoldr f v l)
     hFoldr f v (HCons x l)    = apply  f (x, hFoldr  f v l)
 
 
+-- * A heterogeneous unfold for all types
+
+hUnfold :: (Apply p s, HUnfold' p (ApplyR p s)) => p -> s -> HList (HUnfold p s)
+hUnfold p s = hUnfold' p (apply p s)
+
+type HUnfold p s = HUnfoldR p (ApplyR p s)
+
+class HUnfold' p res where
+    type HUnfoldR p res :: [*]
+    hUnfold' :: p -> res -> HList (HUnfoldR p res)
+
+instance HUnfold' p HNothing where
+    type HUnfoldR p HNothing = '[]
+    hUnfold' _ _ = HNil
+
+instance (Apply p s, HUnfold' p (ApplyR p s)) => HUnfold' p (HJust (e,s)) where
+    type HUnfoldR p (HJust (e,s)) = e ': HUnfold p s
+    hUnfold' p (HJust (e,s)) = HCons e (hUnfold p s)
+
 
 -- --------------------------------------------------------------------------
 -- * Map
@@ -303,14 +322,14 @@ append' :: [a] -> [a] -> [a]
 append' l l' = foldr (:) l' l
 
 -- | Alternative implementation of 'hAppend'. Demonstrates 'HFoldr'
-hAppend' :: (HFoldr ApplyHCons v l) => HList l -> v -> HFoldrR ApplyHCons v l
-hAppend' l l' = hFoldr ApplyHCons l' l
+hAppend' :: (HFoldr FHCons v l) => HList l -> v -> HFoldrR FHCons v l
+hAppend' l l' = hFoldr FHCons l' l
 
-data ApplyHCons = ApplyHCons
+data FHCons = FHCons
 
-instance Apply ApplyHCons (e,HList l) where
-    type  ApplyR ApplyHCons (e,HList l) =  HList (e ': l)
-    apply ApplyHCons (e,l) = HCons e l
+instance Apply FHCons (e,HList l) where
+    type  ApplyR FHCons (e,HList l) =  HList (e ': l)
+    apply _ (e,l) = HCons e l
 
 
 -- --------------------------------------------------------------------------
@@ -349,18 +368,74 @@ instance (Monad m, ApplyR f x ~ m (), Apply f x) =>
 
 -- * Type-level equality for lists
 
-{-
-type instance HEq '[] '[]      = True
-type instance HEq '[] (e ': l) = False
-type instance HEq (e ': l) '[] = False
-type instance HEq 
+instance HEq '[] '[]      True
+instance HEq '[] (e ': l) False
+instance HEq (e ': l) '[] False
+instance (HEq e1 e2 b1, HEq l1 l2 b2, br ~ HAnd b1 b2)
+      => HEq (e1 ': l1) (e2 ': l2) br
 
-(HList l, HList l', HEq e e' b, HEq l l' b', HAnd b b' b'')
-      => HEq (HCons e l) (HCons e' l') b''
+-- --------------------------------------------------------------------------
+-- * Ensure a list to contain HNats only
+-- We do so constructively, converting the HList whose elements
+-- are Proxy HNat to [HNat]. The latter kind is unpopulated and
+-- is present only at the type level.
+
+type family HNats (l :: [*]) :: [HNat]
+type instance HNats '[] = '[]
+type instance HNats (Proxy n ': l) = n ': HNats l
+
+hNats :: HList l -> Proxy (HNats l)
+hNats = undefined
+
+
+-- --------------------------------------------------------------------------
+-- * Membership tests
+
+-- Check to see if an HList contains an element with a given type
+-- This is a type-level only test
+
+class HMember e1 (l :: [*]) (b :: Bool) | e1 l -> b
+instance HMember e1 '[] False
+instance (HEq e1 e b, HMember' b e1 l br) => HMember  e1 (e ': l) br
+class HMember' (b0 :: Bool) e1 (l :: [*]) (b :: Bool) | b0 e1 l -> b
+instance HMember' True e1 l True
+instance (HMember e1 l br) => HMember' False e1 l br
+
+-- The following is a similar type-only membership test
+-- It uses the user-supplied curried type equality predicate pred
+type family HMemberP pred e1 (l :: [*]) :: Bool
+type instance HMemberP pred e1 '[] = False
+type instance HMemberP pred e1 (e ': l) =
+    HMemberP' pred e1 l (ApplyR pred (e1,e))
+
+type family HMemberP' pred e1 (l :: [*]) pb :: Bool
+type instance HMemberP' pred e1 l (Proxy True) = True
+type instance HMemberP' pred e1 l (Proxy False) = HMemberP pred e1 l
+ 
+
+hMember :: HMember e l b => e -> HList l -> Proxy b
+hMember = undefined
+
+-- ** Another type-level membership test
+--
+-- Check to see if an element e occurs in a list l
+-- If not, return 'Nothing
+-- If the element does occur, return 'Just l1
+-- where l1 is a type-level list without e
+{-
+class HMemberM e1 (l :: [*]) (r :: Maybe [*]) | e1 l -> r
+instance HMemberM e1 '[] 'Nothing
+instance (HEq e1 e b, HMemberM' b e1 (e ': l) res)
+      =>  HMemberM e1 (e ': l) res
+class HMemberM' b e1 (l :: [*]) r | b e1 l -> r
+instance HMemberM' True e1 (e ': l) ('Just l)
+instance (HMemberM e1 l r, HMemberM' r e1 (e ': l) res)
+    => HMemberM' False e1 (e ': l) res
+instance HMemberM' Nothing e1 l Nothing
+instance HMemberM' (Just l1) e1 (e ': l) (Just (e ': l1))
 -}
 
 {-
-
 -- --------------------------------------------------------------------------
 
 -- * Staged equality for lists
@@ -401,13 +476,6 @@ instance Eq e => HStagedEq' HTrue e e
   hStagedEq' _ = (==)
 
 
--- --------------------------------------------------------------------------
--- * Ensure a list to contain HNats only
-
--- No longer needed: we merely set the kind to be [HNat]
--- class HList l => HNats l
--- instance HNats HNil
--- instance (HNat n, HNats ns) => HNats (HCons n ns)
 
 
 -- * Static set property based on HEq
@@ -445,34 +513,6 @@ instance HFind e l n
   hFind' _ e l = hSucc (hFind e l)
 
 
--- * Membership test
-
-class HBool b => HMember e l b | e l -> b
-instance HMember e HNil HFalse
-instance (HEq e e' b, HMember e l b', HOr b b' b'')
-      =>  HMember e (HCons e' l) b''
-
-hMember :: HMember e l b => e -> l -> b
-hMember _ _ = undefined
-
-
--- ** Another type-level membership test
---
--- Check to see if an element e occurs in a list l
--- If not, return HNothing
--- If the element does occur, return HJust l'
--- where l' is a type-level list without e
-
-class HMemberM e l r | e l -> r
-instance HMemberM e HNil HNothing
-instance (HEq e e' b, HMemberM' b e (HCons e' l) res)
-      =>  HMemberM e (HCons e' l) res
-class HMemberM' b e l r | b e l -> r
-instance HMemberM' HTrue e (HCons e l) (HJust l)
-instance (HMemberM e l r, HMemberM' r e (HCons e' l) res)
-    => HMemberM' HFalse e (HCons e' l) res
-instance HMemberM' HNothing e l HNothing
-instance HMemberM' (HJust l') e (HCons e' l) (HJust (HCons e' l'))
 
 
 
