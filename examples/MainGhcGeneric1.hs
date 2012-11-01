@@ -3,6 +3,7 @@
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE OverlappingInstances#-}
 {-# LANGUAGE UndecidableInstances#-}
+{-# LANGUAGE ScopedTypeVariables #-}
 
 {-
 
@@ -35,11 +36,16 @@ import Datatypes2
 -- import Data.HList.CommonMain -- hiding (HDeleteMany, hDeleteMany)
 import Data.HList.FakePrelude
 import Data.HList.HListPrelude
+import Data.HList.HList
 import Data.HList.HArray
+import Data.HList.HOccurs
+import Data.HList.HTypeIndexed
+import Data.HList.TIP
+
+import Data.HList.TypeEqO
 
 {-
 import Data.HList.RecordAdv
-import Data.HList.TypeEqO
 import Data.HList.Label3
 import Data.HList.RecordP
 -}
@@ -70,14 +76,23 @@ H[Key 42, Name "Angus", Cow, Price 75.5, Key 42, Name "Angus", Cow, Price 75.5]
 -}
 
 
-tListBasic = putStrLn "\nBasic HList tests" >>
-	     sequence_ [tList1, tList2]
+testListBasic = do
+  putStrLn "\nBasic HList tests"
+  tList1
+  tList2
 
-testHArray = putStrLn "\ntestHArray" >>
-  sequence_ [ myProj1
-  ]
+testHArray = do
+  putStrLn "\ntestHArray"
+  myProj1
+  myProj2
+  myProj2'
+  myProj3
+  myProj4
 
 myProj1 = print $ hProjectByHNats (hNats (HCons hZero (HCons hZero HNil))) angus
+-- H[Key 42]
+
+-- Before:
 -- H[Key 42, Key 42]
 -- XXX I don't duplicate at present!
 
@@ -89,93 +104,76 @@ myProj2' = print $
 	  hProjectByHNats (undefined::Proxy ['HZero, 'HSucc 'HZero]) angus
 -- H[Key 42, Name "Angus"]
 
-myProj3 = hProjectAwayByHNats (hNats (HCons hZero HNil)) angus
+myProj3 = print $ 
+	  hProjectAwayByHNats (hNats (HCons hZero HNil)) angus
 -- H[Name "Angus", Cow, Price 75.5]
 
-{-
-testHArray = (myProj1,myProj2,myProj3,myProj4)
- where
-  myProj4 = hSplitByHNats (HCons hZero (HCons (hSucc hZero) HNil)) angus
--}
+myProj4 = print $ 
+	  hSplitByHNats 
+	    (undefined::Proxy ['HZero, 'HSucc 'HZero])
+	    angus
+-- (H[Key 42, Name "Angus"],H[Cow, Price 75.5])
 
-{-
-*HArray> myProj3
-HCons (Name "Angus") (HCons Cow (HCons (Price 75.5) HNil))
+testHOccurs = do
+  putStrLn "\ntestHOccurs"
+  print (hOccurs angus :: Breed)
+  print $ hOccurs (TIP (HCons 1 HNil))
+  print $ null $ hOccurs (TIP (HCons [] HNil))
+  print (hProject angus :: HList '[Key, Name])
 
-*HArray> myProj4
-(HCons (Key 42) (HCons (Name "Angus") HNil),HCons Cow (HCons (Price 75.5) HNil)
 
--}
-
-{-
-testHOccurs = (testHOccurs1,testHOccurs2,testHOccurs3,testHOccurs4)
- where
-  testHOccurs1 = hOccurs angus :: Breed
-  testHOccurs2 = hOccurs (TIP (HCons 1 HNil))
-  testHOccurs3 = null $ hOccurs (TIP (HCons [] HNil))
-  testHOccurs4 = hProject angus :: (HCons Key (HCons Name HNil))
-
-testTypeIndexed =   ( typeIdx1
-                  , ( typeIdx2
-                  , ( typeIdx3
-                  , ( typeIdx4
-                  , ( typeIdx5
-                  , ( typeIdx6 ))))))
- where
-  typeIdx1 = hDeleteMany (proxy::Proxy Name) angus
+testTypeIndexed = do
+  putStrLn "\ntestTypeIndexed"
+  print typeIdx1
+  print typeIdx2
+  print $ hUpdateAt Sheep typeIdx1
+  print $ hDeleteAt (undefined::Proxy Breed) typeIdx2
+  print $ hProjectBy (undefined::Proxy '[Breed]) angus
+  print $ hSplitBy (undefined:: Proxy '[Breed]) angus
+ where 
+  typeIdx1 = hDeleteMany (undefined::Proxy Name) angus
   typeIdx2 = hExtend BSE angus
-  typeIdx3 = hUpdateAtType Sheep typeIdx1
-  typeIdx4 = hDeleteAtProxy (proxy::Proxy Breed) typeIdx2
-  typeIdx5 = hProjectByProxies (HCons (proxy::Proxy Breed) HNil) angus
-  typeIdx6 = fst $ hSplitByProxies (HCons (proxy::Proxy Breed) HNil) angus
 
 -- |
 -- This example from the TIR paper challenges singleton lists.
 -- Thanks to the HW 2004 reviewer who pointed out the value of this example.
 -- We note that the explicit type below is richer than the inferred type.
 -- This richer type is needed for making this operation more polymorphic.
--- That is, /a)/ would not work without the explicit type, while it would:
+-- That is, /a)/ would not work without the explicit type, 
+-- while /b/ would:
 --
 -- >  a)  ((+) (1::Int)) $ snd $ tuple oneTrue
 -- >  b)  ((+) (1::Int)) $ fst $ tuple oneTrue
 
-tuple :: ( HOccurs e1 (TIP l)
-         , HType2HNat e1 l n
-         , HDeleteAtHNat n l l'
-         , HOccurs e2 (TIP l')
-         , HOccurs e2 (TIP l)
-         , HType2HNat e2 l n'
-         , HDeleteAtHNat n' l l''
-         , HOccurs e1 (TIP l'')
-         ) =>
-              TIP l -> (e1, e2)
-
+tuple :: forall e1 e2 n l n2.
+    (HDeleteAtHNat n l,
+     HOccurs e1 (TIP l),
+     HOccurs e2 (TIP (HDeleteAtHNatR n l)),
+     HType2HNat e1 l n,
+     -- extra, not inferred
+     HType2HNat e2 l n2,
+     HOccurs e1 (TIP (HDeleteAtHNatR n2 l))
+    ) => TIP l -> (e1,e2)
 tuple (TIP l) = let
                  x  = hOccurs (TIP l)
-                 l' = hDeleteAtProxy (toProxy x) l
+                 l' = hDeleteAt (undefined::Proxy e1) l
                  y  = hOccurs (TIP l')
                 in (x,y)
 
-
 -- | A specific tuple
 -- Need to import an instance of TypeEq to be able to run the examples
-
-oneTrue :: TIP (HCons Int (HCons Bool HNil))
+oneTrue :: TIP '[Int, Bool]		-- inferred
 oneTrue = hExtend (1::Int) (hExtend True emptyTIP)
 
-testTuple =   ( testTuple1
-            , ( testTuple2
-            , ( testTuple3
-            , ( testTuple4
-            , ( testTuple5
-              )))))
- where
-  testTuple1 = let (a,b) = tuple oneTrue in (a+(1::Int), not b)
-  testTuple2 = let b = not $ fst $ tuple oneTrue in (1::Int,b)
-  testTuple3 = tuple oneTrue == (1::Int,True)
-  testTuple4 = ((+) (1::Int)) $ fst $ tuple oneTrue
+testTuple = do
+  putStrLn "\ntestTuple"
+  print $ let (a,b) = tuple oneTrue in (a+(1::Int), not b)
+  print $ let b = not $ fst $ tuple oneTrue in (1::Int,b)
+  print $ tuple oneTrue == (1::Int,True)
+  print $ ((+) (1::Int)) $ fst $ tuple oneTrue
   -- requires explicit type for tuple
-  testTuple5 = ((+) (1::Int)) $ snd $ tuple oneTrue
+  print $ ((+) (1::Int)) $ snd $ tuple oneTrue
+
 
 myTipyCow = TIP angus
 
@@ -188,13 +186,22 @@ animalish :: SubType l (TIP Animal) => l -> l
 animalish = id
 animalKey' l = hOccurs (animalish l) :: Key
 
-testTIP = (testTIP1,testTIP2,testTIP3,testTIP4)
- where
-  testTIP1 = hOccurs myTipyCow :: Breed
-  testTIP2 = hExtend BSE myTipyCow
-  testTIP3 = hExtend Sheep $ tipyDelete (proxy::Proxy Breed) myTipyCow
-  testTIP4 = tipyUpdate Sheep myTipyCow
+testTIP = do
+  putStrLn "\ntestTIP"
+  print $ (hOccurs myTipyCow :: Breed)
+  print $ hExtend BSE myTipyCow
+  -- print $ hExtend Sheep $ myTipyCow
+  {- if we uncomment the line above, we get the type error
+     about the violation of the TIP condition: Breed type
+     occurs twice.
 
+    No instance for (Fail * (TypeFound Breed))
+      arising from a use of `hExtend'
+  -}
+  print $ hExtend Sheep $ tipyDelete (undefined::Proxy Breed) myTipyCow
+  print $ tipyUpdate Sheep myTipyCow
+
+{-
 data MyNS = MyNS -- a name space for record labels
 
 key   = firstLabel MyNS  (undefined::DKey)
@@ -302,6 +309,7 @@ mainExport
                , ( testTypeIndexed
                , ( testTuple
                , ( testTIP
+
                , ( testRecords
                , ( testRecordsP
                , ( testTIC
@@ -309,3 +317,11 @@ mainExport
                )))))))))
 
 -}
+
+main = do
+       testListBasic
+       testHArray
+       testHOccurs
+       testTypeIndexed
+       testTuple
+       testTIP

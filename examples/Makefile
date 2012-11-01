@@ -30,7 +30,7 @@ test:
 # The favoured GHC model
 #
 	ghci -fcontext-stack=50 -i.. MainGhcGeneric1.hs -v0 < Main.in > MainGhcGeneric1.out
-	diff -b MainGhcGeneric1.out MainGhcGeneric1.ref
+	diff -u -b MainGhcGeneric1.out MainGhcGeneric1.ref
 #
 # The GHC model with TTypeable-based type equality
 #

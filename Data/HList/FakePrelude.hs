@@ -16,12 +16,42 @@
 module Data.HList.FakePrelude where
 
 
+-- --------------------------------------------------------------------------
+-- * A heterogeneous apply operator
+
+class Apply f a where
+  type ApplyR f a :: *
+  apply :: f -> a -> ApplyR f a
+  apply = undefined                     -- In case we use Apply for
+                                        -- type-level computations only
+
+-- Simple useful instances of Apply
+
+instance Apply (x -> y) x where
+  type ApplyR (x -> y) x = y
+  apply f x = f x
+
+-- Instances for showing
+data HShow     = HShow
+newtype HSeq x = HSeq x
+
+instance Show x => Apply HShow x where
+  type ApplyR HShow x = IO ()
+  apply _ x = putStrLn $ show x
+
+instance (Monad m, ApplyR f x ~ m (), Apply f x) => 
+    Apply (HSeq f) (x,m ()) where
+  type ApplyR (HSeq f) (x,m ()) = m ()
+  apply (HSeq f) (x,c) = do apply f x; c
+
+
+-- --------------------------------------------------------------------------
 -- Injection from algebraic kinds to *
 -- Algebraic kinds like Nat are not populated and we can't use 
 -- values of type Nat as function arguments. In contrast, we can use
 -- (undefined :: Proxy Z) as an argument, as a value proxy.
 -- data Proxy (tp :: k) :: *
-data Proxy tp :: *
+data Proxy tp 
 
 proxy :: Proxy tp
 proxy =  undefined
@@ -105,22 +135,6 @@ type instance HBoolEQ False True     = False
 type instance HBoolEQ True  False    = False
 type instance HBoolEQ True  True     = True
 
-
--- ** Conditional
-
-class HCond (t :: Bool) x y where
-    type HCondR t x y :: *
-    hCond :: Proxy t -> x -> y -> HCondR t x y
-
-instance HCond False x y where
-    type HCondR False x y = y
-    hCond _ x y = y
-
-instance HCond True x y where
-    type HCondR True x y = x
-    hCond _ x y = x
-
-
 -- We could define all kinds of further Boolean operations.
 -- We omit everything what's not needed for the code in the paper.
 
@@ -150,7 +164,7 @@ instance HNat2Integral n => Show (Proxy (n :: HNat)) where
 
 
 -- Equality on natural numbers
-
+-- (eventually to be subsumed by the universal polykinded HEq)
 type family HNatEq (t1 :: HNat) (t2 :: HNat) :: Bool
 type instance HNatEq HZero HZero          = True
 type instance HNatEq HZero (HSucc n)      = False
@@ -182,7 +196,8 @@ newtype HJust x   = HJust x   deriving Show
 -- --------------------------------------------------------------------------
 
 -- * Polykinded Equality for types
-
+-- We have to use Functional dependencies for now,
+-- for the sake of the generic equality.
 class HEq x y (b :: Bool) | x y -> b
 
 -- Equality instances for naturals
@@ -229,9 +244,9 @@ typeEq = undefined
 proxyEq :: TypeEq t t' b => Proxy t -> Proxy t' -> b
 proxyEq _ _ = undefined
 
+-}
 
 -- --------------------------------------------------------------------------
-
 -- * Type-safe cast -- no longer need. We use a a ~ b
 
 {-
@@ -243,34 +258,9 @@ class TypeCast x y | x -> y, y -> x
 
 -- --------------------------------------------------------------------------
 
--- * A phantom type for type proxies
-
-data Proxy e
-instance Show (Proxy e) where show _ = "Proxy"
-
-toProxy :: e -> Proxy e
-toProxy _ = undefined
-
-unProxy :: Proxy e -> e
-unProxy =  undefined
-
-
--- --------------------------------------------------------------------------
-
--- * Subtyping
-
-class SubType l l'
-
-subType :: SubType l l' => l -> l' -> ()
-subType _ _ = ()
-
-
--- --------------------------------------------------------------------------
-
 -- * Error messages
 
 -- | A class without instances for explicit failure
 class Fail x
 
 
--}

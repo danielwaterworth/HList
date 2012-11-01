@@ -1,8 +1,16 @@
+31 Oct 2012
+	New file HList/HList.hs contains the implementation of
+	heterogeneous lists. HListPrelude.hs defines operations
+	that work across all heterogeneous collections (lists, TIP,
+	Records, etc).
+	General clean-up, removing obsolete code.
+	Code re-written up to Records.
+
 25 Oct 2012
 	hUnfold
 	hProjectByHNats and hProjectAwayByHNats now take type-level
-	list of naturals as the argument. More computation is made
-	purely type-level
+	list of naturals as the argument. They are implemented in terms
+	of Unfold. More computation is made purely type-level.
 
 24 Oct 2012
 	Nat, Bool and [*] kinds
@@ -30,11 +38,11 @@
 29 March 2010
 	examples/TIPTransformM.hs, the monadic version of
 	TIPTransform.hs
-	
+
 17 February 2010
 	Two patches from Adam Vogt to get the code compile on ghc-6.12
 	and to make Record Typeable instances nonstrict
-	
+
 10-14 January 2010
         Reverse parameter order for .@.
 	Changed fixity <++
@@ -49,7 +57,7 @@
 	keyword argument problem posed by Andrew U. Frank.
 	Adjusted the LANGUAGE pragmas, made the examples run without
 	the global -fglasgow-exts
-	
+
 15 September 2009
 	Release 0.2 by Gwern Branwen
 

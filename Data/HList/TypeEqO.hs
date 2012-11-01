@@ -1,6 +1,7 @@
 {-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances,
   FlexibleContexts, OverlappingInstances, UndecidableInstances #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE DataKinds #-}
 
 {- |
    The HList library
@@ -9,6 +10,7 @@
 
    Generic type equality predicate: 
    The implementation based on overlapping instances
+   The only place where overlapping instances are really used
 
 -}
 
@@ -16,15 +18,15 @@ module Data.HList.TypeEqO where
 
 import Data.HList.FakePrelude
 
-instance TypeEq x x HTrue
-instance (HBool b, HFalse ~ b) => TypeEq x y b
+instance HEq x x True
+instance False ~ b => HEq x y b
 -- instance TypeEq x y HFalse -- would violate functional dependency
 
 
-class HBool b => TupleType t b | t -> b
-instance TupleType () HTrue
-instance TupleType (x,y) HTrue
-instance TupleType (x,y,z) HTrue
+class TupleType t (b :: Bool) | t -> b
+instance TupleType () True
+instance TupleType (x,y) True
+instance TupleType (x,y,z) True
 -- Continue for a while
-instance (HBool b, HFalse ~ b) => TupleType x b
+instance False ~ b => TupleType x b
 -- instance TupleType x HFalse -- would violate functional dependency

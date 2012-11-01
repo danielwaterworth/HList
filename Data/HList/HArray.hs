@@ -1,11 +1,11 @@
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
-{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances,
-  FlexibleContexts, UndecidableInstances #-}
-
+{-# LANGUAGE MultiParamTypeClasses, FlexibleInstances, FlexibleContexts #-}
+{-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE DataKinds #-}
+{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
 
@@ -21,6 +21,7 @@ module Data.HList.HArray where
 
 import Data.HList.FakePrelude
 import Data.HList.HListPrelude
+import Data.HList.HList
 
 
 -- --------------------------------------------------------------------------
@@ -63,8 +64,8 @@ class HUpdateAtHNat (n :: HNat) e (l :: [*]) where
   hUpdateAtHNat :: Proxy n -> e -> HList l -> HList (HUpdateAtHNatR n e l)
 
 instance HUpdateAtHNat HZero e1 (e ': l) where
-  type HUpdateAtHNatR HZero e1 (e ': l) = e1 ': l
-  hUpdateAtHNat _ e1 (HCons _ l) = HCons e1 l
+  type HUpdateAtHNatR  HZero e1 (e ': l) = e1 ': l
+  hUpdateAtHNat _ e1 (HCons _ l)         = HCons e1 l
 
 instance HUpdateAtHNat n e1 l => HUpdateAtHNat (HSucc n) e1 (e ': l) where
   type HUpdateAtHNatR  (HSucc n) e1 (e ': l) = e ': (HUpdateAtHNatR n e1 l)
@@ -72,13 +73,112 @@ instance HUpdateAtHNat n e1 l => HUpdateAtHNat (HSucc n) e1 (e ': l) where
 
 
 -- --------------------------------------------------------------------------
+-- * Projection
+
+-- One way of implementing it:
+
+hProjectByHNats' ns l = hMap (FHLookupByHNat l) ns
+
+newtype FHLookupByHNat (l :: [*]) = FHLookupByHNat (HList l)
+
+instance HLookupByHNat n l => 
+    Apply (FHLookupByHNat l) (Proxy (n :: HNat)) where
+  type ApplyR (FHLookupByHNat l) (Proxy n) = HLookupByHNatR n l
+  apply (FHLookupByHNat l) n               = hLookupByHNat  n l
+
+-- The drawback is that the list ns must be a constructed value.
+-- We cannot lazily pattern-match on GADTs. Moreover, there are
+-- repeated traversals of the HList l at run-time.
+
+-- Here is a more optimal version with a better separation of
+-- compile-time and run-time computation. 
+-- The list of labels to project is type-level only.
+-- We treat this list of labels as a set -- that is, we will
+-- ignore duplicates.
+-- We traverse the HList l only once. The lookup in the list of
+-- indices is compile-time only.
+-- (In contrast, hProjectByHNats' does not ignore duplicates).
+-- We unify hProjectByHNats and hProjectAwayByHNats in one
+-- function, distinguished by the sel :: Bool in
+-- FHUProj below. The operation hProjectByHNats corresponds
+-- to sel = True (that is, elements of l whose indices are found in 
+-- ns are to be included in the result), whereas hProjectByHNats
+-- corresponds to set = False.
+
+hProjectByHNats (_ :: Proxy (ns :: [HNat])) l = 
+    hUnfold (FHUProj :: FHUProj True ns) (l,hZero)
+
+data FHUProj (sel :: Bool) (ns :: [HNat]) = FHUProj
+
+instance Apply (FHUProj sel ns) (HList '[],n) where
+    type ApplyR (FHUProj sel ns) (HList '[],n) = HNothing
+    apply _ _ = HNothing
+
+instance (ch ~ Proxy (HBoolEQ sel (KMember n ns)), 
+	  Apply (ch, FHUProj sel ns) (HList (e ': l),Proxy (n :: HNat))) =>
+    Apply (FHUProj sel ns) (HList (e ': l),Proxy (n :: HNat)) where
+    type ApplyR (FHUProj sel ns) (HList (e ': l),Proxy n) = 
+       ApplyR (Proxy (HBoolEQ sel (KMember n ns)), FHUProj sel ns)
+	      (HList (e ': l),Proxy n)
+    apply fn s = apply (undefined::ch,fn) s
+
+instance Apply (Proxy True, FHUProj sel ns) 
+               (HList (e ': l),Proxy (n::HNat)) where
+    type ApplyR (Proxy True, FHUProj sel ns) (HList (e ': l),Proxy n) = 
+	(HJust (e, (HList l,Proxy (HSucc n))))
+    apply _ (HCons e l,n) = (HJust (e,(l,hSucc n)))
+
+instance (Apply (FHUProj sel ns) (HList l, Proxy (HSucc n))) =>
+    Apply (Proxy False, FHUProj sel ns) 
+          (HList (e ': l),Proxy (n::HNat)) where
+    type ApplyR (Proxy False, FHUProj sel ns) (HList (e ': l),Proxy n) = 
+	ApplyR (FHUProj sel ns) (HList l, Proxy (HSucc n))
+    apply (_,fn) (HCons _ l,n) = apply fn (l,hSucc n)
+
+
+-- lifted member on naturals
+type family KMember (n :: HNat) (ns :: [HNat]) :: Bool
+type instance KMember n '[]       = False
+type instance KMember n (n1 ': l) = HOr (HNatEq n n1) (KMember n l)
+
+-- Useful abbreviations for complex types (which are inferred)
+type HProjectByHNatsR (ns :: [HNat]) (l :: [*]) = 
+    HUnfold (FHUProj True ns) (HList l, Proxy 'HZero)
+
+type HProjectByHNatsCtx ns l =
+  (Apply (FHUProj True ns) (HList l, Proxy 'HZero),
+      HUnfold' (FHUProj True ns) 
+       (ApplyR (FHUProj True ns) (HList l, Proxy 'HZero)))
+
+-- * Complement of Projection
+
+-- The naive approach is repeated deletion (which is a bit subtle
+-- sine we need to adjust indices)
+-- Instead, we compute the complement of indices to project away
+-- to obtain the indices to project to, and then use hProjectByHNats.
+-- Only the latter requires run-time computation. The rest
+-- are done at compile-time only. 
+
+hProjectAwayByHNats (_ :: Proxy (ns :: [HNat])) l = 
+    hUnfold (FHUProj :: FHUProj False ns) (l,hZero)
+
+
+-- Useful abbreviations for complex types (which are inferred)
+type HProjectAwayByHNatsR (ns :: [HNat]) (l :: [*]) = 
+    HUnfold (FHUProj False ns) (HList l, Proxy 'HZero)
+
+type HProjectAwayByHNatsCtx ns l =
+  (Apply (FHUProj False ns) (HList l, Proxy 'HZero),
+      HUnfold' (FHUProj False ns) (ApplyR (FHUProj False ns) 
+				   (HList l, Proxy 'HZero)))
+
 -- * Splitting
 -- | Splitting an array according to indices
---
--- Signature is inferred:
---
---  > hSplitByHNats :: (HSplitByHNats' ns l' l'1 l'', HMap (HAddTag HTrue) l l') =>
---  >               ns -> l -> (l'1, l'')
+
+-- The following is not optimal; we'll optimize later if needed
+
+hSplitByHNats ns l = (hProjectByHNats ns l,
+		      hProjectAwayByHNats ns l)
 {-
 hSplitByHNats ns l = hSplitByHNats' ns (hFlag l)
 
@@ -106,167 +206,7 @@ instance ( HLookupByHNat n l (e,b)
     (l',l'') = hSplitByHNats' ns l'''
 -}
 
-
--- --------------------------------------------------------------------------
--- * Projection
-
-
--- One way of implementing it:
-
-hProjectByHNats' ns l = hMap (FHLookupByHNat l) ns
-
-newtype FHLookupByHNat (l :: [*]) = FHLookupByHNat (HList l)
-
-instance HLookupByHNat n l => 
-    Apply (FHLookupByHNat l) (Proxy (n :: HNat)) where
-  type ApplyR (FHLookupByHNat l) (Proxy n) = HLookupByHNatR n l
-  apply (FHLookupByHNat l) n               = hLookupByHNat  n l
-
--- The drawback is that the list ns must be a constructed value.
--- We cannot lazily pattern-match on GADTs. 
-
-hProjectByHNats (_ :: Proxy (ns :: [HNat])) l = 
-    hUnfold (FHUProj :: FHUProj True ns) (l,hZero)
-
-data FHUProj (sel :: Bool) (ns :: [HNat]) = FHUProj
-
-
-instance Apply (FHUProj sel ns) (HList '[],n) where
-    type ApplyR (FHUProj sel ns) (HList '[],n) = HNothing
-    apply _ _ = HNothing
-
-instance (ch ~ Proxy (HBoolEQ sel (KMember n ns)), 
-	  Apply (ch, FHUProj sel ns) (HList (e ': l),Proxy (n :: HNat))) =>
-    Apply (FHUProj sel ns) (HList (e ': l),Proxy (n :: HNat)) where
-    type ApplyR (FHUProj sel ns) (HList (e ': l),Proxy n) = 
-       ApplyR (Proxy (HBoolEQ sel (KMember n ns)), FHUProj sel ns)
-	      (HList (e ': l),Proxy n)
-    apply fn s = apply (undefined::ch,fn) s
-
-instance Apply (Proxy True, FHUProj sel ns) 
-               (HList (e ': l),Proxy (n::HNat)) where
-    type ApplyR (Proxy True, FHUProj sel ns) (HList (e ': l),Proxy n) = 
-	(HJust (e, (HList l,Proxy (HSucc n))))
-    apply (_,fn) (HCons e l,n) = (HJust (e,(l,hSucc n)))
-
-instance (Apply (FHUProj sel ns) (HList l, Proxy (HSucc n))) =>
-    Apply (Proxy False, FHUProj sel ns) 
-          (HList (e ': l),Proxy (n::HNat)) where
-    type ApplyR (Proxy False, FHUProj sel ns) (HList (e ': l),Proxy n) = 
-	ApplyR (FHUProj sel ns) (HList l, Proxy (HSucc n))
-    apply (_,fn) (HCons _ l,n) = apply fn (l,hSucc n)
-
-
--- lifted member on naturals
-type family KMember (n :: HNat) (ns :: [HNat]) :: Bool
-type instance KMember n '[]       = False
-type instance KMember n (n1 ': l) = HOr (HNatEq n n1) (KMember n l)
-
-
-
--- --------------------------------------------------------------------------
--- * Complement of Projection
-
--- The naive approach is repeated deletion (which is a bit subtle
--- sine we need to adjust indices)
--- Instead, we compute the complement of indices to project away
--- to obtain the indices to project to, and then use hProjectByHNats.
--- Only the latter requires run-time computation. The rest
--- are done at compile-time only. 
-
-hProjectAwayByHNats (_ :: Proxy (ns :: [HNat])) l = 
-    hUnfold (FHUProj :: FHUProj False ns) (l,hZero)
-
 {-
-class HProjectAwayByHNats ns l l' | ns l -> l'
- where
-  hProjectAwayByHNats :: ns -> l -> l'
-
-instance ( HLength l len
-         , HBetween len nats
-         , HDiff nats ns ns'
-         , HProjectByHNats ns' l l'
-         )
-           => HProjectAwayByHNats ns l l'
- where
-  hProjectAwayByHNats ns l = l'
-   where
-    len  = hLength l
-    nats = hBetween len
-    ns'  = hDiff nats ns
-    l'   = hProjectByHNats ns' l
--}
-
-{-
-
--- --------------------------------------------------------------------------
--- * Enumerate naturals
--- | from 1 to x - 1
-
-class HBetween x y | x -> y
- where
-  hBetween :: x -> y
-
-instance HBetween (HSucc HZero) (HCons HZero HNil)
- where
-  hBetween _ = HCons hZero HNil
-
-instance ( HNat x
-         , HBetween (HSucc x) y
-         , HAppend y (HCons (HSucc x) HNil) z
-         , HList y
-         )
-           => HBetween (HSucc (HSucc x)) z
- where
-  hBetween x = hBetween (hPred x) `hAppend` HCons (hPred x) HNil
-
-
--- * Set-difference on naturals
-
-class HDiff x y z | x y -> z
- where
-  hDiff :: x -> y -> z
-
-instance HDiff HNil x HNil
- where
-  hDiff _ _ = HNil
-
-instance ( HOrdMember e y b
-         , HDiff x y z
-         , HCond b z (HCons e z) z'
-         )
-           => HDiff (HCons e x) y z'
- where
-  hDiff (HCons e x) y = z'
-   where z' = hCond b z (HCons e z)
-         b  = hOrdMember e y
-         z  = hDiff x y
-
-
--- * Membership test for types with 'HOrd' instances
--- |
--- This special type equality/comparison is entirely pure!
-
-class HOrdMember e l b | e l -> b
- where
-  hOrdMember :: e -> l -> b
-
-instance HOrdMember e HNil HFalse
- where
-  hOrdMember _ _ = hFalse
-
-instance ( HEq e e' b1
-         , HOrdMember e l b2
-         , HOr b1 b2 b
-         )
-           => HOrdMember e (HCons e' l) b
- where
-  hOrdMember e (HCons e' l) = hOr b1 b2
-   where
-    b1 = hEq e e'
-    b2 = hOrdMember e l
-
-
 -- --------------------------------------------------------------------------
 -- * Length
 

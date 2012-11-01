@@ -1,1 +1,41 @@
-((HCons (Key 42) (HCons (Key 42) HNil),HCons (Key 42) (HCons (Name "Angus") HNil),HCons (Name "Angus") (HCons Cow (HCons (Price 75.5) HNil)),(HCons (Key 42) (HCons (Name "Angus") HNil),HCons Cow (HCons (Price 75.5) HNil))),((Cow,1,True,HCons (Key 42) (HCons (Name "Angus") HNil)),((HCons (Key 42) (HCons Cow (HCons (Price 75.5) HNil)),(HCons BSE (HCons (Key 42) (HCons (Name "Angus") (HCons Cow (HCons (Price 75.5) HNil)))),(HCons (Key 42) (HCons Sheep (HCons (Price 75.5) HNil)),(HCons BSE (HCons (Key 42) (HCons (Name "Angus") (HCons (Price 75.5) HNil))),(HCons Cow HNil,HCons Cow HNil))))),(((2,False),((1,False),(True,(2,2)))),((Cow,TIP (HCons BSE (HCons (Key 42) (HCons (Name "Angus") (HCons Cow (HCons (Price 75.5) HNil))))),TIP (HCons Sheep (HCons (Key 42) (HCons (Name "Angus") (HCons (Price 75.5) HNil)))),TIP (HCons (Key 42) (HCons (Name "Angus") (HCons Sheep (HCons (Price 75.5) HNil))))),((Record{key=42,name="Angus",breed=Cow},(Cow,(Record{key=42,name="Angus"},(Record{key=42,name="Angus",breed=Sheep},(Record{price=8.8,key=42,name="Angus",breed=Cow},(Record{price=8.8,breed=Cow},(Record{breed=Sheep,key=42,name="Angus"},HNothing,(Record{breed=Cow,key=42,name="Angus"},Record{key=42,name="Angus",breed=Sheep}),False,(True,True),True))))))),((Record{key=42,name="Angus",breed=Cow},(Cow,(Record{key=42,name="Angus"},(Record{breed=Sheep,key=42,name="Angus"},(Record{price=8.8,key=42,name="Angus",breed=Cow},Record{price=8.8,breed=Cow}))))),((<Cannot show TIC content!>,Just Cow,Nothing),(<Cannot show Variant content!>,(Nothing,Just "angus"))))))))))
+
+Basic HList tests
+Key 42
+Name "Angus"
+Cow
+Price 75.5
+H[Key 42, Name "Angus", Cow, Price 75.5, Key 42, Name "Angus", Cow, Price 75.5]
+
+testHArray
+H[Key 42]
+H[Key 42, Name "Angus"]
+H[Key 42, Name "Angus"]
+H[Name "Angus", Cow, Price 75.5]
+(H[Key 42, Name "Angus"],H[Cow, Price 75.5])
+
+testHOccurs
+Cow
+1
+True
+H[Key 42, Name "Angus"]
+
+testTypeIndexed
+H[Key 42, Cow, Price 75.5]
+H[BSE, Key 42, Name "Angus", Cow, Price 75.5]
+H[Key 42, Sheep, Price 75.5]
+H[BSE, Key 42, Name "Angus", Price 75.5]
+H[Cow]
+(H[Cow],H[Key 42, Name "Angus", Price 75.5])
+
+testTuple
+(2,False)
+(1,False)
+True
+2
+2
+
+testTIP
+Cow
+TIPH[BSE, Key 42, Name "Angus", Cow, Price 75.5]
+TIPH[Sheep, Key 42, Name "Angus", Price 75.5]
+TIPH[Key 42, Name "Angus", Sheep, Price 75.5]

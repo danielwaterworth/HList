@@ -2,6 +2,11 @@
 {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, UndecidableInstances,
     FlexibleContexts #-}
 {-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TypeOperators #-}
 
 {- |
    The HList library
@@ -16,6 +21,7 @@ module Data.HList.TIP where
 
 import Data.HList.FakePrelude
 import Data.HList.HListPrelude
+import Data.HList.HList
 import Data.HList.HArray
 import Data.HList.HOccurs
 import Data.HList.HTypeIndexed
@@ -24,29 +30,33 @@ import Data.HList.HTypeIndexed
 -- --------------------------------------------------------------------------
 -- | The newtype for type-indexed products
 
-newtype TIP l = TIP l deriving (Read,Show)
+newtype TIP (l :: [*]) = TIP{unTIP:: HList l}
 
-mkTIP :: HTypeIndexed l => l -> TIP l
+instance Show (HList l) => Show (TIP l) where
+  show (TIP l) = "TIP" ++ show l
+
+mkTIP :: HTypeIndexed l => HList l -> TIP l
 mkTIP = TIP
 
-unTIP :: TIP l -> l
-unTIP (TIP l) = l
-
-emptyTIP :: TIP HNil
+emptyTIP :: TIP '[]
 emptyTIP = mkTIP HNil
-
-
 
 -- --------------------------------------------------------------------------
 -- | Type-indexed type sequences
 
-class HList l => HTypeIndexed l
-instance HTypeIndexed HNil
-instance (HOccursNot e l,HTypeIndexed l) => HTypeIndexed (HCons e l)
-
+class HTypeIndexed (l :: [*])
+instance HTypeIndexed '[]
+instance (HOccursNot e l,HTypeIndexed l) => HTypeIndexed (e ': l)
 
 -- --------------------------------------------------------------------------
---
+-- Implementing the HLIstPrelude interface
+
+instance (HOccursNot e l, HTypeIndexed l) => HExtend e (TIP l) 
+ where
+  type HExtendR e (TIP l) = TIP (e ': l)
+  hExtend e (TIP l) = mkTIP (HCons e l)
+
+
 -- One occurrence and nothing is left
 --
 -- This variation provides an extra feature for singleton lists.
@@ -54,75 +64,27 @@ instance (HOccursNot e l,HTypeIndexed l) => HTypeIndexed (HCons e l)
 -- Hence the explicit provision of a result type can be omitted.
 --
 
-instance e' ~ e => HOccurs e (TIP (HCons e' HNil))
- where
+instance e' ~ e => HOccurs e' (TIP '[e]) where
   hOccurs (TIP (HCons e' _)) = e'
 
-instance HOccurs e (HCons x (HCons y l))
-      => HOccurs e (TIP (HCons x (HCons y l)))
- where
+instance HOccurs e (HList (x ': y ': l))
+      => HOccurs e (TIP (x ': y ': l)) where
   hOccurs (TIP l) = hOccurs l
 
-
--- --------------------------------------------------------------------------
--- HOccursNot lifted to TIPs
 
 instance HOccursNot e l => HOccursNot e (TIP l)
 
 
--- --------------------------------------------------------------------------
-
--- | Type-indexed extension
---
--- signature is inferred
---
--- > hExtend' :: (HTypeIndexed t, HOccursNot e t) => e -> TIP t -> TIP (HCons e t)
-hExtend' e (TIP l) = mkTIP (HCons e l)
-
-{- $example
-
-Valid type I
-
-hExtend' :: (HTypeIndexed l, HOccursNot e l)
-         => e -> TIP l -> TIP (HCons e l)
-
-Valid type II
-
-*TIP> :t hExtend'
-hExtend' :: forall l e.
-            (HTypeIndexed (HCons e l)) =>
-            e -> TIP l -> TIP (HCons e l)
-
--}
-
-
--- --------------------------------------------------------------------------
--- Lift extension through HExtend
-
-instance ( HOccursNot e l
-         , HTypeIndexed l
-         )
-      => HExtend e (TIP l) (TIP (HCons e l))
+instance (HAppend (HList l) (HList l'), HTypeIndexed (HAppendList l l'))
+           => HAppend (TIP l) (TIP l')
  where
-  hExtend = hExtend'
-
-
--- --------------------------------------------------------------------------
--- Lifting previous operations
-
-
-instance ( HAppend l l' l''
-         , HTypeIndexed l''
-         )
-           => HAppend (TIP l) (TIP l') (TIP l'')
- where
+  type HAppendR (TIP l) (TIP l') = TIP (HAppendList l l')
   hAppend (TIP l) (TIP l') = mkTIP (hAppend l l')
 
 
-instance HOccurrence e l l' => HOccurrence e (TIP l) l'
- where
-  hOccurrence e = hOccurrence e . unTIP
-
+-- instance HOccurrence e l l' => HOccurrence e (TIP l) l'
+--  where
+--   hOccurrence e = hOccurrence e . unTIP
 
 -- --------------------------------------------------------------------------
 -- | Shielding type-indexed operations
@@ -130,24 +92,24 @@ instance HOccurrence e l l' => HOccurrence e (TIP l) l'
 
 onTIP f (TIP l) = mkTIP (f l)
 
-tipyDelete  p t  = onTIP (hDeleteAtProxy p) t
-tipyUpdate  e t  = onTIP (hUpdateAtType e) t
-tipyProject ps t = onTIP (hProjectByProxies ps) t
+tipyDelete  p t  = onTIP (hDeleteAt p) t
+tipyUpdate  e t  = onTIP (hUpdateAt e) t
+tipyProject ps t = onTIP (hProjectBy ps) t
 
 
 -- Split produces two TIPs
 tipySplit ps (TIP l) = (mkTIP l',mkTIP l'')
  where
-  (l',l'') = hSplitByProxies ps l
+  (l',l'') = hSplitBy ps l
 
 
 -- --------------------------------------------------------------------------
 
 -- Subtyping for TIPs
 
-instance SubType (TIP l) (TIP HNil)
-instance (HOccurs e l, SubType (TIP l) (TIP l'))
-      =>  SubType (TIP l) (TIP (HCons e l'))
+instance SubType (TIP l) (TIP '[])
+instance (HOccurs e (TIP l1), SubType (TIP l1) (TIP l2))
+      =>  SubType (TIP l1) (TIP (e ': l2))
 
 
 -- --------------------------------------------------------------------------
@@ -172,12 +134,7 @@ Session log
 > Cow
 
 > *TIP> hExtend BSE myTipyCow
-> TIP (HCons BSE
->     (HCons (Key 42)
->     (HCons (Name "Angus")
->     (HCons Cow
->     (HCons (Price 75.5)
->      HNil)))))
+> TIPH[BSE, Key 42, Name "Angus", Cow, Price 75.5]
 
 > *TIP> BSE .*. myTipyCow
 > --- same as before ---
@@ -186,12 +143,10 @@ Session log
 > Type error ...
 
 > *TIP> Sheep .*. tipyDelete myTipyCow (HProxy::HProxy Breed)
->TIP (HCons Sheep (HCons (Key 42) (HCons (Name "Angus") (HCons (Price 75.5) HNil))))
+> TIPH[Sheep, Key 42, Name "Angus", Price 75.5]
 
 > *TIP> tipyUpdate myTipyCow Sheep
-> TIP (HCons (Key 42) (HCons (Name "Angus") (HCons Sheep (HCons (Price 75.5) HNil))))
+> TIPH[Key 42, Name "Angus", Sheep, Price 75.5]
 
 -}
-
-
 
