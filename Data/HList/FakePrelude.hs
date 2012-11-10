@@ -56,6 +56,13 @@ data Proxy tp
 proxy :: Proxy tp
 proxy =  undefined
 
+-- A special Proxy for record labels, polykinded
+data Label l = Label
+
+labelToProxy :: Label l -> Proxy l
+labelToProxy = undefined
+
+
 -- --------------------------------------------------------------------------
 
 -- * Booleans

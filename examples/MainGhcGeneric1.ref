@@ -39,3 +39,7 @@ Cow
 TIPH[BSE, Key 42, Name "Angus", Cow, Price 75.5]
 TIPH[Sheep, Key 42, Name "Angus", Price 75.5]
 TIPH[Key 42, Name "Angus", Sheep, Price 75.5]
+
+testRecords
+Record{key=42,name="Angus",breed=Cow}
+Cow

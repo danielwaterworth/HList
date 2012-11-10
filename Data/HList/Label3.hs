@@ -1,4 +1,7 @@
 {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, UndecidableInstances, EmptyDataDecls #-}
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE TypeFamilies #-}
 
 {- |
    The HList library
@@ -36,41 +39,41 @@ import Data.HList.FakePrelude
 import Data.HList.Record (ShowLabel(..))
 
 
--- | Labels are type-level naturals
-data Label x ns desc  -- labels are exclusively type-level entities
+data Lbl (x :: HNat) ns desc  -- labels are exclusively type-level entities
 
 
 -- Public constructors for labels
 
 -- | Construct the first label
-firstLabel :: ns -> desc -> Label HZero ns desc
+firstLabel :: ns -> desc -> Label (Lbl HZero ns desc)
 firstLabel = undefined
 
 
 -- | Construct the next label
-nextLabel :: Label x ns desc -> desc' -> Label (HSucc x) ns desc'
+nextLabel :: Label (Lbl x ns desc) -> desc' -> Label (Lbl (HSucc x) ns desc')
 nextLabel = undefined
 
 
 -- | Equality on labels (descriptions are ignored)
-
+-- Use generic instance
+{-
 instance ( HEq x x' b
-         , TypeEq ns ns' b'
-         , HAnd b b' b''
+         , HEq ns ns' b'
+	 , bres ~ HAnd b b'
          )
-      =>   HEq (Label x ns desc) (Label x' ns' desc') b''
-
+      =>   HEq (Lbl x ns desc) (Lbl x' ns' desc') bres
+-}
 
 -- | Show label
 
-instance (HNat x, Show desc) => ShowLabel (Label x ns desc) where
+instance Show desc => ShowLabel (Lbl x ns desc) where
   showLabel = show . getd
-      where getd :: Label x ns desc -> desc -- for the sake of Hugs
+      where getd :: Label (Lbl x ns desc) -> desc -- for the sake of Hugs
             getd = undefined
 
-instance (HNat x, Show desc) => Show (Label x ns desc)
+instance Show desc => Show (Label (Lbl x ns desc))
  where
   show = show . getd
-      where getd :: Label x ns desc -> desc -- for the sake of Hugs
+      where getd :: Label (Lbl x ns desc) -> desc -- for the sake of Hugs
             getd = undefined
 

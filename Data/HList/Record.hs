@@ -1,5 +1,10 @@
 {-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances,
-  FlexibleContexts, UndecidableInstances, ScopedTypeVariables #-}
+  FlexibleContexts, UndecidableInstances #-}
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE PolyKinds #-}
+{-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
 
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
@@ -26,6 +31,7 @@
 -}
 
 module Data.HList.Record
+{-
 (
     -- * Records
 
@@ -112,11 +118,12 @@ module Data.HList.Record
     HRearrange(hRearrange2),
     HRearrange'(hRearrange2'),
     UnionSymRec'(..)
-) where
+) -} where
 
 
 import Data.HList.FakePrelude
 import Data.HList.HListPrelude
+import Data.HList.HList
 import Data.HList.HArray
 
 
@@ -129,17 +136,19 @@ import Data.HList.HArray
 -- labels is erased.
 
 -- | Field of label l with value type v
+-- Polikinded with respect to l: label may be a symbol, a nat, etc.
 newtype LVPair l v = LVPair { valueLVPair :: v } deriving Eq
 
 -- | Label accessor
-labelLVPair :: LVPair l v -> l
+labelLVPair :: LVPair l v -> Label l
 labelLVPair = undefined
 
-newLVPair :: l -> v -> LVPair l v
+newLVPair :: Label l -> v -> LVPair l v
 newLVPair _ = LVPair
 
 infixr 4 :=:
 type l :=: v = LVPair l v
+
 
 infixr 4 .=.
 {-|
@@ -154,126 +163,124 @@ infixr 4 .=.
   > emptyRecord
 
 -}
-(.=.) :: l -> v -> LVPair l v
+(.=.) :: Label l -> v -> LVPair l v
 l .=. v = newLVPair l v
 
 
-newtype Record r = Record r deriving Eq
+newtype Record (r :: [*]) = Record (HList r) -- deriving Eq
 
 
 -- | Build a record
-mkRecord :: HRLabelSet r => r -> Record r
+mkRecord :: HRLabelSet r => HList r -> Record r
 mkRecord = Record
 
 
 -- | Build an empty record
-emptyRecord :: Record HNil
+emptyRecord :: Record '[]
 emptyRecord = mkRecord HNil
 
 
 -- | Propery of a proper label set for a record: no duplication of labels
 
-class HRLabelSet ps
-instance HRLabelSet HNil
-instance HRLabelSet (HCons x HNil)
+data DuplicatedLabel l
+
+class HRLabelSet (ps :: [*])
+instance HRLabelSet '[]
+instance HRLabelSet '[x]
 instance ( HEq l1 l2 leq
-         , HRLabelSet' l1 v1 l2 v2 leq r
-         ) => HRLabelSet (HCons (LVPair l1 v1) (HCons (LVPair l2 v2) r))
+         , HRLabelSet' l1 l2 leq r
+         ) => HRLabelSet (LVPair l1 v1 ': LVPair l2 v2 ': r)
 
-class HRLabelSet' l1 v1 l2 v2 leq r
-instance ( HRLabelSet (HCons (LVPair l2 v2) r)
-         , HRLabelSet (HCons (LVPair l1 v1) r)
-         ) => HRLabelSet' l1 v1 l2 v2 HFalse r
-instance ( Fail (DuplicatedLabel l1) ) => HRLabelSet' l1 v1 l2 v2 HTrue r
+class HRLabelSet' l1 l2 (leq::Bool) (r :: [*])
+instance ( HRLabelSet (LVPair l2 () ': r)
+         , HRLabelSet (LVPair l1 () ': r)
+         ) => HRLabelSet' l1 l2 False r
+instance ( Fail (DuplicatedLabel l1) ) => HRLabelSet' l1 l2 True r
 
+
+-- Relation between HLabelSet and HRLabelSet
 {-
 instance (HZip ls vs ps, HLabelSet ls) => HRLabelSet ps
 -}
 
 class HLabelSet ls
-instance HLabelSet HNil
-instance (HMember x ls xmem, HLabelSet' x ls xmem) => HLabelSet (HCons x ls)
+instance HLabelSet '[]
+instance HLabelSet '[x]
+instance ( HEq l1 l2 leq
+         , HLabelSet' l1 l2 leq r
+         ) => HLabelSet (l1 ': l2 ': r)
 
-class HLabelSet' x ls xmem
-instance HLabelSet ls => HLabelSet' x ls HFalse
-
-data DuplicatedLabel l = DuplicatedLabel l
-instance Fail (DuplicatedLabel x) => HLabelSet' x ls HTrue
+class HLabelSet' l1 l2 (leq::Bool) r
+instance ( HLabelSet (l2 ': r)
+         , HLabelSet (l1 ': r)
+         ) => HLabelSet' l1 l2 False r
+instance ( Fail (DuplicatedLabel l1) ) => HLabelSet' l1 l2 True r
 
 -- | Construct the (phantom) list of labels of the record.
 --
--- This is a purely type-level function.
-class RecordLabels r ls | r -> ls
-instance RecordLabels HNil HNil
-instance RecordLabels r' ls
-      => RecordLabels (HCons (LVPair l v) r') (HCons l ls)
 
-recordLabels' :: RecordLabels r ls => r -> ls
-recordLabels' r = undefined
+type family RecordLabels (r :: [*]) :: [*] -- XXX should be [k]
+type instance RecordLabels '[]               = '[]
+type instance RecordLabels (LVPair l v ': r) = l ': RecordLabels r
 
-recordLabels :: RecordLabels r ls => Record r -> ls
-recordLabels (Record r) = recordLabels' r
+recordLabels :: Record r -> Proxy (RecordLabels r)
+recordLabels = undefined
 
--- | Construct the list of values of the record.
-class RecordValues r ls | r -> ls
-    where recordValues' :: r -> ls
-instance RecordValues HNil HNil
-    where recordValues' _ = HNil
-instance RecordValues r' vs
-      => RecordValues (HCons (LVPair l v) r') (HCons v vs)
-    where recordValues' ~(HCons (LVPair v) r') = HCons v (recordValues' r')
+-- | Construct the Hlist of values of the record.
+class RecordValues (r :: [*]) where
+  type RecordValuesR r :: [*]
+  recordValues' :: HList r -> HList (RecordValuesR r)
 
-recordValues :: RecordValues r vs => Record r -> vs
+instance RecordValues '[] where
+  type RecordValuesR '[] = '[]
+  recordValues' _ = HNil
+instance RecordValues r=> RecordValues (LVPair l v ': r) where
+   type RecordValuesR (LVPair l v ': r) = v ': RecordValuesR r
+   recordValues' (HCons (LVPair v) r) = HCons v (recordValues' r)
+
+recordValues :: RecordValues r => Record r -> HList (RecordValuesR r)
 recordValues (Record r) = recordValues' r
-
 
 
 -- --------------------------------------------------------------------------
 
 -- 'Show' instance to appeal to normal records
 
-instance ShowComponents r => Show (Record r)
- where
+instance ShowComponents r => Show (Record r) where
   show (Record r) =  "Record{"
                   ++ showComponents "" r
                   ++ "}"
 
-class ShowComponents l
- where
-  showComponents :: String -> l -> String
+class ShowComponents l where
+  showComponents :: String -> HList l -> String
 
-instance ShowComponents HNil
- where
-  showComponents _ HNil = ""
+instance ShowComponents '[] where
+  showComponents _ _ = ""
 
 instance ( ShowLabel l
          , Show v
          , ShowComponents r
          )
-      =>   ShowComponents (HCons (LVPair l v) r)
- where
+      =>   ShowComponents (LVPair l v ': r) where
   showComponents comma (HCons f@(LVPair v) r)
      =  comma
-     ++ showLabel (labelLVPair f)
+     ++ showLabel ((labelLVPair f) :: Label l)
      ++ "="
      ++ show v
      ++ showComponents "," r
 
-class ShowLabel l
- where
-  showLabel :: l -> String
+class ShowLabel l where
+  showLabel :: Label l -> String
 
 
 -- --------------------------------------------------------------------------
 
 -- Extension
 
-instance HRLabelSet (HCons (LVPair l v) r)
-    => HExtend (LVPair l v) (Record r) (Record (HCons (LVPair l v) r))
- where
-  hExtend f (Record r) = mkRecord (HCons f r)
+instance HRLabelSet (LVPair l v ': r) => HExtend (LVPair (l :: *) v) (Record r) where
+  type HExtendR (LVPair l v) (Record r) = Record (LVPair l v ': r)
+  f .*. (Record r) = mkRecord (HCons f r)
 
-infixr 2 .*.
 
 -- * For records
 
@@ -287,21 +294,15 @@ infixr 2 .*.
   >        .*. field2
 
 -}
-(.*.) :: HExtend e l l' => e -> l -> l'
-(.*.) =  hExtend
-
 
 -- --------------------------------------------------------------------------
 
 -- Concatenation
 
-instance ( HRLabelSet r''
-         , HAppend r r' r''
-         )
-    => HAppend (Record r) (Record r') (Record r'')
- where
+instance (HRLabelSet (HAppendList r1 r2), HAppend (HList r1) (HList r2))
+    => HAppend (Record r1) (Record r2) where
+  type HAppendR (Record r1) (Record r2) = Record (HAppendList r1 r2)
   hAppend (Record r) (Record r') = mkRecord (hAppend r r')
-
 
 -- --------------------------------------------------------------------------
 
@@ -314,9 +315,8 @@ instance ( HRLabelSet r''
 -- | Because 'hLookupByLabel' is so frequent and important, we implement
 -- it separately, more efficiently. The algorithm is familiar assq, only
 -- the comparison operation is done at compile-time
-class HasField l r v | l r -> v
-  where
-    hLookupByLabel:: l -> r -> v
+class HasField l r v | l r -> v where
+    hLookupByLabel:: Label l -> r -> v
 
 {-
 instance ( RecordLabels r ls
@@ -333,22 +333,21 @@ instance ( RecordLabels r ls
 -}
 
 
+instance (HEq l l1 b, HasField' b l (LVPair l1 v1 ': r) v)
+    => HasField l (Record (LVPair l1 v1 ': r)) v where
+    hLookupByLabel l (Record r) =
+             hLookupByLabel' (undefined::Proxy b) l r
 
-instance HasField l r v => HasField l (Record r) v where
-    hLookupByLabel l (Record r) = hLookupByLabel l r
+-- Alas, I have to set l :: * even though it could be other kinds.
+-- Check back with GHC 7.8
 
-class HasField' b l r v | b l r -> v where
-    hLookupByLabel':: b -> l -> r -> v
+class HasField' (b::Bool) (l :: *) (r::[*]) v | b l r -> v where
+    hLookupByLabel':: Proxy b -> Label l -> HList r -> v
 
-instance (HEq l l' b, HasField' b l (HCons (LVPair l' v') r) v)
-    => HasField l (HCons (LVPair l' v') r) v where
-    hLookupByLabel l r@(HCons f' _) =
-             hLookupByLabel' (hEq l (labelLVPair f')) l r
-
-instance HasField' HTrue l (HCons (LVPair l v) r) v where
+instance HasField' True l (LVPair l v ': r) v where
     hLookupByLabel' _ _ (HCons (LVPair v) _) = v
-instance HasField l r v => HasField' HFalse l (HCons fld r) v where
-    hLookupByLabel' _ l (HCons _ r) = hLookupByLabel l r
+instance HasField l (Record r) v => HasField' False l (fld ': r) v where
+    hLookupByLabel' _ l (HCons _ r) = hLookupByLabel l (Record r)
 
 
 
@@ -361,9 +360,10 @@ infixr 9 .!.
   >         .*. label2 .=. record2 .!. label2
 
 -}
-(.!.) :: (HasField l r v) => r -> l -> v
+(.!.) :: (HasField l r v) => r -> Label l -> v
 r .!. l =  hLookupByLabel l r
 
+{-
 
 -- --------------------------------------------------------------------------
 
@@ -681,3 +681,4 @@ instance Fail (FieldNotFound l) =>
 instance Fail (ExtraField l) => 
           HRearrange HNil (HCons (LVPair l v) a) (ExtraField l) where
    hRearrange2 _ _ = ExtraField
+-}

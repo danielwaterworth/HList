@@ -24,22 +24,6 @@ import Data.HList.HList
 import Data.HList.HArray
 import Data.HList.HOccurs
 
-{-
--- --------------------------------------------------------------------------
-
-infixr 2 :+:
-infixr 2 .+.
-
-type e :+: l = HCons (Proxy e) l
-
-{-|
-  Type-indexed rows append. Very similar to (.*.), so
-  keep the same fixity.
--}
-(.+.) ::  (HExtend (Proxy e) l l') => e -> l -> l'
-e .+. r = hExtend (toProxy e) r
--}
-
 -- --------------------------------------------------------------------------
 -- | Map a type to a natural (index within the collection)
 -- This is a purely type-level computation

@@ -54,7 +54,7 @@ instance (HOccursNot e l,HTypeIndexed l) => HTypeIndexed (e ': l)
 instance (HOccursNot e l, HTypeIndexed l) => HExtend e (TIP l) 
  where
   type HExtendR e (TIP l) = TIP (e ': l)
-  hExtend e (TIP l) = mkTIP (HCons e l)
+  e .*. TIP l = mkTIP (HCons e l)
 
 
 -- One occurrence and nothing is left
@@ -133,7 +133,7 @@ Session log
 > *TIP> hOccurs myTipyCow :: Breed
 > Cow
 
-> *TIP> hExtend BSE myTipyCow
+> *TIP> BSE .*. myTipyCow
 > TIPH[BSE, Key 42, Name "Angus", Cow, Price 75.5]
 
 > *TIP> BSE .*. myTipyCow

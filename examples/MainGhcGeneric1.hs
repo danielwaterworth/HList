@@ -44,9 +44,11 @@ import Data.HList.TIP
 
 import Data.HList.TypeEqO
 
+import Data.HList.Record
+import Data.HList.Label3
+
 {-
 import Data.HList.RecordAdv
-import Data.HList.Label3
 import Data.HList.RecordP
 -}
 
@@ -132,7 +134,7 @@ testTypeIndexed = do
   print $ hSplitBy (undefined:: Proxy '[Breed]) angus
  where 
   typeIdx1 = hDeleteMany (undefined::Proxy Name) angus
-  typeIdx2 = hExtend BSE angus
+  typeIdx2 = BSE .*. angus
 
 -- |
 -- This example from the TIR paper challenges singleton lists.
@@ -163,7 +165,7 @@ tuple (TIP l) = let
 -- | A specific tuple
 -- Need to import an instance of TypeEq to be able to run the examples
 oneTrue :: TIP '[Int, Bool]		-- inferred
-oneTrue = hExtend (1::Int) (hExtend True emptyTIP)
+oneTrue = (1::Int) .*. True .*. emptyTIP
 
 testTuple = do
   putStrLn "\ntestTuple"
@@ -189,7 +191,7 @@ animalKey' l = hOccurs (animalish l) :: Key
 testTIP = do
   putStrLn "\ntestTIP"
   print $ (hOccurs myTipyCow :: Breed)
-  print $ hExtend BSE myTipyCow
+  print $ BSE .*. myTipyCow
   -- print $ hExtend Sheep $ myTipyCow
   {- if we uncomment the line above, we get the type error
      about the violation of the TIP condition: Breed type
@@ -198,10 +200,9 @@ testTIP = do
     No instance for (Fail * (TypeFound Breed))
       arising from a use of `hExtend'
   -}
-  print $ hExtend Sheep $ tipyDelete (undefined::Proxy Breed) myTipyCow
+  print $ Sheep .*. tipyDelete (undefined::Proxy Breed) myTipyCow
   print $ tipyUpdate Sheep myTipyCow
 
-{-
 data MyNS = MyNS -- a name space for record labels
 
 key   = firstLabel MyNS  (undefined::DKey)
@@ -220,6 +221,12 @@ data DPrice; instance Show DPrice where show _ = "price"
 
 getKey l = hLookupByLabel key l
 
+testRecords = do
+  putStrLn "\ntestRecords"
+  print $ unpricedAngus
+  print $ unpricedAngus .!. breed
+
+{-
 testRecords =   ( test1 
               , ( test2
               , ( test3 
@@ -229,8 +236,6 @@ testRecords =   ( test1
 	      , (test7, test81, test82, test83, test84, test85)
                 ))))))
  where
-  test1 = unpricedAngus
-  test2 = test1 .!. breed
   test3 = hDeleteAtLabel breed test1
   test4 = breed .=. Sheep .@. test1
   test5 = price .=. 8.8 .*. test1
@@ -325,3 +330,5 @@ main = do
        testTypeIndexed
        testTuple
        testTIP
+       testRecords
+

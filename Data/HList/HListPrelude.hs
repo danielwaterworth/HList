@@ -24,7 +24,8 @@ import Data.HList.FakePrelude
 
 class HExtend e l where
   type HExtendR e l
-  hExtend :: e -> l -> HExtendR e l
+  (.*.) :: e -> l -> HExtendR e l
+infixr 2 .*.
 
 -- Poly-kinded
 class SubType l l'

@@ -1,3 +1,6 @@
+08 Nov 2012
+	Started porting Records.
+	
 31 Oct 2012
 	New file HList/HList.hs contains the implementation of
 	heterogeneous lists. HListPrelude.hs defines operations

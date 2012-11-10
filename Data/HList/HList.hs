@@ -61,7 +61,7 @@ hTail (HCons _ l) = l
 
 instance HExtend e (HList l) where
   type HExtendR e (HList l) = HList (e ': l)
-  hExtend = HCons
+  (.*.) = HCons
 
 instance HAppend (HList l1) (HList l2) where
   type HAppendR (HList l1) (HList l2) = HList (HAppendList l1 l2)
