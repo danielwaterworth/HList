@@ -225,6 +225,17 @@ testRecords = do
   putStrLn "\ntestRecords"
   print $ unpricedAngus
   print $ unpricedAngus .!. breed
+  print $ test3
+  print $ test4
+  print $ test5
+  print $ hProjectByLabels (hLabels (breed `HCons` price `HCons` HNil)) test5
+ where
+  test3 = hDeleteAtLabel breed unpricedAngus
+  test4 = breed .=. Sheep .@. unpricedAngus
+  test5 = price .=. 8.8 .*. unpricedAngus
+  -- test7 should have the same type as unpricedAngus and test4 but
+  -- with the different order of labels
+  test7 = (newLVPair breed Sheep) .*. test3
 
 {-
 testRecords =   ( test1 
@@ -236,14 +247,6 @@ testRecords =   ( test1
 	      , (test7, test81, test82, test83, test84, test85)
                 ))))))
  where
-  test3 = hDeleteAtLabel breed test1
-  test4 = breed .=. Sheep .@. test1
-  test5 = price .=. 8.8 .*. test1
-  test6 = hProjectByLabels (HCons breed (HCons price HNil)) test5
-  -- test7 should have the same type as test1 and test4 but
-  -- with the different order of labels
-  -- test7 is even the same value as test4, modulo field order
-  test7 = hExtend (newLVPair breed Sheep) test3
   test81 = equivR test1 test3 -- HNothing
   test82 = let HJust (r17,r71) = equivR test1 test7 in (r17 test1,r71 test7)
   test83 = let HJust (r17,r71) = 

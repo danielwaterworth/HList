@@ -1,6 +1,7 @@
 {-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances,
   FlexibleContexts, UndecidableInstances #-}
 {-# LANGUAGE GADTs #-}
+{-# LANGUAGE NoMonomorphismRestriction #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE PolyKinds #-}
@@ -226,7 +227,7 @@ type instance RecordLabels (LVPair l v ': r) = l ': RecordLabels r
 recordLabels :: Record r -> Proxy (RecordLabels r)
 recordLabels = undefined
 
--- | Construct the Hlist of values of the record.
+-- | Construct the HList of values of the record.
 class RecordValues (r :: [*]) where
   type RecordValuesR r :: [*]
   recordValues' :: HList r -> HList (RecordValuesR r)
@@ -241,6 +242,14 @@ instance RecordValues r=> RecordValues (LVPair l v ': r) where
 recordValues :: RecordValues r => Record r -> HList (RecordValuesR r)
 recordValues (Record r) = recordValues' r
 
+
+-- Polykinded
+type family LabelsOf (ls :: [*]) :: [*]
+type instance LabelsOf '[] = '[]
+type instance LabelsOf (Label l ': r)  = l ': LabelsOf r
+
+hLabels :: HList l -> Proxy (LabelsOf l)
+hLabels = undefined
 
 -- --------------------------------------------------------------------------
 
@@ -277,7 +286,8 @@ class ShowLabel l where
 
 -- Extension
 
-instance HRLabelSet (LVPair l v ': r) => HExtend (LVPair (l :: *) v) (Record r) where
+instance HRLabelSet (LVPair l v ': r) 
+    => HExtend (LVPair (l :: *) v) (Record r) where
   type HExtendR (LVPair l v) (Record r) = Record (LVPair l v ': r)
   f .*. (Record r) = mkRecord (HCons f r)
 
@@ -338,7 +348,7 @@ instance (HEq l l1 b, HasField' b l (LVPair l1 v1 ': r) v)
     hLookupByLabel l (Record r) =
              hLookupByLabel' (undefined::Proxy b) l r
 
--- Alas, I have to set l :: * even though it could be other kinds.
+-- XXX Alas, I have to set l :: * even though it could be other kinds.
 -- Check back with GHC 7.8
 
 class HasField' (b::Bool) (l :: *) (r::[*]) v | b l r -> v where
@@ -363,16 +373,15 @@ infixr 9 .!.
 (.!.) :: (HasField l r v) => r -> Label l -> v
 r .!. l =  hLookupByLabel l r
 
-{-
-
 -- --------------------------------------------------------------------------
 
 -- Delete
 
-hDeleteAtLabel :: (H2ProjectByLabels (HCons e HNil) t t1 t2) =>e -> Record t -> Record t2
-hDeleteAtLabel l (Record r) = Record r'
- where
-  (_,r')  = h2projectByLabels (HCons l HNil) r
+hDeleteAtLabel :: forall l t t1 t2. 
+   (H2ProjectByLabels '[l] t t1 t2) =>
+   Label l -> Record t -> Record t2
+hDeleteAtLabel _ (Record r) = 
+  Record $ snd $ h2projectByLabels (undefined::Proxy '[l]) r
 
 infixl 2 .-.
 {-|
@@ -397,8 +406,8 @@ infixl 2 .-.
   >         .-. label1
 
 -}
-(.-.) :: (H2ProjectByLabels (HCons e HNil) r _r' r') =>
-    Record r -> e -> Record r'
+(.-.) :: (H2ProjectByLabels '[l] r _r' r') =>
+    Record r -> Label l -> Record r'
 r .-. l =  hDeleteAtLabel l r
 
 
@@ -406,11 +415,11 @@ r .-. l =  hDeleteAtLabel l r
 
 -- Update
 
-hUpdateAtLabel :: (HUpdateAtHNat n (LVPair l v) t l',HFind l ls n,RecordLabels t ls) =>l -> v -> Record t -> Record l'
-hUpdateAtLabel l v (Record r) = Record r'
- where
-  n    = hFind l (recordLabels' r)
-  r'   = hUpdateAtHNat n (newLVPair l v) r
+hUpdateAtLabel :: forall (r :: [*]) (l :: *) (n::HNat) (v :: *). 
+  (HFind l (RecordLabels r) n, HUpdateAtHNat n (LVPair l v) r) =>
+  Label l -> v -> Record r -> Record (HUpdateAtHNatR n (LVPair l v) r)
+hUpdateAtLabel l v (Record r) = 
+    Record (hUpdateAtHNat (undefined::Proxy n) (newLVPair l v) r)
 
 infixr 2 .@.
 {-|
@@ -435,11 +444,14 @@ f@(LVPair v) .@. r  =  hUpdateAtLabel (labelLVPair f) v r
 
 
 -- | @hProjectByLabels ls r@ returns @r@ with only the labels in @ls@ remaining
-hProjectByLabels :: (HRLabelSet a, H2ProjectByLabels ls t a b) => ls -> Record t -> Record a
+hProjectByLabels :: (HRLabelSet a, H2ProjectByLabels ls t a b) => 
+	Proxy ls -> Record t -> Record a
 hProjectByLabels ls (Record r) = mkRecord (fst $ h2projectByLabels ls r)
 
 -- | See 'H2ProjectByLabels'
-hProjectByLabels2 :: (H2ProjectByLabels ls t t1 t2, HRLabelSet t1, HRLabelSet t2) =>ls -> Record t -> (Record t1, Record t2)
+hProjectByLabels2 :: 
+    (H2ProjectByLabels ls t t1 t2, HRLabelSet t1, HRLabelSet t2) =>
+    Proxy ls -> Record t -> (Record t1, Record t2)
 hProjectByLabels2 ls (Record r) = (mkRecord rin, mkRecord rout)
    where (rin,rout) = h2projectByLabels ls r
 
@@ -448,54 +460,53 @@ hProjectByLabels2 ls (Record r) = (mkRecord rin, mkRecord rout)
 --  > r === rin `disjoint-union` rout
 --  > labels rin === ls
 --  >     where (rin,rout) = hProjectByLabels ls r
-class H2ProjectByLabels ls r rin rout | ls r -> rin rout where
-    h2projectByLabels :: ls -> r -> (rin,rout)
+-- XXX ls should be [k], poly-kinded; OTH, r, rin, rout are of kind [*]
+class H2ProjectByLabels (ls::[*]) r rin rout | ls r -> rin rout where
+    h2projectByLabels :: Proxy ls -> HList r -> (HList rin,HList rout)
 
-instance H2ProjectByLabels HNil r HNil r where
+instance H2ProjectByLabels '[] r '[] r where
     h2projectByLabels _ r = (HNil,r)
 
-instance H2ProjectByLabels (HCons l ls) HNil HNil HNil where
+instance H2ProjectByLabels (l ': ls) '[] '[] '[] where
     h2projectByLabels _ _ = (HNil,HNil)
 
-instance (HMemberM l' (HCons l ls) b,
-          H2ProjectByLabels' b (HCons l ls) (HCons (LVPair l' v') r') rin rout)
-    => H2ProjectByLabels (HCons l ls) (HCons (LVPair l' v') r') rin rout where
-    -- h2projectByLabels = h2projectByLabels' (undefined::b)
-    -- The latter is solely for the Hugs benefit
-    h2projectByLabels ls r@(HCons _ _) =h2projectByLabels' (undefined::b) ls r
-      -- where b = hMember (labelLVPair f') ls
+instance (HMemberM l1 (l ': ls) b,
+          H2ProjectByLabels' b (l ': ls) (LVPair l1 v1 ': r1) rin rout)
+    => H2ProjectByLabels (l ': ls) (LVPair l1 v1 ': r1) rin rout where
+    h2projectByLabels = h2projectByLabels' (undefined::(Proxy b))
 
-class H2ProjectByLabels' b ls r rin rout | b ls r -> rin rout where
-    h2projectByLabels' :: b -> ls -> r -> (rin,rout)
+class H2ProjectByLabels' (b::Maybe [*]) (ls::[*]) r rin rout 
+                         | b ls r -> rin rout where
+    h2projectByLabels' :: Proxy b -> Proxy ls -> 
+				     HList r -> (HList rin,HList rout)
 
-instance H2ProjectByLabels ls' r' rin rout =>
-    H2ProjectByLabels' (HJust ls') ls (HCons f' r') (HCons f' rin) rout where
+instance H2ProjectByLabels ls1 r rin rout =>
+    H2ProjectByLabels' ('Just ls1) ls (f ': r) (f ': rin) rout where
     h2projectByLabels' _ _ (HCons x r) = (HCons x rin, rout)
-        where (rin,rout) = h2projectByLabels (undefined::ls') r
+        where (rin,rout) = h2projectByLabels (undefined::Proxy ls1) r
 
-instance H2ProjectByLabels ls r' rin rout =>
-    H2ProjectByLabels' HNothing ls (HCons f' r') rin (HCons f' rout) where
+instance H2ProjectByLabels ls r rin rout =>
+    H2ProjectByLabels' 'Nothing ls (f ': r) rin (f ': rout) where
     h2projectByLabels' _ ls (HCons x r) = (rin, HCons x rout)
         where (rin,rout) = h2projectByLabels ls r
 
-
 -- --------------------------------------------------------------------------
-
 -- | Rename the label of record
+
+{-
 hRenameLabel :: (HRLabelSet (HCons (LVPair l v) t2),HasField e t1 v,H2ProjectByLabels (HCons e HNil) t1 t t2) =>
-    e -> l -> Record t1 -> Record (HCons (LVPair l v) t2)
+    e -> l -> Record t1 -> Record (LVPair l v ': t2)
+-}
 hRenameLabel l l' r = r''
  where
   v   = hLookupByLabel l r
   r'  = hDeleteAtLabel l r
-  r'' = hExtend (newLVPair l' v) r'
+  r'' = newLVPair l' v .*. r'
 
 
 -- --------------------------------------------------------------------------
 
 -- | A variation on 'hUpdateAtLabel': type-preserving update.
-hTPupdateAtLabel :: (HasField l t a,HUpdateAtHNat n (LVPair l a) t l',HFind l ls n,RecordLabels t ls) =>
-    l -> a -> Record t -> Record l'
 hTPupdateAtLabel l v r = hUpdateAtLabel l v r
  where
    te :: a -> a -> ()
@@ -521,14 +532,13 @@ infixr 2 .<.
 f@(LVPair v) .<. r = hTPupdateAtLabel (labelLVPair f) v r
 
 -- --------------------------------------------------------------------------
-
 -- | Subtyping for records
-instance ( RecordLabels r' ls
-         , H2ProjectByLabels ls r r' rout
-         )
-    => SubType (Record r) (Record r')
+
+instance H2ProjectByLabels (RecordLabels r2) r1 r2 rout
+    => SubType (Record r1) (Record r2)
 
 
+{-
 -- --------------------------------------------------------------------------
 
 -- Left Union

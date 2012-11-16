@@ -366,18 +366,18 @@ hMember = undefined
 -- If not, return 'Nothing
 -- If the element does occur, return 'Just l1
 -- where l1 is a type-level list without e
-{-
-class HMemberM e1 (l :: [*]) (r :: Maybe [*]) | e1 l -> r
+-- XXX should be poly-kinded
+class HMemberM (e1 :: *) (l :: [*]) (r :: Maybe [*]) | e1 l -> r
 instance HMemberM e1 '[] 'Nothing
-instance (HEq e1 e b, HMemberM' b e1 (e ': l) res)
+instance (HEq e1 e b, HMemberM1 b e1 (e ': l) res)
       =>  HMemberM e1 (e ': l) res
-class HMemberM' b e1 (l :: [*]) r | b e1 l -> r
-instance HMemberM' True e1 (e ': l) ('Just l)
-instance (HMemberM e1 l r, HMemberM' r e1 (e ': l) res)
-    => HMemberM' False e1 (e ': l) res
-instance HMemberM' Nothing e1 l Nothing
-instance HMemberM' (Just l1) e1 (e ': l) (Just (e ': l1))
--}
+class HMemberM1 (b::Bool) (e1 :: *) (l :: [*]) (r::Maybe [*]) | b e1 l -> r
+instance HMemberM1 True e1 (e ': l) ('Just l)
+instance (HMemberM e1 l r, HMemberM2 r e1 (e ': l) res)
+    => HMemberM1 False e1 (e ': l) res
+class HMemberM2 (b::Maybe [*]) (e1 :: *) (l :: [*]) (r::Maybe [*]) | b e1 l -> r
+instance HMemberM2 Nothing e1 l Nothing
+instance HMemberM2 (Just l1) e1 (e ': l) (Just (e ': l1))
 
 {-
 -- --------------------------------------------------------------------------
@@ -426,38 +426,20 @@ instance Eq e => HStagedEq' HTrue e e
 class HSet l
 instance HSet HNil
 instance (HMember e l HFalse, HSet l) => HSet (HCons e l)
-
+-}
 
 -- * Find an element in a set based on HEq
-class HNat n => HFind e l n | e l -> n
- where
-  hFind :: e -> l -> n
+-- It is a pure type-level operation
+-- XXX should be poly-kinded
+class HFind (e :: *) (l :: [*]) (n :: HNat) | e l -> n
 
-instance ( HEq e e' b
-         , HFind' b e l n
-         )
-      =>   HFind e (HCons e' l) n
- where
-  hFind e (HCons e' l) = n
-   where
-    b  = hEq e e'
-    n  = hFind' b e l
+instance (HEq e1 e2 b, HFind' b e1 l n) => HFind e1 (e2 ': l) n
 
-class HNat n => HFind' b e l n | b e l -> n
- where
-  hFind' :: b -> e -> l -> n
+class HFind' (b::Bool) (e :: *) (l::[*]) (n::HNat) | b e l -> n
+instance HFind' True e l HZero
+instance HFind e l n => HFind' False e l (HSucc n)
 
-instance HFind' HTrue e l HZero
- where
-  hFind' _ _ _ = hZero
-
-instance HFind e l n
-      => HFind' HFalse e l (HSucc n)
- where
-  hFind' _ e l = hSucc (hFind e l)
-
-
-
+{-
 
 
 -- ** Membership test based on type equality
