@@ -21,10 +21,10 @@ module Data.HList.MakeLabels (makeLabels,label) where
 import Data.HList.FakePrelude
 
 import Language.Haskell.TH.Ppr (pprint)
-import Language.Haskell.TH.Syntax
+import Language.Haskell.TH
 
 import Data.Char (toUpper, toLower)
-import Control.Monad (liftM)
+import Control.Monad (liftM, liftM2)
 
 import Data.Typeable (Typeable)
 
@@ -41,54 +41,13 @@ make_tname str = mkName $ capitalize str
 -- is uncapitalized str
 make_dname str = mkName $ uncapitalize str
 
--- The template of our declaration. We will then replace all occurences
--- of Foo with the desired name
-dcl_template = [d| data Foo deriving Typeable; foo = proxy::Proxy Foo |]
-
--- A very dirty traversal/replacement...
-
-class ReplaceSyntax a where
-    replace_name :: (Name,Name) -> (Name,Name) -> a -> a
-
-instance ReplaceSyntax [Dec] where
-    replace_name frm to dcls = map (replace_name frm to) dcls
-
-instance ReplaceSyntax Dec where
-    replace_name (tfrom,dfrom) (tto,dto)
-                 dcl@(DataD ctx n parms con othern) =
-                     if tfrom == n then
-                        DataD ctx tto parms con othern
-                        else dcl
-    replace_name (tfrom,dfrom) (tto,dto)
-                 dcl@(ValD (VarP n) (NormalB body) []) =
-          let n' = if n == dfrom then dto else n
-          in ValD (VarP n')
-                  (NormalB (replace_name (tfrom,dfrom) (tto,dto) body)) []
-
-    replace_name (tfrom,dfrom) (tto,dto) dcl =
-        error $ "Can't handle: " ++ show dcl
-
-
-instance ReplaceSyntax Exp where
-    replace_name from to (SigE exp tp) =
-                     SigE (replace_name from to exp)
-                          (replace_name from to tp)
-    replace_name from to exp = exp
-
-
-instance ReplaceSyntax Type where
-    replace_name (tfrom,dfrom) (tto,dto) tp@(ConT n) =
-        if n == tfrom then (ConT tto) else tp
-    replace_name from to (AppT t1 t2) =
-        (AppT (replace_name from to t1) (replace_name from to t2))
+dcl n = liftM2 (\a b ->[a,b])
+    (dataD (return []) (make_tname n) [] [] [''Typeable])
+    (valD (varP (make_dname n)) (normalB [| proxy :: Proxy $(conT (make_tname n)) |]) [])
 
 -- | Our main function
 makeLabels :: [String] -> Q [Dec]
-makeLabels = liftM concat . sequence . map repl
- where
- repl n = liftM (replace_name from (to n)) dcl_template
- from = (make_tname "foo",make_dname "foo")
- to n = (make_tname n,make_dname n)
+makeLabels = liftM concat . mapM dcl
 
 -- | Make a single label
 label :: String -> Q [Dec]
