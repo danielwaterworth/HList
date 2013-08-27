@@ -41,6 +41,7 @@ import Data.HList.HArray
 import Data.HList.HOccurs
 import Data.HList.HTypeIndexed
 import Data.HList.TIP
+import Data.HList.TIC
 
 import Data.HList.TypeEqO
 
@@ -275,13 +276,17 @@ testRecordsP =   ( test1
   test6 = fst $ h2projectByLabels (HCons breed (HCons price HNil)) test5
 
 
-type AnimalCol = Key :+: Name :+: Breed :+: Price :+: HNil
+-}
 
-testTIC = (myCol,test2,test3)
+type AnimalCol = [Key,Name,Breed,Price]
+
+testTIC = do
+  putStrLn "\ntestTIC"
+  print $ myCol
+  print $ (unTIC myCol :: Maybe Breed)
+  print $ (unTIC myCol :: Maybe Price)
  where
   myCol = mkTIC Cow :: TIC AnimalCol
-  test2 = unTIC myCol :: Maybe Breed
-  test3 = unTIC myCol :: Maybe Price
 
 {-
 
@@ -298,6 +303,7 @@ Type error ...
 
 -}
 
+{-
 testVariant = (testVar1,(testVar2,(testVar3)))
  where
   animalVar =  key   .=. (proxy::Proxy Integer)
@@ -334,4 +340,4 @@ main = do
        testTuple
        testTIP
        testRecords
-
+       testTIC
