@@ -1,8 +1,8 @@
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
-{-# LANGUAGE EmptyDataDecls #-}
-{-# LANGUAGE MultiParamTypeClasses, FlexibleContexts, FlexibleInstances #-}
-{-# LANGUAGE FunctionalDependencies #-}
-{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE EmptyDataDecls, FlexibleContexts, FlexibleInstances, FunctionalDependencies, MultiParamTypeClasses, UndecidableInstances #-}
+
+
+
 
 -- XXX Updates are delayed...
 -- | Potentially infinite, open, statically constrained HLists...
@@ -23,7 +23,7 @@ instance (Nat n, TypeCast r HNothing) => CHList l n r
 
 -- The first two CHList
 
-data LEmpty = LEmpty			-- and that is it...
+data LEmpty = LEmpty                    -- and that is it...
 
 data L1 = L1
 instance CHList L1 Z (HJust Int) where
@@ -36,7 +36,7 @@ instance CHList L1 (S Z) (HJust Int) where
 class CHL2HL l n r | l n -> r where
     chl_to_hl_n :: l -> n -> r
 
-instance (CHList l n el, CHL2HL (CHL2HL' l el) n r) 
+instance (CHList l n el, CHL2HL (CHL2HL' l el) n r)
     => CHL2HL l n r where
     chl_to_hl_n l n = chl_to_hl_n (CHL2HL' l (chel l n)) n
 
@@ -126,15 +126,15 @@ cl_fold f z l = apply (CLFold f z) (l,Z,chel l Z)
 instance Apply (CLFold f z) (l,n,HNothing) z where
     apply (CLFold _ z) _ = z
 
-instance (Apply f (x,z') r, CHList l (S n) e, 
-	  Apply (CLFold f z) (l,(S n),e) z', Nat n)
+instance (Apply f (x,z') r, CHList l (S n) e,
+          Apply (CLFold f z) (l,(S n),e) z', Nat n)
     => Apply (CLFold f z) (l, n, HJust x) r where
-    apply op@(CLFold f z) (l,n,HJust x) = 
-	apply f (x,apply op (l,S n,chel l (S n)))
+    apply op@(CLFold f z) (l,n,HJust x) =
+        apply f (x,apply op (l,S n,chel l (S n)))
 
 
-test_f1 = cl_fold (uncurry ((+)::Int->Int->Int)) (0::Int) L1 
- 
+test_f1 = cl_fold (uncurry ((+)::Int->Int->Int)) (0::Int) L1
+
 
 -- Taking
 data CLTake n l = CLTake n l
@@ -188,7 +188,7 @@ data LFibs = LFibs  -- lists of Fibonacci numbers
 instance CHList LFibs Z (HJust (S Z))
 instance CHList LFibs (S Z) (HJust (S Z))
 instance (Nat n, CHList LFibs (S n) (HJust e1), CHList LFibs n (HJust e2),
-	  Apply Add (e1,e2) r)
+          Apply Add (e1,e2) r)
     => CHList LFibs (S (S n)) (HJust r)
 
 test_fib = show $ chl_to_hl $ cl_take five LFibs
@@ -251,7 +251,7 @@ instance (Nat n, TypeCast r HNothing, Apply (CK l) (n, r) HTrue) => C1 l n r
 
 instance Apply (CK l) (Z,r) HTrue
 instance Apply (CK l) (S n,HNothing) HTrue
-instance (C1 l n (HJust ep), Apply PLEQ (ep,e) r) 
+instance (C1 l n (HJust ep), Apply PLEQ (ep,e) r)
     => Apply (CK l) (S n,HJust e) r
 
 
@@ -267,8 +267,8 @@ instance C1 LC1 (S (S Z)) (HJust (S (S (S Z))))
 data LC2 = LC2
 instance C1 LC2 Z (HJust Z)
           -- this constraint suggested by the typechecker
-instance (Apply PLEQ (r, S (S r)) HTrue, 
-	  C1 LC2 n (HJust r))
+instance (Apply PLEQ (r, S (S r)) HTrue,
+          C1 LC2 n (HJust r))
     => C1 LC2 (S n) (HJust (S (S r)))
 
 
@@ -311,11 +311,11 @@ newtype S a = S a
 instance Show Z where show _ = "Z"
 instance Show n => Show (S n) where show _ = "S " ++ show (undefined::n)
 
-class Nat a				-- Kind of natural numbers
+class Nat a                             -- Kind of natural numbers
 instance Nat Z
 instance Nat a => Nat (S a)
 
-four = S $ S $ S $ S Z			-- A few sample numbers
+four = S $ S $ S $ S Z                  -- A few sample numbers
 five = S $ four
 seven = S $ S $ five
 
@@ -325,7 +325,7 @@ data HFalse
 
 data HNothing = HNothing
 newtype HJust x = HJust x
-fromHJust (HJust x) = x			-- this is the total function!
+fromHJust (HJust x) = x                 -- this is the total function!
 
 data HNil = HNil deriving Show
 data HCons a b = HCons a b deriving Show

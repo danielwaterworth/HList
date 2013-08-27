@@ -1,4 +1,4 @@
-{-# LANGUAGE KindSignatures,MultiParamTypeClasses,FunctionalDependencies,FlexibleInstances, FlexibleContexts, UndecidableInstances, OverlappingInstances #-}
+{-# LANGUAGE FlexibleContexts, FlexibleInstances, FunctionalDependencies, KindSignatures, MultiParamTypeClasses, OverlappingInstances, UndecidableInstances #-}
 
 {-
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
@@ -63,5 +63,5 @@ instance TypeCast HTrue b => IsTC2 (f a b) f b
 instance TypeCast HFalse b => IsTC2 f x b
 
 -- Sample
-funType :: IsTC2 t (->) b => t -> b
+funType :: IsTC2 t ((->))b=> t -> b
 funType = undefined
