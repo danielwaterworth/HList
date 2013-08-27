@@ -55,13 +55,13 @@ class HProject l l' where
 -- This is a purely type-level computation
 class HType2HNat e l (n :: HNat) | e l -> n
 
---  and lift to the list of types
+--  | and lift to the list of types
 class HTypes2HNats es l (ns :: [HNat]) | es l -> ns
 
--- Delete all elements with the type-level key e from the
+-- | Delete all elements with the type-level key e from the
 -- collection l. Since the key is type-level, it is represented
 -- by a Proxy.
--- polykinded
+-- (polykinded)
 
 class HDeleteMany e l l' | e l -> l' where
   hDeleteMany :: Proxy e -> l -> l'

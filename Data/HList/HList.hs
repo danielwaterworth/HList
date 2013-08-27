@@ -27,6 +27,8 @@ module Data.HList.HList where
 import Data.HList.FakePrelude
 import Data.HList.HListPrelude
 
+import Control.Applicative (Applicative, liftA, liftA2, pure)
+
 
 -- --------------------------------------------------------------------------
 -- * Heterogeneous type sequences
@@ -52,9 +54,11 @@ infixr 2 `HCons`
 -- --------------------------------------------------------------------------
 -- * Basic list functions
 
+-- | 'head'
 hHead :: HList (e ': l) -> e
 hHead (HCons x _) = x
 
+-- | 'tail'
 hTail :: HList (e ': l) -> HList l
 hTail (HCons _ l) = l
 
@@ -71,30 +75,55 @@ type family HAppendList (l1 :: [*]) (l2 :: [*]) :: [*]
 type instance HAppendList '[] l = l
 type instance HAppendList (e ': l) l' = e ': HAppendList l l'
 
+-- | the same as 'hAppend'
 hAppendList :: HList l1 -> HList l2 -> HList (HAppendList l1 l2)
 hAppendList HNil l = l
 hAppendList (HCons x l) l' = HCons x (hAppend l l')
 
--- The original HList code is given below. In both cases
--- we had to program the algorithm twice, at the term and the type levels.
-{-
--- | The class HAppend
+-- --------------------------------------------------------------------------
 
-class HAppend l l' l'' | l l' -> l''
- where
-  hAppend :: l -> l' -> l''
+-- ** Alternative append
 
 
--- | The instance following the normal append
+-- | 'hAppend'' below is implemented using the same idea
+append' :: [a] -> [a] -> [a]
+append' l l' = foldr (:) l' l
 
-instance HList l => HAppend HNil l l
- where
-  hAppend HNil l = l
+-- | Alternative implementation of 'hAppend'. Demonstrates 'HFoldr'
+hAppend' :: (HFoldr FHCons v l) => HList l -> v -> HFoldrR FHCons v l
+hAppend' l l' = hFoldr FHCons l' l
 
-instance (HList l, HAppend l l' l'')
-      => HAppend (HCons x l) l' (HCons x l'')
- where
-  hAppend (HCons x l) l' = HCons x (hAppend l l')
+data FHCons = FHCons
+
+instance Apply FHCons (e,HList l) where
+    type  ApplyR FHCons (e,HList l) =  HList (e ': l)
+    apply _ (e,l) = HCons e l
+
+-- ** Historical append
+
+{- $
+
+The original HList code is included below. In both cases
+we had to program the algorithm twice, at the term and the type levels.
+
+[@The class HAppend@]
+
+> class HAppend l l' l'' | l l' -> l''
+>  where
+>   hAppend :: l -> l' -> l''
+>
+
+[@The instance following the normal append@]
+
+> instance HList l => HAppend HNil l l
+>  where
+>   hAppend HNil l = l
+>
+> instance (HList l, HAppend l l' l'')
+>       => HAppend (HCons x l) l' (HCons x l'')
+>  where
+>   hAppend (HCons x l) l' = HCons x (hAppend l l')
+
 -}
 
 -- --------------------------------------------------------------------------
@@ -119,6 +148,7 @@ hReverse l = hRevApp l HNil
 -- * A nicer notation for lists
 --
 
+
 -- | List termination
 hEnd :: HList l -> HList l
 hEnd = id
@@ -132,7 +162,7 @@ hEnd = id
 -}
 
 
--- **  Building lists
+-- |  Building lists
 
 hBuild :: (HBuild' '[] r) => r
 hBuild =  hBuild' HNil
@@ -148,16 +178,29 @@ instance HBuild' (a ': l) r
       => HBuild' l (a->r) where
   hBuild' l x = hBuild' (HCons x l)
 
+-- ** examples
+{- $examplesNote
+
+The classes above allow the third (shortest) way to make a list
+(containing a,b,c) in this case
+
+> list = a `HCons` b `HCons` c `HCons` HNil
+> list = a .*. b .*. c .*. HNil
+> list = hEnd $ hBuild a b c
+
+-}
 test_build1 = let x = hBuild True in hEnd x
--- H[True]
+-- ^ >>> H[True]
 
 test_build2 = let x = hBuild True 'a' in hEnd x
--- H[True, 'a']
+-- ^ >>> H[True, 'a']
 
 test_build3 = let x = hBuild True 'a' "ok" in hEnd x
--- H[True, 'a', "ok"]
+-- ^ >>> H[True, 'a', "ok"]
 
-{- $hbuild
+-- *** historical
+{- $hbuild the show instance has since changed, but these uses of
+'hBuild'/'hEnd' still work
 
 > HList> let x = hBuild True in hEnd x
 > HCons True HNil
@@ -178,8 +221,8 @@ test_build3 = let x = hBuild True 'a' "ok" in hEnd x
 
 -- --------------------------------------------------------------------------
 
--- * A heterogeneous fold for all types
--- GADTs and type-classes mix well
+-- * fold
+-- $foldNote  Consume a heterogenous list. GADTs and type-classes mix well
 
 class HFoldr f v (l :: [*]) where
     type HFoldrR f v l :: *
@@ -195,7 +238,8 @@ instance (Apply f (e, HFoldrR f v l), HFoldr f v l)
     hFoldr f v (HCons x l)    = apply  f (x, hFoldr  f v l)
 
 
--- * A heterogeneous unfold for all types
+-- * unfold
+-- $unfoldNote Produce a heterogenous list
 
 hUnfold :: (Apply p s, HUnfold' p (ApplyR p s)) => p -> s -> HList (HUnfold p s)
 hUnfold p s = hUnfold' p (apply p s)
@@ -216,8 +260,11 @@ instance (Apply p s, HUnfold' p (ApplyR p s)) => HUnfold' p (HJust (e,s)) where
 
 
 -- --------------------------------------------------------------------------
--- * Map
--- It could be implemented with hFoldR, as we show further below
+-- * traversing HLists
+
+-- ** producing HList
+-- *** map
+-- $mapNote It could be implemented with 'hFoldr', as we show further below
 
 class HMap f (l :: [*]) where
   type HMapR f l :: [*]
@@ -231,11 +278,106 @@ instance (Apply f e, HMap f l) => HMap f (e ': l) where
   type HMapR f (e ': l) = ApplyR f e ': HMapR f l
   hMap f (HCons x l)    = apply f x `HCons` hMap f l
 
+-- --------------------------------------------------------------------------
+
+-- **** alternative implementation
+
+newtype MapCar f = MapCar f
+
+-- | Same as 'hMap' only a different implementation.
+hMap' :: (HFoldr (MapCar f) (HList '[]) l) => 
+    f -> HList l -> HFoldrR (MapCar f) (HList '[]) l
+hMap' f = hFoldr (MapCar f) HNil
+
+instance Apply f e => Apply (MapCar f) (e,HList l) where 
+    type ApplyR (MapCar f) (e,HList l) = HList (ApplyR f e ': l)
+    apply (MapCar f) (e,l) = HCons (apply f e) l
 
 -- --------------------------------------------------------------------------
--- * Map a heterogeneous list to a homogeneous one
 
--- This one we implement via hFoldr
+-- *** sequence
+{- |
+   A heterogeneous version of
+
+   > sequenceA :: (Monad m) => [m a] -> m [a]
+
+   Only now we operate on heterogeneous lists, where different elements
+   may have different types 'a'.
+   In the argument list of monadic values (m a_i),
+   although a_i may differ, the monad 'm' must be the same for all
+   elements. That's why we needed "Data.HList.TypeCastGeneric2" (currently (~)).
+   The typechecker will complain
+   if we attempt to use hSequence on a HList of monadic values with different
+   monads.
+
+   The 'hSequence' problem was posed by Matthias Fischmann
+   in his message on the Haskell-Cafe list on Oct 8, 2006
+
+   <http://www.haskell.org/pipermail/haskell-cafe/2006-October/018708.html>
+
+   <http://www.haskell.org/pipermail/haskell-cafe/2006-October/018784.html>
+ -}
+
+class Applicative m => HSequence m a b | a -> m b, m b -> a where
+    hSequence :: a -> m b
+{- ^
+
+Maybe
+
+>>> hSequence $ Just (1 :: Integer) `HCons` (Just 'c') `HCons` HNil
+> Just (HCons 1 (HCons 'c' HNil))
+
+List
+
+>>> hSequence $ [1] `HCons` ['c'] `HCons` HNil
+> [HCons 1 (HCons 'c' HNil)]
+
+>>> hSequence $  return 1 `HCons` Just  'c' `HCons` HNil
+> Just H[1, 'c']
+
+-}
+
+instance Applicative m => HSequence m (HList ('[])) (HList ('[])) where
+    hSequence _ = pure HNil
+
+instance (m1 ~ m, Applicative m, HSequence m (HList as) (HList bs)) =>
+    HSequence m (HList (m1 a ': as)) (HList (a ': bs)) where
+    hSequence (HCons a b) = liftA2 HCons a (hSequence b)
+
+data ConsM = ConsM
+instance (m1 ~ m, Applicative m) => Apply ConsM (m a, m1 (HList l))  where
+    type ApplyR ConsM (m a, m1 (HList l)) = m (HList (a ': l))
+    apply _ (me,ml) = liftA2 HCons me ml
+
+
+-- **** alternative implementation
+
+-- | The DataKinds version needs a little help to find the type of the
+-- return HNil, unlike the original version, which worked just fine as
+--
+--  > hSequence l = hFoldr ConsM (return HNil) l
+
+hSequence' l =
+    let rHNil = pure HNil `asTypeOf` (liftA undefined x)
+        x = hFoldr ConsM rHNil l
+    in x
+
+-- type HSequence' l f a = (Applicative f, HFoldr ConsM (f (HList ('[]))) l ~ f a)
+-- hSequence' :: HSequence l f a => HList l -> f a
+-- if only this signature was accepted. Fails with
+--
+-- Expecting one more argument to `l'
+
+
+
+-- --------------------------------------------------------------------------
+
+
+-- --------------------------------------------------------------------------
+-- ** producing homogenous lists
+
+-- *** map (no sequencing)
+-- $mapOut This one we implement via hFoldr
 
 newtype Mapcar f = Mapcar f
 
@@ -252,18 +394,20 @@ hMapOut f l = hFoldr (Mapcar f) ([]::[e]) l
 
 
 -- --------------------------------------------------------------------------
--- * A heterogenous version of mapM.
+-- *** mapM
+
+-- |
 --
 -- > mapM :: forall b m a. (Monad m) => (a -> m b) -> [a] -> m [b]
 --
 -- Likewise for mapM_.
 --
--- See "Data.HList.HSequence" if the result list should also be heterogenous.
+-- See 'hSequence' if the result list should also be heterogenous.
 
 hMapM   :: (Monad m, HMapOut f l (m e)) => f -> HList l -> [m e]
 hMapM f =  hMapOut f
 
--- GHC doesn't like its own type.
+-- | GHC doesn't like its own type.
 -- hMapM_  :: forall m a f e. (Monad m, HMapOut f a (m e)) => f -> a -> m ()
 -- Without explicit type signature, it's Ok. Sigh.
 -- Anyway, Hugs does insist on a better type. So we restrict as follows:
@@ -275,42 +419,12 @@ hMapM_ f =  sequence_ .  disambiguate . hMapM f
   disambiguate =  id
 
 
--- --------------------------------------------------------------------------
 
--- * A reconstruction of append
 
-append' :: [a] -> [a] -> [a]
-append' l l' = foldr (:) l' l
-
--- | Alternative implementation of 'hAppend'. Demonstrates 'HFoldr'
-hAppend' :: (HFoldr FHCons v l) => HList l -> v -> HFoldrR FHCons v l
-hAppend' l l' = hFoldr FHCons l' l
-
-data FHCons = FHCons
-
-instance Apply FHCons (e,HList l) where
-    type  ApplyR FHCons (e,HList l) =  HList (e ': l)
-    apply _ (e,l) = HCons e l
 
 
 -- --------------------------------------------------------------------------
-
--- * A heterogeneous map for all types
-
-newtype MapCar f = MapCar f
-
--- | Same as 'hMap' only a different implementation.
-hMap' :: (HFoldr (MapCar f) (HList '[]) l) => 
-    f -> HList l -> HFoldrR (MapCar f) (HList '[]) l
-hMap' f = hFoldr (MapCar f) HNil
-
-instance Apply f e => Apply (MapCar f) (e,HList l) where 
-    type ApplyR (MapCar f) (e,HList l) = HList (ApplyR f e ': l)
-    apply (MapCar f) (e,l) = HCons (apply f e) l
-
-
--- --------------------------------------------------------------------------
--- * Type-level equality for lists
+-- * Type-level equality for lists ('HEq')
 
 instance HEq '[] '[]      True
 instance HEq '[] (e ': l) False
@@ -320,7 +434,7 @@ instance (HEq e1 e2 b1, HEq l1 l2 b2, br ~ HAnd b1 b2)
 
 -- --------------------------------------------------------------------------
 -- * Ensure a list to contain HNats only
--- We do so constructively, converting the HList whose elements
+-- | We do so constructively, converting the HList whose elements
 -- are Proxy HNat to [HNat]. The latter kind is unpopulated and
 -- is present only at the type level.
 
@@ -335,7 +449,7 @@ hNats = undefined
 -- --------------------------------------------------------------------------
 -- * Membership tests
 
--- Check to see if an HList contains an element with a given type
+-- | Check to see if an HList contains an element with a given type
 -- This is a type-level only test
 
 class HMember e1 (l :: [*]) (b :: Bool) | e1 l -> b
@@ -362,7 +476,7 @@ hMember = undefined
 
 -- ** Another type-level membership test
 --
--- Check to see if an element e occurs in a list l
+-- | Check to see if an element e occurs in a list l
 -- If not, return 'Nothing
 -- If the element does occur, return 'Just l1
 -- where l1 is a type-level list without e
@@ -429,7 +543,7 @@ instance (HMember e l HFalse, HSet l) => HSet (HCons e l)
 -}
 
 -- * Find an element in a set based on HEq
--- It is a pure type-level operation
+-- | It is a pure type-level operation
 -- XXX should be poly-kinded
 class HFind (e :: *) (l :: [*]) (n :: HNat) | e l -> n
 

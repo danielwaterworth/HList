@@ -19,6 +19,7 @@ module Data.HList.FakePrelude where
 -- --------------------------------------------------------------------------
 -- * A heterogeneous apply operator
 
+-- | Apply is used to pass polymorphic functions around
 class Apply f a where
   type ApplyR f a :: *
   apply :: f -> a -> ApplyR f a
@@ -46,7 +47,9 @@ instance (Monad m, ApplyR f x ~ m (), Apply f x) =>
 
 
 -- --------------------------------------------------------------------------
--- Injection from algebraic kinds to *
+-- * Proxy
+--
+-- | Injection from algebraic kinds to *
 -- Algebraic kinds like Nat are not populated and we can't use 
 -- values of type Nat as function arguments. In contrast, we can use
 -- (undefined :: Proxy Z) as an argument, as a value proxy.
@@ -67,22 +70,27 @@ labelToProxy = undefined
 
 -- * Booleans
 
--- GHC already lifts booleans, defined as
--- data Bool = True | False
--- to types: Bool becomes kind and True and False (also denoted by
--- 'True and 'False) become nullary type constructors.
+{- $boolNote
 
--- The above line is equivalent to 
-{-
-data HTrue
-data HFalse
+GHC already lifts booleans, defined as
 
-class HBool x
-instance HBool HTrue
-instance HBool HFalse
+> data Bool = True | False
+
+to types: Bool becomes kind and True and False (also denoted by
+'True and 'False) become nullary type constructors.
+
+The above line is equivalent to
+
+> data HTrue
+> data HFalse
+
+> class HBool x
+> instance HBool HTrue
+> instance HBool HFalse
+
 -}
 
--- Value-level proxies
+-- ** Value-level proxies
 hTrue  :: Proxy True ; hTrue  = undefined
 hFalse :: Proxy False; hFalse = undefined
 
@@ -96,7 +104,7 @@ type family HAnd (t1 :: Bool) (t2 :: Bool) :: Bool
 type instance HAnd False t  = False
 type instance HAnd True  t  = t
 
--- `demote' to values
+-- | `demote' to values
 hAnd :: Proxy t1 -> Proxy t2 -> Proxy (HAnd t1 t2)
 hAnd = undefined
 
@@ -107,31 +115,33 @@ type family HOr (t1 :: Bool) (t2 :: Bool) :: Bool
 type instance HOr False t    = t
 type instance HOr True t     = True
 
--- `demote' to values
+-- | `demote' to values
 hOr :: Proxy t1 -> Proxy t2 -> Proxy (HOr t1 t2)
 hOr = undefined
 
--- Compare with the original code based on functional dependencies:
-{-
-class (HBool t, HBool t', HBool t'') => HOr t t' t'' | t t' -> t''
- where
-  hOr :: t -> t' -> t''
+{- $boolHistoricalNote
 
-instance HOr HFalse HFalse HFalse
- where
-  hOr _ _ = hFalse
+Compare with the original code based on functional dependencies:
 
-instance HOr HTrue HFalse HTrue
- where
-  hOr _ _ = hTrue
+> class (HBool t, HBool t', HBool t'') => HOr t t' t'' | t t' -> t''
+>  where
+>   hOr :: t -> t' -> t''
 
-instance HOr HFalse HTrue HTrue
- where
-  hOr _ _ = hTrue
+> instance HOr HFalse HFalse HFalse
+>  where
+>   hOr _ _ = hFalse
 
-instance HOr HTrue HTrue HTrue
- where
-  hOr _ _ = hTrue
+> instance HOr HTrue HFalse HTrue
+>  where
+>   hOr _ _ = hTrue
+
+> instance HOr HFalse HTrue HTrue
+>  where
+>   hOr _ _ = hTrue
+
+> instance HOr HTrue HTrue HTrue
+>  where
+>   hOr _ _ = hTrue
 -}
 
 -- ** Boolean equivalence
@@ -149,7 +159,7 @@ type instance HBoolEQ True  True     = True
 
 -- * Naturals
 
--- The data type to be lifted to the type level
+-- | The data type to be lifted to the type level
 data HNat = HZero | HSucc HNat
 
 
@@ -170,7 +180,7 @@ instance HNat2Integral n => Show (Proxy (n :: HNat)) where
     show n = "H" ++ show (hNat2Integral n)
 
 
--- Equality on natural numbers
+-- | Equality on natural numbers
 -- (eventually to be subsumed by the universal polykinded HEq)
 type family HNatEq (t1 :: HNat) (t2 :: HNat) :: Bool
 type instance HNatEq HZero HZero          = True
@@ -194,7 +204,7 @@ hLt = undefined
 
 -- --------------------------------------------------------------------------
 -- * Maybies
--- We cannot use lifted Maybe since the latter are not populated
+-- $maybiesNote We cannot use lifted Maybe since the latter are not populated
 
 data    HNothing  = HNothing  deriving Show
 newtype HJust x   = HJust x   deriving Show
@@ -203,7 +213,7 @@ newtype HJust x   = HJust x   deriving Show
 -- --------------------------------------------------------------------------
 
 -- * Polykinded Equality for types
--- We have to use Functional dependencies for now,
+-- | We have to use Functional dependencies for now,
 -- for the sake of the generic equality.
 class HEq x y (b :: Bool) | x y -> b
 

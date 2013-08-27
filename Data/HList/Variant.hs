@@ -25,6 +25,7 @@ import Data.HList.FakePrelude
 import Data.HList.HListPrelude
 import Data.HList.HArray
 import Data.HList.Record
+import Data.HList.HList
 
 
 -- --------------------------------------------------------------------------

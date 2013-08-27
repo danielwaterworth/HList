@@ -19,12 +19,13 @@ should expand into the following declarations
 module Data.HList.MakeLabels (makeLabels,label) where
 
 import Data.HList.FakePrelude
+import Data.HList.Record
 
 import Language.Haskell.TH.Ppr (pprint)
 import Language.Haskell.TH
 
 import Data.Char (toUpper, toLower)
-import Control.Monad (liftM, liftM2)
+import Control.Monad (liftM, liftM3)
 
 import Data.Typeable (Typeable)
 
@@ -41,9 +42,13 @@ make_tname str = mkName $ capitalize str
 -- is uncapitalized str
 make_dname str = mkName $ uncapitalize str
 
-dcl n = liftM2 (\a b ->[a,b])
+dcl n = liftM3 (\a b c ->[a,b,c])
     (dataD (return []) (make_tname n) [] [] [''Typeable])
-    (valD (varP (make_dname n)) (normalB [| proxy :: Proxy $(conT (make_tname n)) |]) [])
+    (valD (varP (make_dname n)) (normalB [| Label :: Label $(conT (make_tname n)) |]) [])
+    (instanceD (return []) [t| ShowLabel $(conT (make_tname n)) |]
+        [valD (varP 'showLabel)
+            (normalB [| \_ -> n |])
+            [] ])
 
 -- | Our main function
 makeLabels :: [String] -> Q [Dec]

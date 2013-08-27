@@ -13,7 +13,7 @@ can be used instead, but the chosen look better in types.
 module Data.HList (
 
  module Data.HList.CommonMain,
- module Data.HList.RecordAdv,
+ -- module Data.HList.RecordAdv,
  module Data.STRef,
  module Data.IORef,
  module Data.Typeable,
@@ -25,7 +25,7 @@ module Data.HList (
 -- module New,
 -- module Data.HList.HList
  concrete,
- (#)
+ -- (#)
 ) where
 
 
@@ -33,7 +33,7 @@ import Data.HList.CommonMain hiding ( HDeleteMany
                          , hDeleteMany
                          )
 
-import Data.HList.RecordAdv
+-- import Data.HList.RecordAdv
 
 import Data.STRef
 import Data.IORef
@@ -42,9 +42,11 @@ import Control.Monad
 import Control.Monad.ST
 import Control.Monad.Fix
 
+{-
 infixr 9 #
 (#) :: (HasField l r v) => r -> l -> v
 m # field = (m .!. field)
+-}
 
 concrete :: (MonadFix m) => (a -> m a) -> a -> m a
 concrete generator self = generator self

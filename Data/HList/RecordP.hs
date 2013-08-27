@@ -1,3 +1,6 @@
+{-# LANGUAGE PolyKinds #-}
+{-# LANGUAGE TypeOperators #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleContexts,
   FlexibleInstances #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -23,13 +26,14 @@ module Data.HList.RecordP where
 
 import Data.HList.FakePrelude
 import Data.HList.HListPrelude
+import Data.HList.HList
 import Data.HList.Record
 import Data.HList.HArray
 
 -- --------------------------------------------------------------------------
 -- Record types as Phantom labels with values
 
-newtype RecordP ls vs = RecordP vs
+newtype RecordP (ls::[*]) vs = RecordP (HList vs)
 
 
 -- Build a record. I wonder if the 'ls' argument of mkRecordP can be
@@ -38,26 +42,27 @@ newtype RecordP ls vs = RecordP vs
 mkRecordP :: (HSameLength ls vs, HLabelSet ls) => ls -> vs -> RecordP ls vs
 mkRecordP _ vs = RecordP vs
 
--- The contraint that two HLists have the same length
+-- The contraint that two type level lists have the same length
 class HSameLength l1 l2
-instance HSameLength HNil HNil
-instance HSameLength l1 l2 => HSameLength (HCons e1 l1) (HCons e2 l2)
+instance HSameLength '[] '[]
+instance HSameLength l1 l2 => HSameLength (e1 ': l1) (e2 ': l2)
 
 -- Build an empty record
-emptyRecordP :: RecordP HNil HNil
+emptyRecordP :: RecordP ('[]) ('[])
 emptyRecordP = mkRecordP HNil HNil
 
 -- Converting between RecordP and Record (label/value pairs)
 
 -- The following class declares a bijection between Record and recordP
-class HRLabelSet r => RecordR2P r ls vs | r -> ls vs, ls vs -> r where
+class HRLabelSet r => RecordR2P (r::[*]) (ls::[*]) (vs::[*]) | r -> ls vs, ls vs -> r where
     record_r2p :: Record r -> RecordP ls vs
     record_p2r :: RecordP ls vs -> Record r
 
-instance RecordR2P HNil HNil HNil where
+instance RecordR2P ('[]) ('[]) ('[]) where
     record_r2p _ = emptyRecordP
     record_p2r _ = emptyRecord
 
+{-
 instance (RecordR2P r ls vs, HRLabelSet (HCons (LVPair l v) r),
           HLabelSet (HCons l ls), HSameLength ls vs)
     => RecordR2P (HCons (LVPair l v) r) (HCons l ls) (HCons v vs) where
@@ -205,3 +210,4 @@ instance H2ProjectByLabels ls (RecordP ls' vs') rin (RecordP lo vo) =>
 
 instance H2ProjectByLabels ls' (RecordP ls vs) (RecordP ls' vs') rout
     =>  SubType (RecordP ls vs) (RecordP ls' vs')
+    -}

@@ -17,11 +17,15 @@ module Data.HList.CommonMain (
  , module Data.HList.HArray
  , module Data.HList.HOccurs
  , module Data.HList.HTypeIndexed
- , module Data.HList.TIP
- , module Data.HList.TIC
- , module Data.HList.HZip
  , module Data.HList.Record
- , module Data.HList.Variant
+ , module Data.HList.HList
+ , module Data.HList.MakeLabels
+ , module Data.HList.TypeEqO
+--  currently broken. Not needed anymore?
+--  , module Data.HList.TIP
+--  , module Data.HList.TIC
+--  , module Data.HList.HZip
+--  , module Data.HList.Variant
 ) where
 
 import Data.HList.FakePrelude
@@ -29,8 +33,12 @@ import Data.HList.HListPrelude
 import Data.HList.HArray
 import Data.HList.HOccurs
 import Data.HList.HTypeIndexed
-import Data.HList.TIP
-import Data.HList.TIC
-import Data.HList.HZip
 import Data.HList.Record
-import Data.HList.Variant
+import Data.HList.HList
+import Data.HList.MakeLabels
+import Data.HList.TypeEqO
+
+-- import Data.HList.TIP
+-- import Data.HList.TIC
+-- import Data.HList.HZip
+-- import Data.HList.Variant

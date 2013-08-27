@@ -10,7 +10,7 @@
 
 module Data.HList.HZip where
 
-import Data.HList.HListPrelude
+import Data.HList.HList
 
 
 -- --------------------------------------------------------------------------

@@ -1,7 +1,4 @@
 {-# LANGUAGE FlexibleInstances, FlexibleContexts #-}
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE KindSignatures #-}
-{-# LANGUAGE TypeOperators #-}
 
 {- |
    The HList library
@@ -18,21 +15,23 @@ module Data.HList.TIC where
 import Data.Dynamic
 
 import Data.HList.FakePrelude
-import Data.HList.HList
+import Data.HList.HListPrelude
+import Data.HList.HOccurs
 import Data.HList.TIP
 
 
 -- --------------------------------------------------------------------------
 -- | A datatype for type-indexed co-products
 
-newtype TIC (l :: [*]) = TIC Dynamic
+newtype TIC l = TIC Dynamic
 
 
 -- --------------------------------------------------------------------------
--- | Public constructor (or, open union's injection function)
+-- | Public constructor
 
 mkTIC :: ( HTypeIndexed l
-         , HMember i l True
+         , HTypeProxied l
+         , HOccurs (Proxy i) l
          , Typeable i
          )
       => i -> TIC l
@@ -41,15 +40,24 @@ mkTIC i = TIC (toDyn i)
 
 
 -- --------------------------------------------------------------------------
--- | Public destructor (or, open union's projection function)
+-- | Public destructor
 
 unTIC :: ( HTypeIndexed l
-         , HMember o l True
+         , HTypeProxied l
+         , HOccurs (Proxy o) l
          , Typeable o
          )
       => TIC l -> Maybe o
 
 unTIC (TIC i) = fromDynamic i
+
+
+-- --------------------------------------------------------------------------
+-- | A type-indexed type sequence that is a sequence of proxy types
+
+class HTypeProxied l
+instance HTypeProxied HNil
+instance HTypeProxied l => HTypeProxied (HCons (Proxy e) l)
 
 
 -- --------------------------------------------------------------------------

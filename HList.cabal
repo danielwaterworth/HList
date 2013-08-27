@@ -1,5 +1,5 @@
 Name:                HList
-Version:             0.2.4
+Version:             0.3.0
 Category:            Data
 Synopsis:            Heterogeneous lists
 Description:         HList is a record system providing strongly typed heterogenous lists, records,
@@ -12,19 +12,25 @@ Maintainer:          oleg@pobox.com
 
 Data-files:          README
 Cabal-version:       >= 1.4
-Tested-With:         GHC==6.12.1
-Build-Depends:       base >= 3 && < 5, template-haskell
+Tested-With:         GHC==7.6.2
 Build-Type:          Simple
-Exposed-modules:     Data.HList, Data.HList.CommonMain, Data.HList.Variant, 
-		     Data.HList.Record, Data.HList.HZip, Data.HList.TIC, 
-		     Data.HList.TIP, Data.HList.HTypeIndexed, 
-		     Data.HList.HOccurs, Data.HList.HArray,
-                     Data.HList.HListPrelude, Data.HList.TypeEqO,
-		     Data.HList.FakePrelude, 
-                     Data.HList.RecordP, Data.HList.RecordAdv,
-                     Data.HList.Label1, Data.HList.Label2, Data.HList.Label3, 
-		     Data.HList.Label4, Data.HList.Label5, Data.HList.MakeLabels
-extensions:          EmptyDataDecls, FlexibleContexts, FlexibleInstances, FunctionalDependencies,
-                     MultiParamTypeClasses, OverlappingInstances, ScopedTypeVariables, RankNTypes,
-                     ScopedTypeVariables, TypeSynonymInstances, UndecidableInstances
-ghc-options:         -Wall
+
+
+library
+  Build-Depends:       base >= 4 && < 5, template-haskell
+  Exposed-modules:     Data.HList,
+
+                       Data.HList.CommonMain,
+                       Data.HList.HList,
+
+                       Data.HList.HListPrelude,
+                       Data.HList.FakePrelude,
+
+                       Data.HList.HArray,
+                       Data.HList.HOccurs,
+                       Data.HList.HTypeIndexed,
+                       Data.HList.MakeLabels,
+                       Data.HList.Record,
+                       Data.HList.TypeEqO
+
+  ghc-options:         -Wall

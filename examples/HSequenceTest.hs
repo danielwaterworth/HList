@@ -2,8 +2,7 @@
 
 module HSequenceTest where
 
-import Data.HList.HSequence
-import Data.HList.HListPrelude -- (Apply(..), HCons(..), apply, hFoldr, HNil)
+import Data.HList
 import Control.Monad (liftM2)
 
 
