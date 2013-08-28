@@ -21,8 +21,12 @@ import Control.Monad
 
 make_cname, make_dname :: String -> Name
 make_cname (x:xs) = mkName ("Label" ++ toUpper x : xs)
-make_dname (x:xs) = mkName (toLower x : xs)
+make_cname _ = error "Data.HList.MakeLabels.make_cname: empty string"
 
+make_dname (x:xs) = mkName (toLower x : xs)
+make_dname _ = error "Data.HList.MakeLabels.make_dname: empty string"
+
+dcl :: String -> Q [Dec]
 dcl n = let
     c = make_cname n
     d = make_dname n

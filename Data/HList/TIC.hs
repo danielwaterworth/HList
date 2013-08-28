@@ -17,7 +17,6 @@ module Data.HList.TIC where
 
 import Data.Dynamic
 
-import Data.HList.FakePrelude
 import Data.HList.HList
 import Data.HList.TIP
 

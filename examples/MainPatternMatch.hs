@@ -31,7 +31,7 @@ happens to have the field names PtX.
 
 module Main where
 
-import Data.HList.CommonMain
+import Data.HList
 
 import Data.HList.TypeEqO
 import Data.HList.Label4

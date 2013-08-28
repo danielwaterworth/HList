@@ -8,7 +8,7 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
 
-{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
+{-# OPTIONS_GHC -fno-warn-missing-signatures -fno-warn-dodgy-exports #-}
 
 {- |
    The HList library
@@ -115,6 +115,7 @@ module Data.HList.Record
 
     -- * Unclassified
     -- | Probably internals, that may not be useful
+
     DuplicatedLabel(..),
     -- ExtraField(..),
     -- FieldNotFound(..),
@@ -127,7 +128,7 @@ module Data.HList.Record
     -- HRearrange(hRearrange2),
     -- HRearrange'(hRearrange2'),
     -- UnionSymRec'(..)
-    -- module Data.HList.Record, -- if something was forgotten
+    module Data.HList.Record, -- if something was forgotten
 ) where
 
 
