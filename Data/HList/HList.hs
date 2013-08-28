@@ -188,15 +188,16 @@ The classes above allow the third (shortest) way to make a list
 > list = a .*. b .*. c .*. HNil
 > list = hEnd $ hBuild a b c
 
+>>> let x = hBuild True in hEnd x
+H[True]
+
+>>> let x = hBuild True 'a' in hEnd x
+H[True, 'a']
+
+>>> let x = hBuild True 'a' "ok" in hEnd x
+H[True, 'a', "ok"]
+
 -}
-test_build1 = let x = hBuild True in hEnd x
--- ^ >>> H[True]
-
-test_build2 = let x = hBuild True 'a' in hEnd x
--- ^ >>> H[True, 'a']
-
-test_build3 = let x = hBuild True 'a' "ok" in hEnd x
--- ^ >>> H[True, 'a', "ok"]
 
 -- *** historical
 {- $hbuild the show instance has since changed, but these uses of
@@ -322,18 +323,20 @@ class Applicative m => HSequence m a b | a -> m b, m b -> a where
     hSequence :: a -> m b
 {- ^
 
-Maybe
+[@Maybe@]
 
 >>> hSequence $ Just (1 :: Integer) `HCons` (Just 'c') `HCons` HNil
-> Just (HCons 1 (HCons 'c' HNil))
-
-List
-
->>> hSequence $ [1] `HCons` ['c'] `HCons` HNil
-> [HCons 1 (HCons 'c' HNil)]
+Just H[1, 'c']
 
 >>> hSequence $  return 1 `HCons` Just  'c' `HCons` HNil
-> Just H[1, 'c']
+Just H[1, 'c']
+
+
+[@List@]
+
+>>> hSequence $ [1] `HCons` ['c'] `HCons` HNil
+[H[1, 'c']]
+
 
 -}
 
