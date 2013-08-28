@@ -33,19 +33,18 @@ module Main where
 
 import Data.HList
 
-import Data.HList.TypeEqO
-import Data.HList.Label4
+makeLabels ["px","py"]
 
 -- Labels
 -- The more convenient labels, Label4.hs, need -fallow-overlapping-instances
 -- The less convenient label representation needs fewer extensions.
 -- We go for more convenient...
 
+{-
 data PtX; px = proxy::Proxy PtX
 data PtY; py = proxy::Proxy PtY
+-}
 
-infixr 9 #
-m # field = m .!. field
 
 accessor r f = r # f
 
@@ -59,6 +58,7 @@ point2 x y =
        px .=. x
    .*. py .=. (y + 10)
    .*. emptyRecord
+
 
 -- Record-polymorphic function, which illustrates record pattern-matching,
 -- with the help of generalized guards

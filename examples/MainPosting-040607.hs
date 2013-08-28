@@ -1,3 +1,4 @@
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -19,6 +20,7 @@ Ralf
 
 import MainGhcGeneric1
 import Data.Typeable
+import Data.HList
 
 -- These are your two "implementations".
 
@@ -53,9 +55,7 @@ list1 =  MyImplementation1 10
 -- This list is not opaque. Less trouble in our experience.
 -- (When compared to using existentials.)
 
-type MyList =     MyImplementation1
-            :*: ( MyImplementation2
-            :*:   HNil )
+type MyList = '[MyImplementation1, MyImplementation2]
 
 
 -- Perhaps you want to make sure that you have a list of implementations

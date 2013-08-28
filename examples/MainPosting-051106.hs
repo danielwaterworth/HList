@@ -1,3 +1,4 @@
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE EmptyDataDecls #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -12,8 +13,9 @@ test = HCons (length::String -> Int) (HCons ((+1)::(Int->Int)) (HCons ((*2)::(In
 
 data Comp
 
-instance Apply Comp (x -> y,y -> z) (x -> z)
+instance Apply Comp (x -> y,y -> z)
  where
+  type ApplyR Comp (x -> y,y -> z) = x -> z
   apply _ (f,g) = g . f
 
 -- Function composition based on type code works.
