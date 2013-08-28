@@ -22,6 +22,7 @@ library
 
                        Data.HList.CommonMain,
                        Data.HList.HList,
+                       Data.HList.HZip,
 
                        Data.HList.HListPrelude,
                        Data.HList.FakePrelude,

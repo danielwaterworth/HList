@@ -21,10 +21,11 @@ module Data.HList.CommonMain (
  , module Data.HList.HList
  , module Data.HList.MakeLabels
  , module Data.HList.TypeEqO
+ , module Data.HList.TIP
+ , module Data.HList.TIC
+ , module Data.HList.Label3
+ , module Data.HList.HZip
 --  currently broken. Not needed anymore?
---  , module Data.HList.TIP
---  , module Data.HList.TIC
---  , module Data.HList.HZip
 --  , module Data.HList.Variant
 ) where
 
@@ -37,8 +38,11 @@ import Data.HList.Record
 import Data.HList.HList
 import Data.HList.MakeLabels
 import Data.HList.TypeEqO
+import Data.HList.TIP
+import Data.HList.TIC
 
--- import Data.HList.TIP
--- import Data.HList.TIC
--- import Data.HList.HZip
+import Data.HList.HZip
+import Data.HList.Label3
+-- import Data.HList.Label6 () -- is it harmful to export this instance default?
+
 -- import Data.HList.Variant
