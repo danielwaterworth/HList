@@ -1,3 +1,4 @@
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE FlexibleContexts, FlexibleInstances, FunctionalDependencies, MultiParamTypeClasses, UndecidableInstances #-}
 
 
@@ -37,51 +38,70 @@ newtype Variant mr = Variant mr
 -- --------------------------------------------------------------------------
 -- | Turn proxy sequence into sequence of Nothings
 
-class HMaybied r r' | r -> r'
- where
-  hMaybied :: r -> r'
+data HMaybeF = HMaybeF
+instance Apply HMaybeF (LVPair l (Proxy t)) where
+    type ApplyR HMaybeF (LVPair l (Proxy t)) = LVPair l (Maybe t)
+    apply _ _ = LVPair Nothing
 
-instance HMaybied HNil HNil
- where
-  hMaybied _ = HNil
+hMaybied x = hMap HMaybeF x
 
-instance HMaybied r r'
-      => HMaybied (HCons (LVPair l (Proxy v)) r) (HCons (LVPair l (Maybe v)) r')
- where
-  hMaybied (HCons _ r) = HCons (LVPair Nothing) (hMaybied r)
+{- ^ used to be
 
+> class HMaybied r r' | r -> r'
+>  where
+>   hMaybied :: r -> r'
+>
+> instance HMaybied HNil HNil
+>  where
+>   hMaybied _ = HNil
+>
+> instance HMaybied r r'
+>       => HMaybied (HCons (LVPair l (Proxy v)) r) (HCons (LVPair l (Maybe v)) r')
+>  where
+>   hMaybied (HCons _ r) = HCons (LVPair Nothing) (hMaybied r)
+
+-}
 
 -- --------------------------------------------------------------------------
 -- | Public constructor
+mkVariant x y (Record v) = case hUpdateAtLabel x (Just y) (Record (hMaybied v)) of
+    Record x -> Variant x
+{- ^ previously:
 
-mkVariant :: ( RecordLabels v ls
-             , HFind x ls n
-             , HMaybied v v'
-             , HUpdateAtHNat n (LVPair x (Maybe y)) v' v'
-             )
-          => x -> y -> (Record v) -> Variant v'
+> mkVariant :: ( RecordLabels v ls
+>              , HFind x ls n
+>              , HMaybied v v'
+>              , HUpdateAtHNat n (LVPair x (Maybe y)) v' v'
+>              )
+>           => x -> y -> (Record v) -> Variant v'
+>
+> mkVariant x y (Record v) = Variant v'
+>  where
+>   n       = hFind x (recordLabels' v)
+>   ms      = hMaybied v
+>   v'      = hUpdateAtHNat n (newLVPair x (Just y)) ms
 
-mkVariant x y (Record v) = Variant v'
- where
-  n       = hFind x (recordLabels' v)
-  ms      = hMaybied v
-  v'      = hUpdateAtHNat n (newLVPair x (Just y)) ms
-
+-}
 
 -- --------------------------------------------------------------------------
 -- | Public destructor
 
-unVariant :: ( RecordLabels v ls
-             , HFind x ls n
-             , HLookupByHNat n v (LVPair x (Maybe y))
-             )
-          => x -> Variant v -> Maybe y
+unVariant x (Variant v) = hLookupByLabel x (Record v)
 
-unVariant x (Variant v) = y
- where
-  n       = hFind x (recordLabels' v)
-  LVPair y     = hLookupByHNat n v
+{- ^ previously:
 
+> unVariant :: ( RecordLabels v ls
+>              , HFind x ls n
+>              , HLookupByHNat n v (LVPair x (Maybe y))
+>              )
+>           => x -> Variant v -> Maybe y
+>
+> unVariant x (Variant v) = y
+>  where
+>   n       = hFind x (recordLabels' v)
+>   LVPair y     = hLookupByHNat n v
+
+-}
 
 -- --------------------------------------------------------------------------
 -- | Variants are opaque

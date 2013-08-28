@@ -25,8 +25,8 @@ module Data.HList.CommonMain (
  , module Data.HList.TIC
  , module Data.HList.Label3
  , module Data.HList.HZip
+ , module Data.HList.Variant
 --  currently broken. Not needed anymore?
---  , module Data.HList.Variant
 ) where
 
 import Data.HList.FakePrelude
@@ -45,4 +45,4 @@ import Data.HList.HZip
 import Data.HList.Label3
 -- import Data.HList.Label6 () -- is it harmful to export this instance default?
 
--- import Data.HList.Variant
+import Data.HList.Variant
