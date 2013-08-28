@@ -1,75 +1,62 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE TemplateHaskell, FlexibleInstances, EmptyDataDecls #-}
 
+{- | Slight help making value-level labels in the style of "Data.HList.Label6",
+without needing to import that module.
 
-{- | Making labels in the style of "Data.HList.Label4"
+ The following TH declaration splice should be placed at top-level, before the
+ created values are used. Enable @-XTemplateHaskell@ too.
 
- The following TH splice
-
->  $(makeLabels ["getX","getY","draw"])
+>  makeLabels ["getX","getY","draw","X"]
 
 should expand into the following declarations
 
-> data GetX;     getX     = proxy::Proxy GetX
-> data GetY;     getY     = proxy::Proxy GetY
-> data Draw;     draw     = proxy::Proxy Draw
+> getX = Label :: Label "getX"
+> getY = Label :: Label "getY"
+> draw = Label :: Label "draw"
+> x    = Label :: Label "X"
+
+plus a number of instances which replicate the single undecidable instance
+in "Data.HList.Label6" which look like
+
+> instance ShowLabel "getX" where showLabel = \_ -> "getX"
+> instance ShowLabel "getY" where showLabel = \_ -> "getY"
+> instance ShowLabel "draw" where showLabel = \_ -> "draw"
 
 -}
 
-module Data.HList.MakeLabels (makeLabels,label) where
+module Data.HList.MakeLabels (makeLabels,makeLabel) where
 
 import Data.HList.FakePrelude
 import Data.HList.Record
-
-import Language.Haskell.TH.Ppr (pprint)
 import Language.Haskell.TH
+import Data.Char
+import Control.Monad
 
-import Data.Char (toUpper, toLower)
-import Control.Monad (liftM, liftM3)
+make_dname (x:xs) = mkName (toLower x : xs)
 
-import Data.Typeable (Typeable)
+dcl n = let
+    ty = litT (strTyLit n)
+    labelDec = valD
+                  (varP (make_dname n))
+                  (normalB [| Label :: Label $ty |]) []
 
-capitalize, uncapitalize :: String -> String
-capitalize   (c:rest) = toUpper c : rest
-uncapitalize (c:rest) = toLower c : rest
+    showLabelInst = instanceD
+            (return [])
+            [t| ShowLabel $ty |]
+            [valD (varP 'showLabel)
+                (normalB [| \_ -> n |])
+                [] ]
 
+ in liftM2 (\a b -> [a,b])
+        labelDec
+        showLabelInst
 
--- Make the name of the type constructor whose string representation
--- is capitalized str
-make_tname str = mkName $ capitalize str
-
--- Make the name of the value identifier whose string representation
--- is uncapitalized str
-make_dname str = mkName $ uncapitalize str
-
-dcl n = liftM3 (\a b c ->[a,b,c])
-    (dataD (return []) (make_tname n) [] [] [''Typeable])
-    (valD (varP (make_dname n)) (normalB [| Label :: Label $(conT (make_tname n)) |]) [])
-    (instanceD (return []) [t| ShowLabel $(conT (make_tname n)) |]
-        [valD (varP 'showLabel)
-            (normalB [| \_ -> n |])
-            [] ])
 
 -- | Our main function
 makeLabels :: [String] -> Q [Dec]
-makeLabels = liftM concat . mapM dcl
+makeLabels = fmap concat . mapM dcl
 
 -- | Make a single label
-label :: String -> Q [Dec]
-label s = makeLabels [s]
-
--- Show the code expression
-show_code cde = runQ cde >>= putStrLn . pprint
-
-{-
-t1 = show_code [d| data Foo |]
-
-t2 = showName $ mkName "Foo"
-
-t3 = show_code $
-     liftM (replace_name
-            (make_tname "foo",make_dname "foo")
-            (make_tname "bar",make_dname "bar")) dcl_template
--}
-
--- t4 = show_code $ makeLabels ["getX","getY","draw"]
+makeLabel :: String -> Q [Dec]
+makeLabel s = makeLabels [s]

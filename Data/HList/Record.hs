@@ -29,6 +29,8 @@
    * "Data.HList.Label4"
 
    * "Data.HList.Label5"
+
+   * "Data.HList.Label6"
 -}
 
 module Data.HList.Record
