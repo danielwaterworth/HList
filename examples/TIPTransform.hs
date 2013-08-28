@@ -1,3 +1,6 @@
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE MultiParamTypeClasses, FlexibleInstances #-}
 {-# LANGUAGE ScopedTypeVariables, UndecidableInstances #-}
 
@@ -18,10 +21,6 @@
 module TIPTransform where
 
 import Data.HList
-import Data.HList.TIP
-
-import Data.HList.TypeEqO
-import Data.HList.Label5
 
 -- We start with the examples
 
@@ -61,20 +60,20 @@ class TransTIP op db where
 
 instance (HMember op db b, TransTIP' b op (TIP db)) 
     => TransTIP op (TIP db) where
-    ttip = ttip' (undefined::b)
+    ttip = ttip' (proxy ::Proxy b)
 
-class TransTIP' b op db where
-    ttip' :: b -> op -> db -> db
+class TransTIP' (b :: Bool) op db where
+    ttip' :: Proxy b -> op -> db -> db
 
 -- If op is found in a TIP, update the TIP with op
-instance (HTypeIndexed db, HUpdateAtHNat n op db db, HType2HNat op db n)
-    => TransTIP' HTrue op (TIP db) where
+instance (HTypeIndexed db, HUpdateAtHNat n op db, HUpdateAtHNatR n op db ~ db, HType2HNat op db n)
+    => TransTIP' True op (TIP db) where
     ttip' _ = tipyUpdate
 
 -- If op is not found in a TIP, it must be a function. Look up
 -- its argument in a TIP and recur.
 instance (HOccurs arg db, TransTIP op db) 
-    => TransTIP' HFalse (arg -> op) db where
+    => TransTIP' False (arg -> op) db where
     ttip' _ f db = ttip (f (hOccurs db)) db
 
 
