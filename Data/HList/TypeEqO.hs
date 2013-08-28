@@ -1,3 +1,4 @@
+{-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances,
   FlexibleContexts, OverlappingInstances, UndecidableInstances #-}
 {-# LANGUAGE TypeFamilies #-}

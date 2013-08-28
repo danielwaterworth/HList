@@ -1,3 +1,7 @@
+{-# LANGUAGE FlexibleInstances #-}
+{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE EmptyDataDecls #-}
 {-# LANGUAGE FlexibleContexts #-}
@@ -33,20 +37,7 @@ module MainGhcGeneric1 (
 ) where
 
 import Datatypes2
--- import Data.HList.CommonMain -- hiding (HDeleteMany, hDeleteMany)
-import Data.HList.FakePrelude
-import Data.HList.HListPrelude
-import Data.HList.HList
-import Data.HList.HArray
-import Data.HList.HOccurs
-import Data.HList.HTypeIndexed
-import Data.HList.TIP
-import Data.HList.TIC
-
-import Data.HList.TypeEqO
-
-import Data.HList.Record
-import Data.HList.Label3
+import Data.HList.CommonMain -- hiding (HDeleteMany, hDeleteMany)
 
 {-
 import Data.HList.RecordAdv
@@ -204,21 +195,28 @@ testTIP = do
   print $ Sheep .*. tipyDelete (undefined::Proxy Breed) myTipyCow
   print $ tipyUpdate Sheep myTipyCow
 
+{-
 data MyNS = MyNS -- a name space for record labels
 
 key   = firstLabel MyNS  (undefined::DKey)
 name  = nextLabel  key   (undefined::DName)
 breed = nextLabel  name  (undefined::DBreed)
 price = nextLabel  breed (undefined::DPrice)
-unpricedAngus =  key    .=. (42::Integer)
-             .*. name   .=. "Angus"
-             .*. breed  .=. Cow
-             .*. emptyRecord
 
 data DKey;   instance Show DKey   where show _ = "key"
 data DName;  instance Show DName  where show _ = "name"
 data DBreed; instance Show DBreed where show _ = "breed"
 data DPrice; instance Show DPrice where show _ = "price"
+
+-}
+
+makeLabels3 "MyNS" (words "key name breed price")
+
+unpricedAngus =  key    .=. (42::Integer)
+             .*. name   .=. "Angus"
+             .*. breed  .=. Cow
+             .*. emptyRecord
+
 
 getKey l = hLookupByLabel key l
 
@@ -303,7 +301,6 @@ Type error ...
 
 -}
 
-{-
 testVariant = (testVar1,(testVar2,(testVar3)))
  where
   animalVar =  key   .=. (proxy::Proxy Integer)
@@ -314,6 +311,7 @@ testVariant = (testVar1,(testVar2,(testVar3)))
   testVar2 = unVariant key testVar1
   testVar3 = unVariant name testVar1
 
+{-
 -- --------------------------------------------------------------------------
 
 main = mainExport

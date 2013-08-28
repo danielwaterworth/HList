@@ -35,6 +35,9 @@ library
                        Data.HList.MakeLabels,
                        Data.HList.Record,
                        Data.HList.Variant,
-                       Data.HList.TypeEqO
+                       Data.HList.TypeEqO,
+
+                       Data.HList.Label3,
+                       Data.HList.Label6
 
   ghc-options:         -Wall

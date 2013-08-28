@@ -19,14 +19,21 @@ module Data.HList.CommonMain (
  , module Data.HList.HTypeIndexed
  , module Data.HList.Record
  , module Data.HList.HList
- , module Data.HList.MakeLabels
  , module Data.HList.TypeEqO
  , module Data.HList.TIP
  , module Data.HList.TIC
- , module Data.HList.Label3
  , module Data.HList.HZip
  , module Data.HList.Variant
---  currently broken. Not needed anymore?
+
+
+ -- * Labels
+ -- | there are three options for now:
+
+ -- $label6demo
+ , module Data.HList.Label3
+
+ -- $labelTHdemo
+ , module Data.HList.MakeLabels
 ) where
 
 import Data.HList.FakePrelude
@@ -43,6 +50,29 @@ import Data.HList.TIC
 
 import Data.HList.HZip
 import Data.HList.Label3
--- import Data.HList.Label6 () -- is it harmful to export this instance default?
+import Data.HList.Label6 () -- only instances
 
 import Data.HList.Variant
+
+
+{- $label6demo #label6demo#
+
+ Instances from "Data.HList.Label6"
+
+>>> (Label :: Label "x") .=. (5::Int) .*. emptyRecord
+Record{x=5}
+
+>>> let x = Label :: Label "x"
+>>> let r = x .=. (5::Int) .*. emptyRecord
+>>> r .!. x
+5
+
+-}
+
+
+{- $labelTHdemo
+
+>>> makeLabels ["a", "b", "c"]
+
+
+-}

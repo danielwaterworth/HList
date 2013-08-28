@@ -215,7 +215,7 @@ newtype HJust x   = HJust x   deriving Show
 -- * Polykinded Equality for types
 -- | We have to use Functional dependencies for now,
 -- for the sake of the generic equality.
-class HEq x y (b :: Bool) | x y -> b
+class HEq (x :: k) (y :: k) (b :: Bool) | x y -> b
 
 -- Equality instances for naturals
 

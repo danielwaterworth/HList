@@ -1,8 +1,68 @@
-{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE TemplateHaskell, FlexibleInstances, EmptyDataDecls #-}
 
-{- | Slight help making value-level labels in the style of "Data.HList.Label6",
-without needing to import that module.
+{- |
+Automate some of the ways to make labels.
+
+-}
+
+module Data.HList.MakeLabels (
+    makeLabels,
+    makeLabels3,
+    makeLabels6) where
+
+import Data.HList.FakePrelude
+import Data.HList.Record
+
+import Data.HList.Label3
+
+import Language.Haskell.TH
+import Data.Char
+import Control.Monad
+
+make_cname, make_dname :: String -> Name
+make_cname (x:xs) = mkName ("Label" ++ toUpper x : xs)
+make_dname (x:xs) = mkName (toLower x : xs)
+
+dcl n = let
+    c = make_cname n
+    d = make_dname n
+
+    dd = dataD (return []) c [] [] [{- 'Typeable -}]
+
+    labelSig = sigD d [t| Label $(conT c) |]
+
+    labelDec = valD
+                  (varP d)
+                  (normalB [| Label |])
+                  []
+
+    showLabelInst = instanceD
+            (return [])
+            [t| ShowLabel $(conT c) |]
+            [valD (varP 'showLabel)
+                (normalB [| \_ -> n |])
+                [] ]
+
+    showInst = instanceD
+            (return [])
+            [t| Show $(conT c) |]
+            [valD (varP 'show)
+                (normalB [| \_ -> n |])
+                [] ]
+
+ in sequence [
+        labelSig,
+        labelDec,
+
+        dd,
+
+        showLabelInst,
+        showInst ]
+
+
+{- |
+
+Labels like "Data.HList.Label4" used to provide (only no Typeable).
 
  The following TH declaration splice should be placed at top-level, before the
  created values are used. Enable @-XTemplateHaskell@ too.
@@ -11,52 +71,50 @@ without needing to import that module.
 
 should expand into the following declarations
 
-> getX = Label :: Label "getX"
-> getY = Label :: Label "getY"
-> draw = Label :: Label "draw"
-> x    = Label :: Label "X"
+> data LabelGetX
+> data LabelGetY
+> data LabelDraw
+> data LabelX
 
-plus a number of instances which replicate the single undecidable instance
-in "Data.HList.Label6" which look like
+> getX = Label :: Label LabelGetX
+> getY = Label :: Label LabelGetY
+> draw = Label :: Label LabelDraw
+> x    = Label :: Label LabelX
 
-> instance ShowLabel "getX" where showLabel = \_ -> "getX"
-> instance ShowLabel "getY" where showLabel = \_ -> "getY"
-> instance ShowLabel "draw" where showLabel = \_ -> "draw"
+
+> instance ShowLabel LabelGetX where showLabel = \_ -> "getX"
+> instance ShowLabel LabelGetY where showLabel = \_ -> "getY"
+> instance ShowLabel LabelDraw where showLabel = \_ -> "draw"
 
 -}
-
-module Data.HList.MakeLabels (makeLabels,makeLabel) where
-
-import Data.HList.FakePrelude
-import Data.HList.Record
-import Language.Haskell.TH
-import Data.Char
-import Control.Monad
-
-make_dname (x:xs) = mkName (toLower x : xs)
-
-dcl n = let
-    ty = litT (strTyLit n)
-    labelDec = valD
-                  (varP (make_dname n))
-                  (normalB [| Label :: Label $ty |]) []
-
-    showLabelInst = instanceD
-            (return [])
-            [t| ShowLabel $ty |]
-            [valD (varP 'showLabel)
-                (normalB [| \_ -> n |])
-                [] ]
-
- in liftM2 (\a b -> [a,b])
-        labelDec
-        showLabelInst
-
-
--- | Our main function
 makeLabels :: [String] -> Q [Dec]
 makeLabels = fmap concat . mapM dcl
 
--- | Make a single label
-makeLabel :: String -> Q [Dec]
-makeLabel s = makeLabels [s]
+
+-- | for "Data.HList.Label3"
+makeLabels3 :: String -- ^ namespace
+    -> [String] -- ^ labels
+    -> Q [Dec]
+makeLabels3 ns (k:ks) =
+    let pt1 = fmap (concatMap (drop 2)) $ mapM dcl (ns : k : ks)
+
+        sq1 = valD (varP (make_dname k))
+                (normalB [| firstLabel (undefined :: $(conT (make_cname ns)))
+                                       (undefined :: $(conT (make_cname k))) |])
+                []
+
+        sqs = [ valD (varP (make_dname k2))
+                (normalB [| nextLabel $(varE (make_dname k1))
+                                    (undefined :: $(conT (make_cname k2))) |])
+                []
+
+                | (k1,k2) <- zip (k:ks) ks ]
+
+    in fmap concat $ sequence [ pt1, sequence (sq1 : sqs) ]
+
+
+-- | for "Data.HList.Label6"
+makeLabels6 :: [String] -> Q [Dec]
+makeLabels6 ns = fmap concat $ forM ns $ \n -> sequence
+  [sigD (make_dname n) [t| Label $(litT (strTyLit n)) |],
+   valD (varP (make_dname n)) (normalB [| Label |]) []]

@@ -25,7 +25,7 @@ module Data.HList (
 -- module New,
 -- module Data.HList.HList
  concrete,
- -- (#)
+ (#)
 ) where
 
 
@@ -42,13 +42,13 @@ import Control.Monad
 import Control.Monad.ST
 import Control.Monad.Fix
 
-{-
 infixr 9 #
-(#) :: (HasField l r v) => r -> l -> v
+(#) :: HasField l r v => r -> Label l -> v
 m # field = (m .!. field)
--}
 
 concrete :: (MonadFix m) => (a -> m a) -> a -> m a
 concrete generator self = generator self
  where
   _ = mfix generator
+
+

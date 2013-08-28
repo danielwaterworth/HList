@@ -17,24 +17,28 @@
 
    Extensible records
 
-   The are different models of labels that go with this module;
-   see:
+   The three-ish models of labels that go with this module;
+
+   * "Data.HList.Label3"
+
+   * "Data.HList.Label6"
+
+   * "Data.HList.MakeLabels"
+
+
+   These used to work:
 
    * "Data.HList.Label1"
 
    * "Data.HList.Label2"
 
-   * "Data.HList.Label3"
-
    * "Data.HList.Label4"
 
    * "Data.HList.Label5"
 
-   * "Data.HList.Label6"
 -}
 
 module Data.HList.Record
-{-
 (
     -- * Records
 
@@ -53,7 +57,6 @@ module Data.HList.Record
     -- *** Getting Labels
     RecordLabels,
     recordLabels,
-    recordLabels',
 
     -- *** Getting Values
     RecordValues(..),
@@ -90,6 +93,7 @@ module Data.HList.Record
     hProjectByLabels,
     hProjectByLabels2,
 
+   {-
     -- ** Unions
     -- *** Left
     HLeftUnion(hLeftUnion),
@@ -100,8 +104,10 @@ module Data.HList.Record
     -- $symmetricUnion
     UnionSymRec(unionSR),
 
+
     -- ** Reorder Labels
     hRearrange,
+    -}
 
     -- ** Extension
     -- | 'hExtend', 'hAppend'
@@ -110,18 +116,19 @@ module Data.HList.Record
     -- * Unclassified
     -- | Probably internals, that may not be useful
     DuplicatedLabel(..),
-    ExtraField(..),
-    FieldNotFound(..),
+    -- ExtraField(..),
+    -- FieldNotFound(..),
     H2ProjectByLabels(h2projectByLabels),
     H2ProjectByLabels'(h2projectByLabels'),
     HLabelSet,
     HLabelSet',
     HRLabelSet,
     HRLabelSet',
-    HRearrange(hRearrange2),
-    HRearrange'(hRearrange2'),
-    UnionSymRec'(..)
-) -} where
+    -- HRearrange(hRearrange2),
+    -- HRearrange'(hRearrange2'),
+    -- UnionSymRec'(..)
+    -- module Data.HList.Record, -- if something was forgotten
+) where
 
 
 import Data.HList.FakePrelude
@@ -222,7 +229,7 @@ instance ( Fail (DuplicatedLabel l1) ) => HLabelSet' l1 l2 True r
 -- | Construct the (phantom) list of labels of the record.
 --
 
-type family RecordLabels (r :: [*]) :: [*] -- XXX should be [k]
+type family RecordLabels (r :: [*]) :: [k]
 type instance RecordLabels '[]               = '[]
 type instance RecordLabels (LVPair l v ': r) = l ': RecordLabels r
 
@@ -284,12 +291,13 @@ class ShowLabel l where
   showLabel :: Label l -> String
 
 
+
 -- --------------------------------------------------------------------------
 
 -- Extension
 
 instance HRLabelSet (LVPair l v ': r) 
-    => HExtend (LVPair (l :: *) v) (Record r) where
+    => HExtend (LVPair (l :: k) v) (Record r) where
   type HExtendR (LVPair l v) (Record r) = Record (LVPair l v ': r)
   f .*. (Record r) = mkRecord (HCons f r)
 
@@ -327,7 +335,7 @@ instance (HRLabelSet (HAppendList r1 r2), HAppend (HList r1) (HList r2))
 -- | Because 'hLookupByLabel' is so frequent and important, we implement
 -- it separately, more efficiently. The algorithm is familiar assq, only
 -- the comparison operation is done at compile-time
-class HasField l r v | l r -> v where
+class HasField (l::k) r v | l r -> v where
     hLookupByLabel:: Label l -> r -> v
 
 {-
@@ -353,7 +361,7 @@ instance (HEq l l1 b, HasField' b l (LVPair l1 v1 ': r) v)
 -- XXX Alas, I have to set l :: * even though it could be other kinds.
 -- Check back with GHC 7.8
 
-class HasField' (b::Bool) (l :: *) (r::[*]) v | b l r -> v where
+class HasField' (b::Bool) (l :: k) (r::[*]) v | b l r -> v where
     hLookupByLabel':: Proxy b -> Label l -> HList r -> v
 
 instance HasField' True l (LVPair l v ': r) v where

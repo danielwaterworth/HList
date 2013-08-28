@@ -9,14 +9,13 @@
 
 module MainGhcGeneric2 where
 
-import Data.HList.FakePrelude hiding (TypeEq,typeEq,proxyEq)
-import Data.HList.TypeEqGeneric2
+import Data.HList
 
 
 {-----------------------------------------------------------------------------}
 
-main = print ( typeEq True False
-             , typeEq True "True"
+main = print ( hEq True False
+             , hEq True "True"
              )
 
 
