@@ -29,10 +29,12 @@ module Data.HList.CommonMain (
  -- * Labels
  -- | there are three options for now:
 
- -- $label6demo
  , module Data.HList.Label3
 
- -- $labelTHdemo
+ -- $label6demo
+ , module Data.HList.Label6
+
+ -- | template haskell for automating different types of labels
  , module Data.HList.MakeLabels
 ) where
 
@@ -70,9 +72,3 @@ Record{x=5}
 -}
 
 
-{- $labelTHdemo
-
->>> makeLabels ["a", "b", "c"]
-
-
--}
