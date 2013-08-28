@@ -1,3 +1,5 @@
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE MultiParamTypeClasses, FlexibleInstances #-}
 {-# LANGUAGE ScopedTypeVariables, UndecidableInstances #-}
 {-# LANGUAGE TypeFamilies #-}  -- !TF
@@ -24,10 +26,6 @@
 module TIPTransformM where
 
 import Data.HList
-import Data.HList.TIP
-
-import Data.HList.TypeEqO
-import Data.HList.Label5
 
 -- We start with the examples
 
@@ -75,7 +73,8 @@ tip5' = runIdentity $
 -- TIP (HCons (MyVal 21) (HCons 1 (HCons True (HCons 3.5 HNil))))
 
 -- Andrew Frank's test
-tip6 :: IO (TIP (HCons MyVal (HCons Int (HCons Bool (HCons Float HNil)))))
+-- tip6 :: IO (TIP (HCons MyVal (HCons Int (HCons Bool (HCons Float HNil)))))
+tip6 :: IO (TIP (MyVal ': Int ': Bool ': Float ': '[]))
 tip6 = ttipM op6 tip1
 
 op6 :: MyVal -> Bool -> IO MyVal
@@ -127,17 +126,17 @@ class Monad m => TransTIPM m op db where
 -- can be instantiated either to a monad type constructor, or (arg->).
 instance (Monad m, HMember op db b, TransTIPM' b m (m' op) (TIP db))
     => TransTIPM m (m' op) (TIP db) where
-    ttipM = ttipM' (undefined::b)
+    ttipM = ttipM' (proxy :: Proxy b)
 
-class Monad m => TransTIPM' b m op db where
-    ttipM' :: b -> op -> db -> m db
+class Monad m => TransTIPM' (b :: Bool) m op db where
+    ttipM' :: Proxy b -> op -> db -> m db
 
 -- If op is found in a TIP, update the TIP with op.
 -- The type variable m' must be equal to the type of the monad
 -- in which the final result is reported.
 instance (Monad m, m ~ m',
-	  HTypeIndexed db, HUpdateAtHNat n op db db, HType2HNat op db n)
-    => TransTIPM' HTrue m (m' op) (TIP db) where
+	  HTypeIndexed db, HUpdateAtHNat n op db, HUpdateAtHNatR n op db ~ db, HType2HNat op db n)
+    => TransTIPM' True m (m' op) (TIP db) where
     ttipM' _ op db = do
                      op' <- op
 		     return $ tipyUpdate op' db
@@ -145,7 +144,7 @@ instance (Monad m, m ~ m',
 -- If op is not found in a TIP, it must be a function. Look up
 -- its argument in a TIP and recur.
 instance (Monad m, HOccurs arg db, TransTIPM m op db)
-    => TransTIPM' HFalse m (arg-> op) db where
+    => TransTIPM' False m (arg-> op) db where
     ttipM' _ f db = ttipM (f (hOccurs db)) db
 -- -} -- !TF
 
