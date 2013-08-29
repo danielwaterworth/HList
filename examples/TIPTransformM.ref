@@ -1,8 +1,8 @@
-TIP (HCons (MyVal 20) (HCons 1 (HCons True (HCons 3.5 HNil))))
-TIP (HCons (MyVal 20) (HCons 2 (HCons True (HCons 3.5 HNil))))
-TIP (HCons (MyVal 20) (HCons 1 (HCons False (HCons 3.5 HNil))))
-TIP (HCons (MyVal 20) (HCons 21 (HCons True (HCons 3.5 HNil))))
-TIP (HCons (MyVal 21) (HCons 1 (HCons True (HCons 3.5 HNil))))
-TIP (HCons (MyVal 21) (HCons 1 (HCons True (HCons 3.5 HNil))))
+TIPH[MyVal 20, 1, True, 3.5]
+TIPH[MyVal 20, 2, True, 3.5]
+TIPH[MyVal 20, 1, False, 3.5]
+TIPH[MyVal 20, 21, True, 3.5]
+TIPH[MyVal 21, 1, True, 3.5]
+TIPH[MyVal 21, 1, True, 3.5]
 MyVal is now MyVal 5
-tip2 isTIP (HCons (MyVal 5) (HCons 1 (HCons True (HCons 3.5 HNil))))
+tip2 isTIPH[MyVal 5, 1, True, 3.5]

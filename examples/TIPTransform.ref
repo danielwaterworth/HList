@@ -1,6 +1,6 @@
-TIP (HCons (MyVal 20) (HCons 1 (HCons True HNil)))
-TIP (HCons (MyVal 20) (HCons 2 (HCons True HNil)))
-TIP (HCons (MyVal 20) (HCons 1 (HCons False HNil)))
-TIP (HCons (MyVal 20) (HCons 21 (HCons True HNil)))
-TIP (HCons (MyVal 21) (HCons 1 (HCons True HNil)))
-TIP (HCons (MyVal 21) (HCons 1 (HCons True HNil)))
+TIPH[MyVal 20, 1, True]
+TIPH[MyVal 20, 2, True]
+TIPH[MyVal 20, 1, False]
+TIPH[MyVal 20, 21, True]
+TIPH[MyVal 21, 1, True]
+TIPH[MyVal 21, 1, True]

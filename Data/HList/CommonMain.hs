@@ -61,6 +61,7 @@ import Data.HList.Variant
 
  Instances from "Data.HList.Label6"
 
+>>> :set -XDataKinds
 >>> (Label :: Label "x") .=. (5::Int) .*. emptyRecord
 Record{x=5}
 

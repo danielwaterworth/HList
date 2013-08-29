@@ -40,4 +40,16 @@ library
                        Data.HList.Label3,
                        Data.HList.Label6
 
-  ghc-options:         -Wall
+  Ghc-Options:         -Wall
+
+Test-Suite examples
+  Type:     exitcode-stdio-1.0
+  Ghc-Options: -threaded
+  Main-Is: examples/runexamples.hs
+  Build-Depends: base, hspec == 1.7.*, directory, filepath, process
+
+Test-Suite doctests
+  Type:     exitcode-stdio-1.0
+  Ghc-Options: -threaded
+  Main-Is: examples/rundoctests.hs
+  Build-Depends: base, doctest >= 0.8
