@@ -40,6 +40,7 @@ hUnproxyLabel l v r = hUpdateAtLabel l v r
   tpe _ _ = ()
   _ = tpe v (hLookupByLabel l r)
 
+
 infixr 2 .^.
 {-|
   This is a variation on updating, so use the same fixity as (.\@.).
@@ -57,11 +58,11 @@ hasNoProxies = const ()
 
 
 data ProxyFound x
-class HasNoProxies l
-instance HasNoProxies HNil
-instance Fail (ProxyFound x) => HasNoProxies (HCons (Proxy x) l)
-instance Fail (ProxyFound x) => HasNoProxies (HCons (LVPair lab (Proxy x)) l)
-instance HasNoProxies l => HasNoProxies (HCons e l)
+class HasNoProxies (l :: [*])
+instance HasNoProxies '[]
+instance Fail (ProxyFound x) => HasNoProxies (Proxy x ': l)
+instance Fail (ProxyFound x) => HasNoProxies (LVPair lab (Proxy x) ': l)
+instance HasNoProxies l => HasNoProxies (e ': l)
 
 
 -- --------------------------------------------------------------------------
@@ -74,27 +75,29 @@ instance HasNoProxies l => HasNoProxies (HCons e l)
 class  NarrowM a b res | a b -> res where
     narrowM :: Record a -> Record b -> res
 
-instance NarrowM a HNil (HJust (Record HNil)) where
+instance NarrowM a '[] (HJust (Record '[])) where
+
     narrowM _ _ = HJust emptyRecord
 
-instance (H2ProjectByLabels (HCons l HNil) a rin rout,
+instance (H2ProjectByLabels (l ': '[]) a rin rout,
           NarrowM' rin rout b res)
-    => NarrowM a (HCons (LVPair l v) b) res where
-    narrowM (Record a) _ = narrowM' rin rout (undefined::b)
+    => NarrowM a (LVPair l v ': b) res where
+    narrowM (Record a) _ = narrowM' (Record rin) (Record rout) (undefined:: Record b)
      where
-        (rin,rout) = h2projectByLabels (undefined::(HCons l HNil)) a
+        (rin,rout) = h2projectByLabels (proxy :: Proxy (l ': '[])) a
 
+-- | could be changed to type family
 class  NarrowM' rin rout b res | rin rout b -> res where
-    narrowM' :: rin -> rout -> b -> res
+    narrowM' :: Record rin -> Record rout -> Record b -> res
 
-instance NarrowM' HNil rout b HNothing where
+instance NarrowM' '[] rout b HNothing where
     narrowM' _ _ _ = HNothing
 
 instance (NarrowM rout b res',
           NarrowM'' f res' res)
-    => NarrowM' (HCons f HNil) rout b res where
-    narrowM' (HCons f HNil) rout b =
-        narrowM'' f (narrowM (Record rout) (Record b))
+    => NarrowM' (f ': '[]) rout b res where
+    narrowM' (Record (f `HCons` HNil)) rout b =
+        narrowM'' f (narrowM rout b)
 
 class  NarrowM'' f r r' | f r -> r' where
     narrowM'' :: f -> r -> r'
@@ -102,28 +105,28 @@ class  NarrowM'' f r r' | f r -> r' where
 instance NarrowM'' f HNothing HNothing where
     narrowM'' _ _ = HNothing
 
-instance NarrowM'' f (HJust (Record r)) (HJust (Record (HCons f r))) where
+instance NarrowM'' f (HJust (Record r)) (HJust (Record (f ': r))) where
     narrowM'' f (HJust (Record r)) = HJust (Record (HCons f r))
 
 
 class  Narrow a b
  where narrow :: Record a -> Record b
 
-instance Narrow a HNil
+instance Narrow a '[]
  where   narrow _ = emptyRecord
 
 instance ( Narrow rout r'
-         , H2ProjectByLabels (HCons l HNil) r (HCons (LVPair l v) HNil) rout
-         ) => Narrow r (HCons (LVPair l v) r')
+         , H2ProjectByLabels (l ': '[]) r (LVPair l v ': '[]) rout
+         ) => Narrow r ( LVPair l v ': r' )
   where
-    narrow (Record r) = Record (HCons f r')
-      where
-        (HCons f HNil,rout) = h2projectByLabels (undefined::(HCons l HNil)) r
-        (Record r')    = narrow (Record rout)
+    narrow (Record r) = case h2projectByLabels (proxy::Proxy (l ': '[])) r of
+        (HCons f HNil,rout) -> let (Record r')    = narrow (Record rout)
+            in Record (HCons f r')
 
 
 -- --------------------------------------------------------------------------
 
+{-
 -- | Narrow two records to their least-upper bound
 
 class LubNarrow a b c | a b -> c
@@ -139,11 +142,17 @@ instance ( RecordLabels a la
          )
       => LubNarrow (Record a) (Record b) (Record c)
  where
-  lubNarrow ra@(Record _) rb@(Record _) =
-     ( hProjectByLabels (undefined::lc) ra
-     , hProjectByLabels (undefined::lc) rb
+
+lubNarrow ra@(Record _) rb@(Record _) =
+     ( hProjectByLabels (proxy::Proxy lc) ra
+     , hProjectByLabels (proxy::lc) rb
      )
 
+    where
+    la = recordLabels ra
+    lb = recordLabels rb/
+-}
+{-
 
 -- --------------------------------------------------------------------------
 
@@ -300,4 +309,5 @@ instance Typeable x => Typeable (Proxy x)
    = mkTyConApp proxyTcName [ typeOf (undefined::x) ]
 
 
+-}
 
