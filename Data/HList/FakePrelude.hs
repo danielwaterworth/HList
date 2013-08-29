@@ -1,3 +1,7 @@
+{-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE NoMonomorphismRestriction #-}
+{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE EmptyDataDecls, MultiParamTypeClasses, 
   FunctionalDependencies, FlexibleInstances, UndecidableInstances #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -19,32 +23,244 @@ module Data.HList.FakePrelude where
 -- --------------------------------------------------------------------------
 -- * A heterogeneous apply operator
 
--- | Apply is used to pass polymorphic functions around
+-- | simpler/weaker version where type information only propagates forward
+-- with this one. 'app' defined below, is more complicated / verbose to define,
+-- but it offers better type inference. Most uses have been converted to
+-- 'app', so there is not much that can be done with 'Apply'.
 class Apply f a where
   type ApplyR f a :: *
   apply :: f -> a -> ApplyR f a
   apply = undefined                     -- In case we use Apply for
                                         -- type-level computations only
 
--- Simple useful instances of Apply
+{- $note
 
-instance Apply (x -> y) x where
-  type ApplyR (x -> y) x = y
-  apply f x = f x
+ Polymorphic functions are not first-class in haskell. One solution is to
+ write an instance of 'ApplyAB' for a data type that takes the place of
+ the original function. In other words,
 
--- Instances for showing
-data HShow     = HShow
+ > data Fn = Fn
+ > instance ApplyAB Fn a b where applyAB Fn a = actual_fn a
+
+ Normally you would have been able to pass around the definition actual_fn.
+
+ [@Type inference@]
+
+ The definiton of 'ApplyAB' requires all three types (function @f@, argument
+ @a@ and result @b@) to be known before picking an implementation. This is
+ impractical, since it means that every usage of 'applyAB' will need a type
+ signature which is a pain.
+
+ Specifying that the types should be restricted is accomplished by the use of
+ two type families (described here since haddock does a bad job of them). These
+ are (type-level) functions which compute (given @f@ @a@ @b@ from
+ an instance of @ApplyAB@):
+
+ > ApplyB f a = Maybe b
+ > ApplyA f b = Maybe a
+
+-}
+
+-- | No constraints on result and argument types
+class ApplyAB f a b where
+
+  -- | @GetApplyB f a = b@ when it can be calculated
+  type ApplyB f a :: Maybe k
+
+  -- | @GetApplyA f b = a@ when it can be calculated
+  type ApplyA f b :: Maybe k
+
+  applyAB :: f -> a -> b
+  applyAB = undefined -- In case we use Apply for type-level computations only
+
+
+-- * working with promoted Maybe
+type family GuardJust (a :: Maybe *) b :: *
+type instance GuardJust Nothing b = ()
+type instance GuardJust (Just a) b = b
+
+type family FromMaybe b (a :: Maybe *) :: *
+type instance FromMaybe b Nothing  = b
+type instance FromMaybe b (Just a) = a
+
+type family FromJust (a :: Maybe *) :: *
+type instance FromJust (Just a) = a
+
+
+{- | a single name for (the same behavior as)
+
+> class Apply f a b | f a -> b, f b -> a where apply :: f -> a -> b
+> class Apply f a b | f a -> b           where apply :: f -> a -> b
+> class Apply f a b |           f b -> a where apply :: f -> a -> b
+
+The fundeps are present if the associated types 'ApplyA' and 'ApplyB'
+produce types that are 'Just', or absent if they are 'Nothing'.
+
+-}
+type App f a b = (ApplyAB f a b,
+    GuardJust (ApplyA f b) a ~ FromMaybe () (ApplyA f b) ,
+    GuardJust (ApplyB f a) b ~ FromMaybe () (ApplyB f a) )
+
+app :: App f a b => f -> a -> b
+app = applyAB
+
+-- ** more restrictive apply
+{- $example
+
+Not clear if these really work properly yet.
+
+Using standard \'standard\' functions read, show and Just,
+only the following restricted versions of apply are accepted
+
+>>> :t applyB' HRead
+applyB' HRead :: Read b => [Char] -> b
+
+>>> :t applyA' HShow
+applyA' HShow :: Show a => a -> [Char]
+
+
+>>> :t applyA' (HJust ())
+applyA' (HJust ()) :: a -> HJust a
+
+> ??
+> >>> :t applyB' (HJust ())
+> applyB' (HJust ()) :: a -> HJust a
+
+>>> :t apply' (HJust ())
+apply' (HJust ()) :: a -> HJust a
+
+The other combinations should not typecheck (not tested here...)
+
+-}
+
+-- | must have a @| f b -> a@
+type ApplyB' f a b = (ApplyAB f a b, a ~ FromJust (ApplyA f b) )
+
+-- | must have a @| f a -> b@
+type ApplyA' f a b = (ApplyAB f a b, b ~ FromJust (ApplyB f a) )
+
+-- | must have a @| f a -> b, f b -> a@
+type Apply' f a b = (ApplyAB f a b, b ~ FromJust (ApplyB f a), a ~ FromJust (ApplyA f b) )
+
+
+apply' :: Apply' f a b => f -> a -> b
+apply' = applyAB
+
+applyA' :: ApplyA' f a b => f -> a -> b
+applyA' = applyAB
+
+applyB' :: ApplyB' f a b => f -> a -> b
+applyB' = applyAB
+
+-- ** Simple useful instances of Apply
+instance ApplyAB (x -> y) x y where
+  type ApplyB (x -> y) x = Just y
+  type ApplyA (x -> y) y = Just x
+  applyAB f x = f x
+
+
+
+-- | print
+data HPrint = HPrint
+
+instance Show x => ApplyAB HPrint x (IO ()) where
+  type ApplyB HPrint x = Just (IO ())
+  type ApplyA HPrint (IO ()) = Nothing
+  applyAB _ x = print x
+
+
+{- | read
+
+>>> app HRead "5.0" :: Double
+5.0
+
+-}
+data HRead = HRead
+instance Read a => ApplyAB HRead String a where
+    type ApplyA HRead a = Just String
+    type ApplyB HRead String = Nothing
+    applyAB _ x = read x
+
+-- | show
+data HShow = HShow
+instance Show a => ApplyAB HShow a String where
+    type ApplyA HShow String = Nothing
+    type ApplyB HShow a = Just String
+    applyAB _ x = show x
+
+
+{- | Compose two instances of 'ApplyAB'
+
+>>> app (HComp HRead HShow) (5::Double) :: Double
+5.0
+
+-}
+data HComp g f = HComp g f -- ^ @g . f@
+
+type family JoinMaybe (a :: Maybe (Maybe k)) :: Maybe k
+type instance JoinMaybe (Just a) = a
+type instance JoinMaybe Nothing = Nothing
+
+type family BindApplyA f (a :: Maybe *) :: Maybe *
+type instance BindApplyA f Nothing = Nothing
+type instance BindApplyA f (Just a) = ApplyA f a
+
+type family BindApplyB f (a :: Maybe *) :: Maybe *
+type instance BindApplyB f Nothing = Nothing
+type instance BindApplyB f (Just a) = ApplyB f a
+
+instance forall f g a b c. (App f a b, App g b c) => ApplyAB (HComp g f) a c where
+    type ApplyA (HComp g f) c = BindApplyA f (ApplyA g c)
+    type ApplyB (HComp g f) a = BindApplyB g (ApplyB f a)
+    applyAB ~(HComp g f) x = app g (app f x :: b)
+
+
+{- | @app Comp (f,g) = g . f@. Works like:
+
+>>> app Comp (succ, pred) 'a'
+'a'
+
+>>> app Comp (toEnum :: Int -> Char, fromEnum) 10
+10
+
+Note that defaulting will sometimes give you the wrong thing
+
+>>> app Comp (fromEnum, toEnum) 'a'
+*** Exception: Prelude.Enum.().toEnum: bad argument
+
+-}
+data Comp = Comp
+
+instance y ~ y' => ApplyAB Comp (x -> y,y' -> z) (x -> z)
+ where
+  type ApplyB Comp (x -> y,y' -> z) = Just (x -> z)
+  type ApplyA Comp (x -> z)  = Nothing
+  applyAB _ (f,g) = g . f
+
+-- | (\(a,b) -> f a >> b)
 newtype HSeq x = HSeq x
+instance (Monad m, ApplyB f x ~ Just (m ()),
+          App f x (m ()) ) => ApplyAB (HSeq f) (x,m ()) (m ()) where
+  type ApplyA (HSeq f) (m ()) = Nothing
+  type ApplyB (HSeq f) (x,m ()) = Just (m ())
+  applyAB (HSeq f) (x,c) = do app f x; c
 
-instance Show x => Apply HShow x where
-  type ApplyR HShow x = IO ()
-  apply _ x = putStrLn $ show x
 
-instance (Monad m, ApplyR f x ~ m (), Apply f x) => 
-    Apply (HSeq f) (x,m ()) where
-  type ApplyR (HSeq f) (x,m ()) = m ()
-  apply (HSeq f) (x,c) = do apply f x; c
 
+-- | @HJust ()@ is a placeholder for a function that applies the 'HJust' constructor
+instance ApplyAB (HJust ()) a (HJust a) where
+    type ApplyA (HJust ()) (HJust a) = Just a
+    type ApplyB (HJust ()) a = Just (HJust a)
+    applyAB _ a = HJust a
+
+
+-- | 'flip'
+data HFlip = HFlip
+
+instance ApplyAB HFlip (a -> b -> c) (b -> a -> c) where
+    type ApplyB HFlip (a -> b -> c) = Just (b -> a -> c)
+    type ApplyA HFlip (b -> a -> c) = Just (a -> b -> c)
+    applyAB _ = flip
 
 -- --------------------------------------------------------------------------
 -- * Proxy
@@ -59,7 +275,7 @@ data Proxy tp
 proxy :: Proxy tp
 proxy =  undefined
 
--- A special Proxy for record labels, polykinded
+-- | A special 'Proxy' for record labels, polykinded
 data Label l = Label
 
 labelToProxy :: Label l -> Proxy l
@@ -143,6 +359,20 @@ Compare with the original code based on functional dependencies:
 >  where
 >   hOr _ _ = hTrue
 -}
+
+
+class HCond (t :: Bool) x y z | t x y -> z
+ where
+  hCond :: Proxy t -> x -> y -> z
+
+instance HCond False x y y
+ where
+  hCond _ _ y = y
+
+instance HCond True x y x
+ where
+  hCond _ x _ = x
+
 
 -- ** Boolean equivalence
 
@@ -279,5 +509,4 @@ class TypeCast x y | x -> y, y -> x
 
 -- | A class without instances for explicit failure
 class Fail x
-
 

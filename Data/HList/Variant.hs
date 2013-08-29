@@ -1,3 +1,5 @@
+{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE FlexibleContexts, FlexibleInstances, FunctionalDependencies, MultiParamTypeClasses, UndecidableInstances #-}
 
@@ -39,10 +41,12 @@ newtype Variant mr = Variant mr
 -- | Turn proxy sequence into sequence of Nothings
 
 data HMaybeF = HMaybeF
-instance Apply HMaybeF (LVPair l (Proxy t)) where
-    type ApplyR HMaybeF (LVPair l (Proxy t)) = LVPair l (Maybe t)
-    apply _ _ = LVPair Nothing
+instance ApplyAB HMaybeF (LVPair l (Proxy t)) (LVPair l (Maybe t)) where
+    type ApplyB HMaybeF (LVPair l (Proxy t)) = Just (LVPair l (Maybe t))
+    type ApplyA HMaybeF (LVPair l (Maybe t)) = Just (LVPair l (Proxy t))
+    applyAB _ _ = LVPair Nothing
 
+hMaybied :: App (HMap HMaybeF) a b => a -> b
 hMaybied x = hMap HMaybeF x
 
 {- ^ used to be
@@ -64,7 +68,9 @@ hMaybied x = hMap HMaybeF x
 
 -- --------------------------------------------------------------------------
 -- | Public constructor
-mkVariant x y (Record v) = case hUpdateAtLabel x (Just y) (Record (hMaybied v)) of
+-- it seems we can blame 'hUpdateAtLabel' (not 'HMap') for needing the asTypeOf?
+mkVariant x y (Record v) = let r1 = Record (hMaybied v) in
+    case hUpdateAtLabel x (Just y) r1 `asTypeOf` r1 of
     Record x -> Variant x
 {- ^ previously:
 

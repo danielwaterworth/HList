@@ -1,3 +1,8 @@
+{-# LANGUAGE GADTs #-}
+{-# LANGUAGE TypeFamilies #-}
+{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE KindSignatures #-}
+{-# LANGUAGE TypeOperators #-}
 {-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 {-# LANGUAGE EmptyDataDecls, FlexibleContexts, FlexibleInstances, FunctionalDependencies, MultiParamTypeClasses, ScopedTypeVariables, UndecidableInstances #-}
 
@@ -18,6 +23,7 @@ import Data.HList.FakePrelude
 import Data.HList.HListPrelude
 import Data.HList.HArray
 import Data.HList.Record
+import Data.HList.HList
 import Data.Typeable
 
 -- --------------------------------------------------------------------------
@@ -26,10 +32,8 @@ import Data.Typeable
 --
 -- Replace a proxy by a value of the proxied type.
 -- The signature is inferred
-hUnproxyLabel :: (HUpdateAtHNat n (LVPair l a) t l', HFind l ls n,
-                               RecordLabels t ls,
-                               HasField l t (Proxy a)) =>
-                                             l -> a -> Record t -> Record l'
+hUnproxyLabel :: (HFind l (RecordLabels r) n,HUpdateAtHNat n (LVPair l v) r,HasField l (Record r) (Proxy v)) =>
+    Label l-> v -> Record r -> Record (HUpdateAtHNatR n (LVPair l v) r)
 hUnproxyLabel l v r = hUpdateAtLabel l v r
  where
   tpe :: a -> Proxy a -> ()

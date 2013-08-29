@@ -1,3 +1,5 @@
+{-# LANGUAGE NoMonomorphismRestriction #-}
+{-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE EmptyDataDecls #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -5,18 +7,30 @@
 
 -- Needed for a reply to the Haskell mailing list
 
-import Data.HList.CommonMain
+import Data.HList.CommonMain hiding (Comp(..))
 
-main = print $ comp "abc"
+main = do
+    print $ comp "abc"
+    print $ (hComposeList test2 "abc" :: Int) -- definition in HList now
 
 test = HCons (length::String -> Int) (HCons ((+1)::(Int->Int)) (HCons ((*2)::(Int->Int)) HNil))
+test2 = length .*. (+1) .*. (*2) .*. HNil
 
 data Comp
 
+{- simpler class. wouldn't work with test2. The original HFoldr won't work with
+ - Apply anymore.
 instance Apply Comp (x -> y,y -> z)
  where
   type ApplyR Comp (x -> y,y -> z) = x -> z
   apply _ (f,g) = g . f
+  -}
+
+instance y ~ y' => ApplyAB Comp (x -> y,y' -> z) (x -> z)
+ where
+  type ApplyB Comp (x -> y,y' -> z) = Just (x -> z)
+  type ApplyA Comp (x -> z)  = Nothing
+  applyAB _ (f,g) = g . f
 
 -- Function composition based on type code works.
 

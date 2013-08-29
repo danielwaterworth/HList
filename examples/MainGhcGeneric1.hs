@@ -56,7 +56,7 @@ angus =  HCons (Key 42)
            (HCons (Price 75.5)
             HNil)))
 
-tList1 = hFoldr (HSeq HShow) (return () :: IO ()) angus
+tList1 = hFoldr (HSeq HPrint) (return () :: IO ()) angus
 {-
  Key 42
  Name "Angus"

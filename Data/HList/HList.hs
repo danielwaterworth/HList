@@ -1,3 +1,5 @@
+{-# LANGUAGE PolyKinds #-}
+{-# LANGUAGE ConstraintKinds #-}
 {-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies #-}
 {-# LANGUAGE FlexibleInstances, FlexibleContexts #-}
 {-# LANGUAGE UndecidableInstances #-}
@@ -90,14 +92,16 @@ append' :: [a] -> [a] -> [a]
 append' l l' = foldr (:) l' l
 
 -- | Alternative implementation of 'hAppend'. Demonstrates 'HFoldr'
-hAppend' :: (HFoldr FHCons v l) => HList l -> v -> HFoldrR FHCons v l
+hAppend' :: (HFoldr FHCons v l r) => HList l -> v -> r
 hAppend' l l' = hFoldr FHCons l' l
 
 data FHCons = FHCons
 
-instance Apply FHCons (e,HList l) where
-    type  ApplyR FHCons (e,HList l) =  HList (e ': l)
-    apply _ (e,l) = HCons e l
+instance ApplyAB FHCons (e,HList l) (HList (e ': l)) where
+    type ApplyB FHCons (e,HList l) = Just (HList (e ': l))
+    type ApplyA FHCons (HList (e ': l)) = Just (e,HList l)
+    applyAB _ (e,l) = HCons e l
+
 
 -- ** Historical append
 
@@ -225,22 +229,26 @@ H[True, 'a', "ok"]
 -- * fold
 -- $foldNote  Consume a heterogenous list. GADTs and type-classes mix well
 
-class HFoldr f v (l :: [*]) where
-    type HFoldrR f v l :: *
-    hFoldr :: f -> v -> HList l -> HFoldrR f v l
 
-instance HFoldr f v '[] where
-    type HFoldrR f v '[] = v
+class HFoldr f v (l :: [*]) r | f v l -> r where
+    hFoldr :: f -> v -> HList l -> r
+
+instance HFoldr f v '[] v where
     hFoldr       _ v _   = v
 
-instance (Apply f (e, HFoldrR f v l), HFoldr f v l)
-    => HFoldr f v (e ': l) where
-    type HFoldrR f v (e ': l) = ApplyR f (e, HFoldrR f v l)
-    hFoldr f v (HCons x l)    = apply  f (x, hFoldr  f v l)
+-- | uses 'ApplyAB' not 'Apply'
+instance (App f (e, r) r', HFoldr f v l r)
+    => HFoldr f v (e ': l) r' where
+    hFoldr f v (HCons x l)    = app f (x, hFoldr f v l)
+
+
+
 
 
 -- * unfold
--- $unfoldNote Produce a heterogenous list
+-- $unfoldNote Produce a heterogenous list. Uses the more limited
+-- 'Apply' instead of 'App' since that's all that is needed for uses of this
+-- function downstream. Those could in principle be re-written.
 
 hUnfold :: (Apply p s, HUnfold' p (ApplyR p s)) => p -> s -> HList (HUnfold p s)
 hUnfold p s = hUnfold' p (apply p s)
@@ -260,6 +268,7 @@ instance (Apply p s, HUnfold' p (ApplyR p s)) => HUnfold' p (HJust (e,s)) where
     hUnfold' p (HJust (e,s)) = HCons e (hUnfold p s)
 
 
+
 -- --------------------------------------------------------------------------
 -- * traversing HLists
 
@@ -267,32 +276,108 @@ instance (Apply p s, HUnfold' p (ApplyR p s)) => HUnfold' p (HJust (e,s)) where
 -- *** map
 -- $mapNote It could be implemented with 'hFoldr', as we show further below
 
-class HMap f (l :: [*]) where
-  type HMapR f l :: [*]
-  hMap :: f -> HList l -> HList (HMapR f l)
+{- |
 
-instance HMap f '[] where
-  type HMapR f '[] = '[]
+>>> :set -XNoMonomorphismRestriction
+>>> let xs = 1 .*. 'c' .*. HNil
+>>> :t hMap (HJust ()) xs
+hMap (HJust ()) xs
+  :: Num e => HList ((':) * (HJust e) ((':) * (HJust Char) ('[] *)))
+
+-}
+hMap :: App (HMap f) a b => f -> a -> b
+hMap f xs = app (HMap f) xs
+
+newtype HMap f = HMap f
+
+instance (App f a b, ApplyAB (HMap f) (HList as) (HList bs)) =>
+    ApplyAB (HMap f) (HList (a ': as)) (HList (b ': bs)) where
+    type ApplyA (HMap f) (HList (b ': bs)) = FmapMaybe HList (SequenceMaybe (MapApplyA f (b ': bs)))
+    type ApplyB (HMap f) (HList (a ': as)) = FmapMaybe HList (SequenceMaybe (MapApplyB f (a ': as)))
+    applyAB (HMap f) (HCons a as) = HCons (app f a) (applyAB (HMap f) as)
+
+instance ApplyAB (HMap f) (HList '[]) (HList '[]) where
+    type ApplyA (HMap f) (HList '[]) = Just (HList '[])
+    type ApplyB (HMap f) (HList '[]) = Just (HList '[])
+    applyAB (HMap f) x = x
+
+type family MapApplyA f (l :: [*]) :: [Maybe *]
+type instance MapApplyA f (x ': xs) = ApplyA f x ': MapApplyA f xs
+type instance MapApplyA f '[] = '[]
+
+type family MapApplyB f (l :: [*]) :: [Maybe *]
+type instance MapApplyB f (x ': xs) = ApplyB f x ': MapApplyB f xs
+type instance MapApplyB f '[] = '[]
+
+type family SequenceMaybe (l :: [Maybe k]) :: Maybe [k]
+type instance SequenceMaybe '[] = Just '[]
+type instance SequenceMaybe (x ': xs) = LiftMCons x (SequenceMaybe xs)
+
+type family LiftMCons (x :: Maybe k) (xs :: Maybe [k]) :: Maybe [k]
+type instance LiftMCons Nothing t = Nothing
+type instance LiftMCons t Nothing = Nothing
+type instance LiftMCons (Just x) (Just xs) = Just (x ': xs)
+
+type family UnHList a :: [k]
+type instance UnHList (HList a) = a
+
+type family FmapMaybe (f :: k1 -> k2) (x :: Maybe k1) :: Maybe k2
+type instance FmapMaybe f Nothing = Nothing
+type instance FmapMaybe f (Just x) = (Just (f x))
+
+{-
+class HMap f (l :: [*]) (r :: [*]) | f l -> r where
+  hMap :: f -> HList l -> HList r
+
+instance HMap f '[] '[] where
   hMap       _  _  = HNil
 
-instance (Apply f e, HMap f l) => HMap f (e ': l) where
-  type HMapR f (e ': l) = ApplyR f e ': HMapR f l
-  hMap f (HCons x l)    = apply f x `HCons` hMap f l
+instance (ApplyA f e e', HMap f l l') => HMap f (e ': l) (e' ': l') where
+  hMap f (HCons x l)    = applyA f x `HCons` hMap f l
+  -}
+
+
+
 
 -- --------------------------------------------------------------------------
 
 -- **** alternative implementation
+-- $note currently broken
 
 newtype MapCar f = MapCar f
 
 -- | Same as 'hMap' only a different implementation.
-hMap' :: (HFoldr (MapCar f) (HList '[]) l) => 
-    f -> HList l -> HFoldrR (MapCar f) (HList '[]) l
-hMap' f = hFoldr (MapCar f) HNil
+hMapMapCar :: (HFoldr (MapCar f) (HList '[]) l l') =>
+    f -> HList l -> l'
+hMapMapCar f = hFoldr (MapCar f) HNil
 
-instance Apply f e => Apply (MapCar f) (e,HList l) where 
-    type ApplyR (MapCar f) (e,HList l) = HList (ApplyR f e ': l)
-    apply (MapCar f) (e,l) = HCons (apply f e) l
+instance App f e e' => ApplyAB (MapCar f) (e,HList l) (HList (e' ': l)) where
+    type ApplyA (MapCar f) (HList (e' ': l)) = ApplyAMapCar (ApplyA f e') (HList l)
+    type ApplyB (MapCar f) (e,HList l) = ApplyBMapCar (ApplyB f e) l
+    applyAB (MapCar f) (e,l) = HCons (app f e) l
+
+type family ApplyAMapCar (a :: Maybe *) b :: Maybe *
+type instance ApplyAMapCar Nothing t = Nothing
+type instance ApplyAMapCar (Just x) t = Just (x,t)
+
+type family ApplyBMapCar (a :: Maybe *) (b::[*]) :: Maybe *
+type instance ApplyBMapCar Nothing b = Nothing
+type instance ApplyBMapCar (Just x) xs = Just (HList (x ': xs))
+
+
+-- --------------------------------------------------------------------------
+
+-- *** @appEndo . mconcat . map Endo@
+{- |
+
+>>> let xs = length .*. (+1) .*. (*2) .*. HNil
+>>> hComposeList xs "abc"
+8
+
+
+-}
+hComposeList fs v0 = let r = hFoldr (undefined :: Comp) (\x -> x `asTypeOf` r) fs v0 in r
+
 
 -- --------------------------------------------------------------------------
 
@@ -300,7 +385,7 @@ instance Apply f e => Apply (MapCar f) (e,HList l) where
 {- |
    A heterogeneous version of
 
-   > sequenceA :: (Monad m) => [m a] -> m [a]
+   > sequenceA :: (Applicative m) => [m a] -> m [a]
 
    Only now we operate on heterogeneous lists, where different elements
    may have different types 'a'.
@@ -348,29 +433,33 @@ instance (m1 ~ m, Applicative m, HSequence m (HList as) (HList bs)) =>
     hSequence (HCons a b) = liftA2 HCons a (hSequence b)
 
 data ConsM = ConsM
-instance (m1 ~ m, Applicative m) => Apply ConsM (m a, m1 (HList l))  where
-    type ApplyR ConsM (m a, m1 (HList l)) = m (HList (a ': l))
-    apply _ (me,ml) = liftA2 HCons me ml
+instance (m1 ~ m, Applicative m) => ApplyAB ConsM (m a, m1 (HList l)) (m (HList (a ': l)))  where
+    type ApplyB ConsM (m a, m1 (HList l)) = Just (m (HList (a ': l)))
+    type ApplyA ConsM (m (HList (a ': l))) = Just (m a, m (HList l))
+    applyAB _ (me,ml) = liftA2 HCons me ml
 
 
 -- **** alternative implementation
 
--- | The DataKinds version needs a little help to find the type of the
+-- | 'hSequence2' is not recommended over 'hSequence' since it possibly doesn't
+-- allow inferring argument types from the result types. Otherwise this version
+-- should do exactly the same thing.
+--
+-- The DataKinds version needs a little help to find the type of the
 -- return HNil, unlike the original version, which worked just fine as
 --
 --  > hSequence l = hFoldr ConsM (return HNil) l
 
-hSequence' l =
+
+hSequence2 :: HSequence2 l f a => HList l -> f a
+hSequence2 l =
     let rHNil = pure HNil `asTypeOf` (liftA undefined x)
         x = hFoldr ConsM rHNil l
     in x
 
--- type HSequence' l f a = (Applicative f, HFoldr ConsM (f (HList ('[]))) l ~ f a)
--- hSequence' :: HSequence l f a => HList l -> f a
--- if only this signature was accepted. Fails with
---
--- Expecting one more argument to `l'
 
+-- | abbreviation for the constraint on 'hSequence2'
+type HSequence2 l f a = (Applicative f, HFoldr ConsM (f (HList ('[]))) l (f a))
 
 
 -- --------------------------------------------------------------------------
@@ -384,16 +473,27 @@ hSequence' l =
 
 newtype Mapcar f = Mapcar f
 
-instance (l ~ [ApplyR f e], Apply f e) => Apply (Mapcar f) (e, l) where
-    type ApplyR (Mapcar f) (e, l) = [ApplyR f e]
-    apply (Mapcar f) (e, l) = apply f e : l
+instance (l ~ [e'], App f e e') => ApplyAB (Mapcar f) (e, l) l where
+    type ApplyB (Mapcar f) (e, l) = ApplyBMapcar (ApplyB f e)
+    type ApplyA (Mapcar f) l = ApplyAMapcar (ApplyA f l)
+    applyAB (Mapcar f) (e, l) = app f e : l
+
+-- is there a cleaner way?
+type family ApplyBMapcar (a :: Maybe a) :: Maybe k
+type instance ApplyBMapcar Nothing = Nothing
+type instance ApplyBMapcar (Just x) = Just [x]
+
+type family ApplyAMapcar (a :: Maybe a) :: Maybe k
+type instance ApplyAMapcar Nothing = Nothing
+type instance ApplyAMapcar (Just [x]) = Just x
 
 
 -- A synonym for the complex constraint
-type HMapOut f l e = (HFoldr (Mapcar f) [e] l, HFoldrR (Mapcar f) [e] l ~ [e])
+type HMapOut f l e = (HFoldr (Mapcar f) [e] l [e])
 
 hMapOut :: forall f e l. HMapOut f l e => f -> HList l -> [e]
-hMapOut f l = hFoldr (Mapcar f) ([]::[e]) l
+hMapOut f l = hFoldr (Mapcar f) ([] :: [e]) l
+
 
 
 -- --------------------------------------------------------------------------
@@ -466,8 +566,7 @@ instance (HMember e1 l br) => HMember' False e1 l br
 -- It uses the user-supplied curried type equality predicate pred
 type family HMemberP pred e1 (l :: [*]) :: Bool
 type instance HMemberP pred e1 '[] = False
-type instance HMemberP pred e1 (e ': l) =
-    HMemberP' pred e1 l (ApplyR pred (e1,e))
+--type instance HMemberP pred e1 (e ': l) = HMemberP' pred e1 l (ApplyR pred (e1,e))
 
 type family HMemberP' pred e1 (l :: [*]) pb :: Bool
 type instance HMemberP' pred e1 l (Proxy True) = True
@@ -556,18 +655,18 @@ class HFind' (b::Bool) (e :: *) (l::[*]) (n::HNat) | b e l -> n
 instance HFind' True e l HZero
 instance HFind e l n => HFind' False e l (HSucc n)
 
-{-
 
 
 -- ** Membership test based on type equality
 
-class HBool b => HTMember e l b | e l -> b
-instance HTMember e HNil HFalse
-instance (TypeEq e e' b, HTMember e l b', HOr b b' b'')
-      =>  HTMember e (HCons e' l) b''
+-- | could be an associated type if HEq had one
+class HTMember e (l :: [*]) (b :: Bool) | e l -> b
+instance HTMember e '[] False
+instance (HEq e e' b, HTMember e l b', HOr b b' ~ b'')
+      =>  HTMember e (e' ': l) b''
 
-hTMember :: HTMember e l b => e -> l -> b
-hTMember _ _ = undefined
+hTMember :: HTMember e l b => e -> HList l -> Proxy b
+hTMember _ _ = proxy
 
 
 -- * Intersection based on HTMember
@@ -575,32 +674,32 @@ hTMember _ _ = undefined
 class HTIntersect l1 l2 l3 | l1 l2 -> l3
  where
   -- | Like 'Data.List.intersect'
-  hTIntersect :: l1 -> l2 -> l3
+  hTIntersect :: HList l1 -> HList l2 -> HList l3
 
-instance HTIntersect HNil l HNil
+instance HTIntersect '[] l '[]
  where
   hTIntersect _ _ = HNil
 
 instance ( HTMember h l1 b
          , HTIntersectBool b h t l1 l2
          )
-         => HTIntersect (HCons h t) l1 l2
+         => HTIntersect (h ': t) l1 l2
  where
   hTIntersect (HCons h t) l1 = hTIntersectBool b h t l1
    where
     b = hTMember h l1
 
-class HBool b => HTIntersectBool b h t l1 l2 | b h t l1 -> l2
+class HTIntersectBool (b :: Bool) h t l1 l2 | b h t l1 -> l2
  where
- hTIntersectBool :: b -> h -> t -> l1 -> l2
+ hTIntersectBool :: Proxy b -> h -> HList t -> HList l1 -> HList l2
 
 instance HTIntersect t l1 l2
-      => HTIntersectBool HTrue h t l1 (HCons h l2)
+      => HTIntersectBool True h t l1 (h ': l2)
  where
   hTIntersectBool _ h t l1 = HCons h (hTIntersect t l1)
 
 instance HTIntersect t l1 l2
-      => HTIntersectBool HFalse h t l1 l2
+      => HTIntersectBool False h t l1 l2
  where
   hTIntersectBool _ _ t l1 = hTIntersect t l1
 
@@ -610,54 +709,87 @@ instance HTIntersect t l1 l2
 -- | Same as @hMapOut Id@
 class HList2List l e
  where
-  hList2List :: l -> [e]
+  hList2List :: HList l -> [e]
 
-instance HList2List HNil e
+instance HList2List '[] e
  where
   hList2List HNil = []
 
 instance HList2List l e
-      => HList2List (HCons e l) e
+      => HList2List (e ': l) e
  where
   hList2List (HCons e l) = e:hList2List l
+
+
 
 
 -- --------------------------------------------------------------------------
 -- * With 'HMaybe'
 
 -- ** Turn list in a list of justs
+-- | the same as @map Just@
+--
+-- >>> toHJust (2 .*. 'a' .*. HNil)
+-- H[HJust 2, HJust 'a']
+--
+-- >>> toHJust2 (2 .*. 'a' .*. HNil)
+-- H[HJust 2, HJust 'a']
 
-class ToHJust l l' | l -> l'
+class ToHJust l l' | l -> l', l' -> l
  where
-  toHJust :: l -> l'
+  toHJust :: HList l -> HList l'
 
-instance ToHJust HNil HNil
+instance ToHJust '[] '[]
  where
   toHJust HNil = HNil
 
-instance ToHJust l l' => ToHJust (HCons e l) (HCons (HJust e) l')
+instance ToHJust l l' => ToHJust (e ': l) (HJust e ': l')
  where
   toHJust (HCons e l) = HCons (HJust e) (toHJust l)
 
+-- | alternative implementation. The Apply instance is in "Data.HList.FakePrelude".
+-- A longer type could be inferred.
+-- toHJust2 :: (HMap' (HJust ()) a b) => HList a -> HList b
+toHJust2 xs = hMap (HJust ()) xs
 
 -- --------------------------------------------------------------------------
 -- ** Extract justs from list of maybes
+--
+-- >>> let xs = 2 .*. 'a' .*. HNil
+-- >>> fromHJust (toHJust xs) == xs
+-- True
 
-class FromHJust l l' | l -> l'
+class FromHJust l
  where
-  fromHJust :: l -> l'
+  type FromHJustR l
+  fromHJust :: HList l -> HList (FromHJustR l)
 
-instance FromHJust HNil HNil
+instance FromHJust '[]
  where
+  type FromHJustR '[] = '[]
   fromHJust HNil = HNil
 
-instance FromHJust l l' => FromHJust (HCons HNothing l) l'
+instance FromHJust l => FromHJust (HNothing ': l)
  where
+  type FromHJustR (HNothing ': l) = FromHJustR l
   fromHJust (HCons _ l) = fromHJust l
 
-instance FromHJust l l' => FromHJust (HCons (HJust e) l) (HCons e l')
+instance FromHJust l => FromHJust (HJust e ': l)
  where
+  type FromHJustR (HJust e ': l) = e ': FromHJustR l
   fromHJust (HCons (HJust e) l) = HCons e (fromHJust l)
+
+-- *** alternative implementation
+
+-- | A longer type could be inferred.
+-- fromHJust2 :: (HMap' HFromJust a b) => HList a -> HList b
+fromHJust2 xs = hMap HFromJust xs
+
+data HFromJust = HFromJust
+instance ApplyAB HFromJust (HJust a) a where
+    type ApplyB HFromJust (HJust a) = Just a
+    type ApplyA HFromJust a = Just (HJust a)
+    applyAB _ (HJust a) = a
 
 
 -- --------------------------------------------------------------------------
@@ -666,48 +798,70 @@ instance FromHJust l l' => FromHJust (HCons (HJust e) l) (HCons e l')
 data HAddTag t = HAddTag t
 data HRmTag    = HRmTag
 
-hAddTag :: (HMap (HAddTag t) l l') => t -> l -> l'
+-- hAddTag :: HMap' (HAddTag t) l r => t -> HList l -> HList r
 hAddTag t l = hMap (HAddTag t) l
-hRmTag :: (HMap HRmTag l l') => l -> l'
+
+-- hRmTag ::  HMap HRmTag l => HList l -> HList (HMapR HRmTag l)
 hRmTag l    = hMap HRmTag l
 
-instance Apply (HAddTag t) e (e,t)
+instance ApplyAB (HAddTag t) e (e,t)
  where
-  apply (HAddTag t) e = (e,t)
+  type ApplyB (HAddTag t) e = Just (e,t)
+  type ApplyA (HAddTag t) (e,t) = Just e
+  applyAB (HAddTag t) e = (e,t)
 
-instance Apply HRmTag (e,t) e
+
+instance ApplyAB HRmTag (e,t) e
  where
-  apply HRmTag (e,_) = e
+  type ApplyA HRmTag e = Nothing
+  type ApplyB HRmTag (e,t) = Just e
+  applyAB _ (e,_) = e
 
 
 -- | Annotate list with a type-level Boolean
-hFlag :: (HMap (HAddTag HTrue) l l') => l -> l'
+-- hFlag :: HMap' (HAddTag (Proxy True)) l r => HList l -> HList r
 hFlag l = hAddTag hTrue l
 
 
 -- --------------------------------------------------------------------------
 -- * Splitting by HTrue and HFalse
 
--- | Analogus to @Data.List.partition snd@
+-- | Analogus to Data.List.'Data.List.partition' 'snd'
+--
+-- >>> hSplit $ (2,hTrue) .*. (3,hTrue) .*. (1,hFalse) .*. HNil
+-- (H[2, 3],H[1])
+--
+-- it might make more sense to instead have @LVPair Bool e@
+-- instead of @(e, Proxy Bool)@ since the former has the same
+-- runtime representation as @e@
 
-class HSplit l l' l'' | l -> l' l''
+class HSplit l
  where
-  hSplit :: l -> (l',l'')
+  type HSplitT l
+  type HSplitF l
+  hSplit :: HList l -> (HList (HSplitT l), HList (HSplitF l))
 
-instance HSplit HNil HNil HNil
+instance HSplit '[]
  where
+  type HSplitT '[] = '[]
+  type HSplitF '[] = '[]
   hSplit HNil = (HNil,HNil)
 
-instance HSplit l l' l''
-      => HSplit (HCons (e,HTrue) l) (HCons e l') l''
+instance HSplit l => HSplit ((e, Proxy True) ': l)
  where
+
+  type HSplitT ((e,Proxy True) ': l) = e ': HSplitT l
+  type HSplitF ((e,Proxy True) ': l) = HSplitF l
+
   hSplit (HCons (e,_) l) = (HCons e l',l'')
    where
     (l',l'') = hSplit l
 
-instance HSplit l l' l''
-      => HSplit (HCons (e,HFalse) l) l' (HCons e l'')
+instance HSplit l => HSplit ((e,Proxy False) ': l)
  where
+  type HSplitT ((e,Proxy False) ': l) = HSplitT l
+  type HSplitF ((e,Proxy False) ': l) = e ': HSplitF l
+
   hSplit (HCons (e,_) l) = (l',HCons e l'')
    where
     (l',l'') = hSplit l
@@ -723,7 +877,5 @@ ERROR - Unresolved overloading
 *** Type       : HSplit (HCons ([Char],HTrue) HNil) a b => (a,b)
 *** Expression : hSplit (hFlag (HCons "1" HNil))
 
-
--}
 
 -}
