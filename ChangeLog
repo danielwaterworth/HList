@@ -1,3 +1,12 @@
+28 Aug 2013
+	Large patch from Adam Vogt
+	 moved files that need attention to broken/
+	 put HSequence in with HList.HList: fixed the function
+	 added Label6 with GHC Symbols
+	 fix HZip, Variant, examples/TIPTransformM.hs
+	 Many Haddoc changes and beautifications
+	 format some examples for doctest
+
 27 Aug 2013
 	Adam Vogt's patch greatly simplifying makeLabels.
 	Updated TIC.hs
