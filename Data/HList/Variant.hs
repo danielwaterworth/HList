@@ -41,12 +41,14 @@ newtype Variant mr = Variant mr
 -- | Turn proxy sequence into sequence of Nothings
 
 data HMaybeF = HMaybeF
-instance ApplyAB HMaybeF (LVPair l (Proxy t)) (LVPair l (Maybe t)) where
+instance ((LVPair l (Proxy t) ~ a, b ~ LVPair l (Maybe t))) =>  ApplyAB HMaybeF a b   where
+{-
     type ApplyB HMaybeF (LVPair l (Proxy t)) = Just (LVPair l (Maybe t))
     type ApplyA HMaybeF (LVPair l (Maybe t)) = Just (LVPair l (Proxy t))
+    -}
     applyAB _ _ = LVPair Nothing
 
-hMaybied :: App (HMap HMaybeF) a b => a -> b
+-- hMaybied :: ApplyAB (HMap HMaybeF) a b => a -> b
 hMaybied x = hMap HMaybeF x
 
 {- ^ used to be

@@ -1,3 +1,4 @@
+{-# LANGUAGE GADTs #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
 {-# LANGUAGE ConstraintKinds #-}
@@ -63,6 +64,7 @@ class Apply f a where
 
 -- | No constraints on result and argument types
 class ApplyAB f a b where
+{-
 
   -- | @GetApplyB f a = b@ when it can be calculated
   type ApplyB f a :: Maybe k
@@ -70,6 +72,7 @@ class ApplyAB f a b where
   -- | @GetApplyA f b = a@ when it can be calculated
   type ApplyA f b :: Maybe k
 
+-}
   applyAB :: f -> a -> b
   applyAB = undefined -- In case we use Apply for type-level computations only
 
@@ -97,12 +100,14 @@ The fundeps are present if the associated types 'ApplyA' and 'ApplyB'
 produce types that are 'Just', or absent if they are 'Nothing'.
 
 -}
+{-
 type App f a b = (ApplyAB f a b,
     GuardJust (ApplyA f b) a ~ FromMaybe () (ApplyA f b) ,
     GuardJust (ApplyB f a) b ~ FromMaybe () (ApplyB f a) )
 
 app :: App f a b => f -> a -> b
 app = applyAB
+-}
 
 -- ** more restrictive apply
 {- $example
@@ -133,6 +138,7 @@ The other combinations should not typecheck (not tested here...)
 
 -}
 
+{-
 -- | must have a @| f b -> a@
 type ApplyB' f a b = (ApplyAB f a b, a ~ FromJust (ApplyA f b) )
 
@@ -151,11 +157,10 @@ applyA' = applyAB
 
 applyB' :: ApplyB' f a b => f -> a -> b
 applyB' = applyAB
+-}
 
 -- ** Simple useful instances of Apply
-instance ApplyAB (x -> y) x y where
-  type ApplyB (x -> y) x = Just y
-  type ApplyA (x -> y) y = Just x
+instance (x' ~ x, y' ~ y) => ApplyAB (x' -> y') x y where
   applyAB f x = f x
 
 
@@ -163,9 +168,7 @@ instance ApplyAB (x -> y) x y where
 -- | print
 data HPrint = HPrint
 
-instance Show x => ApplyAB HPrint x (IO ()) where
-  type ApplyB HPrint x = Just (IO ())
-  type ApplyA HPrint (IO ()) = Nothing
+instance (io ~ IO (), Show x) => ApplyAB HPrint x io where
   applyAB _ x = print x
 
 
@@ -176,17 +179,22 @@ instance Show x => ApplyAB HPrint x (IO ()) where
 
 -}
 data HRead = HRead
-instance Read a => ApplyAB HRead String a where
-    type ApplyA HRead a = Just String
-    type ApplyB HRead String = Nothing
+instance (String ~ string, Read a) => ApplyAB HRead string a where
     applyAB _ x = read x
 
 -- | show
 data HShow = HShow
-instance Show a => ApplyAB HShow a String where
-    type ApplyA HShow String = Nothing
-    type ApplyB HShow a = Just String
+instance (String ~ string, Show a) => ApplyAB HShow a string where
     applyAB _ x = show x
+
+
+
+data EnumFuns = Succ | Pred | ToEnum | FromEnum
+
+instance (a ~ a' , Enum a) => ApplyAB (Proxy Succ) a a' where applyAB _ = succ
+instance (a ~ a' , Enum a) => ApplyAB (Proxy Pred) a a' where applyAB _ = pred
+instance (Enum a' , a ~ Int) => ApplyAB (Proxy ToEnum) a a' where applyAB _ = toEnum
+instance (Enum a , a' ~ Int) => ApplyAB (Proxy FromEnum) a a' where applyAB _ = fromEnum
 
 
 {- | Compose two instances of 'ApplyAB'
@@ -197,22 +205,8 @@ instance Show a => ApplyAB HShow a String where
 -}
 data HComp g f = HComp g f -- ^ @g . f@
 
-type family JoinMaybe (a :: Maybe (Maybe k)) :: Maybe k
-type instance JoinMaybe (Just a) = a
-type instance JoinMaybe Nothing = Nothing
-
-type family BindApplyA f (a :: Maybe *) :: Maybe *
-type instance BindApplyA f Nothing = Nothing
-type instance BindApplyA f (Just a) = ApplyA f a
-
-type family BindApplyB f (a :: Maybe *) :: Maybe *
-type instance BindApplyB f Nothing = Nothing
-type instance BindApplyB f (Just a) = ApplyB f a
-
-instance forall f g a b c. (App f a b, App g b c) => ApplyAB (HComp g f) a c where
-    type ApplyA (HComp g f) c = BindApplyA f (ApplyA g c)
-    type ApplyB (HComp g f) a = BindApplyB g (ApplyB f a)
-    applyAB ~(HComp g f) x = app g (app f x :: b)
+instance forall f g a b b' c. (ApplyAB f a b', b ~ b', ApplyAB g b c) => ApplyAB (HComp g f) a c where
+    applyAB ~(HComp g f) x = applyAB g (applyAB f x :: b)
 
 
 {- | @app Comp (f,g) = g . f@. Works like:
@@ -231,35 +225,29 @@ Note that defaulting will sometimes give you the wrong thing
 -}
 data Comp = Comp
 
-instance y ~ y' => ApplyAB Comp (x -> y,y' -> z) (x -> z)
+instance (y ~ y', fg ~ (x -> y, y' -> z), r ~ (x -> z)) => ApplyAB Comp fg  r
  where
-  type ApplyB Comp (x -> y,y' -> z) = Just (x -> z)
-  type ApplyA Comp (x -> z)  = Nothing
   applyAB _ (f,g) = g . f
 
 -- | (\(a,b) -> f a >> b)
 newtype HSeq x = HSeq x
-instance (Monad m, ApplyB f x ~ Just (m ()),
-          App f x (m ()) ) => ApplyAB (HSeq f) (x,m ()) (m ()) where
-  type ApplyA (HSeq f) (m ()) = Nothing
-  type ApplyB (HSeq f) (x,m ()) = Just (m ())
-  applyAB (HSeq f) (x,c) = do app f x; c
+instance (Monad m, ApplyAB f x fx, fx ~ m (), pair ~ (x,m ()), 
+          ApplyAB f x (m ()) ) => ApplyAB (HSeq f) pair fx where
+  applyAB (HSeq f) (x,c) = do asVoid (applyAB f x); c
+    where asVoid :: m () -> m ()
+          asVoid x = x
 
 
 
 -- | @HJust ()@ is a placeholder for a function that applies the 'HJust' constructor
-instance ApplyAB (HJust ()) a (HJust a) where
-    type ApplyA (HJust ()) (HJust a) = Just a
-    type ApplyB (HJust ()) a = Just (HJust a)
+instance hJustA ~ HJust a => ApplyAB (HJust t) a hJustA where
     applyAB _ a = HJust a
 
 
 -- | 'flip'
 data HFlip = HFlip
 
-instance ApplyAB HFlip (a -> b -> c) (b -> a -> c) where
-    type ApplyB HFlip (a -> b -> c) = Just (b -> a -> c)
-    type ApplyA HFlip (b -> a -> c) = Just (a -> b -> c)
+instance (f1 ~ (a -> b -> c), f2 ~ (b -> a -> c))  => ApplyAB HFlip f1 f2 where
     applyAB _ = flip
 
 -- --------------------------------------------------------------------------

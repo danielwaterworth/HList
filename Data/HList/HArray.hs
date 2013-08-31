@@ -206,18 +206,8 @@ instance ( HLookupByHNat n l (e,b)
     (l',l'') = hSplitByHNats' ns l'''
 -}
 
+
 {-
--- --------------------------------------------------------------------------
--- * Length
-
-class (HList l, HNat n) => HLength l n | l -> n
-instance HLength HNil HZero
-instance (HLength l n, HNat n, HList l)
-      => HLength (HCons a l) (HSucc n)
-
-hLength   :: HLength l n => l -> n
-hLength _ =  undefined
-
 
 -- --------------------------------------------------------------------------
 -- * Bounded lists
