@@ -385,7 +385,6 @@ instance (ApplyAB f e e', HMap_ f l l') => HMap_ f (e ': l) (e' ': l') where
 -- **** alternative implementation
 -- $note currently broken
 
-{-
 newtype MapCar f = MapCar f
 
 -- | Same as 'hMap' only a different implementation.
@@ -393,19 +392,8 @@ hMapMapCar :: (HFoldr (MapCar f) (HList '[]) l l') =>
     f -> HList l -> l'
 hMapMapCar f = hFoldr (MapCar f) HNil
 
-instance App f e e' => ApplyAB (MapCar f) (e,HList l) (HList (e' ': l)) where
-    type ApplyA (MapCar f) (HList (e' ': l)) = ApplyAMapCar (ApplyA f e') (HList l)
-    type ApplyB (MapCar f) (e,HList l) = ApplyBMapCar (ApplyB f e) l
-    applyAB (MapCar f) (e,l) = HCons (app f e) l
-
-type family ApplyAMapCar (a :: Maybe *) b :: Maybe *
-type instance ApplyAMapCar Nothing t = Nothing
-type instance ApplyAMapCar (Just x) t = Just (x,t)
-
-type family ApplyBMapCar (a :: Maybe *) (b::[*]) :: Maybe *
-type instance ApplyBMapCar Nothing b = Nothing
-type instance ApplyBMapCar (Just x) xs = Just (HList (x ': xs))
--}
+instance ApplyAB f e e' => ApplyAB (MapCar f) (e,HList l) (HList (e' ': l)) where
+    applyAB (MapCar f) (e,l) = HCons (applyAB f e) l
 
 
 -- --------------------------------------------------------------------------
@@ -528,31 +516,16 @@ type HSequence2 l f a = (Applicative f, HFoldr ConsM (f (HList ('[]))) l (f a))
 -- *** map (no sequencing)
 -- $mapOut This one we implement via hFoldr
 
-{-
 newtype Mapcar f = Mapcar f
 
-instance (l ~ [e'], App f e e') => ApplyAB (Mapcar f) (e, l) l where
-    type ApplyB (Mapcar f) (e, l) = ApplyBMapcar (ApplyB f e)
-    type ApplyA (Mapcar f) l = ApplyAMapcar (ApplyA f l)
-    applyAB (Mapcar f) (e, l) = app f e : l
-
--- is there a cleaner way?
-type family ApplyBMapcar (a :: Maybe a) :: Maybe k
-type instance ApplyBMapcar Nothing = Nothing
-type instance ApplyBMapcar (Just x) = Just [x]
-
-type family ApplyAMapcar (a :: Maybe a) :: Maybe k
-type instance ApplyAMapcar Nothing = Nothing
-type instance ApplyAMapcar (Just [x]) = Just x
-
+instance (l ~ [e'], ApplyAB f e e', el ~ (e,l)) => ApplyAB (Mapcar f) el l where
+    applyAB (Mapcar f) (e, l) = applyAB f e : l
 
 -- A synonym for the complex constraint
 type HMapOut f l e = (HFoldr (Mapcar f) [e] l [e])
 
 hMapOut :: forall f e l. HMapOut f l e => f -> HList l -> [e]
 hMapOut f l = hFoldr (Mapcar f) ([] :: [e]) l
-
-    -}
 
 
 -- --------------------------------------------------------------------------
@@ -566,7 +539,6 @@ hMapOut f l = hFoldr (Mapcar f) ([] :: [e]) l
 --
 -- See 'hSequence' if the result list should also be heterogenous.
 
-{-
 hMapM   :: (Monad m, HMapOut f l (m e)) => f -> HList l -> [m e]
 hMapM f =  hMapOut f
 
@@ -581,8 +553,6 @@ hMapM_ f =  sequence_ .  disambiguate . hMapM f
   disambiguate :: [q ()] -> [q ()]
   disambiguate =  id
 
-
--}
 
 
 
