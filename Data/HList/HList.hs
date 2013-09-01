@@ -274,6 +274,21 @@ instance (Apply p s, HUnfold' p (ApplyR p s)) => HUnfold' p (HJust (e,s)) where
     hUnfold' p (HJust (e,s)) = HCons e (hUnfold p s)
 
 
+-- * replicate
+
+class HReplicate n e where
+    type HReplicateR n e :: [*]
+    hReplicate :: Proxy n -> e -> HList (HReplicateR n e)
+
+instance HReplicate HZero e where
+    type HReplicateR HZero e = '[]
+    hReplicate _ _ = HNil
+
+instance HReplicate n e => HReplicate (HSucc n) e where
+    type HReplicateR (HSucc n) e = e ': HReplicateR n e
+    hReplicate n e = e `HCons` hReplicate (hPred n) e
+
+
 
 -- --------------------------------------------------------------------------
 -- * traversing HLists
