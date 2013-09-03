@@ -276,7 +276,7 @@ instance (Apply p s, HUnfold' p (ApplyR p s)) => HUnfold' p (HJust (e,s)) where
 
 -- * replicate
 
-class HReplicate n e where
+class HReplicate (n :: HNat) e where
     type HReplicateR n e :: [*]
     hReplicate :: Proxy n -> e -> HList (HReplicateR n e)
 
@@ -338,7 +338,7 @@ hMap f xs = applyAB (HMap f) xs
 
 newtype HMap f = HMap f
 
-instance (ApplyAB (HMap1 f) as bs, ApplyAB (HMap2 f) as bs) => ApplyAB (HMap f) as bs where
+instance (ApplyAB (HMap1 f) as bs, ApplyAB (HMap2 f) as bs, as ~ HList as', bs ~ HList bs') => ApplyAB (HMap f) as bs where
     applyAB (HMap f) = applyAB (HMap1 f)
 
 
