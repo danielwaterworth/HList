@@ -1,3 +1,9 @@
+31 Aug 2013
+	Large patch from Adam Vogt
+	 Improving the Apply class (ApplyAB) to help type inference
+	 and avoid specifying many type sigatures.
+	 Fix a few of broken code files, in particular RecordAdv.
+
 28 Aug 2013
 	Large patch from Adam Vogt
 	 moved files that need attention to broken/
