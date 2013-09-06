@@ -336,10 +336,9 @@ hMap (HJust ()) xs
 
 hMap f xs = applyAB (HMap f) xs
 
-newtype FHMap f = FHMap f
+newtype HMap f = HMap f
 
-instance 
-    => ApplyAB (HMap f) as bs where
+instance (HMapCxt f as bs as' bs') => ApplyAB (HMap f) as bs where
     applyAB (HMap f) = hMapAux f
 
 type HMapCxt f as bs as' bs' = (HMapAux f as' bs', as ~ HList as', bs ~ HList bs')
