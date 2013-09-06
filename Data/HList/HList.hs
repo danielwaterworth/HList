@@ -336,46 +336,33 @@ hMap (HJust ()) xs
 
 hMap f xs = applyAB (HMap f) xs
 
-newtype HMap f = HMap f
+newtype FHMap f = FHMap f
 
-instance (ApplyAB (HMap1 f) as bs, ApplyAB (HMap2 f) as bs, as ~ HList as', bs ~ HList bs') => ApplyAB (HMap f) as bs where
-    applyAB (HMap f) = applyAB (HMap1 f)
+instance 
+    => ApplyAB (HMap f) as bs where
+    applyAB (HMap f) = hMapAux f
 
-
-
--- | helper. Length information only propagates forward with @applyAB (HMap1 fun)@
-newtype HMap1 f = HMap1 f
-
-instance (b ~ (HList '[])) => ApplyAB (HMap1 f) (HList '[]) b where applyAB _ _ = HNil
-
-instance (ApplyAB f a b, ApplyAB (HMap1 f) (HList as) (HList bs),
-    lbs ~ (HList (b ': bs))) =>
-    ApplyAB (HMap1 f) (HList (a ': as)) lbs where
-    applyAB (HMap1 f) (HCons a as) = applyAB f a `HCons` applyAB (HMap1 f) as
-
-newtype HMap2 f = HMap2 f
-
-instance (b ~ (HList '[])) => ApplyAB (HMap2 f) b (HList '[]) where applyAB _ _ = HNil
-
-instance (ApplyAB f a b, ApplyAB (HMap2 f) (HList as) (HList bs),
-    las ~ (HList (a ': as))) =>
-    ApplyAB (HMap2 f) las (HList (b ': bs)) where
-    applyAB (HMap2 f) (HCons a as) = applyAB f a `HCons` applyAB (HMap2 f) as
+type HMapCxt f as bs as' bs' = (HMapAux f as' bs', as ~ HList as', bs ~ HList bs')
 
 
-data ConstUndefined = ConstUndefined
+-- | Ensure two lists have the same length. We do case analysis on the
+-- first one (hence the type must be known to the type checker).
+-- In contrast, the second list may be a type variable.
+class SameLength es1 es2
+instance (es2 ~ '[]) => SameLength '[] es2
+instance (SameLength xs ys, es2 ~ (y ': ys)) => SameLength (x ': xs) es2
 
-instance ApplyAB ConstUndefined a b where applyAB _ _ = undefined
 
 
-class HMap_ f (l :: [*]) (r :: [*]) | f l -> r where
-  hMap_ :: f -> HList l -> HList r
 
-instance HMap_ f '[] '[] where
-  hMap_       _  _  = HNil
+class (SameLength l r, SameLength r l) => HMapAux f (l :: [*]) (r :: [*]) where
+  hMapAux :: f -> HList l -> HList r
 
-instance (ApplyAB f e e', HMap_ f l l') => HMap_ f (e ': l) (e' ': l') where
-  hMap_ f (HCons x l)    = applyAB f x `HCons` hMap_ f l
+instance HMapAux f '[] '[] where
+  hMapAux       _  _  = HNil
+
+instance (ApplyAB f e e', HMapAux f l l') => HMapAux f (e ': l) (e' ': l') where
+  hMapAux f (HCons x l)    = applyAB f x `HCons` hMapAux f l
 
 
 
@@ -437,8 +424,8 @@ hComposeList fs v0 = let r = hFoldr (undefined :: Comp) (\x -> x `asTypeOf` r) f
    <http://www.haskell.org/pipermail/haskell-cafe/2006-October/018784.html>
  -}
 
-class Applicative m => HSequence m a b | a -> m b, m b -> a where
-    hSequence :: a -> m b
+class (Applicative m, SameLength a b, SameLength b a) => HSequence m a b | a -> m b, m b -> a where
+    hSequence :: HList a -> m (HList b)
 {- ^
 
 [@Maybe@]
@@ -458,11 +445,11 @@ Just H[1, 'c']
 
 -}
 
-instance Applicative m => HSequence m (HList ('[])) (HList ('[])) where
+instance Applicative m => HSequence m '[] '[] where
     hSequence _ = pure HNil
 
-instance (m1 ~ m, Applicative m, HSequence m (HList as) (HList bs)) =>
-    HSequence m (HList (m1 a ': as)) (HList (a ': bs)) where
+instance (m1 ~ m, Applicative m, HSequence m as bs) =>
+    HSequence m (m1 a ': as) (a ': bs) where
     hSequence (HCons a b) = liftA2 HCons a (hSequence b)
 
 -- data ConsM = ConsM
