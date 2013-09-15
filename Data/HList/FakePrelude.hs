@@ -200,8 +200,7 @@ instance (String ~ string, Show a) => ApplyAB HShow a string where
 
 {- | Compose two instances of 'ApplyAB'
 
--- broken
-> app (HComp HRead HShow) (5::Double) :: Double
+>>> applyAB (HComp HRead HShow) (5::Double) :: Double
 5.0
 
 -}
