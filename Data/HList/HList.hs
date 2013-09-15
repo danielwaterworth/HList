@@ -297,40 +297,59 @@ instance HReplicate n e => HReplicate (HSucc n) e where
 -- *** map
 -- $mapNote It could be implemented with 'hFoldr', as we show further below
 
-{- |
+{- | hMap is written such that the length of the result list
+can be determined from the length of the argument list (and
+the other way around). Similarly, the type of the elements
+of the list is propagated in both directions too.
+
+Excuse the ugly types printed. Unfortunately ghc (still?)
+shows types like @'[a,b]@ using the actual constructors involved
+@(':) a ((':) b '[])@ (or even worse when the kind variables are printed).
 
 >>> :set -XNoMonomorphismRestriction
 >>> let xs = 1 .*. 'c' .*. HNil
 >>> :t hMap (HJust ()) xs
 hMap (HJust ()) xs
-  :: Num e => HList ((':) * (HJust e) ((':) * (HJust Char) ('[] *)))
+  :: Num y => HList ((':) * (HJust y) ((':) * (HJust Char) ('[] *)))
+
+
+These 4 examples show that the constraint on the length (2 in this cae)
+can be applied before or after the 'hMap'. That inference is independent of the
+direction that type information is propagated for the individual elements.
 
 
 >>> let asLen2 xs = xs `asTypeOf` (undefined :: HList '[a,b])
->>> :t \xs -> asLen2 (apply (HMap HRead) xs)
-\xs -> asLen2 (apply (HMap HRead) xs)
-  :: (Read b, Read b1) =>
-     HList ((':) * String ((':) * String ('[] *)))
-     -> HList ((':) * b ((':) * b1 ('[] *)))
 
->>>  :t \xs -> asLen2 (apply (HMap HRead) xs)
-\xs -> asLen2 (apply (HMap HRead) xs)
-  :: (Read b, Read b1) =>
-     HList ((':) * String ((':) * String ('[] *)))
-     -> HList ((':) * b ((':) * b1 ('[] *)))
+>>> let lr xs = asLen2 (applyAB (HMap HRead) xs)
+>>> let ls xs = asLen2 (applyAB (HMap HShow) xs)
+>>> let rl xs = applyAB (HMap HRead) (asLen2 xs)
+>>> let sl xs = applyAB (HMap HShow) (asLen2 xs)
 
->>> :t \xs -> apply (HMap HRead) (asLen2 xs)
-\xs -> apply (HMap HRead) (asLen2 xs)
-  :: (Read b, Read b1) =>
-     HList ((':) * String ((':) * String ('[] *)))
-     -> HList ((':) * b ((':) * b1 ('[] *)))
 
->>> :t \xs -> asLen2 (apply (HMap HRead) xs)
-\xs -> asLen2 (apply (HMap HRead) xs)
-  :: (Read b, Read b1) =>
+>>> :t lr
+lr
+  :: (Read y, Read y1) =>
      HList ((':) * String ((':) * String ('[] *)))
-     -> HList ((':) * b ((':) * b1 ('[] *)))
+     -> HList ((':) * y ((':) * y1 ('[] *)))
 
+>>> :t rl
+rl
+  :: (Read y, Read y1) =>
+     HList ((':) * String ((':) * String ('[] *)))
+     -> HList ((':) * y ((':) * y1 ('[] *)))
+
+
+>>> :t ls
+ls
+  :: (Show y, Show y1) =>
+     HList ((':) * y ((':) * y1 ('[] *)))
+     -> HList ((':) * String ((':) * String ('[] *)))
+
+>>> :t sl
+sl
+  :: (Show y, Show y1) =>
+     HList ((':) * y ((':) * y1 ('[] *)))
+     -> HList ((':) * String ((':) * String ('[] *)))
 
 -}
 
@@ -341,7 +360,8 @@ newtype HMap f = HMap f
 instance (HMapCxt f as bs as' bs') => ApplyAB (HMap f) as bs where
     applyAB (HMap f) = hMapAux f
 
-type HMapCxt f as bs as' bs' = (HMapAux f as' bs', as ~ HList as', bs ~ HList bs')
+type HMapCxt f as bs as' bs' = (HMapAux f as' bs', as ~ HList as', bs ~ HList bs',
+    SameLength as' bs', SameLength bs' as')
 
 
 -- | Ensure two lists have the same length. We do case analysis on the
@@ -354,13 +374,15 @@ instance (SameLength xs ys, es2 ~ (y ': ys)) => SameLength (x ': xs) es2
 
 
 
-class (SameLength l r, SameLength r l) => HMapAux f (l :: [*]) (r :: [*]) where
-  hMapAux :: f -> HList l -> HList r
+class HMapAux f (l :: [*]) (r :: [*]) where
+  hMapAux :: (SameLength l r, SameLength r l) => f -> HList l -> HList r
 
 instance HMapAux f '[] '[] where
   hMapAux       _  _  = HNil
 
-instance (ApplyAB f e e', HMapAux f l l') => HMapAux f (e ': l) (e' ': l') where
+instance (ApplyAB f e e', HMapAux f l l',
+    SameLength l l', SameLength l' l)
+    => HMapAux f (e ': l) (e' ': l') where
   hMapAux f (HCons x l)    = applyAB f x `HCons` hMapAux f l
 
 
