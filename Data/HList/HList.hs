@@ -423,7 +423,7 @@ hComposeList fs v0 = let r = hFoldr (undefined :: Comp) (\x -> x `asTypeOf` r) f
    <http://www.haskell.org/pipermail/haskell-cafe/2006-October/018784.html>
  -}
 
-class (Applicative m, SameLength a b, SameLength b a) => HSequence m a b | a -> m b, m b -> a where
+class (Applicative m, SameLength a b, SameLength b a) => HSequence m a b | a -> b, m b -> a where
     hSequence :: HList a -> m (HList b)
 {- ^
 
@@ -778,7 +778,7 @@ toHJust2 xs = hMap (HJust ()) xs
 
 class FromHJust l
  where
-  type FromHJustR l
+  type FromHJustR l :: [*]
   fromHJust :: HList l -> HList (FromHJustR l)
 
 instance FromHJust '[]
@@ -848,8 +848,8 @@ hFlag l = hAddTag hTrue l
 
 class HSplit l
  where
-  type HSplitT l
-  type HSplitF l
+  type HSplitT l :: [*]
+  type HSplitF l :: [*]
   hSplit :: HList l -> (HList (HSplitT l), HList (HSplitF l))
 
 instance HSplit '[]
