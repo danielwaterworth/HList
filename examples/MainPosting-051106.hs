@@ -1,3 +1,4 @@
+{-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -26,10 +27,9 @@ instance Apply Comp (x -> y,y -> z)
   apply _ (f,g) = g . f
   -}
 
-instance y ~ y' => ApplyAB Comp (x -> y,y' -> z) (x -> z)
+instance ((x -> y,y -> z) ~ xyz, (x -> z) ~ xz)
+    => ApplyAB Comp xyz xz
  where
-  type ApplyB Comp (x -> y,y' -> z) = Just (x -> z)
-  type ApplyA Comp (x -> z)  = Nothing
   applyAB _ (f,g) = g . f
 
 -- Function composition based on type code works.
