@@ -1,3 +1,4 @@
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE GADTs #-}
 {-# LANGUAGE ScopedTypeVariables #-}
@@ -21,6 +22,7 @@
 
 module Data.HList.FakePrelude where
 
+import GHC.Prim (Constraint)
 
 -- --------------------------------------------------------------------------
 -- * A heterogeneous apply operator
@@ -46,136 +48,140 @@ class Apply f a where
 
  Normally you would have been able to pass around the definition actual_fn.
 
- [@Type inference@]
+ [@Type inference / Local functional dependencies@]
 
- The definiton of 'ApplyAB' requires all three types (function @f@, argument
- @a@ and result @b@) to be known before picking an implementation. This is
- impractical, since it means that every usage of 'applyAB' will need a type
- signature which is a pain.
+ Note that @class ApplyAB@ has three parameters and no functional dependencies.
+ Instances should be written in the style:
 
- Specifying that the types should be restricted is accomplished by the use of
- two type families (described here since haddock does a bad job of them). These
- are (type-level) functions which compute (given @f@ @a@ @b@ from
- an instance of @ApplyAB@):
+ > instance (int ~ Int, double ~ Double) => ApplyAB Fn int double
+ >  where applyAB _ = fromIntegral
 
- > ApplyB f a = Maybe b
- > ApplyA f b = Maybe a
+ rather than the more natural
+
+ > instance ApplyAB Fn Int Double
+
+ The first instance allows types to be inferred as if we had
+ @class ApplyAB a b c | a -> b c@, while the second instance
+ only matches if ghc already knows that it needs
+ @ApplyAB Fn Int Double@. Additional explanation can be found
+ in <http://okmij.org/ftp/Haskell/typecast.html#local-fd local functional dependencies>
 
 -}
 
 -- | No constraints on result and argument types
 class ApplyAB f a b where
-{-
-
-  -- | @GetApplyB f a = b@ when it can be calculated
-  type ApplyB f a :: Maybe k
-
-  -- | @GetApplyA f b = a@ when it can be calculated
-  type ApplyA f b :: Maybe k
-
--}
   applyAB :: f -> a -> b
   applyAB = undefined -- In case we use Apply for type-level computations only
 
 
--- * working with promoted Maybe
-type family GuardJust (a :: Maybe *) b :: *
-type instance GuardJust Nothing b = ()
-type instance GuardJust (Just a) b = b
+{- $fun
 
-type family FromMaybe b (a :: Maybe *) :: *
-type instance FromMaybe b Nothing  = b
-type instance FromMaybe b (Just a) = a
+ 'Fun' can be used instead of writing a new instance of
+ 'ApplyAB'. Refer to the definition/source for the the most
+ concise explanation. A more wordy explanation is given below:
 
-type family FromJust (a :: Maybe *) :: *
-type instance FromJust (Just a) = a
+ A type signature needs to be provided on 'Fun' to make it work.
+ Depending on the kind of the parameters to 'Fun', a number of
+ different results happen.
 
 
-{- | a single name for (the same behavior as)
+ [@ex1@]
 
-> class Apply f a b | f a -> b, f b -> a where apply :: f -> a -> b
-> class Apply f a b | f a -> b           where apply :: f -> a -> b
-> class Apply f a b |           f b -> a where apply :: f -> a -> b
+ A list of kind @[* -> Constraint]@ produces those
+ constraints on the argument type:
 
-The fundeps are present if the associated types 'ApplyA' and 'ApplyB'
-produce types that are 'Just', or absent if they are 'Nothing'.
+ >>> :set -XDataKinds
+ >>> let plus1 = Fun (\x -> if x < 5 then x+1 else 5) :: Fun '[Num, Ord] '()
+ >>> :t applyAB plus1
+ applyAB plus1 :: (Num a, Ord a) => a -> a
 
--}
-{-
-type App f a b = (ApplyAB f a b,
-    GuardJust (ApplyA f b) a ~ FromMaybe () (ApplyA f b) ,
-    GuardJust (ApplyB f a) b ~ FromMaybe () (ApplyB f a) )
-
-app :: App f a b => f -> a -> b
-app = applyAB
--}
-
--- ** more restrictive apply
-{- $example
-
-Not clear if these really work properly yet.
-
-Using standard \'standard\' functions read, show and Just,
-only the following restricted versions of apply are accepted
-
->>> :t applyB' HRead
-applyB' HRead :: Read b => [Char] -> b
-
->>> :t applyA' HShow
-applyA' HShow :: Show a => a -> [Char]
+ Also note the use of @'()@ to signal that the result
+ type is the same as the argument type.
 
 
->>> :t applyA' (HJust ())
-applyA' (HJust ()) :: a -> HJust a
+ A single constraint can also be supplied:
 
-> ??
-> >>> :t applyB' (HJust ())
-> applyB' (HJust ()) :: a -> HJust a
+ >>> let succ1 = Fun succ :: Fun Enum '()
+ >>> :t applyAB succ1
+ applyAB succ1 :: Enum a => a -> a
 
->>> :t apply' (HJust ())
-apply' (HJust ()) :: a -> HJust a
 
-The other combinations should not typecheck (not tested here...)
+
+ If the constraints should be on the argument type:
+
+ >>> let rd = Fun' read :: Fun' Read String
+ >>> :t applyAB rd
+ applyAB rd :: Read b => [Char] -> b
+
+
+ >>> let just = Fun Just :: Fun '[] Maybe
+ >>> :t applyAB just
+ applyAB just :: a -> Maybe a
+
+ >>> let fromJust' = Fun' (\(Just a) -> a) :: Fun' '[] Maybe
+ >>> :t applyAB fromJust'
+ applyAB fromJust' :: Maybe b -> b
 
 -}
+data Fun (cxt :: k1) (getb :: k2)
+    = Fun (forall a. FunCxt cxt a => a -> FunApp getb a)
 
-{-
--- | must have a @| f b -> a@
-type ApplyB' f a b = (ApplyAB f a b, a ~ FromJust (ApplyA f b) )
-
--- | must have a @| f a -> b@
-type ApplyA' f a b = (ApplyAB f a b, b ~ FromJust (ApplyB f a) )
-
--- | must have a @| f a -> b, f b -> a@
-type Apply' f a b = (ApplyAB f a b, b ~ FromJust (ApplyB f a), a ~ FromJust (ApplyA f b) )
+data Fun' (cxt :: k1) (geta :: k2)
+    = Fun' (forall a. FunCxt cxt a => FunApp geta a -> a)
 
 
-apply' :: Apply' f a b => f -> a -> b
-apply' = applyAB
+type family FunApp (fns :: k) a
 
-applyA' :: ApplyA' f a b => f -> a -> b
-applyA' = applyAB
+type instance FunApp (fn :: *) a = fn
+type instance FunApp (fn :: * -> *) a = fn a
+type instance FunApp (fn :: ()) a = a
 
-applyB' :: ApplyB' f a b => f -> a -> b
-applyB' = applyAB
--}
+type family FunCxt (cxts :: k) a :: Constraint
+type instance FunCxt (x ': xs) a = (x a, FunCxt xs a)
+type instance FunCxt (cxt :: * -> Constraint) a = cxt a
+type instance FunCxt '[] a = ()
+-- | should there be so many ways to write no constraint?
+type instance FunCxt (cxt :: ()) a = ()
+type instance FunCxt (cxt :: *) a = (cxt ~ a)
+
+instance (FunCxt cxt a, FunApp getb a ~ b)  => ApplyAB (Fun cxt getb) a b where
+    applyAB (Fun f) x = f x
+
+instance (FunCxt cxt b, FunApp geta b ~ a)  => ApplyAB (Fun' cxt geta) a b where
+    applyAB (Fun' f) x = f x
+
+
+
 
 -- ** Simple useful instances of Apply
+-- | note this function will only be available at a single type
+-- (that is, @hMap succ@ will only work on 'HList' that contain
+-- only one type)
 instance (x' ~ x, y' ~ y) => ApplyAB (x' -> y') x y where
   applyAB f x = f x
 
 
 
--- | print
+{- | print. An alternative implementation could be:
+
+>>> let hPrint = Fun print :: Fun Show (IO ())
+
+This produces:
+
+>>> :t applyAB hPrint
+applyAB hPrint :: Show a => a -> IO ()
+
+-}
 data HPrint = HPrint
 
 instance (io ~ IO (), Show x) => ApplyAB HPrint x io where
   applyAB _ x = print x
 
 
+
 {- | read
 
->>> app HRead "5.0" :: Double
+>>> applyAB HRead "5.0" :: Double
 5.0
 
 -}
@@ -190,38 +196,34 @@ instance (String ~ string, Show a) => ApplyAB HShow a string where
 
 
 
-data EnumFuns = Succ | Pred | ToEnum | FromEnum
-
-instance (a ~ a' , Enum a) => ApplyAB (Proxy Succ) a a' where applyAB _ = succ
-instance (a ~ a' , Enum a) => ApplyAB (Proxy Pred) a a' where applyAB _ = pred
-instance (Enum a' , a ~ Int) => ApplyAB (Proxy ToEnum) a a' where applyAB _ = toEnum
-instance (Enum a , a' ~ Int) => ApplyAB (Proxy FromEnum) a a' where applyAB _ = fromEnum
 
 
 {- | Compose two instances of 'ApplyAB'
 
->>> app (HComp HRead HShow) (5::Double) :: Double
+-- broken
+> app (HComp HRead HShow) (5::Double) :: Double
 5.0
 
 -}
 data HComp g f = HComp g f -- ^ @g . f@
 
-instance forall f g a b b' c. (ApplyAB f a b', b ~ b', ApplyAB g b c) => ApplyAB (HComp g f) a c where
+instance forall f g a b c. (ApplyAB f a b, ApplyAB g b c) => ApplyAB (HComp g f) a c where
     applyAB ~(HComp g f) x = applyAB g (applyAB f x :: b)
 
 
 {- | @app Comp (f,g) = g . f@. Works like:
 
->>> app Comp (succ, pred) 'a'
+>>> applyAB Comp (succ, pred) 'a'
 'a'
 
->>> app Comp (toEnum :: Int -> Char, fromEnum) 10
+>>> applyAB Comp (toEnum :: Int -> Char, fromEnum) 10
 10
 
 Note that defaulting will sometimes give you the wrong thing
 
->>> app Comp (fromEnum, toEnum) 'a'
-*** Exception: Prelude.Enum.().toEnum: bad argument
+> used to work (with associated types calculating result/argument types)
+> >>> applyAB Comp (fromEnum, toEnum) 'a'
+> *** Exception: Prelude.Enum.().toEnum: bad argument
 
 -}
 data Comp = Comp
