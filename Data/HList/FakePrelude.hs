@@ -106,28 +106,32 @@ class ApplyAB f a b where
  applyAB succ1 :: Enum a => a -> a
 
 
-
- If the constraints should be on the argument type:
-
- >>> let rd = Fun' read :: Fun' Read String
- >>> :t applyAB rd
- applyAB rd :: Read b => [Char] -> b
-
-
  >>> let just = Fun Just :: Fun '[] Maybe
  >>> :t applyAB just
  applyAB just :: a -> Maybe a
 
- >>> let fromJust' = Fun' (\(Just a) -> a) :: Fun' '[] Maybe
- >>> :t applyAB fromJust'
- applyAB fromJust' :: Maybe b -> b
 
 -}
 data Fun (cxt :: k1) (getb :: k2)
     = Fun (forall a. FunCxt cxt a => a -> FunApp getb a)
 
+{- | see 'Fun'. The only difference here is that the argument
+type is calculated from the result type.
+
+ >>> let rd = Fun' read :: Fun' Read String
+ >>> :t applyAB rd
+ applyAB rd :: Read b => [Char] -> b
+
+ >>> let fromJust' = Fun' (\(Just a) -> a) :: Fun' '[] Maybe
+ >>> :t applyAB fromJust'
+ applyAB fromJust' :: Maybe b -> b
+
+Note this use of Fun' means we don't have to get the b out of @Maybe b@,
+
+
+-}
 data Fun' (cxt :: k1) (geta :: k2)
-    = Fun' (forall a. FunCxt cxt a => FunApp geta a -> a)
+    = Fun' (forall b. FunCxt cxt b => FunApp geta b -> b)
 
 
 type family FunApp (fns :: k) a
