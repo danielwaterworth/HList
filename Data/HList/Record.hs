@@ -147,7 +147,7 @@ import Data.HList.HArray
 -- labels is erased.
 
 -- | Field of label l with value type v
--- Polikinded with respect to l: label may be a symbol, a nat, etc.
+-- Polykinded with respect to l: label may be a symbol, a nat, etc.
 newtype LVPair l v = LVPair { valueLVPair :: v } deriving Eq
 
 -- | Label accessor
