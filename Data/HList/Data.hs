@@ -29,16 +29,17 @@ will look like the Data instance for:
 
 [@Record@]
 
-For 'Record' similar ideas apply. A
+For 'Record' similar ideas apply. An
 
 > a :: Record '[ LVPair "x" Int, LVPair "y" Double ]
 
-Should behave like a :
+should behave like a:
 
 > data A = A { x :: Int, y :: Double } deriving (Data)
 
-
-Many unsafecoerces are necessary here
+Many unsafecoerces are necessary here because the Data class includes type
+parameters @c@ that cannot be used in the class context for the instance.
+Perhaps there is another way.
 
 -}
 module Data.HList.Data (
@@ -136,11 +137,14 @@ instance DataRecordCxt a => Data (Record a) where
             c1 :: forall c. c (HList (RecordValuesR a)) -> c (Record a)
             c1 = unsafeCoerce
 
-    dataTypeOf x = recordDataRep (recordLabelsStr x)
-    toConstr x = recordConRep (recordLabelsStr x)
+    dataTypeOf x = snd (recordReps (recordLabelsStr x))
+    toConstr x = fst (recordReps (recordLabelsStr x))
 
-recordDataRep fields = mkDataType "Data.HList.Record" [recordConRep fields]
-recordConRep fields = mkConstr (recordDataRep fields) "Record" fields Prefix
+
+recordReps fields =
+    let c = mkConstr d "Record" fields Prefix
+        d = mkDataType "Data.HList.Record" [c]
+    in (c,d)
 
 
 

@@ -56,6 +56,8 @@ import Data.HList.Label6 () -- only instances
 
 import Data.HList.Variant
 
+import Data.HList.Data
+
 
 {- $label6demo #label6demo#
 
