@@ -5,6 +5,16 @@ import System.Console.CmdArgs
 import Data.HList.CommonMain
 import Data.Generics
 
+
+{-
+
+An example showing off the data instance for Record
+
+Also a use of cmdArgs
+
+
+-}
+
 makeLabels6 (words "x y z")
 
 
@@ -28,34 +38,3 @@ main = do
     rc <- cmdArgs d0
     print rc
 
-{- Some things work properly:
-
-
-> :main --help
-Record{x=5,y=True,z=False}
-Record{x=5,y=False,z=True}
-Record{x=6,y=True,z=False}
-Record{x=1,y=True,z=True}
-The record program
-
-record [OPTIONS]
-
-Common flags:
-  -x=INT          
-  -y              
-  -z              
-  -?     --help     Display help message
-  -V     --version  Print version information
-*** Exception: ExitSuccess
-
-
-But this doesn't:
-
-*Main> :main -x 3
-Record{x=5,y=True,z=False}
-Record{x=5,y=False,z=True}
-Record{x=6,y=True,z=False}
-Record{x=1,y=True,z=True}
-Record{*** Exception: <<loop>>
-
--}

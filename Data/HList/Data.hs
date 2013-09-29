@@ -121,7 +121,7 @@ hListConRep = mkConstr hListDataRep "HList" [] Prefix
 
 type DataRecordCxt a =
     (Data (HList (RecordValuesR a)),
-            TypeRepsList a,
+            TypeRepsList (Record a),
             RecordValues a,
             RecordLabelsStr a)
 
@@ -186,12 +186,12 @@ data C a
 
 
 -- | should be derived for ghc-7.8
-instance TypeRepsList xs => Typeable (HList xs) where
+instance TypeRepsList (Record xs) => Typeable (HList xs) where
    typeOf x = mkTyConApp (mkTyCon3 "HList" "Data.HList.HList" "HList")
                 [ tyConList (typeRepsList (Record x)) ]
 
 -- | should be derived for ghc-7.8
-instance (TypeRepsList xs) => Typeable (Record xs) where
+instance (TypeRepsList (Record xs)) => Typeable (Record xs) where
   typeOf x = mkTyConApp (mkTyCon3 "HList" "Data.HList.Record" "Record")
                 [ tyConList (typeRepsList x) ]
 
@@ -204,13 +204,17 @@ tyConList xs = mkTyConApp open ( intersperse comma xs ++ [close] )
 
 
 class TypeRepsList a where
-  typeRepsList :: Record a -> [TypeRep]
+  typeRepsList :: a -> [TypeRep]
 
-instance (TypeRepsList xs, Typeable x) => TypeRepsList (x ': xs) where
-  typeRepsList (Record (x `HCons` xs))
-        = typeOf (undefined :: x) : typeRepsList (Record xs)
 
-instance TypeRepsList '[] where
+instance (TypeRepsList (Prime xs), ConvHList xs) => TypeRepsList (Record xs) where
+  typeRepsList (Record xs) = typeRepsList (prime xs)
+
+instance (TypeRepsList xs, Typeable x) => TypeRepsList (HCons' x xs) where
+  typeRepsList (~(x `HCons'` xs))
+        = typeOf (undefined :: x) : typeRepsList xs
+
+instance TypeRepsList HNil' where
   typeRepsList _ = []
 
 instance ShowLabel sy => Typeable1 (LVPair sy) where

@@ -34,6 +34,8 @@ import Control.Applicative (Applicative, liftA, liftA2, pure)
 
 -- --------------------------------------------------------------------------
 -- * Heterogeneous type sequences
+-- $note
+--
 -- The easiest way to ensure that sequences can only be formed with Nil
 -- and Cons is to use GADTs
 -- The kind [*] is list kind (lists lifted to types)
@@ -41,6 +43,46 @@ import Control.Applicative (Applicative, liftA, liftA2, pure)
 data HList (l::[*]) where
     HNil  :: HList '[]
     HCons :: e -> HList l -> HList (e ': l)
+
+
+-- ** Alternative representation
+{- $note
+
+HNil' and HCons' are the older ADT-style. This has some advantages
+over the GADT:
+
+* lazy pattern matches are allowed
+
+* type inference is better if you want to directly pattern match
+<http://stackoverflow.com/questions/19077037/is-there-any-deeper-type-theoretic-reason-ghc-cant-infer-this-type see stackoverflow post here>
+
+-}
+data HNil' = HNil'
+data HCons' a b = HCons' a b
+
+
+-- | conversion between GADT ('HList') and ADT ('HNil'' 'HCons'')
+-- representations
+class (UnPrime (Prime a) ~ a) => ConvHList (a :: [*]) where
+    type Prime a :: *
+    type UnPrime b :: [*]
+    prime :: HList a -> Prime a
+    unPrime :: Prime a -> HList a
+
+instance ConvHList as => ConvHList (a ': as) where
+    type Prime   (a ': as) = a `HCons'` Prime as
+    type UnPrime (b `HCons'` bs) = (b ': UnPrime bs)
+    prime (a `HCons` as) = a `HCons'` prime as
+    unPrime ~(a `HCons'` as) = a `HCons` unPrime as
+
+instance ConvHList '[] where
+    type Prime '[] = HNil'
+    type UnPrime HNil' = '[]
+    prime _ = HNil'
+    unPrime _ = HNil
+
+
+
 
 instance Show (HList '[]) where
     show _ = "H[]"
