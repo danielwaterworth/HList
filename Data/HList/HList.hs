@@ -279,16 +279,16 @@ H[True, 'a', "ok"]
 -- $foldNote  Consume a heterogenous list. GADTs and type-classes mix well
 
 
-class HFoldr f v (l :: [*]) r | f v l -> r where
+class HFoldr f v (l :: [*]) r where
     hFoldr :: f -> v -> HList l -> r
 
-instance HFoldr f v '[] v where
+instance (v ~ v') => HFoldr f v '[] v' where
     hFoldr       _ v _   = v
 
 -- | uses 'ApplyAB' not 'Apply'
 instance (ApplyAB f (e, r) r', HFoldr f v l r)
     => HFoldr f v (e ': l) r' where
-    hFoldr f v (HCons x l)    = applyAB f (x, hFoldr f v l)
+    hFoldr f v (HCons x l)    = applyAB f (x, hFoldr f v l :: r)
 
 -- ** foldl
 
