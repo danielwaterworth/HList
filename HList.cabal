@@ -42,6 +42,7 @@ library
   Exposed-modules:     Data.HList,
 
                        Data.HList.CommonMain,
+                       Data.HList.Data,
                        Data.HList.FakePrelude,
                        Data.HList.HArray,
                        Data.HList.HList,
