@@ -1,4 +1,3 @@
-{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 {-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, UndecidableInstances,
     FlexibleContexts #-}
 {-# LANGUAGE TypeFamilies #-}
@@ -19,11 +18,9 @@
 module Data.HList.TIP where
 
 
-import Data.HList.FakePrelude
 import Data.HList.HListPrelude
 import Data.HList.HList
-import Data.HList.HArray
-import Data.HList.HOccurs
+import Data.HList.HArray ()
 import Data.HList.HTypeIndexed
 
 

@@ -241,7 +241,7 @@ instance (Monad m, ApplyAB f x fx, fx ~ m (), pair ~ (x,m ()),
           ApplyAB f x (m ()) ) => ApplyAB (HSeq f) pair fx where
   applyAB (HSeq f) (x,c) = do asVoid (applyAB f x); c
     where asVoid :: m () -> m ()
-          asVoid x = x
+          asVoid t = t
 
 
 
@@ -401,7 +401,7 @@ instance HNat2Integral n => HNat2Integral (HSucc n) where
     hNat2Integral n = hNat2Integral (hPred n) + 1
 
 instance HNat2Integral n => Show (Proxy (n :: HNat)) where 
-    show n = "H" ++ show (hNat2Integral n)
+    show n = "H" ++ show (hNat2Integral n :: Integer)
 
 
 -- | Equality on natural numbers

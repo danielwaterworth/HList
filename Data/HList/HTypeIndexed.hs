@@ -22,7 +22,7 @@ import Data.HList.FakePrelude
 import Data.HList.HListPrelude
 import Data.HList.HList
 import Data.HList.HArray
-import Data.HList.HOccurs
+import Data.HList.HOccurs ()
 
 -- --------------------------------------------------------------------------
 -- | Map a type to a natural (index within the collection)
@@ -77,7 +77,7 @@ instance HDeleteMany e1 (HList l) (HList l1)
 
 hDeleteAt :: forall e l n. (HDeleteAtHNat n l, HType2HNat e l n) => 
 	   Proxy e -> HList l -> HList (HDeleteAtHNatR n l)
-hDeleteAt p l = hDeleteAtHNat (undefined :: Proxy n) l
+hDeleteAt _p l = hDeleteAtHNat (undefined :: Proxy n) l
 
 hUpdateAt :: forall n e l.
 		 (HUpdateAtHNat n e l, HType2HNat e l n) => 
@@ -88,11 +88,11 @@ hProjectBy :: forall (ns :: [HNat]) (ps :: [*]) (l :: [*]).
 	      (HProjectByHNatsCtx ns l, HTypes2HNats ps l ns,
 	      ps ~ (HProjectByHNatsR ns l)) =>
 	      Proxy ps -> HList l -> HList ps
-hProjectBy ps l = hProjectByHNats (undefined::Proxy ns) l
+hProjectBy _ps l = hProjectByHNats (undefined::Proxy ns) l
 
 hSplitBy :: forall (ps :: [*]) l ns.
 	    (HProjectByHNatsCtx ns l, HProjectAwayByHNatsCtx ns l,
 	     HTypes2HNats ps l ns) =>
 	    Proxy ps -> HList l -> (HList (HProjectByHNatsR ns l), 
 				    HList (HProjectAwayByHNatsR ns l))
-hSplitBy ps l = hSplitByHNats (undefined::Proxy ns) l
+hSplitBy _ps l = hSplitByHNats (undefined::Proxy ns) l

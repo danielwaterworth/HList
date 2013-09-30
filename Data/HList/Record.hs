@@ -8,8 +8,6 @@
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
 
-{-# OPTIONS_GHC -fno-warn-missing-signatures -fno-warn-dodgy-exports #-}
-
 {- |
    The HList library
 
@@ -521,9 +519,9 @@ hRenameLabel l l' r = r''
 -- | A variation on 'hUpdateAtLabel': type-preserving update.
 hTPupdateAtLabel l v r = hUpdateAtLabel l v r
  where
-   te :: a -> a -> ()
-   te _ _ = ()
-   _ = te v (hLookupByLabel l r)
+   _te :: a -> a -> ()
+   _te _ _ = ()
+   _ = _te v (hLookupByLabel l r)
 
 {- ^
 

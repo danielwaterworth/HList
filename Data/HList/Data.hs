@@ -57,10 +57,8 @@ module Data.HList.Data (
 import Data.HList.FakePrelude
 import Data.HList.HList
 import Data.HList.Record
-import Data.HList.Label6
-import GHC.TypeLits
+import GHC.TypeLits ()
 import Data.Data
-import Data.Typeable
 import Data.List
 
 import Unsafe.Coerce
@@ -212,7 +210,7 @@ instance (TypeRepsList (Prime xs), ConvHList xs) => TypeRepsList (Record xs) whe
 
 instance (TypeRepsList xs, Typeable x) => TypeRepsList (HCons' x xs) where
   typeRepsList (~(x `HCons'` xs))
-        = typeOf (undefined :: x) : typeRepsList xs
+        = typeOf x : typeRepsList xs
 
 instance TypeRepsList HNil' where
   typeRepsList _ = []

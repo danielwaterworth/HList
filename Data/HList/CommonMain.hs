@@ -32,7 +32,6 @@ module Data.HList.CommonMain (
  , module Data.HList.Label3
 
  -- $label6demo
- , module Data.HList.Label6
 
  -- | template haskell for automating different types of labels
  , module Data.HList.MakeLabels

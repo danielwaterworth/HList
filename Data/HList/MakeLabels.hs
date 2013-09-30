@@ -115,7 +115,8 @@ makeLabels3 ns (k:ks) =
                 | (k1,k2) <- zip (k:ks) ks ]
 
     in fmap concat $ sequence [ pt1, sequence (sq1 : sqs) ]
-
+-- possibly there is a better option
+makeLabels3 ns [] = fail ("makeLabels3 "++ ns ++ " []")
 
 -- | for "Data.HList.Label6"
 makeLabels6 :: [String] -> Q [Dec]

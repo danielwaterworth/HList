@@ -18,7 +18,6 @@
 module Data.HList.HZip where
 
 import Data.HList.HList
-import Data.HList.FakePrelude
 
 -- * functional dependency
 
@@ -58,6 +57,7 @@ instance (z ~ (x,y), HUnZip zs) => HUnZip (z ': zs) where
   type MapFst (z ': zs) = ( Fst z ': MapFst zs )
   type MapSnd (z ': zs) = ( Snd z ': MapSnd zs )
   hZip2 (HCons x xs) (HCons y ys) = HCons (x,y) (hZip2 xs ys)
+  hZip2 _ _ = error "Data.HList.HZip.hZip2: impossible case"
   hUnzip2 (HCons ~(x,y) zs) = let ~(xs,ys) = hUnzip2 zs in (x `HCons` xs, y `HCons` ys)
 
 

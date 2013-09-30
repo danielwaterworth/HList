@@ -1,4 +1,3 @@
-{-# OPTIONS_GHC -fno-warn-missing-signatures #-}
 {-# LANGUAGE MultiParamTypeClasses, FlexibleInstances, FlexibleContexts #-}
 {-# LANGUAGE UndecidableInstances #-}
 {-# LANGUAGE GADTs #-}
@@ -20,7 +19,6 @@
 module Data.HList.HArray where
 
 import Data.HList.FakePrelude
-import Data.HList.HListPrelude
 import Data.HList.HList
 
 

@@ -61,7 +61,7 @@ library
                        Data.HList.Variant
 
 
-  Ghc-Options:         -Wall
+  Ghc-Options:         -Wall -fno-warn-missing-signatures
 
 Test-Suite examples
   Type:     exitcode-stdio-1.0

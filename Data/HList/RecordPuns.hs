@@ -19,10 +19,15 @@ import Data.HList.FakePrelude
 
 
 -- | requires the use of "Data.HList.Label6" (ie. the label for foo is @Label :: Label \"foo\"@)
+pun :: QuasiQuoter
 pun = QuasiQuoter {
-    quotePat = \str -> mkPat (words str)
+    quotePat = \str -> mkPat (words str),
+    quoteExp  = error "Data.HList.RecordPuns.quoteExp",
+    quoteDec  = error "Data.HList.RecordPuns.quoteDec",
+    quoteType = error "Data.HList.RecordPuns.quoteType"
  }
 
+mkPat :: [String] -> PatQ
 mkPat xs = viewP extracts binds
   where
 
