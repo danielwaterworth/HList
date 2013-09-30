@@ -1,5 +1,8 @@
 {-# LANGUAGE TemplateHaskell #-}
-module Data.HList.RecordPuns (pun) where
+module Data.HList.RecordPuns (
+    -- $ex
+    pun
+    ) where
 
 import Language.Haskell.TH
 import Language.Haskell.TH.Quote
