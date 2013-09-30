@@ -11,8 +11,6 @@ module Data.HList.MakeLabels (
     makeLabels6) where
 
 import Data.HList.FakePrelude
-import Data.HList.Record
-
 import Data.HList.Label3
 
 import Language.Haskell.TH

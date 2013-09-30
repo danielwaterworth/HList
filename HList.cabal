@@ -4,6 +4,9 @@ Category:            Data
 Synopsis:            Heterogeneous lists
 Description:         HList is a record system providing strongly typed heterogenous lists, records,
                      type-indexed products (TIP) and co-products; licensed under the MIT X License.
+                     .
+                     User code should import "Data.HList" or
+                     "Data.HList.CommonMain" for a slightly more limited scope
 License:             MIT
 License-File:        LICENSE
 Author:              2004 Oleg Kiselyov (FNMOC, Monterey), Ralf Laemmel (CWI/VU, Amsterdam),

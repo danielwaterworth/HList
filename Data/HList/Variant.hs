@@ -25,7 +25,6 @@
 module Data.HList.Variant where
 
 import Data.HList.FakePrelude
-import Data.HList.HListPrelude
 import Data.HList.Record
 import Data.HList.HList
 
@@ -72,7 +71,7 @@ hMaybied x = hMap HMaybeF x
 -- it seems we can blame 'hUpdateAtLabel' (not 'HMap') for needing the asTypeOf?
 mkVariant x y (Record v) = let r1 = Record (hMaybied v) in
     case hUpdateAtLabel x (Just y) r1 `asTypeOf` r1 of
-    Record x -> Variant x
+    Record t -> Variant t
 {- ^ previously:
 
 > mkVariant :: ( RecordLabels v ls

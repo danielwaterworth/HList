@@ -36,7 +36,6 @@
 module Data.HList.Label3 where
 
 import Data.HList.FakePrelude
-import Data.HList.Record (ShowLabel(..))
 
 
 data Lbl (x :: HNat) ns desc  -- labels are exclusively type-level entities

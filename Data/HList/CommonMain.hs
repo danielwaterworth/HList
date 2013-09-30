@@ -35,6 +35,12 @@ module Data.HList.CommonMain (
 
  -- | template haskell for automating different types of labels
  , module Data.HList.MakeLabels
+
+
+ -- $instancesFrom
+ -- These modules provide useful instances:
+ --
+ -- * "Data.HList.Data"
 ) where
 
 import Data.HList.FakePrelude
@@ -55,7 +61,7 @@ import Data.HList.Label6 () -- only instances
 
 import Data.HList.Variant
 
-import Data.HList.Data
+import Data.HList.Data () -- only instances
 
 
 {- $label6demo #label6demo#

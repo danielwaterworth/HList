@@ -23,6 +23,7 @@
 module Data.HList.FakePrelude where
 
 import GHC.Prim (Constraint)
+import GHC.TypeLits
 
 -- --------------------------------------------------------------------------
 -- * A heterogeneous apply operator
@@ -275,6 +276,9 @@ data Label l = Label
 labelToProxy :: Label l -> Proxy l
 labelToProxy = undefined
 
+class ShowLabel l where
+  showLabel :: Label l -> String
+
 
 -- --------------------------------------------------------------------------
 
@@ -503,4 +507,5 @@ class TypeCast x y | x -> y, y -> x
 
 -- | A class without instances for explicit failure
 class Fail x
+
 

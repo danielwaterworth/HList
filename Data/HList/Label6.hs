@@ -15,7 +15,7 @@
 
 module Data.HList.Label6 () where
 
-import Data.HList.Record
+import Data.HList.FakePrelude
 import GHC.TypeLits
 
 instance SingI x => ShowLabel (x :: Symbol) where

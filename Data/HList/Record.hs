@@ -19,8 +19,6 @@
 
    * "Data.HList.Label3"
 
-   * "Data.HList.Label6"
-
    * "Data.HList.MakeLabels"
 
 
@@ -38,6 +36,9 @@
 
 module Data.HList.Record
 (
+    -- ** labels used for doctests
+    -- $setup
+
     -- * Records
 
     -- ** Labels
@@ -81,10 +82,14 @@ module Data.HList.Record
     hDeleteAtLabel,
 
     -- ** Update
-    -- | 'hUpdateAtLabel' @label value record@
+    (.@.),
     hUpdateAtLabel,
+    -- *** type-preserving versions
+    -- $note these restrict the resulting record type to be the same as in
+    -- input record type, which can help reduce the number of type annotations
+    -- needed
+    (.<.),
     hTPupdateAtLabel,
-    (.@.), (.<.),
 
     -- ** Rename Label
     hRenameLabel,
@@ -112,12 +117,14 @@ module Data.HList.Record
     -- | 'hExtend', 'hAppend'
     (.*.),
 
-    -- * Unclassified
-    -- | Probably internals, that may not be useful
 
+    -- * Hints for type errors
     DuplicatedLabel,
     ExtraField(..),
     FieldNotFound(..),
+
+    -- * Unclassified
+    -- | Probably internals, that may not be useful
     H2ProjectByLabels(h2projectByLabels),
     H2ProjectByLabels'(h2projectByLabels'),
     HLabelSet,
@@ -134,7 +141,18 @@ import Data.HList.FakePrelude
 import Data.HList.HListPrelude
 import Data.HList.HList
 import Data.HList.HArray
+ 
+-- imports for doctest/examples
+import Data.HList.Label6 ()
+import Data.HList.TypeEqO ()
 
+{- $setup
+
+>>> let x = Label :: Label "x"
+>>> let y = Label :: Label "y"
+>>> let z = Label :: Label "z"
+
+-}
 
 -- --------------------------------------------------------------------------
 
@@ -167,9 +185,8 @@ infixr 4 .=.
   than record-modification operations like (.*.), (.-.), etc. to
   support expression like the below w/o parentheses:
 
-  > label1 .=. value1 .*.
-  > label2 .=. value2 .*.
-  > emptyRecord
+  >>> x .=. "v1" .*. y .=. '2' .*. emptyRecord
+  Record{x="v1",y='2'}
 
 -}
 (.=.) :: Label l -> v -> LVPair l v
@@ -207,7 +224,7 @@ instance ( HRLabelSet (LVPair l2 () ': r)
 instance ( Fail (DuplicatedLabel l1) ) => HRLabelSet' l1 l2 True r
 
 
--- Relation between HLabelSet and HRLabelSet
+-- | Relation between HLabelSet and HRLabelSet
 {-
 instance (HZip ls vs ps, HLabelSet ls) => HRLabelSet ps
 -}
@@ -252,7 +269,7 @@ recordValues :: RecordValues r => Record r -> HList (RecordValuesR r)
 recordValues (Record r) = recordValues' r
 
 
--- Polykinded
+-- | Polykinded (??)
 type family LabelsOf (ls :: [*]) :: [*]
 type instance LabelsOf '[] = '[]
 type instance LabelsOf (Label l ': r)  = l ': LabelsOf r
@@ -287,8 +304,6 @@ instance ( ShowLabel l
      ++ show v
      ++ showComponents "," r
 
-class ShowLabel l where
-  showLabel :: Label l -> String
 
 
 
@@ -372,14 +387,35 @@ instance HasField l (Record r) v => HasField' False l (fld ': r) v where
 
 
 infixr 9 .!.
-{-|
+{- |
   Lookup a value in a record, by its label. Analagous to (!!), the
   list indexing operation. Highest fixity, like (!!).
 
-  > record1 .*. label1 .=. record2 .!. label1
-  >         .*. label2 .=. record2 .!. label2
+  >>> :{
+  let record1 = x .=. 3 .*.
+                y .=. 'y' .*.
+                emptyRecord
+  :}
 
+
+  >>> record1 .!. x
+  3
+
+  >>> record1 .!. y
+  'y'
+
+
+  >>> :{
+  let r2 = y .=. record1 .!. x .*.
+           z .=. record1 .!. y .*.
+           emptyRecord
+  :}
+
+  >>> r2
+  Record{y=3,z='y'}
 -}
+
+
 (.!.) :: (HasField l r v) => r -> Label l -> v
 r .!. l =  hLookupByLabel l r
 
@@ -397,7 +433,7 @@ infixl 2 .-.
 {-|
   Remove a field from a record. At the same
   level as other record modification options (.*.). Analagous
-  to (\\) in lists.
+  to (@\\@) in lists.
 
   > record1 .-. label1
 
@@ -425,6 +461,7 @@ r .-. l =  hDeleteAtLabel l r
 
 -- Update
 
+-- | 'hUpdateAtLabel' @label value record@
 hUpdateAtLabel :: forall (r :: [*]) (l :: *) (n::HNat) (v :: *). 
   (HFind l (RecordLabels r) n, HUpdateAtHNat n (LVPair l v) r) =>
   Label l -> v -> Record r -> Record (HUpdateAtHNatR n (LVPair l v) r)
@@ -500,11 +537,11 @@ instance H2ProjectByLabels ls r rin rout =>
         where (rin,rout) = h2projectByLabels ls r
 
 -- --------------------------------------------------------------------------
--- | Rename the label of record
+{- | Rename the label of record
 
-{-
-hRenameLabel :: (HRLabelSet (HCons (LVPair l v) t2),HasField e t1 v,H2ProjectByLabels (HCons e HNil) t1 t t2) =>
-    e -> l -> Record t1 -> Record (LVPair l v ': t2)
+>>> hRenameLabel x y (x .=. () .*. emptyRecord)
+Record{y=()}
+
 -}
 hRenameLabel l l' r = r''
  where
@@ -535,7 +572,7 @@ This would also constrain the actual implementation of hUpdateAtLabel.
 
 infixr 2 .<.
 {-|
-  Another variation on update, so give it the same fixity as (.\@.).
+  The same as '.@.', except type preserving. It has the same fixity as (.\@.).
 
 -}
 f@(LVPair v) .<. r = hTPupdateAtLabel (labelLVPair f) v r
@@ -709,3 +746,5 @@ instance Fail (FieldNotFound l) =>
 instance Fail (ExtraField l) => 
           HRearrange '[] (LVPair l v ': a) (ExtraField l) where
    hRearrange2 _ _ = ExtraField
+
+
