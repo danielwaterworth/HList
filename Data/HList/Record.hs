@@ -58,6 +58,9 @@ module Data.HList.Record
     RecordLabels,
     recordLabels,
 
+    LabelsOf,
+    hLabels,
+
     -- *** Getting Values
     RecordValues(..),
     recordValues,
@@ -93,7 +96,6 @@ module Data.HList.Record
     hProjectByLabels,
     hProjectByLabels2,
 
-   {-
     -- ** Unions
     -- *** Left
     HLeftUnion(hLeftUnion),
@@ -107,7 +109,6 @@ module Data.HList.Record
 
     -- ** Reorder Labels
     hRearrange,
-    -}
 
     -- ** Extension
     -- | 'hExtend', 'hAppend'
@@ -116,19 +117,18 @@ module Data.HList.Record
     -- * Unclassified
     -- | Probably internals, that may not be useful
 
-    DuplicatedLabel(..),
-    -- ExtraField(..),
-    -- FieldNotFound(..),
+    DuplicatedLabel,
+    ExtraField(..),
+    FieldNotFound(..),
     H2ProjectByLabels(h2projectByLabels),
     H2ProjectByLabels'(h2projectByLabels'),
     HLabelSet,
     HLabelSet',
     HRLabelSet,
     HRLabelSet',
-    -- HRearrange(hRearrange2),
-    -- HRearrange'(hRearrange2'),
-    -- UnionSymRec'(..)
-    module Data.HList.Record, -- if something was forgotten
+    HRearrange(hRearrange2),
+    HRearrange'(hRearrange2'),
+    UnionSymRec'(..)
 ) where
 
 
@@ -236,6 +236,7 @@ type instance RecordLabels (LVPair l v ': r) = l ': RecordLabels r
 
 recordLabels :: Record r -> Proxy (RecordLabels r)
 recordLabels = undefined
+
 
 -- | Construct the HList of values of the record.
 class RecordValues (r :: [*]) where
@@ -549,38 +550,37 @@ instance H2ProjectByLabels (RecordLabels r2) r1 r2 rout
     => SubType (Record r1) (Record r2)
 
 
-{-
 -- --------------------------------------------------------------------------
 
 -- Left Union
 
 class  HLeftUnion r r' r'' | r r' -> r''
- where hLeftUnion :: r -> r' -> r''
+ where hLeftUnion :: Record r -> Record r' -> Record r''
 
-instance HLeftUnion r (Record HNil) r
+instance HLeftUnion r '[] r
  where   hLeftUnion r _ = r
 
-instance ( RecordLabels r ls
-         , HMember l ls b
+instance ( RecordLabels r ~ ls
+         , HMember (Label l) ls b
          , HLeftUnionBool b r (LVPair l v) r'''
-         , HLeftUnion (Record r''') (Record r') r''
+         , HLeftUnion r''' r' r''
          )
-           => HLeftUnion (Record r) (Record (HCons (LVPair l v) r')) r''
+           => HLeftUnion r (LVPair l v ': r') r''
   where
-   hLeftUnion (Record r) (Record (HCons f r')) = r''
+   hLeftUnion r (Record (HCons f r')) = r''
     where
-     b       = hMember (labelLVPair f) (recordLabels' r)
+     b       = hMember (labelLVPair f) (error "HLeftUnion" :: HList ls)
      r'''    = hLeftUnionBool b r f
-     r''     = hLeftUnion (Record r''') (Record r')
+     r''     = hLeftUnion r''' (Record r')
 
-class  HLeftUnionBool b r f r' | b r f -> r'
- where hLeftUnionBool :: b -> r -> f -> r'
+class  HLeftUnionBool (b :: Bool) r f r' | b r f -> r'
+ where hLeftUnionBool :: Proxy b -> Record r -> f -> Record r'
 
-instance HLeftUnionBool HTrue r f r
+instance HLeftUnionBool True r f r
    where hLeftUnionBool _ r _  = r
 
-instance HLeftUnionBool HFalse r f (HCons f r)
-   where hLeftUnionBool _ r f = HCons f r
+instance HLeftUnionBool False r f (f ': r)
+   where hLeftUnionBool _ (Record r) f = Record (HCons f r)
 
 infixl 1 .<++.
 {-|
@@ -590,7 +590,7 @@ infixl 1 .<++.
    > field1 .=. value .*. record1 .<++. record2
 
 -}
-(.<++.) ::  (HLeftUnion r r' r'') => r -> r' -> r''
+(.<++.) ::  (HLeftUnion r r' r'') => Record r -> Record r' -> Record r''
 r .<++. r' = hLeftUnion r r'
 
 
@@ -622,84 +622,93 @@ r .<++. r' = hLeftUnion r r'
 -- to r1. Ditto for r2.
 
 class UnionSymRec r1 r2 ru | r1 r2 -> ru where
-    unionSR :: r1 -> r2 -> (ru, ru)
+    unionSR :: Record r1 -> Record r2 -> (Record ru, Record ru)
 
-instance UnionSymRec r1 (Record HNil) r1 where
+instance UnionSymRec r1 '[] r1 where
     unionSR r1 _ = (r1, r1)
 
-instance ( RecordLabels r1 ls
+instance ( RecordLabels r1 ~ ls
          , HMember l ls b
-         , UnionSymRec' b (Record r1) (LVPair l v) (Record r2') ru
+         , UnionSymRec' b r1 (LVPair l v) r2' ru
          )
-    => UnionSymRec (Record r1) (Record (HCons (LVPair l v) r2')) ru
+    => UnionSymRec r1 (LVPair l v ': r2') ru
     where
     unionSR r1 (Record (HCons f r2')) =
-        unionSR' (undefined::b) r1 f (Record r2')
+        unionSR' (undefined::Proxy b) r1 f (Record r2')
 
-class UnionSymRec' b r1 f2 r2' ru | b r1 f2 r2' -> ru where
-    unionSR' :: b -> r1 -> f2 -> r2'  -> (ru, ru)
+class UnionSymRec' (b :: Bool) r1 f2 r2' ru | b r1 f2 r2' -> ru where
+    unionSR' :: Proxy b -> Record r1 -> f2 -> Record r2'  -> (Record ru, Record ru)
 
+
+
+{-
 -- | Field f2 is already in r1, so it will be in the union of r1
 -- with the rest of r2.
 --
 -- To inject (HCons f2 r2) in that union, we should replace the
 -- field f2
-instance (UnionSymRec r1 r2' (Record ru),
-          HasField l2 ru v2,
-          HUpdateAtHNat n (LVPair l2 v2) ru ru,
-          RecordLabels ru ls,
+-}
+instance (UnionSymRec r1 r2' ru,
+          HasField l2 (Record ru) v2,
+          HUpdateAtHNat n (LVPair l2 v2) ru,
+          ru ~ HUpdateAtHNatR n (LVPair l2 v2) ru,
+          RecordLabels ru ~ ls,
+          f2 ~ LVPair l2 v2,
           HFind l2 ls n)
-    => UnionSymRec' HTrue r1 (LVPair l2 v2) r2' (Record ru) where
-    unionSR' _ r1 (LVPair v2) r2' = (ul, ur')
-       where (ul,ur) = unionSR r1 r2'
-             ur' = hTPupdateAtLabel (undefined::l2) v2 ur
+    => UnionSymRec' True r1 f2 r2' ru where
+    unionSR' _ r1 (LVPair v2) r2' =
+       case unionSR r1 r2'
+        of (ul,ur) -> (ul, hTPupdateAtLabel (undefined:: Label l2) v2 ur)
 
 
-instance (UnionSymRec r1 r2' (Record ru),
-          HExtend f2 (Record ru) (Record (HCons f2 ru)))
-    => UnionSymRec' HFalse r1 f2 r2' (Record (HCons f2 ru)) where
+instance (UnionSymRec r1 r2' ru,
+          HExtend f2 (Record ru),
+          HExtendR f2 (Record ru) ~ Record f2ru)
+    => UnionSymRec' False r1 f2 r2' f2ru where
     unionSR' _ r1 f2 r2' = (ul', ur')
        where (ul,ur) = unionSR r1 r2'
-             ul' = hExtend f2 ul
-             ur' = hExtend f2 ur
+             ul' = f2 .*. ul
+             ur' = f2 .*. ur
 
 -- --------------------------------------------------------------------------
 -- | Rearranges a record by labels. Returns the record r, rearranged such that
 -- the labels are in the order given by ls. (recordLabels r) must be a
 -- permutation of ls.
-hRearrange :: (HLabelSet ls, HRearrange ls r r') => ls -> Record r -> Record r'
-hRearrange ls (Record r) = Record $ hRearrange2 ls r
+hRearrange :: (HLabelSet ls, HRearrange ls r (HList r')) => Proxy ls -> Record r -> Record r'
+hRearrange ls (Record r) = Record (hRearrange2 ls r)
 
 -- | Helper class for 'hRearrange'
 class HRearrange ls r r' | ls r -> r' where
-    hRearrange2 :: ls -> r -> r'
+    hRearrange2 :: Proxy ls -> HList r -> r'
 
-instance HRearrange HNil HNil HNil where
+instance HRearrange '[] '[] (HList '[]) where
    hRearrange2 _ _ = HNil
 
-instance (H2ProjectByLabels (HCons l HNil) r rin rout,
-          HRearrange' l ls rin rout r') =>
-        HRearrange (HCons l ls) r r' where
-   hRearrange2 ~(HCons l ls) r = hRearrange2' l ls rin rout
-      where (rin, rout) = h2projectByLabels (HCons l HNil) r
+instance (H2ProjectByLabels '[l] r rin rout,
+          HRearrange' l ls rin rout (HList r')) =>
+        HRearrange (l ': ls) r (HList r') where
+   hRearrange2 _ r = hRearrange2' (proxy :: Proxy l) (proxy :: Proxy ls) rin rout
+      where (rin, rout) = h2projectByLabels (proxy :: Proxy '[l]) r
+
 
 -- | Helper class 2 for 'hRearrange'
 class HRearrange' l ls rin rout r' | l ls rin rout -> r' where
-    hRearrange2' :: l -> ls -> rin -> rout -> r'
-instance HRearrange ls rout r' =>
-        HRearrange' l ls (HCons (LVPair l v) HNil) rout (HCons (LVPair l v) r') where
-   hRearrange2' _ ls (HCons lv@(LVPair v) HNil) rout = HCons (LVPair v `asTypeOf` lv) (hRearrange2 ls rout)
+    hRearrange2' :: Proxy l -> Proxy ls -> HList rin -> HList rout -> r'
+ 
+instance HRearrange ls rout (HList r') =>
+        HRearrange' l ls '[LVPair l v] rout (HList (LVPair l v ': r')) where
+   hRearrange2' _ ls (HCons lv@(LVPair v) _HNil) rout
+        = HCons (LVPair v `asTypeOf` lv) (hRearrange2 ls rout)
 
 data ExtraField l = ExtraField
 data FieldNotFound l = FieldNotFound
 
 -- | For improved error messages
 instance Fail (FieldNotFound l) => 
-        HRearrange' l ls HNil rout (FieldNotFound l) where
+        HRearrange' l ls '[] rout (FieldNotFound l) where
    hRearrange2' _ _ _ _ = FieldNotFound
 
 -- | For improved error messages
 instance Fail (ExtraField l) => 
-          HRearrange HNil (HCons (LVPair l v) a) (ExtraField l) where
+          HRearrange '[] (LVPair l v ': a) (ExtraField l) where
    hRearrange2 _ _ = ExtraField
--}
