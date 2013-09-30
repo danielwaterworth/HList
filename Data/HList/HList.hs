@@ -290,6 +290,26 @@ instance (ApplyAB f (e, r) r', HFoldr f v l r)
     => HFoldr f v (e ': l) r' where
     hFoldr f v (HCons x l)    = applyAB f (x, hFoldr f v l :: r)
 
+
+class HScanr f z ls rs where
+    hScanr :: f -> z -> HList ls -> HList rs
+
+instance HScanr f z '[] '[z] where
+    hScanr _ z _ = HCons z HNil
+
+instance (ApplyAB f (x,r) s, HScanr f z xs (r ': rs)) => HScanr f z (x ': xs) (s ': r ': rs) where
+    hScanr f z (HCons x xs) =
+        case hScanr f z xs :: HList (r ': rs) of
+            HCons r rs -> (applyAB f (x,r) :: s) `HCons` r `HCons` rs
+
+-- | always is Left. This is a workable hFoldr for ghc-7.7,
+-- but it is very inconvenient
+hFoldrFromHScanrTagged :: forall f z ls el e l. (HScanr f z ls el, el ~ (e ': l))
+    => f -> z -> HList ls -> Either e l
+hFoldrFromHScanrTagged  f z ls = Left (hHead (hScanr f z ls :: HList el) :: e)
+
+
+
 -- ** foldl
 
 {- | like 'foldl'
