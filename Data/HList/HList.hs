@@ -684,16 +684,17 @@ hMember = undefined
 -- If not, return 'Nothing
 -- If the element does occur, return 'Just l1
 -- where l1 is a type-level list without e
--- XXX should be poly-kinded
-class HMemberM (e1 :: *) (l :: [*]) (r :: Maybe [*]) | e1 l -> r
+class HMemberM (e1 :: k) (l :: [k]) (r :: Maybe [k]) | e1 l -> r
 instance HMemberM e1 '[] 'Nothing
 instance (HEq e1 e b, HMemberM1 b e1 (e ': l) res)
       =>  HMemberM e1 (e ': l) res
-class HMemberM1 (b::Bool) (e1 :: *) (l :: [*]) (r::Maybe [*]) | b e1 l -> r
+
+class HMemberM1 (b::Bool) (e1 :: k) (l :: [k]) (r::Maybe [k]) | b e1 l -> r
 instance HMemberM1 True e1 (e ': l) ('Just l)
 instance (HMemberM e1 l r, HMemberM2 r e1 (e ': l) res)
     => HMemberM1 False e1 (e ': l) res
-class HMemberM2 (b::Maybe [*]) (e1 :: *) (l :: [*]) (r::Maybe [*]) | b e1 l -> r
+
+class HMemberM2 (b::Maybe [k]) (e1 :: k) (l :: [k]) (r::Maybe [k]) | b e1 l -> r
 instance HMemberM2 Nothing e1 l Nothing
 instance HMemberM2 (Just l1) e1 (e ': l) (Just (e ': l1))
 

@@ -470,8 +470,7 @@ hProjectByLabels2 ls (Record r) = (mkRecord rin, mkRecord rout)
 --  > r === rin `disjoint-union` rout
 --  > labels rin === ls
 --  >     where (rin,rout) = hProjectByLabels ls r
--- XXX ls should be [k], poly-kinded; OTH, r, rin, rout are of kind [*]
-class H2ProjectByLabels (ls::[*]) r rin rout | ls r -> rin rout where
+class H2ProjectByLabels (ls::[k]) r rin rout | ls r -> rin rout where
     h2projectByLabels :: Proxy ls -> HList r -> (HList rin,HList rout)
 
 instance H2ProjectByLabels '[] r '[] r where
@@ -480,12 +479,12 @@ instance H2ProjectByLabels '[] r '[] r where
 instance H2ProjectByLabels (l ': ls) '[] '[] '[] where
     h2projectByLabels _ _ = (HNil,HNil)
 
-instance (HMemberM l1 (l ': ls) b,
+instance (HMemberM l1 ((l::k) ': ls) (b :: Maybe [k]),
           H2ProjectByLabels' b (l ': ls) (LVPair l1 v1 ': r1) rin rout)
     => H2ProjectByLabels (l ': ls) (LVPair l1 v1 ': r1) rin rout where
     h2projectByLabels = h2projectByLabels' (undefined::(Proxy b))
 
-class H2ProjectByLabels' (b::Maybe [*]) (ls::[*]) r rin rout 
+class H2ProjectByLabels' (b::Maybe [k]) (ls::[k]) r rin rout 
                          | b ls r -> rin rout where
     h2projectByLabels' :: Proxy b -> Proxy ls -> 
 				     HList r -> (HList rin,HList rout)
