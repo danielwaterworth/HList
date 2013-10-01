@@ -66,6 +66,25 @@ library
 
   Ghc-Options:         -Wall -fno-warn-missing-signatures
 
+  Extensions:          ConstraintKinds
+                       DataKinds
+                       EmptyDataDecls
+                       FlexibleContexts
+                       FlexibleInstances
+                       FunctionalDependencies
+                       GADTs
+                       KindSignatures
+                       MultiParamTypeClasses
+                       PolyKinds
+                       RankNTypes,
+                       ScopedTypeVariables
+                       TypeFamilies
+                       TypeOperators
+                       UndecidableInstances
+
+  if impl(ghc >= 7.7)
+    Extensions:        AllowAmbiguousTypes
+
 Test-Suite examples
   Type:     exitcode-stdio-1.0
   Ghc-Options: -threaded
