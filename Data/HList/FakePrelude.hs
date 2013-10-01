@@ -7,10 +7,13 @@
    Some very basic technology for faking dependent types in Haskell.
 -}
 
-module Data.HList.FakePrelude where
+module Data.HList.FakePrelude
+    (module Data.HList.FakePrelude,
+     module Data.HList.FakePrelude.Proxy) where
 
 import GHC.Prim (Constraint)
 import GHC.TypeLits
+import Data.HList.FakePrelude.Proxy
 
 -- --------------------------------------------------------------------------
 -- * A heterogeneous apply operator
@@ -247,15 +250,8 @@ instance (f1 ~ (a -> b -> c), f2 ~ (b -> a -> c))  => ApplyAB HFlip f1 f2 where
 -- --------------------------------------------------------------------------
 -- * Proxy
 --
--- | Injection from algebraic kinds to *
--- Algebraic kinds like Nat are not populated and we can't use 
--- values of type Nat as function arguments. In contrast, we can use
--- (undefined :: Proxy Z) as an argument, as a value proxy.
--- data Proxy (tp :: k) :: *
-data Proxy tp 
 
-proxy :: Proxy tp
-proxy =  undefined
+-- $note see "Data.HList.Proxy"
 
 -- | A special 'Proxy' for record labels, polykinded
 data Label l = Label

@@ -47,6 +47,7 @@ library
                        Data.HList.CommonMain,
                        Data.HList.Data,
                        Data.HList.FakePrelude,
+                       Data.HList.FakePrelude.Proxy,
                        Data.HList.HArray,
                        Data.HList.HList,
                        Data.HList.HListPrelude,
@@ -84,6 +85,7 @@ library
 
   if impl(ghc >= 7.7)
     Extensions:        AllowAmbiguousTypes
+                       StandaloneDeriving
 
 Test-Suite examples
   Type:     exitcode-stdio-1.0

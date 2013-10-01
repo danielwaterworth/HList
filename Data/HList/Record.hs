@@ -703,25 +703,27 @@ hRearrange :: (HLabelSet ls, HRearrange ls r (HList r')) => Proxy ls -> Record r
 hRearrange ls (Record r) = Record (hRearrange2 ls r)
 
 -- | Helper class for 'hRearrange'
-class HRearrange ls r r' | ls r -> r' where
+class HRearrange ls r r' where
     hRearrange2 :: Proxy ls -> HList r -> r'
 
-instance HRearrange '[] '[] (HList '[]) where
+instance (HList '[] ~ r) => HRearrange '[] '[] r where
    hRearrange2 _ _ = HNil
 
 instance (H2ProjectByLabels '[l] r rin rout,
-          HRearrange' l ls rin rout (HList r')) =>
-        HRearrange (l ': ls) r (HList r') where
+          HRearrange' l ls rin rout (HList r'),
+          r'' ~ HList r') =>
+        HRearrange (l ': ls) r r'' where
    hRearrange2 _ r = hRearrange2' (proxy :: Proxy l) (proxy :: Proxy ls) rin rout
       where (rin, rout) = h2projectByLabels (proxy :: Proxy '[l]) r
 
 
 -- | Helper class 2 for 'hRearrange'
-class HRearrange' l ls rin rout r' | l ls rin rout -> r' where
+class HRearrange' l ls rin rout r' where
     hRearrange2' :: Proxy l -> Proxy ls -> HList rin -> HList rout -> r'
  
-instance HRearrange ls rout (HList r') =>
-        HRearrange' l ls '[LVPair l v] rout (HList (LVPair l v ': r')) where
+instance (HRearrange ls rout (HList r'),
+         r'' ~ HList (LVPair l v ': r')) =>
+        HRearrange' l ls '[LVPair l v] rout r'' where
    hRearrange2' _ ls (HCons lv@(LVPair v) _HNil) rout
         = HCons (LVPair v `asTypeOf` lv) (hRearrange2 ls rout)
 

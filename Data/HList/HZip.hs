@@ -36,8 +36,8 @@ instance ((x,y)~z, HZip xs ys zs) => HZip (x ': xs) (y ': ys) (z ': zs) where
 -- | HZipR in the superclass constraint doesn't hurt, but it doesn't seem to be
 -- necessary
 class HZipR (MapFst z) (MapSnd z) ~ z => HUnZip z where
-  type MapFst z
-  type MapSnd z
+  type MapFst z :: [*]
+  type MapSnd z :: [*]
   hZip2 :: HList (MapFst z) -> HList (MapSnd z) -> HList z
   hUnzip2 :: HList z -> (HList (MapFst z), HList (MapSnd z))
 

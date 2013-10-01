@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 
 {- | 'Data.Data.Data' instances for 'HList' and 'Record' which pretend
 to be flat data structures.
@@ -46,11 +47,14 @@ import Data.HList.Record
 import GHC.TypeLits ()
 import Data.Data
 import Data.List
+import GHC.Exts (Constraint)
 
 import Unsafe.Coerce
 
+
 type DataHListCxt g a = (HBuild' '[] g,
         Typeable (HList a),
+        TypeablePolyK a,
         HFoldl (GfoldlK  C) (C g) a (C (HList a)),
 
         HFoldr
@@ -105,6 +109,7 @@ hListConRep = mkConstr hListDataRep "HList" [] Prefix
 
 type DataRecordCxt a =
     (Data (HList (RecordValuesR a)),
+            TypeablePolyK a,
             TypeRepsList (Record a),
             RecordValues a,
             RecordLabelsStr a)
@@ -153,14 +158,14 @@ necessary with the above recordLabelsStr (ghc-7.6.3)
 
 -}
 class RecordLabelsStr2 (xs :: [k]) where
-    recordLabelsStr2 :: Proxy xs -> [String]
+    recordLabelsStr2 :: proxy xs -> [String]
 
 instance RecordLabelsStr2 '[] where
     recordLabelsStr2 _ = []
 instance (RecordLabelsStr2 xs,
           ShowLabel x) => RecordLabelsStr2 (x ': xs) where
     recordLabelsStr2 _ = showLabel (undefined :: Label x) :
-                            recordLabelsStr2 (undefined :: Proxy xs)
+                            recordLabelsStr2 (undefined :: proxy xs)
 
 
 -- | use only with @instance Data (HList a)@. This is because the HFoldl
@@ -168,16 +173,38 @@ instance (RecordLabelsStr2 xs,
 -- 'gfoldl'.
 data C a
 
+-- typeable isntances... either hand written or derived when possible
+#if MIN_VERSION_base(4,7,0)
+deriving instance Typeable Record
+deriving instance Typeable HList
+deriving instance Typeable LVPair
 
--- | should be derived for ghc-7.8
+type TypeablePolyK (a :: k) = (Typeable a)
+#else
 instance TypeRepsList (Record xs) => Typeable (HList xs) where
    typeOf x = mkTyConApp (mkTyCon3 "HList" "Data.HList.HList" "HList")
                 [ tyConList (typeRepsList (Record x)) ]
 
--- | should be derived for ghc-7.8
 instance (TypeRepsList (Record xs)) => Typeable (Record xs) where
   typeOf x = mkTyConApp (mkTyCon3 "HList" "Data.HList.Record" "Record")
                 [ tyConList (typeRepsList x) ]
+
+instance ShowLabel sy => Typeable1 (LVPair sy) where
+  typeOf1 _ = mkTyConApp
+        (mkTyCon3 "HList" "Data.HList.Data" (showLabel (undefined :: Label sy)))
+        []
+
+instance (ShowLabel sy, Typeable x) => Typeable (LVPair sy x) where
+  typeOf _ = mkTyConApp
+            (mkTyCon3 "GHC" "GHC.TypeLits" (showLabel (undefined :: Label sy)))
+            [mkTyConApp (mkTyCon3 "HList" "Data.HList.Record" "=") [],
+                    typeOf (undefined :: x)
+                    ]
+
+type TypeablePolyK a = (() :: Constraint)
+#endif
+
+
 
 -- pretty-prints sort of like a real list
 tyConList xs = mkTyConApp open ( intersperse comma xs ++ [close] )
@@ -201,17 +228,6 @@ instance (TypeRepsList xs, Typeable x) => TypeRepsList (HCons' x xs) where
 instance TypeRepsList HNil' where
   typeRepsList _ = []
 
-instance ShowLabel sy => Typeable1 (LVPair sy) where
-  typeOf1 _ = mkTyConApp
-        (mkTyCon3 "HList" "Data.HList.Data" (showLabel (undefined :: Label sy)))
-        []
-
-instance (ShowLabel sy, Typeable x) => Typeable (LVPair sy x) where
-  typeOf _ = mkTyConApp
-            (mkTyCon3 "GHC" "GHC.TypeLits" (showLabel (undefined :: Label sy)))
-            [mkTyConApp (mkTyCon3 "HList" "Data.HList.Record" "=") [],
-                    typeOf (undefined :: x)
-                    ]
 
 
 -- | wraps up the first argument to 'gfoldl'
