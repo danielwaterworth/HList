@@ -5,6 +5,7 @@
 {-# LANGUAGE EmptyDataDecls #-}
 {-# LANGUAGE FlexibleInstances #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
+module Main where
 
 -- Needed for a reply to the Haskell mailing list
 

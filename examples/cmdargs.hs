@@ -1,6 +1,7 @@
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
 {-# LANGUAGE TemplateHaskell #-}
+module Main where
 import System.Console.CmdArgs
 import Data.HList.CommonMain
 import Data.Generics

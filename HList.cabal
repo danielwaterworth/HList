@@ -89,7 +89,7 @@ Test-Suite examples
   Type:     exitcode-stdio-1.0
   Ghc-Options: -threaded
   Main-Is: examples/runexamples.hs
-  Build-Depends: base, hspec == 1.7.*, directory, filepath, process
+  Build-Depends: base, hspec == 1.7.*, directory, filepath, process, syb, cmdargs
 
 Test-Suite doctests
   Type:     exitcode-stdio-1.0
