@@ -1,4 +1,4 @@
-{-# LANGUAGE TemplateHaskell, FlexibleInstances, EmptyDataDecls #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 {- |
 Automate some of the ways to make labels.

@@ -1,8 +1,4 @@
-{-# LANGUAGE PolyKinds #-}
-{-# LANGUAGE MultiParamTypeClasses, FunctionalDependencies, FlexibleInstances,
-  FlexibleContexts, OverlappingInstances, UndecidableInstances #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE DataKinds #-}
+{-# LANGUAGE OverlappingInstances #-}
 
 {- |
    The HList library

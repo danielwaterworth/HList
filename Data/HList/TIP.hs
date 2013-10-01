@@ -1,11 +1,3 @@
-{-# LANGUAGE FlexibleInstances, MultiParamTypeClasses, UndecidableInstances,
-    FlexibleContexts #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE KindSignatures #-}
-{-# LANGUAGE GADTs #-}
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE ScopedTypeVariables #-}
-{-# LANGUAGE TypeOperators #-}
 
 {- |
    The HList library

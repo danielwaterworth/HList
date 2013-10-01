@@ -1,18 +1,4 @@
-{-# LANGUAGE ConstraintKinds,
-        DataKinds,
-        EmptyDataDecls,
-        ExistentialQuantification,
-        FlexibleContexts,
-        FlexibleInstances,
-        GADTs,
-        KindSignatures,
-        MultiParamTypeClasses,
-        PolyKinds,
-        RankNTypes,
-        ScopedTypeVariables,
-        TypeFamilies,
-        TypeOperators,
-        UndecidableInstances #-}
+
 {- | 'Data.Data.Data' instances for 'HList' and 'Record' which pretend
 to be flat data structures.
 
@@ -229,14 +215,16 @@ instance (ShowLabel sy, Typeable x) => Typeable (LVPair sy x) where
 
 
 -- | wraps up the first argument to 'gfoldl'
-data GfoldlK c = GfoldlK (forall d b. Data d => c (d -> b) -> d -> c b)
+data GfoldlK c where
+    GfoldlK :: (forall d b . Data d => c (d -> b) -> d -> c b) -> GfoldlK c
 
 instance (Data d, (c (d -> b), d) ~ x, c b ~ y) =>
         ApplyAB (GfoldlK c) x y where
     applyAB (GfoldlK f) (u,v) = f u v
 
 
-data GunfoldK c = GunfoldK (forall b r. Data b => c (b -> r) -> c r)
+data GunfoldK c where
+    GunfoldK :: (forall b r. Data b => c (b -> r) -> c r) -> GunfoldK c
 
 instance (Data b, x ~ (t, c (b -> r)), y ~ c r) =>
         ApplyAB (GunfoldK c) x y where

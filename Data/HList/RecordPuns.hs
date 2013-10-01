@@ -1,4 +1,5 @@
 {-# LANGUAGE TemplateHaskell #-}
+{-# LANGUAGE NoPolyKinds #-}
 module Data.HList.RecordPuns (
     -- $ex
     pun

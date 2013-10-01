@@ -1,4 +1,3 @@
-{-# LANGUAGE KindSignatures, DataKinds, FlexibleInstances, UndecidableInstances, ScopedTypeVariables #-}
 {- |
    The HList library
 
