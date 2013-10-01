@@ -288,12 +288,6 @@ instance (ApplyAB f (x,r) s, HScanr f z xs (r ': rs)) => HScanr f z (x ': xs) (s
         case hScanr f z xs :: HList (r ': rs) of
             HCons r rs -> (applyAB f (x,r) :: s) `HCons` r `HCons` rs
 
--- | always is Left. This is a workable hFoldr for ghc-7.7,
--- but it is very inconvenient
-hFoldrFromHScanrTagged :: forall f z ls el e l. (HScanr f z ls el, el ~ (e ': l))
-    => f -> z -> HList ls -> Either e l
-hFoldrFromHScanrTagged  f z ls = Left (hHead (hScanr f z ls :: HList el) :: e)
-
 
 
 -- ** foldl
