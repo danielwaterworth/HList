@@ -37,7 +37,7 @@ module Data.HList.Record
     LVPair(..),
     labelLVPair,
     newLVPair,
-    (.=.), (:=:), (.-.),
+    (.=.), (.-.),
 
     -- ** Record
     Record(..),
@@ -164,8 +164,9 @@ labelLVPair = undefined
 newLVPair :: Label l -> v -> LVPair l v
 newLVPair _ = LVPair
 
-infixr 4 :=:
-type l :=: v = LVPair l v
+-- stolen by typeable
+--infixr 4 :=:
+--type l :=: v = LVPair l v
 
 
 infixr 4 .=.
