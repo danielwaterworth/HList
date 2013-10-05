@@ -4,10 +4,7 @@
 
 A couple puzzling issues remain:
 
-* DummyToMakeIsKeyFNBehave
-
 * why can't we have keyword functions defined in lets / top-level anymore?
-
 
 
 >originally:
@@ -89,19 +86,11 @@ import Data.HList.TypeEqO
 import Data.HList.HListPrelude
 import Data.HList.HList
 
--- | why does commenting this instance, which is never used, make
---
--- > doctest Keyword.hs
---
--- fail?
-instance IsKeyFN DummyToMakeIsKeyFNBehave True
-data DummyToMakeIsKeyFNBehave = DummyToMakeIsKeyFNBehave deriving Show
-
 -- * example
 {- $setup
 
  >>> :set -XDataKinds -XFlexibleInstances -XMultiParamTypeClasses
- >>> :set -XScopedTypeVariables -XOverlappingInstances
+ >>> :set -XScopedTypeVariables -XOverlappingInstances -XTypeFamilies
 
 We will be using an example inspired by a graphics toolkit -- the area
 which really benefits from keyword arguments. We first define our
@@ -118,11 +107,11 @@ instance.
 
  >>> instance IsKeyFN (Color->a->b)  True
  >>> instance IsKeyFN (Size->a->b)   True
- >>> instance IsKeyFN (Origin->a->b) True
+ >>> instance (a ~ (Int,Int)) => IsKeyFN (Origin->a->b) True
  >>> instance IsKeyFN (RaisedBorder->a->b) True
 
-Note that if a keyword is to take only a certain argument type, it is possible
-to restrict that here
+Note that if a keyword is always followed by a certain type, that
+can be specified above using an instance like the one for Origin.
 
  >>> data CommonColor = Red | Green | Blue deriving Show
  >>> data RGBColor = RGBColor Int Int Int deriving Show
@@ -131,7 +120,7 @@ and two functions:
 
  >>> :{
  let make_square Size n Origin (x0,y0) Color (color::CommonColor) =
-        unwords ["Square:", show (n :: Int), "at", show (x0 :: Int,y0 :: Int), show color] ++ "\n"
+        unwords ["Square:", show (n :: Int), "at", show (x0,y0), show color] ++ "\n"
  :}
 
  >>> :{
@@ -168,19 +157,19 @@ be HNil if all keyword arguments are required.
 
 The first example (no defaults)
 
- >>> kw make_square HNil Size (1::Int) Origin (0::Int,10::Int) Color Red   :: String
+ >>> kw make_square HNil Size (1::Int) Origin (0,10) Color Red   :: String
  "Square: 1 at (0,10) Red\n"
 
 we can permute the arguments at wish
 
- >>> kw make_square HNil Color Red Size (1::Int) Origin (0::Int,10::Int)   :: String
+ >>> kw make_square HNil Color Red Size (1::Int) Origin (0,10)   :: String
  "Square: 1 at (0,10) Red\n"
 
 we can also assign a name to a keyword function, or partially apply it:
 
  >>> :{
  case kw make_square HNil Color Red of
-    f -> "here: " ++ f Origin (0::Int,10::Int) Size (1::Int)
+    f -> "here: " ++ f Origin (0,10) Size (1::Int)
 :}
 "here: Square: 1 at (0,10) Red\n"
 
@@ -188,15 +177,16 @@ Note that it is necessary to use a monomorphic pattern binding here (lambda or
 case). The following does not work with ghc-7.6, since instance selection
 is now supposed to happen at the `f' instead of later on:
 
-> let f = kw make_square HNil Color Red
-> in "here: " ++ f Origin (0::Int,10::Int) Size (1::Int)
-
+>>> :{
+ let f x = kw make_square HNil Color Red x
+ in "here: " ++ f Origin (0,10) Size (1::Int)
+:}
 
 The following is a more interesting example, with the
 defaults:
 
  >>> :{
-let defaults = Origin .*. (0::Int,10::Int) .*.
+let defaults = Origin .*. (0,10) .*.
              RaisedBorder .*. True .*.
              HNil
     in kw make_square defaults Size (1::Int) Color Red ++
@@ -209,7 +199,7 @@ The argument RaisedBorder is not given, and so the default value is
 used. Of course, we can override the default:
 
  >>> :{
-let defaults = Origin .*. (0::Int,10::Int) .*.
+let defaults = Origin .*. (0,10) .*.
                     RaisedBorder .*. True .*.
                     HNil
  in case kw make_square defaults Color of
@@ -231,7 +221,7 @@ keyword in the rest.
 If we omit a required argument, we get a type error:
 
 > ] testse1 = let f x = kw make_square HNil Color Red x
-> ] 	    in "here: " ++ f Origin (0::Int,10::Int)
+> ] 	    in "here: " ++ f Origin (0,10)
 >
 >   Couldn't match `ErrReqdArgNotFound Size' against `[Char]'
 >       Expected type: ErrReqdArgNotFound Size
@@ -241,14 +231,14 @@ The error message seems reasonably clear. Likewise we get an error
 message if we pass to a keyword function an argument it does not expect:
 
 > ] testse2 = let f x = kw make_square HNil Color Red x
-> ] 	    in "here: " ++ f Origin (0::Int,10::Int) Size (1::Int)
+> ] 	    in "here: " ++ f Origin (0,10) Size (1::Int)
 > ]	                   RaisedBorder False
 >
 >   No instances for (Fail (ErrUnexpectedKW RaisedBorder),
 > 		    KWApply [Char] (HCons RaisedBorder (:*: Bool HNil)) [Char])
 >       arising from use of `f' at ...
 >     In the second argument of `(++)', namely
->   `f Origin (0 :: Int, 10 :: Int) Size (1 :: Int) RaisedBorder False'
+>   `f Origin (0,10) Size (1 :: Int) RaisedBorder False'
 
 
 The function 'kw' receives the appropriately labeled function (such
@@ -365,7 +355,7 @@ instance (HEq kw kw' flag,
     => KWApply (kw->a->f') (kw' ': a' ': tail) r where
     kwapply = kwapply' (proxy :: Proxy flag)
 
-class KWApply' flag f arg_values r  | flag f arg_values -> r  where
+class KWApply' flag f arg_values r  where
     kwapply':: Proxy flag -> f -> HList arg_values -> r
 
 instance  (v' ~ v, KWApply f' tail r)
@@ -400,11 +390,11 @@ Given a function, return the type list of its keywords
 :t reflect_fk (undefined::Size->Int->()->Int)
 -}
 
-class ReflectFK f (kws :: [*]) | f -> kws
+class ReflectFK f (kws :: [*])
 instance (IsKeyFN f flag, ReflectFK' flag f kws) => ReflectFK f kws
-class ReflectFK' (flag :: Bool) f kws | flag f -> kws
-instance ReflectFK rest kws => ReflectFK' True (kw->a->rest) (kw ': kws)
-instance ReflectFK' False f '[]
+class ReflectFK' (flag :: Bool) f kws
+instance (kkws ~ (kw ': kws), ReflectFK rest kws) => ReflectFK' True (kw->a->rest) kkws 
+instance ('[] ~ nil) => ReflectFK' False f nil
 
 
 -- | The main class: collect and apply the keyword arguments
@@ -508,8 +498,18 @@ instance (tail' ~ tail) => HDelete' True e (e ': tail) tail'
 instance (HDelete e tail tail', e'tail ~ (e' ': tail'))
     => HDelete' False e (e' ': tail) e'tail
 
--- | Finally,
+-- | Finally, (note the type signature wasn't required for ghc <= 7.6,
+-- since a fundep on ReflectFK was allowed.
 
-kw f = kwdo f (reflect_fk f)
+kw :: forall rflag fn (kws :: [*]) arg_def r flag. 
+    (KW' rflag fn (Arg kws '[]) arg_def r,
+     ReflectFK' flag fn kws, IsKeyFN r rflag,
+     IsKeyFN fn flag) =>
+                   fn -> HList arg_def -> r
+kw f = kwdo f rfk
+    where rfk = reflect_fk f :: Arg kws '[]
 
 
+data Bug = Bug
+instance IsKeyFN (Bug -> a -> b) True
+bug Bug x () = x
