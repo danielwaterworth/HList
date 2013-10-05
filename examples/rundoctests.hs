@@ -11,4 +11,7 @@ main = do
     let flags = words $ unlines $ filter ((=="-") . take 1 . dropWhile isSpace)
                     $ lines o
 
-    doctest $ "-i.": "-idist/build/autogen": "-w": "Data/HList/CommonMain.hs": flags
+    doctest $ "-i.": "-idist/build/autogen": 
+             "-optP-include":
+             "-optPdist/build/autogen/cabal_macros.h" :
+             "-Idist/build/autogen" : "-w": "Data/HList/CommonMain.hs": flags
