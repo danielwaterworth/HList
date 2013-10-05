@@ -73,21 +73,63 @@ overlapping instances at all. Please see the HList paper for details.
 -}
 module Data.HList.Keyword (
 
-  kw,
+  Kw(..),
+  IsKeyFN,
+
+  -- * errors
+  ErrReqdArgNotFound,
+  ErrUnexpectedKW,
+  Trace,
 
 
-  -- * issue
+  -- * demo
+  -- ** setup data types
+  -- $setup
+  -- $ex2
+
+
+
+
+
+  -- * Implementation details
+  -- $imploutline
+  KWApply(..),
+  KWApply'(..),
+  Arg(..),
+
+
+  -- ** producing lists from a function's arguments
+  reflect_fk,
+  ReflectFK,
+  ReflectFK',
+
+
+  -- ** collecting arguments
+  KW(..),
+  KW'(..),
+  KWAcc(..),
+
+  -- ** merging default with supplied arguments
+  KWMerge(..),
+  KWMerge'(..),
+  KWMerge''(..),
+
+  HDelete, HDelete',
+
+  -- * issue?
+  -- $issue
+  -- help to define a ghc bug?
   Bug(..), bug,
-  module Data.HList.Keyword,
+
+
 
   ) where
 
 import Data.HList.FakePrelude
-import Data.HList.TypeEqO
+import Data.HList.TypeEqO ()
 import Data.HList.HListPrelude
 import Data.HList.HList
 
--- * example
 {- $setup
 
  >>> :set -XDataKinds -XFlexibleInstances -XMultiParamTypeClasses
@@ -254,8 +296,10 @@ truly a heterogeneous, type level collection! The function 'kw'
 traverses that collection, thus performing a limited form of
 reflection on Haskell functions.
 
+-}
 
-Implementation Outline
+
+{- $imploutline
 
 One of the key tools of the implementation is 'kwapply', which applies
 a function to a polymorphic collection of that function's arguments.
@@ -361,15 +405,17 @@ class KWApply' flag f arg_values r  where
 
 instance  (v' ~ v, KWApply f' tail r)
     => KWApply' True (kw->v->f') (kw ': v' ': tail) r where
-    kwapply' _ f (HCons kw (HCons v' tail)) =
-                   kwapply (f kw v') tail
+    kwapply' _ f (HCons kw_ (HCons v' tl)) =
+                   kwapply (f kw_ v') tl
+    kwapply' _ _ _ = error "Data.HList.Keyword.kwapply': impossible 1"
 
 -- | Rotate the arg list ...
 instance  (HAppendList tail '[kw , v] ~ l',
 	   KWApply f l' r)
     => KWApply' False f (kw ': v ': tail) r where
-    kwapply' _ f (HCons kw (HCons v tail)) =
-	kwapply f (hAppend tail (kw .*. v .*. HNil))
+    kwapply' _ f (HCons kw_ (HCons v tl)) =
+	kwapply f (hAppend tl (kw_ .*. v .*. HNil))
+    kwapply' _ _ _ = error "Data.HList.Keyword.kwapply': impossible 2"
 
 {- |
 
@@ -387,14 +433,21 @@ deriving instance Show (HList vals) => Show (Arg tys vals)
 {- | Reflection on a function:
 Given a function, return the type list of its keywords
 
-:t reflect_fk (undefined::Size->Int->Color->CommonColor->String)
-:t reflect_fk (undefined::Size->Int->()->Int)
+>>> :t reflect_fk (undefined::Size->Int->Color->CommonColor->String)
+reflect_fk (undefined::Size->Int->Color->CommonColor->String)
+  :: Arg [*] ((':) * Size ((':) * Color ('[] *))) ('[] *)
+
+>>> :t reflect_fk (undefined::Size->Int->()->Int)
+reflect_fk (undefined::Size->Int->()->Int)
+  :: Arg [*] ((':) * Size ('[] *)) ('[] *)
+
+
 -}
 
 class ReflectFK f (kws :: [*])
 instance (IsKeyFN f flag, ReflectFK' flag f kws) => ReflectFK f kws
 class ReflectFK' (flag :: Bool) f kws
-instance (kkws ~ (kw ': kws), ReflectFK rest kws) => ReflectFK' True (kw->a->rest) kkws 
+instance (kkws ~ (kw ': kws), ReflectFK rest kws) => ReflectFK' True (kw->a->rest) kkws
 instance ('[] ~ nil) => ReflectFK' False f nil
 
 
@@ -424,7 +477,7 @@ more: -}
 
 instance KWAcc arg_desc kw a f arg_def r
     => KW' True f arg_desc arg_def (kw->a->r) where
-    kw' _ f arg_desc arg_def kw a = kwaccum arg_desc kw a f arg_def
+    kw' _ f arg_desc arg_def kw_ a = kwaccum arg_desc kw_ a f arg_def
 
 
 {- | Add the needed arguments from arg_def to arg_values and continue
@@ -466,13 +519,15 @@ class KWMerge'' (flag :: Bool) kw (list :: [*]) atail arg_values arg_def f r
 instance KWMerge atail (kw ': v ': arg_values) arg_def f r
     => KWMerge'' True kw (kw ': v ': tail)
                  atail arg_values arg_def f r where
-    kwmerge'' _ _ (HCons kw (HCons v _)) (Arg arg_values) =
-	kwmerge ((Arg (kw .*. v .*. arg_values))::
+    kwmerge'' _ _ (HCons kw_ (HCons v _)) (Arg arg_values) =
+	kwmerge ((Arg (kw_ .*. v .*. arg_values))::
 		 (Arg atail (kw ': v ': arg_values)))
+    kwmerge'' _ _ _ _ = error "Data.HList.kwmerge'': impossible"
 instance KWMerge' kw tail atail arg_values arg_def f r
     => KWMerge'' False kw (kw' ': v' ': tail)
                  atail arg_values arg_def f r where
-    kwmerge'' _ kw (HCons _ (HCons _ tail)) = kwmerge' kw tail
+    kwmerge'' _ kw_ (HCons _ (HCons _ tl)) = kwmerge' kw_ tl
+    kwmerge'' _ _ _ = error "Data.HList.kwmerge'': impossible 2"
 
 -- | Add the real argument to the Arg structure, and continue
 
@@ -483,8 +538,8 @@ class KWAcc arg_desc kw a f arg_def r where
 instance (HDelete kw arg_types arg_types',
 	  KW f (Arg arg_types' (kw ': a ': arg_values)) arg_def r)
     => KWAcc (Arg arg_types arg_values) kw a f arg_def r  where
-    kwaccum (Arg arg_values) kw a f =
-	kwdo f (Arg (kw .*. a .*. arg_values)::
+    kwaccum (Arg arg_values) kw_ a f =
+	kwdo f (Arg (kw_ .*. a .*. arg_values)::
 		Arg arg_types' (kw ': a ': arg_values))
 
 
@@ -502,14 +557,18 @@ instance (HDelete e tail tail', e'tail ~ (e' ': tail'))
 -- | Finally, (note the type signature wasn't required for ghc <= 7.6,
 -- since a fundep on ReflectFK was allowed.
 
-kw :: forall rflag fn (kws :: [*]) arg_def r flag akws. 
+
+class Kw (fn :: *) (arg_def :: [*]) r where
+    kw :: HList (fn ': arg_def) -> r
+
+instance
     (KW' rflag fn akws arg_def r,
-     akws ~ (Arg kws '[]),
+     akws ~ (Arg (kws :: [*]) '[]),
      ReflectFK' flag fn kws, IsKeyFN r rflag,
-     IsKeyFN fn flag) =>
-                   HList (fn ': arg_def) -> r
-kw (HCons f arg_def) = kwdo f rfk arg_def :: r
-    where rfk = reflect_fk f :: akws
+     IsKeyFN fn (flag::Bool)) => Kw fn arg_def r
+   where
+    kw (HCons f arg_def) = kwdo f rfk arg_def :: r
+        where rfk = reflect_fk f :: akws
 
 
 data Bug = Bug
