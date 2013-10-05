@@ -78,6 +78,7 @@ module Data.HList.Keyword (
 
   -- * issue
   Bug(..), bug,
+  module Data.HList.Keyword,
 
   ) where
 
@@ -157,40 +158,40 @@ be HNil if all keyword arguments are required.
 
 The first example (no defaults)
 
- >>> kw make_square HNil Size (1::Int) Origin (0,10) Color Red   :: String
+ >>> kw (make_square .*. HNil) Size (1::Int) Origin (0,10) Color Red   :: String
  "Square: 1 at (0,10) Red\n"
 
 we can permute the arguments at wish
 
- >>> kw make_square HNil Color Red Size (1::Int) Origin (0,10)   :: String
+ >>> kw (make_square .*. HNil) Color Red Size (1::Int) Origin (0,10)   :: String
  "Square: 1 at (0,10) Red\n"
 
 we can also assign a name to a keyword function, or partially apply it:
 
  >>> :{
- case kw make_square HNil Color Red of
+ case kw (make_square .*. HNil) Color Red of
     f -> "here: " ++ f Origin (0,10) Size (1::Int)
 :}
 "here: Square: 1 at (0,10) Red\n"
 
 Note that it is necessary to use a monomorphic pattern binding here (lambda or
-case). The following does not work with ghc-7.6, since instance selection
-is now supposed to happen at the `f' instead of later on:
+case). One way to get around this is to pass @f@ instead of @kw f@ around:
 
 >>> :{
- let f x = kw make_square HNil Color Red x
- in "here: " ++ f Origin (0,10) Size (1::Int)
+ let f = hEnd $ hBuild make_square Color Red
+ in "here: " ++ kw f Origin (0,10) Size (1::Int)
 :}
+"here: Square: 1 at (0,10) Red\n"
 
 The following is a more interesting example, with the
 defaults:
 
  >>> :{
-let defaults = Origin .*. (0,10) .*.
+let addDef f = f .*. Origin .*. (0,10) .*.
              RaisedBorder .*. True .*.
              HNil
-    in kw make_square defaults Size (1::Int) Color Red ++
-       kw make_rect   defaults Color (RGBColor 0 10 255)
+    in kw (addDef make_square) Size (1::Int) Color Red ++
+       kw (addDef make_rect)   Color (RGBColor 0 10 255)
                                Size (1.0::Float, 2.0::Float)
 :}
 "Square: 1 at (0,10) Red\nRectangle: (1.0,2.0) at (0,10) RGBColor 0 10 255 raised border\n"
@@ -199,11 +200,11 @@ The argument RaisedBorder is not given, and so the default value is
 used. Of course, we can override the default:
 
  >>> :{
-let defaults = Origin .*. (0,10) .*.
+let addDef f =  f .*. Origin .*. (0,10) .*.
                     RaisedBorder .*. True .*.
                     HNil
- in case kw make_square defaults Color of
-     sq -> case kw make_rect   defaults of
+ in case kw (addDef make_square) Color of
+     sq -> case kw (addDef make_rect)  of
       re ->
          sq Red Size (1::Int) ++
          re Color (RGBColor 0 10 255)
@@ -501,13 +502,14 @@ instance (HDelete e tail tail', e'tail ~ (e' ': tail'))
 -- | Finally, (note the type signature wasn't required for ghc <= 7.6,
 -- since a fundep on ReflectFK was allowed.
 
-kw :: forall rflag fn (kws :: [*]) arg_def r flag. 
-    (KW' rflag fn (Arg kws '[]) arg_def r,
+kw :: forall rflag fn (kws :: [*]) arg_def r flag akws. 
+    (KW' rflag fn akws arg_def r,
+     akws ~ (Arg kws '[]),
      ReflectFK' flag fn kws, IsKeyFN r rflag,
      IsKeyFN fn flag) =>
-                   fn -> HList arg_def -> r
-kw f = kwdo f rfk
-    where rfk = reflect_fk f :: Arg kws '[]
+                   HList (fn ': arg_def) -> r
+kw (HCons f arg_def) = kwdo f rfk arg_def :: r
+    where rfk = reflect_fk f :: akws
 
 
 data Bug = Bug
