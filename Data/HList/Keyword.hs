@@ -83,8 +83,10 @@ import Data.HList.TypeEqO
 import Data.HList.HListPrelude
 import Data.HList.HList
 
--- why does commenting this instance, which is never used, make
+-- | why does commenting this instance, which is never used, make
+--
 -- > doctest Keyword.hs
+--
 -- fail?
 instance IsKeyFN DummyToMakeIsKeyFNBehave True
 data DummyToMakeIsKeyFNBehave = DummyToMakeIsKeyFNBehave deriving Show
