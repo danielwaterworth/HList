@@ -1,6 +1,4 @@
-{-# LANGUAGE TypeFamilies, TypeOperators, ScopedTypeVariables, DataKinds, MultiParamTypeClasses,
-      FunctionalDependencies, PolyKinds, FlexibleInstances, FlexibleContexts,
-      UndecidableInstances, StandaloneDeriving, GADTs, OverlappingInstances #-}
+{-# LANGUAGE OverlappingInstances, StandaloneDeriving #-}
 
 {- |
 
@@ -76,7 +74,15 @@ emphasized that other choices are possible, which do not depend on
 overlapping instances at all. Please see the HList paper for details.
 
 -}
-module Data.HList.Keyword where
+module Data.HList.Keyword (
+
+  kw,
+
+
+  -- * issue
+  Bug(..), bug,
+
+  ) where
 
 import Data.HList.FakePrelude
 import Data.HList.TypeEqO

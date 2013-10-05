@@ -25,6 +25,7 @@ module Data.HList.CommonMain (
  , module Data.HList.HZip
  , module Data.HList.Variant
 
+ , module Data.HList.Keyword
 
  -- * Labels
  -- | there are three options for now:
@@ -63,6 +64,7 @@ import Data.HList.Variant
 
 import Data.HList.Data () -- only instances
 
+import Data.HList.Keyword
 
 {- $label6demo #label6demo#
 
