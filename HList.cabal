@@ -54,6 +54,7 @@ library
                        Data.HList.HOccurs,
                        Data.HList.HTypeIndexed,
                        Data.HList.HZip,
+                       Data.HList.Keyword,
                        Data.HList.Label3,
                        Data.HList.Label6,
                        Data.HList.MakeLabels,
