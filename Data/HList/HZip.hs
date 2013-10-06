@@ -81,13 +81,18 @@ type instance Snd (a,b) = b
 
 {- | this transpose requires equal-length HLists inside a HList:
 
+>>> import Data.HList.HListPrelude
 >>> let ex = (1 .*. 2 .*. HNil) .*. ('a' .*. 'b' .*. HNil) .*. ( 3 .*. 5 .*. HNil) .*. HNil
+
+The original list:
+
 >>> ex
-H[H["b", "a"], H['a', 'b'], H[(), 5]]
+H[H[1, 2], H['a', 'b'], H[3, 5]]
 
+And transposed:
 
->>> hTranspose samp
-H[H["b", 'a', ()], H["a", 'b', 5]]
+>>> hTranspose ex
+H[H[1, 'a', 3], H[2, 'b', 5]]
 
 -}
 hTranspose x = hFoldr HZipF (hReplicate (hLength (hHead x)) HNil) x
