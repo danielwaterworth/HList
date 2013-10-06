@@ -20,6 +20,8 @@ Ralf
 
 -}
 
+module Main where
+
 import Data.HList
 
 -- These are your two "implementations".
