@@ -9,9 +9,7 @@ module Data.HList.Keyword (
   Kw(..),
   IsKeyFN,
 
-  --  ** method to avoid writing IsKeyFN instances
-  -- $note
-  -- in progress doesn't work yet. See $todo section
+  -- ** another label type
   K(..),
 
   -- * types for user error
@@ -29,7 +27,7 @@ module Data.HList.Keyword (
   KWApply(..),
   KWApply'(..),
   Arg(..),
-  
+
 
 
   -- ** producing lists from a function's arguments
