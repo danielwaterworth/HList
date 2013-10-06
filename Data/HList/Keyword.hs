@@ -1,85 +1,22 @@
 {-# LANGUAGE OverlappingInstances, StandaloneDeriving #-}
 
-{- |
-
-A couple puzzling issues remain:
-
-* why can't we have keyword functions defined in lets / top-level anymore?
-
-
->originally:
-> From oleg-at-okmij.org Fri Aug 13 14:58:35 2004
-> To: haskell@haskell.org
-> Subject: Keyword arguments
-> From: oleg-at-pobox.com
-> Message-ID: <20040813215834.F1FF3AB7E@Adric.metnet.navy.mil>
-> Date: Fri, 13 Aug 2004 14:58:34 -0700 (PDT)
-> Status: OR
-
-
-We show the Haskell implementation of keyword arguments, which goes
-well beyond records (e.g., in permitting the re-use of
-labels). Keyword arguments indeed look just like regular, positional
-arguments. However, keyword arguments may appear in any
-order. Furthermore, one may associate defaults with some keywords; the
-corresponding arguments may then be omitted. It is a type error to
-omit a required keyword argument. The latter property is in stark
-contrast with the conventional way of emulating keyword arguments via
-records. Also in marked contrast with records, keyword labels may be
-reused throughout the code with no restriction; the same label may be
-associated with arguments of different types in different
-functions. Labels of Haskell records may not be re-used.  Our solution
-is essentially equivalent to keyword arguments of DSSSL Scheme or
-labels of OCaml.
-
-Keyword argument functions are naturally polyvariadic: Haskell does
-support varargs! Keyword argument functions may be polymorphic. As
-usual, functions with keyword arguments may be partially applied. On
-the downside, sometimes one has to specify the type of the return
-value of the function (if the keyword argument function has no
-signature -- the latter is the norm, see below) -- provided that the
-compiler cannot figure the return type out on its own. This is usually
-only the case when we use keyword functions at the top level (GHCi
-prompt).
-
-Our solution requires no special extensions to Haskell and works with
-the existing Haskell compilers; it is tested on GHC 6.0.1. The
-overlapping instances extension is not necessary (albeit it is
-convenient).
-
-The gist of our implementation is the realization that the type of a
-function is a polymorphic collection of its argument types -- a
-collection that we can traverse. This message thus illustrates a
-limited form of the reflection on a function.
-
-
-Our implementation is a trivial extension of the strongly-typed
-polymorphic open records described in
-	http://homepages.cwi.nl/~ralf/HList/
-
-In fact, the implementation relies on the HList library.  To run the
-code (which this message is), one needs to download the HList library
-from the above site.
-
-The HList paper discusses the issue of labels in some detail. The
-paper gives three different representations. One of them needs no
-overlapping instances and is very portable. In this message, we chose
-a representation that relies on generic type equality and therefore
-needs overlapping instances as implemented in GHC. Again, this is
-merely an outcome of our non-deterministic choice. It should be
-emphasized that other choices are possible, which do not depend on
-overlapping instances at all. Please see the HList paper for details.
+{- | keyword functions
 
 -}
 module Data.HList.Keyword (
 
+  -- * main
   Kw(..),
   IsKeyFN,
 
-  -- * errors
+  --  ** method to avoid writing IsKeyFN instances
+  -- $note
+  -- in progress doesn't work yet. See $todo section
+  K(..), EqF,
+
+  -- * types for user error
   ErrReqdArgNotFound,
   ErrUnexpectedKW,
-  Trace,
 
 
   -- * demo
@@ -87,15 +24,12 @@ module Data.HList.Keyword (
   -- $setup
   -- $ex2
 
-
-
-
-
   -- * Implementation details
   -- $imploutline
   KWApply(..),
   KWApply'(..),
   Arg(..),
+  
 
 
   -- ** producing lists from a function's arguments
@@ -116,15 +50,18 @@ module Data.HList.Keyword (
 
   HDelete, HDelete',
 
-  -- * issue?
-  -- $issue
-  -- help to define a ghc bug?
-  Bug(..), bug,
+
+  -- * original introduction
+  -- $originalIntro
 
 
+  -- * todo
+  -- $todo
 
   ) where
 
+import GHC.Prim (Constraint)
+import GHC.TypeLits
 import Data.HList.FakePrelude
 import Data.HList.TypeEqO ()
 import Data.HList.HListPrelude
@@ -379,12 +316,23 @@ to give informative error messages.
 
 data ErrReqdArgNotFound x
 data ErrUnexpectedKW x
-data Trace x
 
 -- | All our keywords must be registered
 
 class IsKeyFN   t (flag :: Bool) | t-> flag
 instance (False ~ flag) => IsKeyFN t flag
+instance IsKeyFN (Label (s :: Symbol) -> a -> b) True
+instance EqF c a => IsKeyFN ( (K s c) -> a -> b) True
+
+data K s (c :: k) = K
+type family EqF (a :: k) b :: Constraint
+type instance EqF a b = (a ~ b)
+type instance EqF '() b = ()
+
+-- | removes the thing that adds the constraint
+class CleanK a b where
+instance (r ~ K a '()) => CleanK (K a b) r where
+instance (t ~ t') => CleanK t t' where
 
 
 -- * The implementation of KWApply
@@ -456,7 +404,7 @@ instance ('[] ~ nil) => ReflectFK' False f nil
 class KW f arg_desc arg_def r where
     kwdo :: f -> arg_desc -> HList arg_def -> r
 
-instance (IsKeyFN r rflag, -- Fail (Trace (arg_desc,r)),
+instance (IsKeyFN r rflag,
 	    KW' rflag f arg_desc arg_def r)
     => KW f arg_desc arg_def r where
     kwdo = kw' (proxy ::Proxy rflag)
@@ -554,10 +502,26 @@ instance (tail' ~ tail) => HDelete' True e (e ': tail) tail'
 instance (HDelete e tail tail', e'tail ~ (e' ': tail'))
     => HDelete' False e (e' ': tail) e'tail
 
--- | Finally, (note the type signature wasn't required for ghc <= 7.6,
--- since a fundep on ReflectFK was allowed.
 
+{- |
 
+@kw@ takes a 'HList' whose first element is the varargs function.
+A useful trick is to have a final argument @()@ which is not
+eaten up by a label (A only takes 1 argument). That way when you supply
+the () it knows there are no more arguments (?).
+
+>>> data A = A
+>>> instance IsKeyFN (A -> a -> b) True
+>>> let f A a () = a + 1
+>>> let f' = f .*. A .*. 1 .*. HNil
+
+>>> kw f' A 0 ()
+1
+
+>>> kw f' ()
+2
+
+-}
 class Kw (fn :: *) (arg_def :: [*]) r where
     kw :: HList (fn ': arg_def) -> r
 
@@ -571,6 +535,94 @@ instance
         where rfk = reflect_fk f :: akws
 
 
-data Bug = Bug
-instance IsKeyFN (Bug -> a -> b) True
-bug Bug x () = x
+{- $originalIntro
+
+> From oleg-at-okmij.org Fri Aug 13 14:58:35 2004
+> To: haskell@haskell.org
+> Subject: Keyword arguments
+> From: oleg-at-pobox.com
+> Message-ID: <20040813215834.F1FF3AB7E@Adric.metnet.navy.mil>
+> Date: Fri, 13 Aug 2004 14:58:34 -0700 (PDT)
+> Status: OR
+
+
+We show the Haskell implementation of keyword arguments, which goes
+well beyond records (e.g., in permitting the re-use of
+labels). Keyword arguments indeed look just like regular, positional
+arguments. However, keyword arguments may appear in any
+order. Furthermore, one may associate defaults with some keywords; the
+corresponding arguments may then be omitted. It is a type error to
+omit a required keyword argument. The latter property is in stark
+contrast with the conventional way of emulating keyword arguments via
+records. Also in marked contrast with records, keyword labels may be
+reused throughout the code with no restriction; the same label may be
+associated with arguments of different types in different
+functions. Labels of Haskell records may not be re-used.  Our solution
+is essentially equivalent to keyword arguments of DSSSL Scheme or
+labels of OCaml.
+
+Keyword argument functions are naturally polyvariadic: Haskell does
+support varargs! Keyword argument functions may be polymorphic. As
+usual, functions with keyword arguments may be partially applied. On
+the downside, sometimes one has to specify the type of the return
+value of the function (if the keyword argument function has no
+signature -- the latter is the norm, see below) -- provided that the
+compiler cannot figure the return type out on its own. This is usually
+only the case when we use keyword functions at the top level (GHCi
+prompt).
+
+Our solution requires no special extensions to Haskell and works with
+the existing Haskell compilers; it is tested on GHC 6.0.1. The
+overlapping instances extension is not necessary (albeit it is
+convenient).
+
+The gist of our implementation is the realization that the type of a
+function is a polymorphic collection of its argument types -- a
+collection that we can traverse. This message thus illustrates a
+limited form of the reflection on a function.
+
+
+Our implementation is a trivial extension of the strongly-typed
+polymorphic open records described in
+	<http://homepages.cwi.nl/~ralf/HList/>
+
+In fact, the implementation relies on the HList library.  To run the
+code (which this message is), one needs to download the HList library
+from the above site.
+
+The HList paper discusses the issue of labels in some detail. The
+paper gives three different representations. One of them needs no
+overlapping instances and is very portable. In this message, we chose
+a representation that relies on generic type equality and therefore
+needs overlapping instances as implemented in GHC. Again, this is
+merely an outcome of our non-deterministic choice. It should be
+emphasized that other choices are possible, which do not depend on
+overlapping instances at all. Please see the HList paper for details.
+
+-}
+
+
+{- $todo
+
+[@better instances for Symbol@]
+
+There isn't a pair @(K2 \"Origin\" (Int, Int))@ @(K \"hi\")@ that behaves just like Origin below.
+something is possible between constraintkinds. See 'Data.HList.FakePrelude.Fun'
+
+> instance (a ~ (Int,Int)) => IsKeyFN (Origin->a->b) True
+
+[@wildcard/catchall@]
+
+like in R. This would be a special keyword for keyword args that didn't match.
+They would be put in a HList/Record argument like @...@
+
+[@investigate first-classness of varargs@]
+for whatever reason you can't have  @f = kw fn blah@ and then pass more arguments
+on to fn. This is bad. It used to work (in the ghc6.6 days and probably up to
+6.12). Some convenience functions/operators should be added which do the same
+thing as:
+
+> fn `hAppendList` hBuild a b c d e
+
+
+-}
