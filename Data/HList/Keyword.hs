@@ -12,7 +12,7 @@ module Data.HList.Keyword (
   --  ** method to avoid writing IsKeyFN instances
   -- $note
   -- in progress doesn't work yet. See $todo section
-  K(..), EqF,
+  K(..),
 
   -- * types for user error
   ErrReqdArgNotFound,
@@ -60,7 +60,6 @@ module Data.HList.Keyword (
 
   ) where
 
-import GHC.Prim (Constraint)
 import GHC.TypeLits
 import Data.HList.FakePrelude
 import Data.HList.TypeEqO ()
@@ -319,20 +318,41 @@ data ErrUnexpectedKW x
 
 -- | All our keywords must be registered
 
+
 class IsKeyFN   t (flag :: Bool) | t-> flag
+-- | overlapping/fallback case
 instance (False ~ flag) => IsKeyFN t flag
 instance IsKeyFN (Label (s :: Symbol) -> a -> b) True
-instance EqF c a => IsKeyFN ( (K s c) -> a -> b) True
+{- ^ labels that impose no restriction on the type of the (single) argument
+ which follows
 
-data K s (c :: k) = K
-type family EqF (a :: k) b :: Constraint
-type instance EqF a b = (a ~ b)
-type instance EqF '() b = ()
+ >>> let testF (Label :: Label "a") (a :: Int) () = a+1
+ >>> kw (hBuild testF) (Label :: Label "a") 5 ()
+ 6
 
--- | removes the thing that adds the constraint
-class CleanK a b where
-instance (r ~ K a '()) => CleanK (K a b) r where
-instance (t ~ t') => CleanK t t' where
+-}
+
+{- | The purpose of this instance is to be able to use the same Symbol
+ (type-level string) at different types. If they are supposed to be the same,
+ then use 'Label' instead of 'K'
+
+ >>> let kA = K :: forall t. K "a" t
+ >>> let testF (K :: K "a" Int) a1 (K :: K "a" Integer) a2 () = a1-fromIntegral a2
+
+ therefore the following options works:
+
+ >>> kw (hBuild testF) kA (5 :: Int) kA (3 :: Integer) ()
+ 2
+
+ >>> kw (hBuild testF) (K :: K "a" Integer) 3 (K :: K "a" Int) 5 ()
+ 2
+
+ But you cannot leave off all @Int@ or @Integer@ annotations.
+
+-}
+instance (r ~ (c -> b)) => IsKeyFN ( (K s c) -> r) True
+
+data K s (c :: *) = K
 
 
 -- * The implementation of KWApply
@@ -344,8 +364,8 @@ instance (r ~ r') => KWApply r '[] r' where
     kwapply f _ = f
 
 instance (HEq kw kw' flag,
-	  KWApply' flag (kw->a->f') (kw' ': a' ': tail) r)
-    => KWApply (kw->a->f') (kw' ': a' ': tail) r where
+	  KWApply' flag (kw ->a->f') (kw' ': a' ': tail) r)
+    => KWApply (kw ->a->f') (kw' ': a' ': tail) r where
     kwapply = kwapply' (proxy :: Proxy flag)
 
 class KWApply' flag f arg_values r  where
@@ -505,7 +525,8 @@ instance (HDelete e tail tail', e'tail ~ (e' ': tail'))
 
 {- |
 
-@kw@ takes a 'HList' whose first element is the varargs function.
+@kw@ takes a 'HList' whose first element is a function, and the rest
+of the elements are default values.
 A useful trick is to have a final argument @()@ which is not
 eaten up by a label (A only takes 1 argument). That way when you supply
 the () it knows there are no more arguments (?).
@@ -618,7 +639,7 @@ They would be put in a HList/Record argument like @...@
 
 [@investigate first-classness of varargs@]
 for whatever reason you can't have  @f = kw fn blah@ and then pass more arguments
-on to fn. This is bad. It used to work (in the ghc6.6 days and probably up to
+on to fn. This is bad. It used to work (in the ghc6.0 days and probably up to
 6.12). Some convenience functions/operators should be added which do the same
 thing as:
 
