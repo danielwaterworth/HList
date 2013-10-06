@@ -30,6 +30,9 @@ data HList (l::[*]) where
     HNil  :: HList '[]
     HCons :: e -> HList l -> HList (e ': l)
 
+-- | this comparison is two traversals
+instance (ConvHList l, Eq (Prime l)) => Eq (HList l) where
+    x == y = prime x == prime y
 
 -- ** Alternative representation
 {- $note
@@ -43,8 +46,8 @@ over the GADT:
 <http://stackoverflow.com/questions/19077037/is-there-any-deeper-type-theoretic-reason-ghc-cant-infer-this-type see stackoverflow post here>
 
 -}
-data HNil' = HNil'
-data HCons' a b = HCons' a b
+data HNil' = HNil' deriving (Eq)
+data HCons' a b = HCons' a b deriving (Eq)
 
 
 -- | conversion between GADT ('HList') and ADT ('HNil'' 'HCons'')
@@ -698,46 +701,46 @@ class HMemberM2 (b::Maybe [k]) (e1 :: k) (l :: [k]) (r::Maybe [k]) | b e1 l -> r
 instance HMemberM2 Nothing e1 l Nothing
 instance HMemberM2 (Just l1) e1 (e ': l) (Just (e ': l1))
 
-{-
 -- --------------------------------------------------------------------------
 
 -- * Staged equality for lists
 
-instance HStagedEq HNil HNil
+instance HStagedEq (HList '[]) (HList '[])
  where
   hStagedEq _ _ = True
 
-instance HStagedEq HNil (HCons e l)
+instance HStagedEq (HList '[]) (HList (e ': l))
  where
   hStagedEq _ _ = False
 
-instance HStagedEq (HCons e l) HNil
+instance HStagedEq (HList (e ': l)) (HList '[])
  where
   hStagedEq _ _ = False
 
-instance ( TypeEq e e' b
-         , HStagedEq l l'
+instance ( HEq e e' b
+         , HStagedEq (HList l) (HList l')
          , HStagedEq' b e e'
          )
-      =>   HStagedEq (HCons e l) (HCons e' l')
+      =>   HStagedEq (HList (e ': l)) (HList (e' ': l'))
  where
   hStagedEq (HCons e l) (HCons e' l') = (hStagedEq' b e e') && b'
    where
-    b  = typeEq e e'
+    b  = proxy :: Proxy b
     b' = hStagedEq l l'
 
-class HStagedEq' b e e'
+class HStagedEq' (b :: Bool) e e'
  where
-  hStagedEq' :: b -> e -> e' -> Bool
+  hStagedEq' :: Proxy b -> e -> e' -> Bool
 
-instance HStagedEq' HFalse e e'
+instance HStagedEq' False e e'
  where
   hStagedEq' _ _ _ = False
 
-instance Eq e => HStagedEq' HTrue e e
+instance Eq e => HStagedEq' True e e
  where
   hStagedEq' _ = (==)
 
+{-
 
 
 

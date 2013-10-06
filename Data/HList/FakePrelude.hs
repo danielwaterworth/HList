@@ -438,7 +438,6 @@ instance HEq  n n' b => HEq (HSucc n) (HSucc n') b
 hEq :: HEq x y b => x -> y -> Proxy b
 hEq =  undefined
 
-{-
 
 -- --------------------------------------------------------------------------
 
@@ -454,6 +453,7 @@ class HStagedEq x y
   hStagedEq :: x -> y -> Bool
 
 
+{-
 -- --------------------------------------------------------------------------
 
 -- | A predicate for type equality

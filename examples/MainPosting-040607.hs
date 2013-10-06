@@ -1,3 +1,5 @@
+{-# LANGUAGE UndecidableInstances #-}
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE ExistentialQuantification #-}
 {-# LANGUAGE TypeOperators #-}
@@ -18,8 +20,6 @@ Ralf
 
 -}
 
-import MainGhcGeneric1
-import Data.Typeable
 import Data.HList
 
 -- These are your two "implementations".
@@ -55,7 +55,7 @@ list1 =  MyImplementation1 10
 -- This list is not opaque. Less trouble in our experience.
 -- (When compared to using existentials.)
 
-type MyList = '[MyImplementation1, MyImplementation2]
+type MyList = HList '[MyImplementation1, MyImplementation2]
 
 
 -- Perhaps you want to make sure that you have a list of implementations
@@ -65,14 +65,14 @@ type MyList = '[MyImplementation1, MyImplementation2]
 
 class ListOfMyInterface l
  where
-  listOfMyInterface :: l -> l
+  listOfMyInterface :: HList l -> HList l
   listOfMyInterface = id
 
-instance ListOfMyInterface HNil
+instance ListOfMyInterface '[]
 instance ( MyInterface e
          , ListOfMyInterface l
          )
-      =>   ListOfMyInterface (HCons e l)
+      =>   ListOfMyInterface (e ': l)
 
 
 -- So you apply the id function with the side effect of statically 
@@ -88,9 +88,12 @@ list2 = listOfMyInterface list1
 
 data ImplementsMyInterface = ImplementsMyInterface
 
-instance Apply ImplementsMyInterface (e,l) (HCons e l)
+instance (
+ x ~ (e,HList l),
+ y ~ (HList (e ': l))
+ ) => ApplyAB ImplementsMyInterface x y
  where
-  apply _ (e,l) = HCons e l
+  applyAB _ (e,l) = HCons e l
 
 myKindOfList l = hFoldr ImplementsMyInterface HNil l
 
@@ -117,9 +120,9 @@ bar = sum . hMapOut Foo
 
 data Foo = Foo -- type driver for class-level application
 
-instance MyInterface e => Apply Foo e Int
+instance (MyInterface e, int ~ Int) => ApplyAB Foo e int
  where
-  apply _ e = foo e
+  applyAB _ e = foo e
 
 
 -- Yet another heterogeneous equality.
