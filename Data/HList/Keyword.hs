@@ -443,8 +443,8 @@ instance KWMerge arg_needed arg_values arg_def f r
 {- | Otherwise, collect the supplied keyword and its value, and recurse for
 more: -}
 
-instance KWAcc arg_desc kw a f arg_def r
-    => KW' True f arg_desc arg_def (kw->a->r) where
+instance (KWAcc arg_desc kw a f arg_def r, (kw->a->r) ~ kwar)
+    => KW' True f arg_desc arg_def kwar where
     kw' _ f arg_desc arg_def kw_ a = kwaccum arg_desc kw_ a f arg_def
 
 
