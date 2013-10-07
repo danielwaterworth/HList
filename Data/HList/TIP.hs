@@ -15,9 +15,10 @@ import Data.HList.HList
 import Data.HList.HArray ()
 import Data.HList.HTypeIndexed
 
+import Data.HList.TypeEqO () -- for doctest
 
 -- --------------------------------------------------------------------------
--- | The newtype for type-indexed products
+-- * The newtype for type-indexed products
 
 newtype TIP (l :: [*]) = TIP{unTIP:: HList l}
 
@@ -31,14 +32,14 @@ emptyTIP :: TIP '[]
 emptyTIP = mkTIP HNil
 
 -- --------------------------------------------------------------------------
--- | Type-indexed type sequences
+-- * Type-indexed type sequences
 
 class HTypeIndexed (l :: [*])
 instance HTypeIndexed '[]
 instance (HOccursNot e l,HTypeIndexed l) => HTypeIndexed (e ': l)
 
 -- --------------------------------------------------------------------------
--- Implementing the HLIstPrelude interface
+-- Implementing the HListPrelude interface
 
 instance (HOccursNot e l, HTypeIndexed l) => HExtend e (TIP l) 
  where
@@ -46,7 +47,7 @@ instance (HOccursNot e l, HTypeIndexed l) => HExtend e (TIP l)
   e .*. TIP l = mkTIP (HCons e l)
 
 
--- One occurrence and nothing is left
+-- | One occurrence and nothing is left
 --
 -- This variation provides an extra feature for singleton lists.
 -- That is, the result type is unified with the element in the list.
@@ -76,8 +77,8 @@ instance (HAppend (HList l) (HList l'), HTypeIndexed (HAppendList l l'))
 --   hOccurrence e = hOccurrence e . unTIP
 
 -- --------------------------------------------------------------------------
--- | Shielding type-indexed operations
--- The absence of signatures is deliberate! They all must be inferred.
+-- * Shielding type-indexed operations
+-- $note The absence of signatures is deliberate! They all must be inferred.
 
 onTIP f (TIP l) = mkTIP (f l)
 
@@ -86,7 +87,7 @@ tipyUpdate  e t  = onTIP (hUpdateAt e) t
 tipyProject ps t = onTIP (hProjectBy ps) t
 
 
--- Split produces two TIPs
+-- | Split produces two TIPs
 tipySplit ps (TIP l) = (mkTIP l',mkTIP l'')
  where
   (l',l'') = hSplitBy ps l
@@ -94,7 +95,7 @@ tipySplit ps (TIP l) = (mkTIP l',mkTIP l'')
 
 -- --------------------------------------------------------------------------
 
--- Subtyping for TIPs
+-- | Subtyping for TIPs
 
 instance SubType (TIP l) (TIP '[])
 instance (HOccurs e (TIP l1), SubType (TIP l1) (TIP l2))
@@ -105,37 +106,59 @@ instance (HOccurs e (TIP l1), SubType (TIP l1) (TIP l2))
 
 -- * Sample code
 
-{- $sampleCode
+{- $setup
 
-Assume
+[@Assume@]
 
-> myTipyCow = TIP myAnimal
+>>> import Data.HList.FakePrelude
 
-> animalKey :: (HOccurs Key l, SubType l (TIP Animal)) => l -> Key
-> animalKey = hOccurs
+>>> :{
+newtype Key    = Key Integer deriving (Show,Eq,Ord)
+newtype Name   = Name String deriving (Show,Eq)
+data Breed     = Cow | Sheep deriving (Show,Eq)
+newtype Price  = Price Float deriving (Show,Eq,Ord)
+data Disease   = BSE | FM deriving (Show,Eq)
+type Animal =  '[Key,Name,Breed,Price]
+:}
 
-Session log
-
-> *TIP> :t myTipyCow
-> myTipyCow :: TIP Animal
-
-> *TIP> hOccurs myTipyCow :: Breed
-> Cow
-
-> *TIP> BSE .*. myTipyCow
-> TIPH[BSE, Key 42, Name "Angus", Cow, Price 75.5]
-
-> *TIP> BSE .*. myTipyCow
-> --- same as before ---
-
-> *TIP> Sheep .*. myTipyCow
-> Type error ...
-
-> *TIP> Sheep .*. tipyDelete myTipyCow (HProxy::HProxy Breed)
-> TIPH[Sheep, Key 42, Name "Angus", Price 75.5]
-
-> *TIP> tipyUpdate myTipyCow Sheep
-> TIPH[Key 42, Name "Angus", Sheep, Price 75.5]
+>>> :{
+let myAnimal :: HList Animal
+    myAnimal = hBuild (Key 42) (Name "Angus") Cow (Price 75.5)
+    myTipyCow = TIP myAnimal
+    animalKey :: (HOccurs Key l, SubType l (TIP Animal)) => l -> Key
+    animalKey = hOccurs
+:}
 
 -}
 
+{- $sessionlog
+[@Session log@]
+
+>>> :t myTipyCow
+myTipyCow :: TIP Animal
+
+>>> hOccurs myTipyCow :: Breed
+Cow
+
+>>> BSE .*. myTipyCow
+TIPH[BSE, Key 42, Name "Angus", Cow, Price 75.5]
+
+
+
+>>> Sheep .*. tipyDelete (proxy::Proxy Breed) myTipyCow
+TIPH[Sheep, Key 42, Name "Angus", Price 75.5]
+
+>>> tipyUpdate Sheep myTipyCow
+TIPH[Key 42, Name "Angus", Sheep, Price 75.5]
+
+-}
+
+
+{- $sessionlog2
+
+Don't bother repeating the type error:
+>>> let doctestEq x y = x == y || "No instance for" `Data.List.isInfixOf` x
+
+>>> Sheep .*. myTipyCow
+-- type error --
+-}
