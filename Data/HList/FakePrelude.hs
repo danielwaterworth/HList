@@ -447,6 +447,7 @@ hEq =  undefined
 --  * Establish type equality statically
 --
 --  * Establish remaining value-level equality dynamically
+--
 
 class HStagedEq x y
  where

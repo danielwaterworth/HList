@@ -13,11 +13,23 @@ import Data.HList.FakePrelude
 
 {- $ex
 
+>>> :set -XQuasiQuotes -XViewPatterns
+
+[@patterns@]
+
 >>> let y = Label :: Label "y"
 >>> let x = Label :: Label "x"
 >>> [pun| x y |] <- return (x .=. 3 .*. y .=. "hi" .*. emptyRecord)
 >>> print (x,y)
 (3,"hi")
+
+[@expressions@]
+
+Compare with the standard way to construct records above
+
+>>> let x = 3; y = "hi"
+>>> [pun|x y|]
+Record{x=3,y="hi"}
 
 -}
 
@@ -26,7 +38,7 @@ import Data.HList.FakePrelude
 pun :: QuasiQuoter
 pun = QuasiQuoter {
     quotePat = \str -> mkPat (words str),
-    quoteExp  = error "Data.HList.RecordPuns.quoteExp",
+    quoteExp  = \str -> mkExp (words str),
     quoteDec  = error "Data.HList.RecordPuns.quoteDec",
     quoteType = error "Data.HList.RecordPuns.quoteType"
  }
@@ -48,3 +60,8 @@ mkPat xs = viewP extracts binds
                 let label = [| Label :: Label $(litT (strTyLit x)) |]
                 ])
 
+mkExp :: [String] -> ExpQ
+mkExp xs = foldr (\x acc -> [| $(mkPair x) .*. $acc |]) [| emptyRecord |] xs
+  where
+  mkPair :: String -> ExpQ
+  mkPair x = [| (Label :: Label $(litT (strTyLit x))) .=. $(dyn x) |]

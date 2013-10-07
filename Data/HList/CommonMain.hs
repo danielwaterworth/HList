@@ -38,6 +38,8 @@ module Data.HList.CommonMain (
 
  -- | template haskell for automating different types of labels
  , module Data.HList.MakeLabels
+ -- | quasiquoter to avoid those labels in the first place
+ , module Data.HList.RecordPuns
 
 
  -- $instancesFrom
@@ -67,6 +69,7 @@ import Data.HList.Variant
 import Data.HList.Data () -- only instances
 
 import Data.HList.Keyword
+import Data.HList.RecordPuns
 
 {- $label6demo #label6demo#
 
