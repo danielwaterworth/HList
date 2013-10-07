@@ -291,6 +291,16 @@ instance (ApplyAB f (x,r) s, HScanr f z xs (r ': rs)) => HScanr f z (x ': xs) (s
         case hScanr f z xs :: HList (r ': rs) of
             HCons r rs -> (applyAB f (x,r) :: s) `HCons` r `HCons` rs
 
+class HFoldr1 f (l :: [*]) r where
+    hFoldr1 :: f -> HList l -> r
+
+instance (v ~ v') => HFoldr1 f '[v] v' where
+    hFoldr1      _ (HCons v _)  = v
+
+-- | uses 'ApplyAB' not 'Apply'
+instance (ApplyAB f (e, r) r', HFoldr1 f (e' ': l) r)
+    => HFoldr1 f (e ': e' ': l) r' where
+    hFoldr1 f (HCons x l)    = applyAB f (x, hFoldr1 f l :: r)
 
 
 -- ** foldl
