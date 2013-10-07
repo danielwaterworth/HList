@@ -40,31 +40,10 @@ newtype Variant mr = Variant mr
 
 data HMaybeF = HMaybeF
 instance ((LVPair l (Proxy t) ~ a, b ~ LVPair l (Maybe t))) =>  ApplyAB HMaybeF a b   where
-{-
-    type ApplyB HMaybeF (LVPair l (Proxy t)) = Just (LVPair l (Maybe t))
-    type ApplyA HMaybeF (LVPair l (Maybe t)) = Just (LVPair l (Proxy t))
-    -}
     applyAB _ _ = LVPair Nothing
 
--- hMaybied :: ApplyAB (HMap HMaybeF) a b => a -> b
 hMaybied x = hMap HMaybeF x
 
-{- ^ used to be
-
-> class HMaybied r r' | r -> r'
->  where
->   hMaybied :: r -> r'
->
-> instance HMaybied HNil HNil
->  where
->   hMaybied _ = HNil
->
-> instance HMaybied r r'
->       => HMaybied (HCons (LVPair l (Proxy v)) r) (HCons (LVPair l (Maybe v)) r')
->  where
->   hMaybied (HCons _ r) = HCons (LVPair Nothing) (hMaybied r)
-
--}
 
 -- --------------------------------------------------------------------------
 -- | Public constructor
@@ -72,42 +51,12 @@ hMaybied x = hMap HMaybeF x
 mkVariant x y (Record v) = let r1 = Record (hMaybied v) in
     case hUpdateAtLabel x (Just y) r1 `asTypeOf` r1 of
     Record t -> Variant t
-{- ^ previously:
-
-> mkVariant :: ( RecordLabels v ls
->              , HFind x ls n
->              , HMaybied v v'
->              , HUpdateAtHNat n (LVPair x (Maybe y)) v' v'
->              )
->           => x -> y -> (Record v) -> Variant v'
->
-> mkVariant x y (Record v) = Variant v'
->  where
->   n       = hFind x (recordLabels' v)
->   ms      = hMaybied v
->   v'      = hUpdateAtHNat n (newLVPair x (Just y)) ms
-
--}
 
 -- --------------------------------------------------------------------------
 -- | Public destructor
 
 unVariant x (Variant v) = hLookupByLabel x (Record v)
 
-{- ^ previously:
-
-> unVariant :: ( RecordLabels v ls
->              , HFind x ls n
->              , HLookupByHNat n v (LVPair x (Maybe y))
->              )
->           => x -> Variant v -> Maybe y
->
-> unVariant x (Variant v) = y
->  where
->   n       = hFind x (recordLabels' v)
->   LVPair y     = hLookupByHNat n v
-
--}
 
 -- --------------------------------------------------------------------------
 -- | Variants are opaque
