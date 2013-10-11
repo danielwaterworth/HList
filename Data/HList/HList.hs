@@ -365,6 +365,32 @@ instance HReplicate n e => HReplicate (HSucc n) e where
     hReplicate n e = e `HCons` hReplicate (hPred n) e
 
 
+-- * concat
+
+{- |
+
+Like 'concat' but for HLists of HLists.
+
+>>> hConcat $ hBuild (hBuild 1 2 3) (hBuild 'a' "abc")
+H[1, 2, 3, 'a', "abc"]
+
+
+-}
+class HConcat (a :: [*]) where
+    type HConcatR a :: [*]
+    hConcat :: HList a -> HList (HConcatR a)
+
+instance HConcat '[] where
+    type HConcatR '[] = '[]
+    hConcat _ = HNil
+
+instance (x ~ HList t, HConcat xs) => HConcat (x ': xs) where
+    type HConcatR (x ': xs) = HAppendList (UnHList x) (HConcatR xs)
+    hConcat (x `HCons` xs) = x `hAppendList` hConcat xs
+
+
+type family UnHList a :: [*]
+type instance UnHList (HList a) = a
 
 -- --------------------------------------------------------------------------
 -- * traversing HLists
