@@ -9,6 +9,8 @@ module Data.HList.Keyword (
   Kw(..),
   IsKeyFN,
 
+  recToKW,
+
   -- ** another label type
   K(..),
 
@@ -63,6 +65,8 @@ import Data.HList.FakePrelude
 import Data.HList.TypeEqO ()
 import Data.HList.HListPrelude
 import Data.HList.HList
+import Data.HList.Record
+import Data.HList.RecordPuns
 
 {- $setup
 
@@ -324,7 +328,7 @@ instance IsKeyFN (Label (s :: Symbol) -> a -> b) True
 {- ^ labels that impose no restriction on the type of the (single) argument
  which follows
 
- >>> let testF (Label :: Label "a") (a :: Int) () = a+1
+ >>> let testF (_ :: Label "a") (a :: Int) () = a+1
  >>> kw (hBuild testF) (Label :: Label "a") 5 ()
  6
 
@@ -553,6 +557,34 @@ instance
     kw (HCons f arg_def) = kwdo f rfk arg_def :: r
         where rfk = reflect_fk f :: akws
 
+data LVPairToKW = LVPairToKW
+instance (x ~ LVPair l v, y ~ HList '[Label l, v]) =>
+        ApplyAB LVPairToKW x y where
+    applyAB _ (LVPair v) = hBuild Label v
+
+
+{- | convert a 'Record' into a list that can supply
+default arguments for 'kw'
+
+A bit of setup:
+
+>>> :set -XQuasiQuotes
+>>> let f (_ :: Label "a") a (_ :: Label "b") b () = a `div` b
+
+
+>>> let a = 2; b = 1; f' = f .*. recToKW [pun| a b |]
+>>> kw f' ()
+2
+
+>>> kw f' (Label :: Label "a") 10 ()
+10
+
+
+-}
+recToKW :: forall a b. (HMapAux LVPairToKW a b, SameLength a b,
+      SameLength b a, HConcat b) =>
+     Record a -> HList (HConcatR b)
+recToKW (Record r) = hConcat (hMap LVPairToKW r :: HList b)
 
 {- $originalIntro
 

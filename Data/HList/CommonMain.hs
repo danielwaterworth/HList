@@ -27,7 +27,7 @@ module Data.HList.CommonMain (
 
  -- * "Data.HList.Keyword"
  -- | the \"public\" parts. More examples are in the module documentation.
- , Kw(..), IsKeyFN, K,  ErrReqdArgNotFound,  ErrUnexpectedKW
+ , Kw(..), recToKW, IsKeyFN, K,  ErrReqdArgNotFound,  ErrUnexpectedKW
 
  -- * Labels
  -- | there are three options for now:
