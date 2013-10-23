@@ -1,3 +1,10 @@
+17 Sep 2013
+	Another large patch from Adam Vogt
+	Added HReplicate, SameLength constraint (used by HSequence and HMap),
+	FunCxt for interpreting context applications,
+	convenient syntax for record patterns,
+	clean-up of ApplyAB and general clean-up
+
 31 Aug 2013
 	Large patch from Adam Vogt
 	 Improving the Apply class (ApplyAB) to help type inference
