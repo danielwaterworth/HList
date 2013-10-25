@@ -1,3 +1,9 @@
+24 Oct 2013
+	Another large patch from Adam Vogt
+	Added HFoldl, HScanr, Data instances for HList, finished the
+	update of Record, the Keyword example
+	becomes full-fledged part of HList
+
 17 Sep 2013
 	Another large patch from Adam Vogt
 	Added HReplicate, SameLength constraint (used by HSequence and HMap),
