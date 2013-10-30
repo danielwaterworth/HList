@@ -27,7 +27,10 @@ main = do
                     $ lines o
 
     let files = case as of
-            [] -> ["Data/HList/CommonMain.hs"]
+            [] -> ["Data/HList/CommonMain.hs",
+                   "Data/HList/HList.hs",
+                   "Data/HList/Record.hs",
+                   "Data/HList/Labelable.hs"]
             _ -> as
 
     doctest $ "-i.": "-idist/build/autogen":
