@@ -7,9 +7,8 @@ behavior as:
  > x = hLens (Label :: Label "x")
  > r ^. x
 
-While still being able to have @x .=. 123@.
-
-Elaboration of some ideas from edwardk.
+While still being able to extract the "x" from x, so that things like
+@x .=. 123@ could be acceptable.
 
 Note that the original hLens is still useful, since the following
 needs to apply the @x@ for different @Functor f =>@, so you would
@@ -24,10 +23,11 @@ The alternative that calls 'hLens' would not need any type signature,
 since each time you write @hLens x@, you can get a different type
 even if the @x :: Label \"x\"@ is a monomorphic type.
 
+Elaboration of some ideas from edwardk.
 -}
 module Data.HList.Labelable
     (makeLabelable,
-     Labelable,
+     Labelable(hLens'),
      Labeled(Labeled),
      (.==.),
      toLabel,
@@ -45,7 +45,7 @@ import GHC.TypeLits
 import Language.Haskell.TH
 
 class Labelable (n :: HNat) l p f s t a b | l s -> a, l t -> b, l s b -> t, l t a -> s, l s -> n, l t -> n where
-    label :: Label l -> p (a -> f b) (Record s -> f (Record t))
+    hLens' :: Label l -> p (a -> f b) (Record s -> f (Record t))
 
 data Labeled (l :: k) (a :: *) (b :: *) = Labeled deriving (Show)
 
@@ -57,11 +57,11 @@ instance (Functor f,
           HUpdateAtHNat n (LVPair x b) s,
           t ~ HUpdateAtHNatR n (LVPair x b) s)
         => Labelable n x (->) f s t a b where
-            label lab f rec = fmap (\v -> hUpdateAtLabel lab v rec) (f (rec .!. lab))
+            hLens' lab f rec = fmap (\v -> hUpdateAtLabel lab v rec) (f (rec .!. lab))
 
 instance (f ~ Identity, n ~ HZero, s ~ '[], t ~ '[], a ~ (), b ~ (),
            x' ~ x) => Labelable n x' (Labeled x) f s t a b where
-        label _ = Labeled :: Labeled x (a -> f b) (Record s -> f (Record t))
+        hLens' _ = Labeled :: Labeled x (a -> f b) (Record s -> f (Record t))
 
 
 -- | modification of '.=.' which works with the labels from this module,
@@ -77,11 +77,35 @@ type instance ToSym (Labeled x a b) = x
 toLabel :: t -> Label (ToSym t :: Symbol)
 toLabel _ = Label
 
+
+
+{- | @makeLabelable \"x y z\"@ will generate haskell identifiers that work with '.==.' and
+are also lenses.
+
+> x = hLens' (Label :: Label "x")
+> y = hLens' (Label :: Label "y")
+> z = hLens' (Label :: Label "z")
+
+-}
+makeLabelable :: String -> Q [Dec]
+makeLabelable xs = fmap concat $ mapM makeLabel1 (words xs)
+    where
+        -- a bit indirect, ghc-7.6 TH is a bit too eager to reject
+        -- mis-matched kind variables
+        makeLabel1 x = sequence
+              [
+                sigD (mkName x) makeSig,
+                valD (varP (mkName x)) (normalB (varE 'hLens' `appE` lt))
+                            []
+                ]
+            where lt = [| Label :: $([t| Label $(litT (strTyLit x)) |]) |]
+
+        makeSig = [t| Labelable n l p f s t a b => p (a -> f b) (Record s -> f (Record t)) |]
 {- ^
 
 >>> :set -XNoMonomorphismRestriction -XDataKinds -XPolyKinds
 >>> import Control.Lens
->>> let x = label (Label :: Label "x")
+>>> let x = hLens' (Label :: Label "x")
 
 The original way:
 
@@ -101,27 +125,3 @@ The improved way:
 Record{x=()}
 
 -}
-
-
-{- | @makeLabelable \"x y z\"@ will generate haskell identifiers that work with '.==.' and
-are also lenses.
-
-> x = label (Label :: Label "x")
-> y = label (Label :: Label "y")
-> z = label (Label :: Label "z")
-
--}
-makeLabelable :: String -> Q [Dec]
-makeLabelable xs = fmap concat $ mapM makeLabel1 (words xs)
-    where
-        -- a bit indirect, ghc-7.6 TH is a bit too eager to reject
-        -- mis-matched kind variables
-        makeLabel1 x = sequence
-              [
-                sigD (mkName x) makeSig,
-                valD (varP (mkName x)) (normalB (varE 'label `appE` lt))
-                            []
-                ]
-            where lt = [| Label :: $([t| Label $(litT (strTyLit x)) |]) |]
-
-        makeSig = [t| Labelable n l p f s t a b => p (a -> f b) (Record s -> f (Record t)) |]
