@@ -266,7 +266,7 @@ recordValues :: RecordValues r => Record r -> HList (RecordValuesR r)
 recordValues (Record r) = recordValues' r
 
 
--- | Polykinded (??)
+-- | Making this ls::[*] and [k] breaks the MainGhcGeneric1.hs...
 type family LabelsOf (ls :: [*]) :: [*]
 type instance LabelsOf '[] = '[]
 type instance LabelsOf (Label l ': r)  = l ': LabelsOf r
