@@ -11,17 +11,26 @@ While still being able to have @x .=. 123@.
 
 Elaboration of some ideas from edwardk.
 
-Note that the original hLens is still useful
-since you can pass around values @:: Label (a :: Symbol)@,
-without as much trouble as you do for the definitions you
-get from 'makeLabelable'.
+Note that the original hLens is still useful, since the following
+needs to apply the @x@ for different @Functor f =>@, so you would
+have to write a type signature (rank-2)
+
+ > let f x r = let
+ >          a = r ^. x
+ >          b = r & x .~ "6"
+ >        in (a,b)
+
+The alternative that calls 'hLens' would not need any type signature,
+since each time you write @hLens x@, you can get a different type
+even if the @x :: Label \"x\"@ is a monomorphic type.
 
 -}
 module Data.HList.Labelable
     (makeLabelable,
      Labelable,
-     Labeled,
+     Labeled(Labeled),
      (.==.),
+     toLabel,
     ) where
 
 
@@ -55,9 +64,18 @@ instance (f ~ Identity, n ~ HZero, s ~ '[], t ~ '[], a ~ (), b ~ (),
         label _ = Labeled :: Labeled x (a -> f b) (Record s -> f (Record t))
 
 
-l .==. v = toLabel (l `asTypeOf` Labeled) .=. v
-    where toLabel :: Labeled x a b -> Label (x :: Symbol)
-          toLabel _ = Label
+-- | modification of '.=.' which works with the labels from this module,
+-- and those from "Data.HList.Label6". Note that this is not strictly a
+-- generalization of '.=.', since it does not work with labels like Label3
+l .==. v = toLabel l .=. v
+
+
+type family ToSym a :: k
+type instance ToSym (Label x) = x
+type instance ToSym (Labeled x a b) = x
+
+toLabel :: t -> Label (ToSym t :: Symbol)
+toLabel _ = Label
 
 {- ^
 
@@ -85,7 +103,7 @@ Record{x=()}
 -}
 
 
-{- | @makeLabelable "x y z"@ will generate label that work with '.==.' and
+{- | @makeLabelable \"x y z\"@ will generate haskell identifiers that work with '.==.' and
 are also lenses.
 
 > x = label (Label :: Label "x")
