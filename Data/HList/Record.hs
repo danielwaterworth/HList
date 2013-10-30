@@ -350,19 +350,18 @@ instance (HRLabelSet (HAppendList r1 r2), HAppend (HList r1) (HList r2))
 class HasField (l::k) r v | l r -> v where
     hLookupByLabel:: Label l -> r -> v
 
-{-
-instance ( RecordLabels r ls
+{- alternative "straightforward" implementation
+instance ( RecordLabels r ~ ls
          , HFind l ls n
-         , HLookupByHNat n r (LVPair l v)
+         , HLookupByHNat n r
+         , HLookupByHNatR n r ~ LVPair l v
          ) => HasField l (Record r) v
   where
     hLookupByLabel l (Record r) = v
       where
-        ls = recordLabels' r
-        n = hFind l ls
-        (LVPair v) = hLookupByHNat n r
-
+        (LVPair v) = hLookupByHNat (proxy :: Proxy n) r
 -}
+
 
 
 instance (HEq l l1 b, HasField' b l (LVPair l1 v1 ': r) v)
