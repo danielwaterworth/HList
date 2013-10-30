@@ -788,12 +788,11 @@ instance (HMember e l HFalse, HSet l) => HSet (HCons e l)
 
 -- * Find an element in a set based on HEq
 -- | It is a pure type-level operation
--- XXX should be poly-kinded
-class HFind (e :: *) (l :: [*]) (n :: HNat) | e l -> n
+class HFind (e :: k) (l :: [k]) (n :: HNat) | e l -> n
 
 instance (HEq e1 e2 b, HFind' b e1 l n) => HFind e1 (e2 ': l) n
 
-class HFind' (b::Bool) (e :: *) (l::[*]) (n::HNat) | b e l -> n
+class HFind' (b::Bool) (e :: k) (l::[k]) (n::HNat) | b e l -> n
 instance HFind' True e l HZero
 instance HFind e l n => HFind' False e l (HSucc n)
 

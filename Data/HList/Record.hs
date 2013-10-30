@@ -63,14 +63,19 @@ module Data.HList.Record
     ShowComponents(..),
     ShowLabel(..),
 
-    -- ** Lookup
-    HasField(..),
-    HasField'(..),
-    (.!.),
 
     -- ** Delete
     -- | 'hDeleteAtLabel' @label record@
     hDeleteAtLabel,
+
+    -- ** Lookup/update
+    -- $lens
+    hLens,
+
+    -- ** Lookup
+    HasField(..),
+    HasField'(..),
+    (.!.),
 
     -- ** Update
     (.@.),
@@ -365,8 +370,6 @@ instance (HEq l l1 b, HasField' b l (LVPair l1 v1 ': r) v)
     hLookupByLabel l (Record r) =
              hLookupByLabel' (undefined::Proxy b) l r
 
--- XXX Alas, I have to set l :: * even though it could be other kinds.
--- Check back with GHC 7.8
 
 class HasField' (b::Bool) (l :: k) (r::[*]) v | b l r -> v where
     hLookupByLabel':: Proxy b -> Label l -> HList r -> v
@@ -454,7 +457,7 @@ r .-. l =  hDeleteAtLabel l r
 -- Update
 
 -- | 'hUpdateAtLabel' @label value record@
-hUpdateAtLabel :: forall (r :: [*]) (l :: *) (n::HNat) (v :: *). 
+hUpdateAtLabel :: forall (r :: [*]) (l :: k) (n::HNat) (v :: *). 
   (HFind l (RecordLabels r) n, HUpdateAtHNat n (LVPair l v) r) =>
   Label l -> v -> Record r -> Record (HUpdateAtHNatR n (LVPair l v) r)
 hUpdateAtLabel l v (Record r) = 
@@ -741,4 +744,11 @@ instance Fail (ExtraField l) =>
           HRearrange '[] (LVPair l v ': a) (ExtraField l) where
    hRearrange2 _ _ = ExtraField
 
+
+-- --------------------------------------------------------------------------
+-- $lens
+-- Lens-based setters/getters are popular.
+--
+-- This is a provisional method to make a @Lens (Record s) (Record t) a b@.
+hLens lab f rec = fmap (\v -> hUpdateAtLabel lab v rec) (f (rec .!. lab)) 
 
