@@ -748,6 +748,7 @@ instance Fail (ExtraField l) =>
 -- $lens
 -- Lens-based setters/getters are popular.
 --
--- This is a provisional method to make a @Lens (Record s) (Record t) a b@.
+-- This is a provisional method to make a @Lens (Record s) (Record t) a b@,
+-- out of a 'Label' @x@. Refer to @examples/lens.hs@ for an example.
 hLens lab f rec = fmap (\v -> hUpdateAtLabel lab v rec) (f (rec .!. lab)) 
 
