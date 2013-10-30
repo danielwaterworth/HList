@@ -41,7 +41,8 @@ Source-Repository head
 
 
 library
-  Build-Depends:       base >= 4 && < 5, template-haskell, ghc-prim
+  Build-Depends:       base >= 4 && < 5, template-haskell, ghc-prim,
+                       mtl
   Exposed-modules:     Data.HList,
 
                        Data.HList.CommonMain,
@@ -57,6 +58,7 @@ library
                        Data.HList.Keyword,
                        Data.HList.Label3,
                        Data.HList.Label6,
+                       Data.HList.Labelable,
                        Data.HList.MakeLabels,
                        Data.HList.Record,
                        Data.HList.RecordPuns,

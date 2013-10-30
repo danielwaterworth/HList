@@ -30,9 +30,10 @@ module Data.HList.CommonMain (
  , Kw(..), recToKW, IsKeyFN, K,  ErrReqdArgNotFound,  ErrUnexpectedKW
 
  -- * Labels
- -- | there are three options for now:
+ -- | there are four options for now:
 
  , module Data.HList.Label3
+ , module Data.HList.Labelable
 
  -- $label6demo
 
@@ -63,6 +64,7 @@ import Data.HList.TIC
 import Data.HList.HZip
 import Data.HList.Label3
 import Data.HList.Label6 () -- only instances
+import Data.HList.Labelable
 
 import Data.HList.Variant
 
