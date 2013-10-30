@@ -99,10 +99,10 @@ instance (NarrowM rout b res',
     narrowM' (Record (f `HCons` HNil)) rout b =
         narrowM'' f (narrowM rout b)
 
-class  NarrowM'' f r r' | f r -> r' where
+class  NarrowM'' f r r' where
     narrowM'' :: f -> r -> r'
 
-instance NarrowM'' f HNothing HNothing where
+instance (hNothing ~ HNothing) => NarrowM'' f HNothing hNothing where
     narrowM'' _ _ = HNothing
 
 instance NarrowM'' f (HJust (Record r)) (HJust (Record (f ': r))) where
@@ -126,34 +126,27 @@ instance ( Narrow rout r'
 
 -- --------------------------------------------------------------------------
 
-{-
 -- | Narrow two records to their least-upper bound
 
-class LubNarrow a b c | a b -> c
+class LubNarrow (a :: [*]) (b :: [*]) (c :: [*]) | a b -> c
  where
-  lubNarrow :: a -> b -> (c,c)
+  lubNarrow :: Record a -> Record b -> (Record c, Record c)
 
-instance ( RecordLabels a la
-         , RecordLabels b lb
-         , HTIntersect la lb lc
+instance ( HTIntersect (RecordLabels a) (RecordLabels b) lc
          , H2ProjectByLabels lc a c aout
          , H2ProjectByLabels lc b c bout
          , HRLabelSet c
          )
-      => LubNarrow (Record a) (Record b) (Record c)
+      => LubNarrow a b c
  where
 
-lubNarrow ra@(Record _) rb@(Record _) =
+ lubNarrow ra@(Record _) rb@(Record _) =
      ( hProjectByLabels (proxy::Proxy lc) ra
-     , hProjectByLabels (proxy::lc) rb
+     , hProjectByLabels (proxy::Proxy lc) rb
      )
 
-    where
-    la = recordLabels ra
-    lb = recordLabels rb/
--}
-{-
 
+{-
 -- --------------------------------------------------------------------------
 
 -- | List constructors that also LUB together
@@ -208,6 +201,7 @@ instance ( HLub (HCons h (HCons h'' t)) e'
     r = hLub (HCons (fst e) t)
 
 
+-}
 
 -- --------------------------------------------------------------------------
 -- | Record equivalence modulo field order
@@ -234,42 +228,41 @@ instance ( HLub (HCons h (HCons h'' t)) e'
 -- should not use equivR on two records with inconsistent labeling...
 
 class RecordEquiv r1 r2 res | r1 r2 -> res where
-    equivR :: Record r1 -> Record r2 -> res
+    equivR :: r1 -> r2 -> res
 
 
-{-
-instance (TypeEq r1 r2 b, RecordEquiv' b r1 r2 res)
+instance (HEq r1 r2 b, RecordEquiv' b r1 r2 res)
     => RecordEquiv r1 r2 res where
-    equivR _ _ = equivR' (undefined::b) (undefined::r1) (undefined::r2)
+    equivR _ _ = equivR' (undefined::Proxy b) (undefined::r1) (undefined::r2)
 -- Two records have the same type: the fast path
-instance RecordEquiv' HTrue r r
-                      (HJust (Record r->Record r,Record r->Record r)) where
+instance RecordEquiv' True r r
+                      (HJust (r->r,r->r)) where
     equivR' _ _ _ = HJust (id,id)
--}
 
 instance (NarrowM r1 r2 r12, NarrowM r2 r1 r21,
-          RecordEquiv' (Record r1->r12) (Record r2->r21) res)
-    => RecordEquiv r1 r2 res where
-    equivR r1 r2 = equivR' r1p r2p
+          RecordEquiv' False (Record r1->r12) (Record r2->r21) res)
+    => RecordEquiv (Record r1) (Record r2) res where
+    equivR r1 r2 = equivR' (undefined :: Proxy False) r1p r2p
      where r1p r1 = narrowM (r1 :: Record r1) r2
            r2p r2 = narrowM (r2 :: Record r2) r1
 
-class RecordEquiv' pj1 pj2 res | pj1 pj2 -> res where
-    equivR' :: pj1 -> pj2 -> res
+class RecordEquiv' (b :: Bool) pj1 pj2 res | b pj1 pj2 -> res where
+    equivR' :: Proxy b -> pj1 -> pj2 -> res
 
-instance RecordEquiv' (r1->HJust r2) (r2->HJust r1) (HJust (r1->r2,r2->r1))
+instance RecordEquiv' False (r1->HJust r2) (r2->HJust r1) (HJust (r1->r2,r2->r1))
     where
-    equivR' r12 r21 = HJust (unj.r12,unj.r21)
+    equivR' _ r12 r21 = HJust (unj.r12,unj.r21)
      where unj (HJust x) = x
 
 -- r2 has something that r1 doesn't
-instance RecordEquiv' (r1->HNothing) pj2 HNothing where
-    equivR' _ _ = HNothing
+instance RecordEquiv' False (r1->HNothing) pj2 HNothing where
+    equivR' _ _ _ = HNothing
 
 -- r1 is a strict superset of r2
-instance RecordEquiv' (r1->HJust r2) (r2->HNothing) HNothing where
-    equivR' _ _ = HNothing
+instance RecordEquiv' False (r1->HJust r2) (r2->HNothing) HNothing where
+    equivR' _ _ _ = HNothing
 
+{-
 
 -- --------------------------------------------------------------------------
 -- Typeable instances
