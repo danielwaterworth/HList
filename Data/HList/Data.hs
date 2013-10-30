@@ -1,18 +1,30 @@
 {-# LANGUAGE CPP #-}
 
-{- | 'Data.Data.Data' instances for 'HList' and 'Record' which pretend
-to be flat data structures.
-
+{- | 'Data.Data.Data' instances for 'HListFlat' and 'Record' which pretend
+to be flat data structures. The @Data@ instance for 'HList' gives a nested
+structure.
 
 [@HList@]
 
+The data instance for
+
+> a :: HList '[Int, Double, b]
+
+Looks like the same instance for
+
+> type T b = (Int, (Double, (b, ())))
+
+
+[@HListFlat@]
+
 The Data instance for
 
-> a :: Data b => HList '[Int,Double,b]
+> a :: Data b => HListFlat '[Int,Double,b]
 
 will look like the Data instance for:
 
 > data A b = A Int Double b
+
 
 [@Record@]
 
@@ -31,7 +43,7 @@ Perhaps there is another way.
 -}
 module Data.HList.Data (
     -- * exports for type signatures/ haddock usage
-    DataHListCxt,
+    DataHListFlatCxt,
     DataRecordCxt,
     TypeRepsList,
 
@@ -39,12 +51,13 @@ module Data.HList.Data (
     RecordLabelsStr(..),
     GfoldlK(..),
     GunfoldK(..),
+    HListFlat(..),
     ) where
 
 import Data.HList.FakePrelude
 import Data.HList.HList
 import Data.HList.Record
-import GHC.TypeLits ()
+import GHC.TypeLits
 import Data.Data
 import Data.List
 import GHC.Exts (Constraint)
@@ -52,8 +65,31 @@ import GHC.Exts (Constraint)
 import Unsafe.Coerce
 
 
-type DataHListCxt g a = (HBuild' '[] g,
-        Typeable (HList a),
+instance (Data x, Data (HList xs), Typeable (HList (x ': xs)),
+        TypeablePolyK (x ': xs))
+        => Data (HList (x ': xs)) where
+    gfoldl k z (HCons a b) = (z HCons `k` a) `k` b
+    gunfold k z _ = k (k (z HCons))
+
+    dataTypeOf _ = hListDataRep
+    toConstr _   = hConsConRep
+
+
+instance (TypeablePolyK ('[] :: [*])) => Data (HList '[]) where
+    gfoldl _k z HNil = z HNil
+    gunfold _k z _ = z HNil
+    dataTypeOf _ = hListDataRep
+    toConstr _   = hNilConRep
+
+hListDataRep = mkDataType "Data.HList.HList" [hConsConRep, hNilConRep]
+hConsConRep = mkConstr hListDataRep "HCons" [] Prefix
+hNilConRep = mkConstr hListDataRep "HNil" [] Prefix
+
+-- | this data type only exists to have Data instance
+newtype HListFlat a = HListFlat (HList a)
+
+type DataHListFlatCxt g a = (HBuild' '[] g,
+        Typeable (HListFlat a),
         TypeablePolyK a,
         HFoldl (GfoldlK  C) (C g) a (C (HList a)),
 
@@ -65,9 +101,8 @@ type DataHListCxt g a = (HBuild' '[] g,
 
         HReplicate (HLength a) ())
 
-instance DataHListCxt g a => Data (HList a) where
-
-    gfoldl k z xs = c3 $
+instance DataHListFlatCxt g a => Data (HListFlat a) where
+    gfoldl k z (HListFlat xs) = c3 $
                     hFoldl
                         (c1 (GfoldlK k))
                         (c2 (z hBuild))
@@ -79,7 +114,7 @@ instance DataHListCxt g a => Data (HList a) where
               c2 :: forall c. c g -> C g
               c2 = unsafeCoerce
 
-              c3 :: forall c. C (HList a) -> c (HList a)
+              c3 :: forall c. C (HList a) -> c (HListFlat a)
               c3 = unsafeCoerce
 
     gunfold k z _ =
@@ -98,32 +133,32 @@ instance DataHListCxt g a => Data (HList a) where
               c2 :: forall c. c g -> C g
               c2 = unsafeCoerce
 
-              c3 :: forall c. C (HList a) -> c (HList a)
+              c3 :: forall c. C (HList a) -> c (HListFlat a)
               c3 = unsafeCoerce
 
-    dataTypeOf _ = hListDataRep
-    toConstr _   = hListConRep
+    dataTypeOf _ = hListFlatDataRep
+    toConstr _   = hListFlatConRep
 
-hListDataRep = mkDataType "Data.HList.HList" [hListConRep]
-hListConRep = mkConstr hListDataRep "HList" [] Prefix
+hListFlatDataRep = mkDataType "Data.HList.HList" [hListFlatConRep]
+hListFlatConRep = mkConstr hListFlatDataRep "HListFlat" [] Prefix
 
 type DataRecordCxt a =
-    (Data (HList (RecordValuesR a)),
+    (Data (HListFlat (RecordValuesR a)),
             TypeablePolyK a,
             TypeRepsList (Record a),
             RecordValues a,
             RecordLabelsStr a)
 
 instance DataRecordCxt a => Data (Record a) where
-    gfoldl k z xs = c1 (gfoldl k z (recordValues xs))
+    gfoldl k z xs = c1 (gfoldl k z (HListFlat (recordValues xs)))
         where
-            c1 :: forall c. c (HList (RecordValuesR a)) -> c (Record a)
+            c1 :: forall c. c (HListFlat (RecordValuesR a)) -> c (Record a)
             c1 = unsafeCoerce
 
     gunfold k z con = c1 (gunfold k z con)
         where
             -- LVPair and Record are newtypes, so this should be safe...
-            c1 :: forall c. c (HList (RecordValuesR a)) -> c (Record a)
+            c1 :: forall c. c (HListFlat (RecordValuesR a)) -> c (Record a)
             c1 = unsafeCoerce
 
     dataTypeOf x = snd (recordReps (recordLabelsStr x))
@@ -177,6 +212,7 @@ data C a
 #if MIN_VERSION_base(4,7,0)
 deriving instance Typeable Record
 deriving instance Typeable HList
+deriving instance Typeable HListFlat
 deriving instance Typeable LVPair
 
 type TypeablePolyK (a :: k) = (Typeable a)
@@ -202,6 +238,11 @@ instance (ShowLabel sy, Typeable x) => Typeable (LVPair sy x) where
                     ]
 
 type TypeablePolyK a = (() :: Constraint)
+
+
+instance Typeable (HList a) => Typeable (HListFlat a) where
+    typeOf _ = mkTyConApp (mkTyCon3 "HList" "Data.HList.Data" "HListFlat")
+            [typeOf (error "Typeable HListFlat" :: HList a)]
 #endif
 
 
