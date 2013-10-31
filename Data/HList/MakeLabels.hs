@@ -7,7 +7,9 @@
 module Data.HList.MakeLabels (
     makeLabels,
     makeLabels3,
-    makeLabels6) where
+    makeLabels6,
+    -- | see also 'Data.HList.Labelable.makeLabelable'
+    ) where
 
 import Data.HList.FakePrelude
 import Data.HList.Label3
