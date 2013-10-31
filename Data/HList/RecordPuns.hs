@@ -4,6 +4,28 @@
 module Data.HList.RecordPuns (
     -- $ex
     pun
+
+    -- * todo
+    {- |
+    nesting is not supported. In principle it might be possible to
+    support the following
+
+    > [rec| ab@{ a b } y z c{d} |]
+
+    which might be a pattern match which makes bindings from an
+    original record @x@, according to the following look-ups (using @.@ for
+    lookup)
+
+    > let ab = x.ab
+    >     a = x.ab.a
+    >     b = x.ab.b
+    >     y = x.y
+    >     d = x.c.d
+
+    Or it could be an expression which creates a record,
+    using the values @ab a b y d@ which are in scope.
+
+    -}
     ) where
 
 import Language.Haskell.TH
