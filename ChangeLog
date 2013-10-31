@@ -1,3 +1,9 @@
+30 Oct 2013
+	Another large patch from Adam Vogt
+	Connect HList with Lens. The Data instance for HList
+	treats HList as a list; a Data instance for HListFlat
+	treats HList as a nested tuple.
+
 24 Oct 2013
 	Another large patch from Adam Vogt
 	Added HFoldl, HScanr, Data instances for HList, finished the
