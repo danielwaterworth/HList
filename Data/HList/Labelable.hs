@@ -54,7 +54,7 @@ import GHC.TypeLits
 
 import Language.Haskell.TH
 
-{- | @s t a b@ type parameters are the same as those that make
+{- | @f s t a b@ type parameters are the same as those that make
 "Control.Lens" work.
 
 [@n@] is the index in the HList at which the value will be found
