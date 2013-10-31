@@ -65,7 +65,11 @@ import Language.Haskell.TH
       as an argument to '.==.'
 
 -}
-class Labelable (n :: HNat) l p f s t a b | l s -> a, l t -> b, l s b -> t, l t a -> s, l s -> n, l t -> n where
+class Labelable (n :: HNat) l p f s t a b
+        | l s -> a n, l t -> b n, -- lookup with `l'
+          n t -> a l, n s -> b l, -- lookup with `n'
+          l s b -> t, l t a -> s  -- update
+  where
     hLens' :: Label l -> p (a -> f b) (Record s -> f (Record t))
 
 data Labeled (l :: k) (a :: *) (b :: *) = Labeled deriving (Show)
