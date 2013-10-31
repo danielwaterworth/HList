@@ -7,8 +7,9 @@ behavior as:
  > x = hLens (Label :: Label "x")
  > r ^. x
 
-While still being able to extract the "x" from x, so that things like
-@x .=. 123@ could be acceptable.
+While still being able to extract the symbol \"x\" from x, so that things
+like @x .=. 123@ could be acceptable. In this case we don't overload '.=.',
+so instead you have to write @x .==. 123@.
 
 Note that the original hLens is still useful, since the following
 needs to apply the @x@ for different @Functor f =>@, so you would
@@ -28,9 +29,14 @@ Elaboration of some ideas from edwardk.
 module Data.HList.Labelable
     (makeLabelable,
      Labelable(hLens'),
-     Labeled(Labeled),
      (.==.),
-     toLabel,
+
+    -- * likely unneeded (re)exports
+    -- $note needed to make a needed instance visible
+    Labeled(Labeled),
+    toLabel,
+    Identity,
+    ToSym,
     ) where
 
 
@@ -44,11 +50,23 @@ import GHC.TypeLits
 
 import Language.Haskell.TH
 
+{- | @s t a b@ type parameters are the same as those that make
+"Control.Lens" work.
+
+[@n@] is the index in the HList at which the value will be found
+
+[@l@] is the label for the field (tends to be "GHC.TypeLits.Symbol")
+
+[@p@] is @->@ when the result is used as a lens, or 'Labeled' when used
+      as an argument to '.==.'
+
+-}
 class Labelable (n :: HNat) l p f s t a b | l s -> a, l t -> b, l s b -> t, l t a -> s, l s -> n, l t -> n where
     hLens' :: Label l -> p (a -> f b) (Record s -> f (Record t))
 
 data Labeled (l :: k) (a :: *) (b :: *) = Labeled deriving (Show)
 
+-- | make a lens
 instance (Functor f,
           HasField x (Record s) a,
           HasField x (Record t) b,
@@ -59,6 +77,7 @@ instance (Functor f,
         => Labelable n x (->) f s t a b where
             hLens' lab f rec = fmap (\v -> hUpdateAtLabel lab v rec) (f (rec .!. lab))
 
+-- | make a data type that allows recovering the field name
 instance (f ~ Identity, n ~ HZero, s ~ '[], t ~ '[], a ~ (), b ~ (),
            x' ~ x) => Labelable n x' (Labeled x) f s t a b where
         hLens' _ = Labeled :: Labeled x (a -> f b) (Record s -> f (Record t))
@@ -66,15 +85,21 @@ instance (f ~ Identity, n ~ HZero, s ~ '[], t ~ '[], a ~ (), b ~ (),
 
 -- | modification of '.=.' which works with the labels from this module,
 -- and those from "Data.HList.Label6". Note that this is not strictly a
--- generalization of '.=.', since it does not work with labels like Label3
+-- generalization of '.=.', since it does not work with labels like
+-- "Data.HList.Label3" which have the wrong kind.
 l .==. v = toLabel l .=. v
 
 
-type family ToSym a :: k
-type instance ToSym (Label x) = x
-type instance ToSym (Labeled x a b) = x
+-- | extracts the type that is actually the label in @a@ and puts it in @b@
+class ToSym a b
 
-toLabel :: t -> Label (ToSym t :: Symbol)
+-- | for labels in this module
+instance (x ~ x', p ~ Labeled x') => ToSym (p a b) x'
+
+-- | for "Data.HList.Label6" labels
+instance (x ~ x') => ToSym (Label x) x'
+
+toLabel :: ToSym t t' => t -> Label (t' :: Symbol)
 toLabel _ = Label
 
 
@@ -101,27 +126,3 @@ makeLabelable xs = fmap concat $ mapM makeLabel1 (words xs)
             where lt = [| Label :: $([t| Label $(litT (strTyLit x)) |]) |]
 
         makeSig = [t| Labelable n l p f s t a b => p (a -> f b) (Record s -> f (Record t)) |]
-{- ^
-
->>> :set -XNoMonomorphismRestriction -XDataKinds -XPolyKinds
->>> import Control.Lens
->>> let x = hLens' (Label :: Label "x")
-
-The original way:
-
->>> let r = (Label :: Label "x") .=. "5" .*. emptyRecord
-
-The improved way:
-
->>> let r2 = x .==. "5" .*. emptyRecord
-
->>> r ^. x
-"5"
-
->>> r2 ^. x
-"5"
-
->>> r & x .~ ()
-Record{x=()}
-
--}

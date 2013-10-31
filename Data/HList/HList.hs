@@ -371,9 +371,11 @@ instance HReplicate n e => HReplicate (HSucc n) e where
 
 Like 'concat' but for HLists of HLists.
 
-Works in ghci... puzzling why it doctest gets an error
+Works in ghci... puzzling as what is different in doctest (it isn't
+@-XExtendedDefaultRules@)
 
 > hConcat $ hBuild (hBuild 1 2 3) (hBuild 'a' "abc")
+
 H[1, 2, 3, 'a', "abc"]
 
 

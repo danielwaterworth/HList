@@ -37,11 +37,9 @@ You can get HList from Hackage or from Darcs:
 $ darcs get --partial http://code.haskell.org/HList/
 
 The code works --- within the limits exercised in the source files ---
-for both GHC (6.4) and Hugs (Nov 2003). See the 
-examples/Makefile for ways of running test cases.
-The last GHC version tried: GHC 6.12
+for GHC-7.6 and GHC-7.7. Older compilers are not supported.
 
-One may run "cd examples; make test" to check the distribution.
+One may run "cabal test" to check the distribution.
 
 See ChangeLog for updates.
 

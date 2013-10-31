@@ -157,8 +157,10 @@ TIPH[Key 42, Name "Angus", Sheep, Price 75.5]
 {- $sessionlog2
 
 Don't bother repeating the type error:
+
 >>> let doctestEq x y = x == y || "No instance for" `Data.List.isInfixOf` x
 
 >>> Sheep .*. myTipyCow
 -- type error --
+
 -}

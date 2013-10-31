@@ -26,6 +26,7 @@
 module TIPTransformM where
 
 import Data.HList
+import Control.Monad.Identity
 
 -- We start with the examples
 
@@ -156,8 +157,3 @@ main = do
             putStrLn $ "tip2 is" ++ show tip2
             return ()
 
--- to avoiding importing mtl
-newtype Identity a = Identity{runIdentity:: a}
-instance Monad Identity where
-    return = Identity
-    m >>= f = f (runIdentity m)

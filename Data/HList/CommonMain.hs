@@ -4,9 +4,7 @@
 
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
-   This is a next-to-main module that loads all modules that at least
-   *compile* fine for all the models of interest. See the Makefile
-   for ways to run different models.
+   This module re-exports everything needed to use HList.
 
 -}
 
@@ -31,6 +29,8 @@ module Data.HList.CommonMain (
 
  -- * Labels
  -- | there are four options for now:
+
+ -- $label6demo
 
  , module Data.HList.Label3
  , module Data.HList.Labelable
@@ -85,6 +85,31 @@ Record{x=5}
 >>> let r = x .=. (5::Int) .*. emptyRecord
 >>> r .!. x
 5
+
+-}
+
+{- $labelable #labelabledemo#
+
+>>> :set -XNoMonomorphismRestriction -XDataKinds -XPolyKinds
+>>> import Control.Lens
+>>> let x = hLens' (Label :: Label "x")
+
+The original way:
+
+>>> let r = (Label :: Label "x") .=. "5" .*. emptyRecord
+
+The improved way:
+
+>>> let r2 = x .==. "5" .*. emptyRecord
+
+>>> r ^. x
+"5"
+
+>>> r2 ^. x
+"5"
+
+>>> r & x .~ ()
+Record{x=()}
 
 -}
 
