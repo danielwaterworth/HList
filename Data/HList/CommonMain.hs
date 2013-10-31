@@ -1,8 +1,9 @@
 {- |
 
-   The HList library
+   Description : import me
+   Copyright   : (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
-   (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
+   The HList library
 
    This module re-exports everything needed to use HList.
 

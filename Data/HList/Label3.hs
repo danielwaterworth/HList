@@ -1,5 +1,8 @@
 
 {- |
+
+   Description : namespaced labels
+
    The HList library
 
    (C) 2004-2006, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
@@ -22,7 +25,7 @@
 
    >     data MyLabelDescr; instance Show MyLabelDescr where show _ = "descr"
 
-   which obviously can be automated with Template Haskell.
+   which are automated by makeLabels3 from "Data.HList.MakeLabel".
 
    This model even allows the labels in a record to belong to different
    namespaces. To this end, the model employs the predicate for type

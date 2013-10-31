@@ -1,7 +1,10 @@
 {- |
+   Description : labels using promoted strings (Symbol)
+
    The HList library
 
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
+
 
    Yet another model of labels.
 

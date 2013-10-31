@@ -1,7 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 
-{- |
-Automate some of the ways to make labels.
+{- | Description : Automate some of the ways to make labels.
 
 -}
 

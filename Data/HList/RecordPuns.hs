@@ -1,5 +1,6 @@
 {-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE NoPolyKinds #-}
+{- | Description : quasiquoter emulating -XNamedFieldPuns -}
 module Data.HList.RecordPuns (
     -- $ex
     pun
