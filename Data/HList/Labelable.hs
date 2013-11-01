@@ -122,9 +122,10 @@ makeLabelable xs = fmap concat $ mapM makeLabel1 (words xs)
                 valD (varP (mkName x)) (normalB (varE 'hLens' `appE` lt))
                             []
                 ]
-            where lt = [| Label :: $([t| Label $(litT (strTyLit x)) |]) |]
+            where lt = [| Label :: $([t| Label $l |]) |]
+                  l = litT (strTyLit x)
 
-        makeSig = [t| Labelable n l p f s t a b => p (a -> f b) (Record s -> f (Record t)) |]
+                  makeSig = [t| Labelable n $l p f s t a b => p (a -> f b) (Record s -> f (Record t)) |]
 
 
 {- $comparisonWithhLensFunction
