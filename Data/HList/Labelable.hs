@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE TemplateHaskell #-}
 {- |
 
@@ -57,9 +58,20 @@ import Language.Haskell.TH
 
 -}
 class Labelable (n :: HNat) l p f s t a b
+#if MIN_VERSION_base(4,7,0)
+     {- no fundeps in this case: they are potentially inconsistent
+        according to ghc-7.8
+        <http://ghc.haskell.org/trac/ghc/ticket/2247>
+
+        these fundeps are mostly documentation, since the two
+        instances have contexts that encode roughly the same
+        dependencies provided you choose a specific `p'
+     -}
+#else
         | l s -> a n, l t -> b n, -- lookup with `l'
           n t -> a l, n s -> b l, -- lookup with `n'
           l s b -> t, l t a -> s  -- update
+#endif
   where
     hLens' :: Label l -> p (a -> f b) (Record s -> f (Record t))
 
