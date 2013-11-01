@@ -1,0 +1,9 @@
+similar:
+(3,Record{a=3})
+(3,Record{a=3})
+3
+
+expression QQ:
+Record{r=Record{b=Record{a=3},c="c",x=1,y="hi"}}
+Record{r=Record{b=Record{a=3},c=1,y="hi"}}
+Record{r=Record{x=1,y="hi"}}
