@@ -1,5 +1,5 @@
 {-# LANGUAGE TemplateHaskell, DataKinds, PolyKinds #-}
-{- | Demonstrates @hLens@
+{- | Demonstrates @hLens@. See also labelable.hs which is more "convenient"
 
 -}
 module Main where

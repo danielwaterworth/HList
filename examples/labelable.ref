@@ -1,0 +1,4 @@
+"hi"
+Record{x=(),y=Record{y=321,x=123}}
+321
+Record{x="hi",y=Record{y="xy",x=123}}
