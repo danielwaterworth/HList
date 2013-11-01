@@ -57,7 +57,7 @@ import Language.Haskell.TH
       as an argument to '.==.'
 
 -}
-class Labelable (n :: HNat) l p f s t a b
+class Labelable l p f s t a b
 #if MIN_VERSION_base(4,7,0)
      {- no fundeps in this case: they are potentially inconsistent
         according to ghc-7.8
@@ -68,8 +68,7 @@ class Labelable (n :: HNat) l p f s t a b
         dependencies provided you choose a specific `p'
      -}
 #else
-        | l s -> a n, l t -> b n, -- lookup with `l'
-          n t -> a l, n s -> b l, -- lookup with `n'
+        | l s -> a, l t -> b,     -- lookup
           l s b -> t, l t a -> s  -- update
 #endif
   where
@@ -85,12 +84,12 @@ instance (Functor f,
           HFind x (RecordLabels s) n,
           HUpdateAtHNat n (LVPair x b) s,
           t ~ HUpdateAtHNatR n (LVPair x b) s)
-        => Labelable n x (->) f s t a b where
+        => Labelable x (->) f s t a b where
             hLens' lab f rec = fmap (\v -> hUpdateAtLabel lab v rec) (f (rec .!. lab))
 
 -- | make a data type that allows recovering the field name
-instance (f ~ Identity, n ~ HZero, s ~ '[], t ~ '[], a ~ (), b ~ (),
-           x' ~ x) => Labelable n x' (Labeled x) f s t a b where
+instance (f ~ Identity, s ~ '[], t ~ '[], a ~ (), b ~ (),
+           x' ~ x) => Labelable x' (Labeled x) f s t a b where
         hLens' _ = Labeled :: Labeled x (a -> f b) (Record s -> f (Record t))
 
 
@@ -137,7 +136,7 @@ makeLabelable xs = fmap concat $ mapM makeLabel1 (words xs)
             where lt = [| Label :: $([t| Label $l |]) |]
                   l = litT (strTyLit x)
 
-                  makeSig = [t| Labelable n $l p f s t a b => p (a -> f b) (Record s -> f (Record t)) |]
+                  makeSig = [t| Labelable $l p f s t a b => p (a -> f b) (Record s -> f (Record t)) |]
 
 
 {- $comparisonWithhLensFunction
