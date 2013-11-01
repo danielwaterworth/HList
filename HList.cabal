@@ -15,7 +15,7 @@ Maintainer:          oleg@pobox.com
 
 Data-files:          README, ChangeLog
 Cabal-version:       >= 1.4
-Tested-With:         GHC==7.6.2
+Tested-With:         GHC==7.6.2, GHC==7.7
 Build-Type:          Simple
 
 Extra-Source-Files:
