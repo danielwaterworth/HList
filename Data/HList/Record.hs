@@ -592,7 +592,7 @@ instance HLeftUnion r '[] r
  where   hLeftUnion r _ = r
 
 instance ( RecordLabels r ~ ls
-         , HMember (Label l) ls b
+         , HMember l ls b
          , HLeftUnionBool b r (LVPair l v) r'''
          , HLeftUnion r''' r' r''
          )
@@ -600,9 +600,8 @@ instance ( RecordLabels r ~ ls
   where
    hLeftUnion r (Record (HCons f r')) = r''
     where
-     b       = hMember (labelLVPair f) (error "HLeftUnion" :: HList ls)
-     r'''    = hLeftUnionBool b r f
-     r''     = hLeftUnion r''' (Record r')
+     r'''    = hLeftUnionBool (proxy :: Proxy b) r f
+     r''     = hLeftUnion (r''' :: Record r''') (Record r' :: Record r')
 
 class  HLeftUnionBool (b :: Bool) r f r' | b r f -> r'
  where hLeftUnionBool :: Proxy b -> Record r -> f -> Record r'

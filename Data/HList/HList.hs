@@ -700,10 +700,10 @@ hNats = undefined
 -- | Check to see if an HList contains an element with a given type
 -- This is a type-level only test
 
-class HMember e1 (l :: [*]) (b :: Bool) | e1 l -> b
+class HMember (e1 :: k) (l :: [k]) (b :: Bool) | e1 l -> b
 instance HMember e1 '[] False
 instance (HEq e1 e b, HMember' b e1 l br) => HMember  e1 (e ': l) br
-class HMember' (b0 :: Bool) e1 (l :: [*]) (b :: Bool) | b0 e1 l -> b
+class HMember' (b0 :: Bool) (e1 :: k) (l :: [k]) (b :: Bool) | b0 e1 l -> b
 instance HMember' True e1 l True
 instance (HMember e1 l br) => HMember' False e1 l br
 
@@ -718,7 +718,7 @@ type instance HMemberP' pred e1 l (Proxy True) = True
 type instance HMemberP' pred e1 l (Proxy False) = HMemberP pred e1 l
  
 
-hMember :: HMember e l b => e -> HList l -> Proxy b
+hMember :: HMember e l b => Proxy e -> Proxy l -> Proxy b
 hMember = undefined
 
 -- ** Another type-level membership test
