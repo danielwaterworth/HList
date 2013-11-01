@@ -1,6 +1,10 @@
 {-# LANGUAGE FlexibleContexts, TemplateHaskell, DataKinds, PolyKinds #-}
 {- | Demonstrates @hLens'@
 
+may be worthwhile to have a lens-free test suite, doing stuff like:
+
+> case x (Identity  . (++"there")) r of Identity t -> t
+
 -}
 module Main where
 import Data.HList.CommonMain
