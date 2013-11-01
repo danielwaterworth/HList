@@ -744,7 +744,9 @@ instance HMemberM2 (Just l1) e1 (e ': l) (Just (e ': l1))
 -- --------------------------------------------------------------------------
 
 -- * Staged equality for lists
+-- $note removed. use Typeable instead
 
+{-
 instance HStagedEq (HList '[]) (HList '[])
  where
   hStagedEq _ _ = True
@@ -779,6 +781,7 @@ instance HStagedEq' False e e'
 instance Eq e => HStagedEq' True e e
  where
   hStagedEq' _ = (==)
+-}
 
 {-
 

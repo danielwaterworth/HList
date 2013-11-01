@@ -448,10 +448,13 @@ hEq =  undefined
 --
 --  * Establish remaining value-level equality dynamically
 --
+-- removed: use typeable
+{-
 
 class HStagedEq x y
  where
   hStagedEq :: x -> y -> Bool
+-}
 
 
 {-

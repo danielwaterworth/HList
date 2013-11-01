@@ -189,11 +189,11 @@ False
 main = print
              ( list1
            , ( list1 == list1
-           , ( list1 `hStagedEq` hReverse list1
+          --  , ( list1 `hStagedEq` hReverse list1
            , ( list4!!0 == list4!!1
            , ( list5!!0 == list5!!1
            , ( list6!!0 == list6!!1
-           ))))))
+           )))))
 
 {-
 
