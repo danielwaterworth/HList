@@ -179,7 +179,7 @@ infixr 4 .=.
 
   Create a value with the given label. Analagous to a data
   constructor such as 'Just', 'Left', or 'Right'. Higher fixity
-  than record-modification operations like (.*.), (.-.), etc. to
+  than record-modification operations like ('.*.'), ('.-.'), etc. to
   support expression like the below w/o parentheses:
 
   >>> x .=. "v1" .*. y .=. '2' .*. emptyRecord
@@ -382,8 +382,8 @@ instance HasField l (Record r) v => HasField' False l (fld ': r) v where
 
 infixr 9 .!.
 {- |
-  Lookup a value in a record, by its label. Analagous to (!!), the
-  list indexing operation. Highest fixity, like (!!).
+  Lookup a value in a record by its label. Analagous to (!!), the
+  list indexing operation. Highest fixity, like ('!!').
 
   >>> :{
   let record1 = x .=. 3 .*.
@@ -407,6 +407,9 @@ infixr 9 .!.
 
   >>> r2
   Record{y=3,z='y'}
+
+  Note that labels made following "Data.HList.Labelable" allow
+  using "Control.Lens.^." instead.
 -}
 
 
@@ -426,8 +429,8 @@ hDeleteAtLabel _ (Record r) =
 infixl 2 .-.
 {-|
   Remove a field from a record. At the same
-  level as other record modification options (.*.). Analagous
-  to (@\\@) in lists.
+  level as other record modification options ('.*.'). Analagous
+  to (@\\\\@) in lists.
 
   > record1 .-. label1
 
