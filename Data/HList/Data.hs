@@ -4,6 +4,9 @@
 to be flat data structures. The @Data@ instance for 'HList' gives a nested
 structure.
 
+NOTE: these instances do not work with ghc-7.8 because of
+<http://ghc.haskell.org/trac/ghc/ticket/8486>
+
 [@HList@]
 
 The data instance for

@@ -13,6 +13,9 @@ An example showing off the data instance for Record
 
 Also a use of cmdArgs
 
+NOTE: the data instances do not work with ghc-7.8 because of
+<http://ghc.haskell.org/trac/ghc/ticket/8486>
+
 
 -}
 
