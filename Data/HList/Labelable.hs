@@ -15,18 +15,6 @@ While still being able to extract the symbol \"x\" from x, so that things
 like @x .=. 123@ could be acceptable. In this case we don't overload '.=.',
 so instead you have to write @x .==. 123@.
 
-Note that the original hLens is still useful, since the following
-needs to apply the @x@ for different @Functor f =>@, so you would
-have to write a type signature (rank-2)
-
- > let f x r = let
- >          a = r ^. x
- >          b = r & x .~ "6"
- >        in (a,b)
-
-The alternative that calls 'hLens' would not need any type signature,
-since each time you write @hLens x@, you can get a different type
-even if the @x :: Label \"x\"@ is a monomorphic type.
 
 Elaboration of some ideas from edwardk.
 -}
@@ -34,6 +22,9 @@ module Data.HList.Labelable
     (makeLabelable,
      Labelable(hLens'),
      (.==.),
+
+    -- * comparison with 'hLens'
+    -- $comparisonWithhLensFunction
 
     -- * likely unneeded (re)exports
     -- $note needed to make a needed instance visible
@@ -59,7 +50,7 @@ import Language.Haskell.TH
 
 [@n@] is the index in the HList at which the value will be found
 
-[@l@] is the label for the field (tends to be "GHC.TypeLits.Symbol")
+[@l@] is the label for the field (tends to be 'GHC.TypeLits.Symbol')
 
 [@p@] is @->@ when the result is used as a lens, or 'Labeled' when used
       as an argument to '.==.'
@@ -134,3 +125,32 @@ makeLabelable xs = fmap concat $ mapM makeLabel1 (words xs)
             where lt = [| Label :: $([t| Label $(litT (strTyLit x)) |]) |]
 
         makeSig = [t| Labelable n l p f s t a b => p (a -> f b) (Record s -> f (Record t)) |]
+
+
+{- $comparisonWithhLensFunction
+
+Note that passing around variables defined with 'hLens'' doesn't get
+you exactly the same thing as calling 'hLens' at the call-site:
+
+The following code needs to apply the @x@ for different @Functor
+f =>@, so you would have to write a type signature (rank-2) to allow this
+definition:
+
+ > -- with the x defined using hLens'
+ > let f x r = let
+ >          a = r ^. x
+ >          b = r & x .~ "6"
+ >        in (a,b)
+
+This alternative won't need a type signature
+
+ > -- with the x defined as x = Label :: Label "x"
+ > let f x r = let
+ >          a = r ^. hLens x
+ >          b = r & hLens x .~ "6"
+ >        in (a,b)
+
+It may work to use 'hLens'' instead of 'hLens' in the second code,
+but that is a bit beside the point being made here.
+
+-}
