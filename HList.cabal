@@ -14,7 +14,7 @@ Author:              2004 Oleg Kiselyov (FNMOC, Monterey), Ralf Laemmel (CWI/VU,
 Maintainer:          oleg@pobox.com
 
 Data-files:          README, ChangeLog
-Cabal-version:       >= 1.4
+Cabal-version:       >= 1.8
 Tested-With:         GHC==7.6.2, GHC==7.7
 Build-Type:          Simple
 
