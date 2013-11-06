@@ -1,5 +1,5 @@
 Name:                HList
-Version:             0.3.0
+Version:             0.3.0.1
 Category:            Data
 Synopsis:            Heterogeneous lists
 Description:         HList is a record system providing strongly typed heterogenous lists, records,
@@ -14,7 +14,7 @@ Author:              2004 Oleg Kiselyov (FNMOC, Monterey), Ralf Laemmel (CWI/VU,
 Maintainer:          oleg@pobox.com
 
 Data-files:          README, ChangeLog
-Cabal-version:       >= 1.8
+Cabal-version:       >= 1.10
 Tested-With:         GHC==7.6.2, GHC==7.7
 Build-Type:          Simple
 
@@ -39,12 +39,10 @@ Source-Repository head
     location: http://code.haskell.org/HList
 
 
-
 library
-  Build-Depends:       base >= 4 && < 5, template-haskell, ghc-prim,
-                       mtl
-  Exposed-modules:     Data.HList,
+  Build-Depends:       base >= 4 && < 5, template-haskell, ghc-prim, mtl
 
+  Exposed-modules:     Data.HList,
                        Data.HList.CommonMain,
                        Data.HList.Data,
                        Data.HList.FakePrelude,
@@ -66,11 +64,12 @@ library
                        Data.HList.TIP,
                        Data.HList.TypeEqO,
                        Data.HList.Variant
+  Default-Language:    Haskell2010
 
 
   Ghc-Options:         -Wall -fno-warn-missing-signatures
 
-  Extensions:          ConstraintKinds
+  Default-Extensions:  ConstraintKinds
                        DataKinds
                        EmptyDataDecls
                        FlexibleContexts
@@ -87,18 +86,20 @@ library
                        UndecidableInstances
 
   if impl(ghc >= 7.7)
-    Extensions:        AllowAmbiguousTypes
-                       StandaloneDeriving
+    Default-Extensions: AllowAmbiguousTypes
+                        StandaloneDeriving
 
 Test-Suite examples
   Type:     exitcode-stdio-1.0
   Ghc-Options: -threaded
   Main-Is: examples/runexamples.hs
-  Build-Depends: base, hspec == 1.7.*, directory, filepath, process, syb, cmdargs,
-                    lens
+  Default-Language:    Haskell2010
+  Build-Depends:       base, hspec == 1.7.*, directory, filepath,
+                       process, syb, cmdargs, lens, HList, mtl
 
 Test-Suite doctests
   Type:     exitcode-stdio-1.0
   Ghc-Options: -threaded
   Main-Is: examples/rundoctests.hs
-  Build-Depends: base, doctest >= 0.8
+  Build-Depends: base, doctest >= 0.8, process
+  Default-Language:    Haskell2010

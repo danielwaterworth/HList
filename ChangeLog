@@ -1,3 +1,7 @@
+05 Nov 2013
+	Release 0.3.0.1
+	fix `cabal test'
+
 01 Nov 2013
 	Release 0.3
 	pun quasiquote supports nested records

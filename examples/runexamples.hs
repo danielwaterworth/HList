@@ -10,10 +10,7 @@ import Data.Maybe
 import Control.Monad
 
 main = do
-
   es <- getDirectoryContents "examples"
-
-
   print es
   -- very dumb
   es <- filterM (\e -> allM
@@ -26,16 +23,16 @@ main = do
     mapM_ runghcwith es
 
 
-runghcwith f = describe f $ it "ok" $ checkResult $
+runghcwith f = describe f $ it "ok" $
   do
     let ex = ("examples" </>)
     let inFile = ex (takeBaseName f)
         outFile = dropExtension inFile ++ ".out"
         refFile = dropExtension inFile ++ ".ref"
 
-    (ec, stdout, stderr) <- readProcessWithExitCode "cabal" ["repl","-v0",
-        "--ghc-options", "-w -fcontext-stack=50 -iexamples -v0 "]
-        (":load " ++ inFile ++ "\nmain")
+    (ec, stdout, stderr) <- readProcessWithExitCode "cabal" ["repl","examples",
+        "-v0", "--ghc-options", "-w -fcontext-stack=50 -iexamples -v0"]
+        (":set -i\n:set -iexamples\n:load " ++ inFile ++ "\nmain")
 
     writeFile outFile stdout
 
@@ -44,8 +41,7 @@ runghcwith f = describe f $ it "ok" $ checkResult $
         readProcess "diff" ["-b", outFile, refFile] "" else return Nothing
 
     return (ec, stderr, diff)
- where
-  checkResult io = io `shouldReturn` (ExitSuccess, "", Just "")
+ `shouldReturn` (ExitSuccess, "", Just "")
 
 
 
