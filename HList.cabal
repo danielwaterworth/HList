@@ -1,5 +1,5 @@
 Name:                HList
-Version:             0.3.0.1
+Version:             0.3.1.0
 Category:            Data
 Synopsis:            Heterogeneous lists
 Description:         HList is a record system providing strongly typed heterogenous lists, records,
@@ -27,12 +27,9 @@ Extra-Source-Files:
                      examples/*.out,
 
                      examples/broken/*.ref,
-                     examples/broken/*.out,
 
                      Data/HList/broken/*.hs,
-                     Data/HList/obsolete/*.hs,
-
-                     examples/Main.in
+                     Data/HList/obsolete/*.hs
 
 Source-Repository head
     type: darcs
