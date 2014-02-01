@@ -24,11 +24,12 @@ class SubType l l'
 -- subType :: SubType l l' => l -> l' -> ()
 -- subType _ _ = ()
 
--- poly-kinded
 class HAppend l1 l2 where
-  type HAppendR l1 l2
   hAppend :: l1 -> l2 -> HAppendR l1 l2
 
+-- | poly-kinded, but 'hAppend' only works in cases where the kind variable
+-- `k` is `*`
+type family HAppendR (l1::k) (l2::k) :: k
 -- class HMember e1 l (b :: Bool) | e1 l -> b
 
 -- One occurrence and nothing is left

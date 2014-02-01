@@ -96,7 +96,7 @@ hTail :: HList (e ': l) -> HList l
 hTail (HCons _ l) = l
 
 -- | Length
-type family HLength (x :: [*]) :: HNat
+type family HLength (x :: [k]) :: HNat
 type instance HLength '[] = HZero
 type instance HLength (x ': xs) = HSucc (HLength xs)
 
@@ -109,10 +109,10 @@ instance HExtend e (HList l) where
   (.*.) = HCons
 
 instance HAppend (HList l1) (HList l2) where
-  type HAppendR (HList l1) (HList l2) = HList (HAppendList l1 l2)
   hAppend = hAppendList
+type instance HAppendR (HList l1) (HList l2) = HList (HAppendList l1 l2)
 
-type family HAppendList (l1 :: [*]) (l2 :: [*]) :: [*]
+type family HAppendList (l1 :: [k]) (l2 :: [k]) :: [k]
 type instance HAppendList '[] l = l
 type instance HAppendList (e ': l) l' = e ': HAppendList l l'
 
@@ -171,7 +171,7 @@ we had to program the algorithm twice, at the term and the type levels.
 -- * Reversing HLists
 
 -- Append the reversed l1 to l2
-type family HRevApp (l1 :: [*]) (l2 :: [*]) :: [*]
+type family HRevApp (l1 :: [k]) (l2 :: [k]) :: [k]
 type instance HRevApp '[] l = l
 type instance HRevApp (e ': l) l' = HRevApp l (e ': l')
 
@@ -353,17 +353,20 @@ instance (Apply p s, HUnfold' p (ApplyR p s)) => HUnfold' p (HJust (e,s)) where
 -- * replicate
 
 class HReplicate (n :: HNat) e where
-    type HReplicateR n e :: [*]
     hReplicate :: Proxy n -> e -> HList (HReplicateR n e)
 
 instance HReplicate HZero e where
-    type HReplicateR HZero e = '[]
     hReplicate _ _ = HNil
 
 instance HReplicate n e => HReplicate (HSucc n) e where
-    type HReplicateR (HSucc n) e = e ': HReplicateR n e
     hReplicate n e = e `HCons` hReplicate (hPred n) e
 
+-- | would be associated with 'HReplicate' except we want
+-- it to work with `e` of any kind, not just `*` that you can
+-- put into a HList. An \"inverse\" of 'HLength'
+type family HReplicateR (n :: HNat) (e :: k) :: [k]
+type instance HReplicateR HZero e = '[]
+type instance HReplicateR (HSucc n) e = e ': HReplicateR n e
 
 -- * concat
 

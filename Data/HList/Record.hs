@@ -333,9 +333,9 @@ instance HRLabelSet (LVPair l v ': r)
 
 instance (HRLabelSet (HAppendList r1 r2), HAppend (HList r1) (HList r2))
     => HAppend (Record r1) (Record r2) where
-  type HAppendR (Record r1) (Record r2) = Record (HAppendList r1 r2)
   hAppend (Record r) (Record r') = mkRecord (hAppend r r')
 
+type instance HAppendR (Record r1) (Record r2) = Record (HAppendList r1 r2)
 -- --------------------------------------------------------------------------
 
 -- Lookup

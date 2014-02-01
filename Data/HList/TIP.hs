@@ -68,9 +68,9 @@ instance HOccursNot e l => HOccursNot e (TIP l)
 instance (HAppend (HList l) (HList l'), HTypeIndexed (HAppendList l l'))
            => HAppend (TIP l) (TIP l')
  where
-  type HAppendR (TIP l) (TIP l') = TIP (HAppendList l l')
   hAppend (TIP l) (TIP l') = mkTIP (hAppend l l')
 
+type instance HAppendR (TIP l) (TIP l') = TIP (HAppendList l l')
 
 -- instance HOccurrence e l l' => HOccurrence e (TIP l) l'
 --  where
