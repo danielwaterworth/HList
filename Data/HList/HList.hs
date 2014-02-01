@@ -467,27 +467,37 @@ instance (HMapCxt f as bs as' bs') => ApplyAB (HMap f) as bs where
     applyAB (HMap f) = hMapAux f
 
 type HMapCxt f as bs as' bs' = (HMapAux f as' bs', as ~ HList as', bs ~ HList bs',
-    SameLength as' bs', SameLength bs' as')
+    SameLength as' bs')
 
 
 -- | Ensure two lists have the same length. We do case analysis on the
 -- first one (hence the type must be known to the type checker).
 -- In contrast, the second list may be a type variable.
-class SameLength es1 es2
-instance (es2 ~ '[]) => SameLength '[] es2
-instance (SameLength xs ys, es2 ~ (y ': ys)) => SameLength (x ': xs) es2
+class SameLength' (es1 :: [k]) (es2 :: [m])
+instance (es2 ~ '[]) => SameLength' '[] es2
+instance (SameLength' xs ys, es2 ~ (y ': ys)) => SameLength' (x ': xs) es2
 
+{- | symmetrical version of 'SameLength''. Written as a class instead of
+
+ > type SameLength a b = (SameLength' a b, SameLength' b a)
+
+since ghc expands type synonyms, but not classes (and it seems to have the same
+result)
+
+-}
+class (SameLength' x y, SameLength' y x) =>
+        SameLength (x :: [k]) (y :: [m])
+instance (SameLength' x y, SameLength' y x) => SameLength x y
 
 
 
 class HMapAux f (l :: [*]) (r :: [*]) where
-  hMapAux :: (SameLength l r, SameLength r l) => f -> HList l -> HList r
+  hMapAux :: SameLength l r => f -> HList l -> HList r
 
 instance HMapAux f '[] '[] where
   hMapAux       _  _  = HNil
 
-instance (ApplyAB f e e', HMapAux f l l',
-    SameLength l l', SameLength l' l)
+instance (ApplyAB f e e', HMapAux f l l', SameLength l l')
     => HMapAux f (e ': l) (e' ': l') where
   hMapAux f (HCons x l)    = applyAB f x `HCons` hMapAux f l
 
@@ -551,7 +561,7 @@ hComposeList fs v0 = let r = hFoldr (undefined :: Comp) (\x -> x `asTypeOf` r) f
    <http://www.haskell.org/pipermail/haskell-cafe/2006-October/018784.html>
  -}
 
-class (Applicative m, SameLength a b, SameLength b a) => HSequence m a b | a -> b, m b -> a where
+class (Applicative m, SameLength a b) => HSequence m a b | a -> b, m b -> a where
     hSequence :: HList a -> m (HList b)
 {- ^
 
