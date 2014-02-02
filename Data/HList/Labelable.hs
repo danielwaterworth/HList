@@ -82,8 +82,8 @@ instance (Functor f,
           HasField x (Record t) b,
           HFind x (RecordLabels t) n,
           HFind x (RecordLabels s) n,
-          HUpdateAtHNat n (LVPair x b) s,
-          t ~ HUpdateAtHNatR n (LVPair x b) s)
+          HUpdateAtHNat n (Tagged x b) s,
+          t ~ HUpdateAtHNatR n (Tagged x b) s)
         => Labelable x (->) f s t a b where
             hLens' lab f rec = fmap (\v -> hUpdateAtLabel lab v rec) (f (rec .!. lab))
 

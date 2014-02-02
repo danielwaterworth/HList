@@ -368,7 +368,7 @@ instance (r ~ r') => KWApply r '[] r' where
 instance (HEq kw kw' flag,
 	  KWApply' flag (kw ->a->f') (kw' ': a' ': tail) r)
     => KWApply (kw ->a->f') (kw' ': a' ': tail) r where
-    kwapply = kwapply' (proxy :: Proxy flag)
+    kwapply = kwapply' (Proxy :: Proxy flag)
 
 class KWApply' flag f arg_values r  where
     kwapply':: Proxy flag -> f -> HList arg_values -> r
@@ -429,7 +429,7 @@ class KW f arg_desc arg_def r where
 instance (IsKeyFN r rflag,
 	    KW' rflag f arg_desc arg_def r)
     => KW f arg_desc arg_def r where
-    kwdo = kw' (proxy ::Proxy rflag)
+    kwdo = kw' (Proxy ::Proxy rflag)
 
 class KW' rflag f arg_desc arg_def r where
     kw' :: Proxy rflag -> f -> arg_desc -> HList arg_def -> r
@@ -479,7 +479,7 @@ instance (Fail (ErrReqdArgNotFound kw), nff ~ (ErrReqdArgNotFound kw))
 instance (HEq kw kw' flag,
 	  KWMerge'' flag kw (kw' ': etc) atail arg_values arg_def f r)
     => KWMerge' kw (kw' ': etc) atail arg_values arg_def f r where
-    kwmerge' = kwmerge'' (undefined:: Proxy flag)
+    kwmerge' = kwmerge'' (Proxy :: Proxy flag)
 
 class KWMerge'' (flag :: Bool) kw (list :: [*]) atail arg_values arg_def f r
      where
@@ -557,10 +557,10 @@ instance
     kw (HCons f arg_def) = kwdo f rfk arg_def :: r
         where rfk = reflect_fk f :: akws
 
-data LVPairToKW = LVPairToKW
-instance (x ~ LVPair l v, y ~ HList '[Label l, v]) =>
-        ApplyAB LVPairToKW x y where
-    applyAB _ (LVPair v) = hBuild Label v
+data TaggedToKW = TaggedToKW
+instance (x ~ Tagged l v, y ~ HList '[Label l, v]) =>
+        ApplyAB TaggedToKW x y where
+    applyAB _ (Tagged v) = hBuild Label v
 
 
 {- | convert a 'Record' into a list that can supply
@@ -581,10 +581,10 @@ A bit of setup:
 
 
 -}
-recToKW :: forall a b. (HMapAux LVPairToKW a b, SameLength a b,
+recToKW :: forall a b. (HMapAux TaggedToKW a b, SameLength a b,
       SameLength b a, HConcat b) =>
      Record a -> HList (HConcatR b)
-recToKW (Record r) = hConcat (hMap LVPairToKW r :: HList b)
+recToKW (Record r) = hConcat (hMap TaggedToKW r :: HList b)
 
 {- $originalIntro
 

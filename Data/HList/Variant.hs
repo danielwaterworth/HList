@@ -39,8 +39,8 @@ newtype Variant mr = Variant mr
 -- | Turn proxy sequence into sequence of Nothings
 
 data HMaybeF = HMaybeF
-instance ((LVPair l (Proxy t) ~ a, b ~ LVPair l (Maybe t))) =>  ApplyAB HMaybeF a b   where
-    applyAB _ _ = LVPair Nothing
+instance ((Tagged l (Proxy t) ~ a, b ~ Tagged l (Maybe t))) =>  ApplyAB HMaybeF a b   where
+    applyAB _ _ = Tagged Nothing
 
 hMaybied x = hMap HMaybeF x
 

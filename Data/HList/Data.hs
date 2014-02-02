@@ -181,7 +181,7 @@ class RecordLabelsStr (xs :: [*]) where
 instance RecordLabelsStr '[] where
     recordLabelsStr _ = []
 instance (RecordLabelsStr xs,
-          ShowLabel x) => RecordLabelsStr (LVPair x t ': xs) where
+          ShowLabel x) => RecordLabelsStr (Tagged x t ': xs) where
     recordLabelsStr _ = showLabel (undefined :: Label x) :
                             recordLabelsStr (undefined :: Record xs)
 
@@ -216,7 +216,7 @@ data C a
 deriving instance Typeable Record
 deriving instance Typeable HList
 deriving instance Typeable HListFlat
-deriving instance Typeable LVPair
+-- deriving instance Typeable Tagged
 
 type TypeablePolyK (a :: k) = (Typeable a)
 #else
@@ -228,12 +228,12 @@ instance (TypeRepsList (Record xs)) => Typeable (Record xs) where
   typeOf x = mkTyConApp (mkTyCon3 "HList" "Data.HList.Record" "Record")
                 [ tyConList (typeRepsList x) ]
 
-instance ShowLabel sy => Typeable1 (LVPair sy) where
+instance ShowLabel sy => Typeable1 (Tagged sy) where
   typeOf1 _ = mkTyConApp
         (mkTyCon3 "HList" "Data.HList.Data" (showLabel (undefined :: Label sy)))
         []
 
-instance (ShowLabel sy, Typeable x) => Typeable (LVPair sy x) where
+instance (ShowLabel sy, Typeable x) => Typeable (Tagged sy x) where
   typeOf _ = mkTyConApp
             (mkTyCon3 "GHC" "GHC.TypeLits" (showLabel (undefined :: Label sy)))
             [mkTyConApp (mkTyCon3 "HList" "Data.HList.Record" "=") [],

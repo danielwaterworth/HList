@@ -827,7 +827,7 @@ instance (HEq e e' b, HTMember e l b', HOr b b' ~ b'')
       =>  HTMember e (e' ': l) b''
 
 hTMember :: HTMember e l b => e -> HList l -> Proxy b
-hTMember _ _ = proxy
+hTMember _ _ = Proxy
 
 
 -- * Intersection based on HTMember

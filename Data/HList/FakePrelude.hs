@@ -1,3 +1,5 @@
+{-# LANGUAGE OverlappingInstances #-}
+-- just for the proxy
 
 {- |
    The HList library
@@ -9,11 +11,11 @@
 
 module Data.HList.FakePrelude
     (module Data.HList.FakePrelude,
-     module Data.HList.FakePrelude.Proxy) where
+     module Data.Proxy) where
 
+import Data.Proxy
 import GHC.Prim (Constraint)
 import GHC.TypeLits
-import Data.HList.FakePrelude.Proxy
 
 -- --------------------------------------------------------------------------
 -- * A heterogeneous apply operator

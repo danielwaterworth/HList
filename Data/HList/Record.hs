@@ -34,9 +34,7 @@ module Data.HList.Record
 
     -- ** Labels
     -- $labels
-    LVPair(..),
-    labelLVPair,
-    newLVPair,
+    module Data.Tagged,
     (.=.), (.-.),
 
     -- ** Record
@@ -137,6 +135,8 @@ import Data.HList.FakePrelude
 import Data.HList.HListPrelude
 import Data.HList.HList
 import Data.HList.HArray
+
+import Data.Tagged
  
 -- imports for doctest/examples
 import Data.HList.Label6 ()
@@ -157,21 +157,16 @@ import Data.HList.TypeEqO ()
 -- its value, and the record, at run-time, is indistinguishable from
 -- the HList of field values. At run-time, all information about the
 -- labels is erased.
-
--- | Field of label l with value type v
--- Polykinded with respect to l: label may be a symbol, a nat, etc.
-newtype LVPair l v = LVPair { valueLVPair :: v } deriving Eq
+--
+-- The type from "Data.Tagged" is used.
 
 -- | Label accessor
-labelLVPair :: LVPair l v -> Label l
+labelLVPair :: Tagged l v -> Label l
 labelLVPair = undefined
 
-newLVPair :: Label l -> v -> LVPair l v
-newLVPair _ = LVPair
+newLVPair :: Label l -> v -> Tagged l v
+newLVPair _ = Tagged
 
--- stolen by typeable
---infixr 4 :=:
---type l :=: v = LVPair l v
 
 
 infixr 4 .=.
@@ -186,7 +181,7 @@ infixr 4 .=.
   Record{x="v1",y='2'}
 
 -}
-(.=.) :: Label l -> v -> LVPair l v
+(.=.) :: Label l -> v -> Tagged l v
 l .=. v = newLVPair l v
 
 
@@ -212,11 +207,11 @@ instance HRLabelSet '[]
 instance HRLabelSet '[x]
 instance ( HEq l1 l2 leq
          , HRLabelSet' l1 l2 leq r
-         ) => HRLabelSet (LVPair l1 v1 ': LVPair l2 v2 ': r)
+         ) => HRLabelSet (Tagged l1 v1 ': Tagged l2 v2 ': r)
 
 class HRLabelSet' l1 l2 (leq::Bool) (r :: [*])
-instance ( HRLabelSet (LVPair l2 () ': r)
-         , HRLabelSet (LVPair l1 () ': r)
+instance ( HRLabelSet (Tagged l2 () ': r)
+         , HRLabelSet (Tagged l1 () ': r)
          ) => HRLabelSet' l1 l2 False r
 instance ( Fail (DuplicatedLabel l1) ) => HRLabelSet' l1 l2 True r
 
@@ -244,10 +239,10 @@ instance ( Fail (DuplicatedLabel l1) ) => HLabelSet' l1 l2 True r
 
 type family RecordLabels (r :: [*]) :: [k]
 type instance RecordLabels '[]               = '[]
-type instance RecordLabels (LVPair l v ': r) = l ': RecordLabels r
+type instance RecordLabels (Tagged l v ': r) = l ': RecordLabels r
 
 recordLabels :: Record r -> Proxy (RecordLabels r)
-recordLabels = undefined
+recordLabels _ = Proxy
 
 
 -- | Construct the HList of values of the record.
@@ -258,9 +253,9 @@ class RecordValues (r :: [*]) where
 instance RecordValues '[] where
   type RecordValuesR '[] = '[]
   recordValues' _ = HNil
-instance RecordValues r=> RecordValues (LVPair l v ': r) where
-   type RecordValuesR (LVPair l v ': r) = v ': RecordValuesR r
-   recordValues' (HCons (LVPair v) r) = HCons v (recordValues' r)
+instance RecordValues r=> RecordValues (Tagged l v ': r) where
+   type RecordValuesR (Tagged l v ': r) = v ': RecordValuesR r
+   recordValues' (HCons (Tagged v) r) = HCons v (recordValues' r)
 
 recordValues :: RecordValues r => Record r -> HList (RecordValuesR r)
 recordValues (Record r) = recordValues' r
@@ -272,7 +267,7 @@ type instance LabelsOf '[] = '[]
 type instance LabelsOf (Label l ': r)  = l ': LabelsOf r
 
 hLabels :: HList l -> Proxy (LabelsOf l)
-hLabels = undefined
+hLabels _ = Proxy
 
 -- --------------------------------------------------------------------------
 
@@ -293,8 +288,8 @@ instance ( ShowLabel l
          , Show v
          , ShowComponents r
          )
-      =>   ShowComponents (LVPair l v ': r) where
-  showComponents comma (HCons f@(LVPair v) r)
+      =>   ShowComponents (Tagged l v ': r) where
+  showComponents comma (HCons f@(Tagged v) r)
      =  comma
      ++ showLabel ((labelLVPair f) :: Label l)
      ++ "="
@@ -308,9 +303,9 @@ instance ( ShowLabel l
 
 -- Extension
 
-instance HRLabelSet (LVPair l v ': r) 
-    => HExtend (LVPair (l :: k) v) (Record r) where
-  type HExtendR (LVPair l v) (Record r) = Record (LVPair l v ': r)
+instance HRLabelSet (Tagged l v ': r) 
+    => HExtend (Tagged (l :: k) v) (Record r) where
+  type HExtendR (Tagged l v) (Record r) = Record (Tagged l v ': r)
   f .*. (Record r) = mkRecord (HCons f r)
 
 
@@ -364,17 +359,17 @@ instance ( RecordLabels r ~ ls
 
 
 
-instance (HEq l l1 b, HasField' b l (LVPair l1 v1 ': r) v)
-    => HasField l (Record (LVPair l1 v1 ': r)) v where
+instance (HEq l l1 b, HasField' b l (Tagged l1 v1 ': r) v)
+    => HasField l (Record (Tagged l1 v1 ': r)) v where
     hLookupByLabel l (Record r) =
-             hLookupByLabel' (undefined::Proxy b) l r
+             hLookupByLabel' (Proxy::Proxy b) l r
 
 
 class HasField' (b::Bool) (l :: k) (r::[*]) v | b l r -> v where
     hLookupByLabel':: Proxy b -> Label l -> HList r -> v
 
-instance HasField' True l (LVPair l v ': r) v where
-    hLookupByLabel' _ _ (HCons (LVPair v) _) = v
+instance HasField' True l (Tagged l v ': r) v where
+    hLookupByLabel' _ _ (HCons (Tagged v) _) = v
 instance HasField l (Record r) v => HasField' False l (fld ': r) v where
     hLookupByLabel' _ l (HCons _ r) = hLookupByLabel l (Record r)
 
@@ -424,7 +419,7 @@ hDeleteAtLabel :: forall l t t1 t2.
    (H2ProjectByLabels '[l] t t1 t2) =>
    Label l -> Record t -> Record t2
 hDeleteAtLabel _ (Record r) = 
-  Record $ snd $ h2projectByLabels (undefined::Proxy '[l]) r
+  Record $ snd $ h2projectByLabels (Proxy::Proxy '[l]) r
 
 infixl 2 .-.
 {-|
@@ -460,10 +455,10 @@ r .-. l =  hDeleteAtLabel l r
 
 -- | 'hUpdateAtLabel' @label value record@
 hUpdateAtLabel :: forall (r :: [*]) (l :: k) (n::HNat) (v :: *). 
-  (HFind l (RecordLabels r) n, HUpdateAtHNat n (LVPair l v) r) =>
-  Label l -> v -> Record r -> Record (HUpdateAtHNatR n (LVPair l v) r)
+  (HFind l (RecordLabels r) n, HUpdateAtHNat n (Tagged l v) r) =>
+  Label l -> v -> Record r -> Record (HUpdateAtHNatR n (Tagged l v) r)
 hUpdateAtLabel l v (Record r) = 
-    Record (hUpdateAtHNat (undefined::Proxy n) (newLVPair l v) r)
+    Record (hUpdateAtHNat (Proxy::Proxy n) (newLVPair l v) r)
 
 infixr 2 .@.
 {-|
@@ -476,7 +471,7 @@ infixr 2 .@.
   > label1 .=. value1 .@. record1
 
 -}
-f@(LVPair v) .@. r  =  hUpdateAtLabel (labelLVPair f) v r
+f@(Tagged v) .@. r  =  hUpdateAtLabel (labelLVPair f) v r
 
 
 -- --------------------------------------------------------------------------
@@ -514,9 +509,9 @@ instance H2ProjectByLabels (l ': ls) '[] '[] '[] where
     h2projectByLabels _ _ = (HNil,HNil)
 
 instance (HMemberM l1 ((l::k) ': ls) (b :: Maybe [k]),
-          H2ProjectByLabels' b (l ': ls) (LVPair l1 v1 ': r1) rin rout)
-    => H2ProjectByLabels (l ': ls) (LVPair l1 v1 ': r1) rin rout where
-    h2projectByLabels = h2projectByLabels' (undefined::(Proxy b))
+          H2ProjectByLabels' b (l ': ls) (Tagged l1 v1 ': r1) rin rout)
+    => H2ProjectByLabels (l ': ls) (Tagged l1 v1 ': r1) rin rout where
+    h2projectByLabels = h2projectByLabels' (Proxy::Proxy b)
 
 class H2ProjectByLabels' (b::Maybe [k]) (ls::[k]) r rin rout 
                          | b ls r -> rin rout where
@@ -526,7 +521,7 @@ class H2ProjectByLabels' (b::Maybe [k]) (ls::[k]) r rin rout
 instance H2ProjectByLabels ls1 r rin rout =>
     H2ProjectByLabels' ('Just ls1) ls (f ': r) (f ': rin) rout where
     h2projectByLabels' _ _ (HCons x r) = (HCons x rin, rout)
-        where (rin,rout) = h2projectByLabels (undefined::Proxy ls1) r
+        where (rin,rout) = h2projectByLabels (Proxy::Proxy ls1) r
 
 instance H2ProjectByLabels ls r rin rout =>
     H2ProjectByLabels' 'Nothing ls (f ': r) rin (f ': rout) where
@@ -572,7 +567,7 @@ infixr 2 .<.
   The same as '.@.', except type preserving. It has the same fixity as (.\@.).
 
 -}
-f@(LVPair v) .<. r = hTPupdateAtLabel (labelLVPair f) v r
+f@(Tagged v) .<. r = hTPupdateAtLabel (labelLVPair f) v r
 
 -- --------------------------------------------------------------------------
 -- | Subtyping for records
@@ -593,14 +588,14 @@ instance HLeftUnion r '[] r
 
 instance ( RecordLabels r ~ ls
          , HMember l ls b
-         , HLeftUnionBool b r (LVPair l v) r'''
+         , HLeftUnionBool b r (Tagged l v) r'''
          , HLeftUnion r''' r' r''
          )
-           => HLeftUnion r (LVPair l v ': r') r''
+           => HLeftUnion r (Tagged l v ': r') r''
   where
    hLeftUnion r (Record (HCons f r')) = r''
     where
-     r'''    = hLeftUnionBool (proxy :: Proxy b) r f
+     r'''    = hLeftUnionBool (Proxy :: Proxy b) r f
      r''     = hLeftUnion (r''' :: Record r''') (Record r' :: Record r')
 
 class  HLeftUnionBool (b :: Bool) r f r' | b r f -> r'
@@ -659,12 +654,12 @@ instance UnionSymRec r1 '[] r1 where
 
 instance ( RecordLabels r1 ~ ls
          , HMember l ls b
-         , UnionSymRec' b r1 (LVPair l v) r2' ru
+         , UnionSymRec' b r1 (Tagged l v) r2' ru
          )
-    => UnionSymRec r1 (LVPair l v ': r2') ru
+    => UnionSymRec r1 (Tagged l v ': r2') ru
     where
     unionSR r1 (Record (HCons f r2')) =
-        unionSR' (undefined::Proxy b) r1 f (Record r2')
+        unionSR' (Proxy::Proxy b) r1 f (Record r2')
 
 class UnionSymRec' (b :: Bool) r1 f2 r2' ru | b r1 f2 r2' -> ru where
     unionSR' :: Proxy b -> Record r1 -> f2 -> Record r2'  -> (Record ru, Record ru)
@@ -680,15 +675,15 @@ class UnionSymRec' (b :: Bool) r1 f2 r2' ru | b r1 f2 r2' -> ru where
 -}
 instance (UnionSymRec r1 r2' ru,
           HasField l2 (Record ru) v2,
-          HUpdateAtHNat n (LVPair l2 v2) ru,
-          ru ~ HUpdateAtHNatR n (LVPair l2 v2) ru,
+          HUpdateAtHNat n (Tagged l2 v2) ru,
+          ru ~ HUpdateAtHNatR n (Tagged l2 v2) ru,
           RecordLabels ru ~ ls,
-          f2 ~ LVPair l2 v2,
+          f2 ~ Tagged l2 v2,
           HFind l2 ls n)
     => UnionSymRec' True r1 f2 r2' ru where
-    unionSR' _ r1 (LVPair v2) r2' =
+    unionSR' _ r1 (Tagged v2) r2' =
        case unionSR r1 r2'
-        of (ul,ur) -> (ul, hTPupdateAtLabel (undefined:: Label l2) v2 ur)
+        of (ul,ur) -> (ul, hTPupdateAtLabel (Label :: Label l2) v2 ur)
 
 
 instance (UnionSymRec r1 r2' ru,
@@ -718,8 +713,8 @@ instance (H2ProjectByLabels '[l] r rin rout,
           HRearrange' l ls rin rout (HList r'),
           r'' ~ HList r') =>
         HRearrange (l ': ls) r r'' where
-   hRearrange2 _ r = hRearrange2' (proxy :: Proxy l) (proxy :: Proxy ls) rin rout
-      where (rin, rout) = h2projectByLabels (proxy :: Proxy '[l]) r
+   hRearrange2 _ r = hRearrange2' (Proxy :: Proxy l) (Proxy :: Proxy ls) rin rout
+      where (rin, rout) = h2projectByLabels (Proxy :: Proxy '[l]) r
 
 
 -- | Helper class 2 for 'hRearrange'
@@ -727,10 +722,10 @@ class HRearrange' l ls rin rout r' where
     hRearrange2' :: Proxy l -> Proxy ls -> HList rin -> HList rout -> r'
  
 instance (HRearrange ls rout (HList r'),
-         r'' ~ HList (LVPair l v ': r')) =>
-        HRearrange' l ls '[LVPair l v] rout r'' where
-   hRearrange2' _ ls (HCons lv@(LVPair v) _HNil) rout
-        = HCons (LVPair v `asTypeOf` lv) (hRearrange2 ls rout)
+         r'' ~ HList (Tagged l v ': r')) =>
+        HRearrange' l ls '[Tagged l v] rout r'' where
+   hRearrange2' _ ls (HCons lv@(Tagged v) _HNil) rout
+        = HCons (Tagged v `asTypeOf` lv) (hRearrange2 ls rout)
 
 data ExtraField l = ExtraField
 data FieldNotFound l = FieldNotFound
@@ -742,7 +737,7 @@ instance Fail (FieldNotFound l) =>
 
 -- | For improved error messages
 instance Fail (ExtraField l) => 
-          HRearrange '[] (LVPair l v ': a) (ExtraField l) where
+          HRearrange '[] (Tagged l v ': a) (ExtraField l) where
    hRearrange2 _ _ = ExtraField
 
 
