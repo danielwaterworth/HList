@@ -1,5 +1,5 @@
 29 Jan 2014
-	Release 0.3.1.1
+	Release 0.3.1.0
 	Work with newer GHC.TypeLits (SingI and similar were moved out)
 
 05 Nov 2013
