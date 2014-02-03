@@ -1,5 +1,5 @@
 Name:                HList
-Version:             0.3.1.0
+Version:             0.3.2.0
 Category:            Data
 Synopsis:            Heterogeneous lists
 Description:         HList is a record system providing strongly typed heterogenous lists, records,
