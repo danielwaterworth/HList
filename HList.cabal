@@ -91,7 +91,7 @@ Test-Suite examples
   Ghc-Options: -threaded
   Main-Is: examples/runexamples.hs
   Default-Language:    Haskell2010
-  Build-Depends:       base, hspec == 1.7.*, directory, filepath,
+  Build-Depends:       base, hspec >= 1.7, directory, filepath,
                        process, syb, cmdargs, lens, HList, mtl
 
 Test-Suite doctests
