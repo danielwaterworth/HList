@@ -352,7 +352,8 @@ instance (Apply p s, HUnfold' p (ApplyR p s)) => HUnfold' p (HJust (e,s)) where
 
 -- * replicate
 
-class HReplicate (n :: HNat) e where
+class (HLength (HReplicateR n e) ~ n) =>
+      HReplicate (n :: HNat) e where
     hReplicate :: Proxy n -> e -> HList (HReplicateR n e)
 
 instance HReplicate HZero e where
