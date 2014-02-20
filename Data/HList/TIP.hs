@@ -145,7 +145,7 @@ TIPH[BSE, Key 42, Name "Angus", Cow, Price 75.5]
 
 
 
->>> Sheep .*. tipyDelete (proxy::Proxy Breed) myTipyCow
+>>> Sheep .*. tipyDelete (Proxy::Proxy Breed) myTipyCow
 TIPH[Sheep, Key 42, Name "Angus", Price 75.5]
 
 >>> tipyUpdate Sheep myTipyCow

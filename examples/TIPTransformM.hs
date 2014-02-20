@@ -127,7 +127,7 @@ class Monad m => TransTIPM m op db where
 -- can be instantiated either to a monad type constructor, or (arg->).
 instance (Monad m, HMember op db b, TransTIPM' b m (m' op) (TIP db))
     => TransTIPM m (m' op) (TIP db) where
-    ttipM = ttipM' (proxy :: Proxy b)
+    ttipM = ttipM' (Proxy :: Proxy b)
 
 class Monad m => TransTIPM' (b :: Bool) m op db where
     ttipM' :: Proxy b -> op -> db -> m db

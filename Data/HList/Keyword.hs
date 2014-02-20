@@ -568,6 +568,7 @@ default arguments for 'kw'
 A bit of setup:
 
 >>> :set -XQuasiQuotes
+>>> import Data.HList.RecordPuns
 >>> let f (_ :: Label "a") a (_ :: Label "b") b () = a `div` b
 
 

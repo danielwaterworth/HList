@@ -303,9 +303,9 @@ Type error ...
 
 testVariant = (testVar1,(testVar2,(testVar3)))
  where
-  animalVar =  key   .=. (proxy::Proxy Integer)
-           .*. name  .=. (proxy::Proxy String)
-           .*. breed .=. (proxy::Proxy Breed)
+  animalVar =  key   .=. (Proxy::Proxy Integer)
+           .*. name  .=. (Proxy::Proxy String)
+           .*. breed .=. (Proxy::Proxy Breed)
            .*. emptyRecord
   testVar1 = mkVariant name "angus" animalVar
   testVar2 = unVariant key testVar1

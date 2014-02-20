@@ -60,7 +60,7 @@ class TransTIP op db where
 
 instance (HMember op db b, TransTIP' b op (TIP db)) 
     => TransTIP op (TIP db) where
-    ttip = ttip' (proxy ::Proxy b)
+    ttip = ttip' (Proxy ::Proxy b)
 
 class TransTIP' (b :: Bool) op db where
     ttip' :: Proxy b -> op -> db -> db
