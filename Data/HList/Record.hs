@@ -127,7 +127,9 @@ module Data.HList.Record
     HRLabelSet',
     HRearrange(hRearrange2),
     HRearrange'(hRearrange2'),
-    UnionSymRec'(..)
+    UnionSymRec'(..),
+    labelLVPair,
+    newLVPair,
 ) where
 
 
@@ -162,7 +164,7 @@ import Data.HList.TypeEqO ()
 
 -- | Label accessor
 labelLVPair :: Tagged l v -> Label l
-labelLVPair = undefined
+labelLVPair _ = Label
 
 newLVPair :: Label l -> v -> Tagged l v
 newLVPair _ = Tagged
