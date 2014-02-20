@@ -66,7 +66,6 @@ import Data.HList.TypeEqO ()
 import Data.HList.HListPrelude
 import Data.HList.HList
 import Data.HList.Record
-import Data.HList.RecordPuns
 
 {- $setup
 
