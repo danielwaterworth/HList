@@ -1,3 +1,8 @@
+20 Feb 2014
+	Release 0.3.4
+	RecordPuns add ( ) syntax
+	Use the tagged package: this removes LVPair and lowercase proxy.
+
 03 Feb 2014
     Release 0.3.2.0
 	Relax hspec dependency
