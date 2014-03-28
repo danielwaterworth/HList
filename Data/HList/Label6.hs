@@ -23,8 +23,7 @@ import GHC.TypeLits
 
 #if MIN_VERSION_base(4,7,0)
 instance KnownSymbol x => ShowLabel (x :: Symbol) where
-  showLabel _ =  symbolVal (proxy :: Proxy x)
-
+  showLabel _ =  symbolVal (Proxy :: Proxy x)
 #else
 instance SingI x => ShowLabel (x :: Symbol) where
   showLabel _ =  fromSing (sing :: Sing x)
