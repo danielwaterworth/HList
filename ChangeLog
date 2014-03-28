@@ -1,3 +1,7 @@
+28 Mar 2014
+	Release 0.3.4.1
+	Fix build with ghc-7.8 broken by changes in HList 0.3.4
+
 20 Feb 2014
 	Release 0.3.4
 	RecordPuns add ( ) syntax
