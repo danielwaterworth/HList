@@ -99,6 +99,8 @@ instance (f ~ Identity, s ~ '[], t ~ '[], a ~ (), b ~ (),
 -- "Data.HList.Label3" which have the wrong kind.
 l .==. v = toLabel l .=. v
 
+infixr 4 .==.
+
 
 -- | extracts the type that is actually the label in @a@ and puts it in @b@
 class ToSym a b
