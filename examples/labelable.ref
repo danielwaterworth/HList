@@ -2,3 +2,8 @@
 Record{x=(),y=Record{y=321,x=123}}
 321
 Record{x="hi",y=Record{y="xy",x=123}}
+
+read-show
+Just Record{x="hi",y=Record{y=321,x=123}}
+Just Record{x="hi",y=Record{y=321,x=123}}
+Nothing

@@ -139,6 +139,10 @@ import Data.HList.HList
 import Data.HList.HArray
 
 import Data.Tagged
+import Control.Monad
+import Control.Applicative
+
+import Text.ParserCombinators.ReadP
  
 -- imports for doctest/examples
 import Data.HList.Label6 ()
@@ -187,7 +191,9 @@ infixr 4 .=.
 l .=. v = newLVPair l v
 
 
-newtype Record (r :: [*]) = Record (HList r) -- deriving Eq
+newtype Record (r :: [*]) = Record (HList r)
+
+deriving instance (Eq (Prime r),ConvHList r) => Eq (Record r)
 
 
 -- | Build a record
@@ -297,6 +303,48 @@ instance ( ShowLabel l
      ++ "="
      ++ show v
      ++ showComponents "," r
+
+
+-- --------------------------------------------------------------------------
+
+-- 'Read' instance to appeal to normal records
+
+
+data ReadComponent = ReadComponent Bool -- ^ include comma?
+
+instance (Read v, ShowLabel l,
+          x ~ Tagged l v,
+          ReadP x ~ y) =>
+  ApplyAB ReadComponent x y where
+    applyAB (ReadComponent comma) _ = do
+      when comma (() <$ string ",")
+      _ <- string (showLabel (Label :: Label l))
+      _ <- string "="
+      v <- readS_to_P reads
+      return (Tagged v)
+
+
+instance (HMapCxt ReadComponent as bs rs bs',
+          ApplyAB ReadComponent r readP_r,
+          ConvHList rs,
+          HSequence ReadP (readP_r ': bs') (r ': rs)) => Read (Record (r ': rs)) where
+    readsPrec _ = readP_to_S $ do
+        _ <- string "Record{"
+        content <- hSequence parsers
+        _ <- string "}"
+        return (Record content)
+
+      where
+        zs :: HList rs
+        zs = unPrime (error "Data.HList.Record reads")
+
+        readP_r :: readP_r
+        readP_r = applyAB
+                      (ReadComponent False)
+                      (error "Data.HList.Record reads z" :: r)
+
+        parsers = readP_r `HCons` (hMap (ReadComponent True) zs :: bs)
+
 
 
 
