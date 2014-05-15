@@ -35,10 +35,11 @@
 module Data.HList.Label3 where
 
 import Data.HList.FakePrelude
+import Data.Typeable
 
 
 data Lbl (x :: HNat) ns desc  -- labels are exclusively type-level entities
-
+  deriving Typeable
 
 -- Public constructors for labels
 

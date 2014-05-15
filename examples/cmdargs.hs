@@ -1,4 +1,5 @@
 {-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
 {-# LANGUAGE TemplateHaskell #-}
 module Main where
@@ -13,13 +14,11 @@ An example showing off the data instance for Record
 
 Also a use of cmdArgs
 
-NOTE: the data instances do not work with ghc-7.8 because of
-<http://ghc.haskell.org/trac/ghc/ticket/8486>
-
 
 -}
 
-makeLabels6 (words "x y z")
+-- makeLabels6 (words "x y z")
+makeLabels3 "examples_cmdargs" (words "x y z")
 
 
 d0 = x .=. (5 :: Int)

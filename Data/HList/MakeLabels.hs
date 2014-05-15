@@ -11,6 +11,7 @@ module Data.HList.MakeLabels (
     -- | see also 'Data.HList.Labelable.makeLabelable'
     ) where
 
+import Data.Typeable
 import Data.HList.FakePrelude
 import Data.HList.Label3
 
@@ -30,7 +31,7 @@ dcl n = let
     c = make_cname n
     d = make_dname n
 
-    dd = dataD (return []) c [] [] [{- 'Typeable -}]
+    dd = dataD (return []) c [] [] [''Typeable]
 
     labelSig = sigD d [t| Label $(conT c) |]
 

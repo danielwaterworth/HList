@@ -4,8 +4,9 @@
 to be flat data structures. The @Data@ instance for 'HList' gives a nested
 structure.
 
-NOTE: these instances do not work with ghc-7.8 because of
-<http://ghc.haskell.org/trac/ghc/ticket/8486>
+NOTE: these instances do not work with ghc-7.8 with promoted
+string (Symbol) labels because of
+<https://ghc.haskell.org/trac/ghc/ticket/9111>
 
 [@HList@]
 
@@ -216,7 +217,12 @@ data C a
 deriving instance Typeable Record
 deriving instance Typeable HList
 deriving instance Typeable HListFlat
--- deriving instance Typeable Tagged
+
+-- orphans
+deriving instance Typeable 'HZero
+deriving instance Typeable 'HSucc
+deriving instance Typeable '[]
+deriving instance Typeable '(:)
 
 type TypeablePolyK (a :: k) = (Typeable a)
 #else
