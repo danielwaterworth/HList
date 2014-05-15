@@ -1,5 +1,3 @@
-{-# LANGUAGE OverlappingInstances #-}
--- just for the proxy
 
 {- |
    The HList library
@@ -292,9 +290,6 @@ The above line is equivalent to
 -- ** Value-level proxies
 hTrue  :: Proxy True ; hTrue  = undefined
 hFalse :: Proxy False; hFalse = undefined
-
-instance Show (Proxy True)  where show _ = "HTrue"
-instance Show (Proxy False) where show _ = "HFalse"
 
 
 -- **  Conjunction

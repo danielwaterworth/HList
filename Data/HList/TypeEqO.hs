@@ -27,3 +27,8 @@ instance TupleType (x,y,z) True
 -- Continue for a while
 instance False ~ b => TupleType x b
 -- instance TupleType x HFalse -- would violate functional dependency
+
+-- overlaps an instance Show (Proxy t) for convenience
+instance Show (Proxy True)  where show _ = "HTrue"
+instance Show (Proxy False) where show _ = "HFalse"
+
