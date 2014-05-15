@@ -71,6 +71,7 @@ import Data.HList.Record
 
  >>> :set -XDataKinds -XFlexibleInstances -XMultiParamTypeClasses
  >>> :set -XScopedTypeVariables -XOverlappingInstances -XTypeFamilies
+ >>> :set -fcontext-stack=100
 
 We will be using an example inspired by a graphics toolkit -- the area
 which really benefits from keyword arguments. We first define our
@@ -404,11 +405,10 @@ Given a function, return the type list of its keywords
 
 >>> :t reflect_fk (undefined::Size->Int->Color->CommonColor->String)
 reflect_fk (undefined::Size->Int->Color->CommonColor->String)
-  :: Arg [*] ((':) * Size ((':) * Color ('[] *))) ('[] *)
+  :: Arg '[Size, Color] '[]
 
 >>> :t reflect_fk (undefined::Size->Int->()->Int)
-reflect_fk (undefined::Size->Int->()->Int)
-  :: Arg [*] ((':) * Size ('[] *)) ('[] *)
+reflect_fk (undefined::Size->Int->()->Int) :: Arg '[Size] '[]
 
 
 -}

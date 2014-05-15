@@ -84,7 +84,7 @@ class ApplyAB f a b where
  >>> :set -XDataKinds
  >>> let plus1 = Fun (\x -> if x < 5 then x+1 else 5) :: Fun '[Num, Ord] '()
  >>> :t applyAB plus1
- applyAB plus1 :: (Num a, Ord a) => a -> a
+ applyAB plus1 :: (Ord a, Num a) => a -> a
 
  Also note the use of @'()@ to signal that the result
  type is the same as the argument type.

@@ -419,8 +419,7 @@ shows types like @'[a,b]@ using the actual constructors involved
 >>> :set -XNoMonomorphismRestriction
 >>> let xs = 1 .*. 'c' .*. HNil
 >>> :t hMap (HJust ()) xs
-hMap (HJust ()) xs
-  :: Num y => HList ((':) * (HJust y) ((':) * (HJust Char) ('[] *)))
+hMap (HJust ()) xs :: Num y => HList '[HJust y, HJust Char]
 
 
 These 4 examples show that the constraint on the length (2 in this cae)
@@ -438,28 +437,20 @@ direction that type information is propagated for the individual elements.
 
 >>> :t lr
 lr
-  :: (Read y, Read y1) =>
-     HList ((':) * String ((':) * String ('[] *)))
-     -> HList ((':) * y ((':) * y1 ('[] *)))
+  :: (Read y1, Read y) => HList '[String, String] -> HList '[y, y1]
 
 >>> :t rl
 rl
-  :: (Read y, Read y1) =>
-     HList ((':) * String ((':) * String ('[] *)))
-     -> HList ((':) * y ((':) * y1 ('[] *)))
+  :: (Read y1, Read y) => HList '[String, String] -> HList '[y, y1]
 
 
 >>> :t ls
 ls
-  :: (Show y, Show y1) =>
-     HList ((':) * y ((':) * y1 ('[] *)))
-     -> HList ((':) * String ((':) * String ('[] *)))
+  :: (Show y1, Show y) => HList '[y, y1] -> HList '[String, String]
 
 >>> :t sl
 sl
-  :: (Show y, Show y1) =>
-     HList ((':) * y ((':) * y1 ('[] *)))
-     -> HList ((':) * String ((':) * String ('[] *)))
+  :: (Show y1, Show y) => HList '[y, y1] -> HList '[String, String]
 
 -}
 
