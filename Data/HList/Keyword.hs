@@ -1,4 +1,4 @@
-{-# LANGUAGE OverlappingInstances, StandaloneDeriving #-}
+{-# LANGUAGE OverlappingInstances #-}
 
 {- | keyword functions
 

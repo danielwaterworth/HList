@@ -68,6 +68,7 @@ library
 
   Default-Extensions:  ConstraintKinds
                        DataKinds
+                       DeriveDataTypeable
                        EmptyDataDecls
                        FlexibleContexts
                        FlexibleInstances
@@ -82,10 +83,13 @@ library
                        TypeFamilies
                        TypeOperators
                        UndecidableInstances
+  Other-Extensions:    CPP
+                       TemplateHaskell
+                       OverlappingInstances
+
 
   if impl(ghc >= 7.7)
     Default-Extensions: AllowAmbiguousTypes
-                        StandaloneDeriving
 
 Test-Suite examples
   Type:     exitcode-stdio-1.0
