@@ -800,13 +800,17 @@ instance (HMember e l HFalse, HSet l) => HSet (HCons e l)
 
 -- * Find an element in a set based on HEq
 -- | It is a pure type-level operation
-class HFind (e :: k) (l :: [k]) (n :: HNat) | e l -> n
+class HFind1 e l n => HFind (e :: k) (l :: [k]) (n :: HNat) | e l -> n
+instance HFind1 e l n => HFind e l n
 
-instance (HEq e1 e2 b, HFind' b e1 l n) => HFind e1 (e2 ': l) n
+class HFind1 (e :: k) (l :: [k]) (n :: HNat) | e l -> n
 
-class HFind' (b::Bool) (e :: k) (l::[k]) (n::HNat) | b e l -> n
-instance HFind' True e l HZero
-instance HFind e l n => HFind' False e l (HSucc n)
+instance (HEq e1 e2 b, HFind2 b e1 l n) => HFind1 e1 (e2 ': l) n
+instance Fail (FieldNotFound e1) => HFind1 e1 '[] HZero
+
+class HFind2 (b::Bool) (e :: k) (l::[k]) (n:: HNat) | b e l -> n
+instance HFind2 True e l HZero
+instance HFind1 e l n => HFind2 False e l (HSucc n)
 
 
 

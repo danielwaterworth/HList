@@ -413,6 +413,7 @@ instance (HEq l l1 b, HasField' b l (Tagged l1 v1 ': r) v)
     => HasField l (Record (Tagged l1 v1 ': r)) v where
     hLookupByLabel l (Record r) =
              hLookupByLabel' (Proxy::Proxy b) l r
+instance Fail (FieldNotFound l) => HasField l (Record '[]) ()
 
 
 class HasField' (b::Bool) (l :: k) (r::[*]) v | b l r -> v where
@@ -776,9 +777,6 @@ instance (HRearrange ls rout (HList r'),
         HRearrange' l ls '[Tagged l v] rout r'' where
    hRearrange2' _ ls (HCons lv@(Tagged v) _HNil) rout
         = HCons (Tagged v `asTypeOf` lv) (hRearrange2 ls rout)
-
-data ExtraField l = ExtraField
-data FieldNotFound l = FieldNotFound
 
 -- | For improved error messages
 instance Fail (FieldNotFound l) => 

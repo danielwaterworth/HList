@@ -60,6 +60,8 @@ instance HUpdateAtHNat n e1 l => HUpdateAtHNat (HSucc n) e1 (e ': l) where
   type HUpdateAtHNatR  (HSucc n) e1 (e ': l) = e ': (HUpdateAtHNatR n e1 l)
   hUpdateAtHNat n e1 (HCons e l) = HCons e (hUpdateAtHNat (hPred n) e1 l)
 
+instance Fail (FieldNotFound (Proxy n, e1)) => HUpdateAtHNat n e1 '[] where
+  type HUpdateAtHNatR n e1 '[] = '[]
 
 -- --------------------------------------------------------------------------
 -- * Projection

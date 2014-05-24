@@ -493,3 +493,11 @@ class TypeCast x y | x -> y, y -> x
 class Fail x
 
 
+-- ** Uses of fail
+-- $note these could be replaced by `'("helpful message", l)`,
+-- but these look better.
+data ExtraField l = ExtraField
+data FieldNotFound l = FieldNotFound
+
+
+
