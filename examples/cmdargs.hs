@@ -14,10 +14,14 @@ An example showing off the data instance for Record
 
 Also a use of cmdArgs
 
+Note that ghc-7.8.2 does not have (or can produce) instances of typeable
+for types of kind Symbol (ie. promoted strings):
+<https://ghc.haskell.org/trac/ghc/ticket/9111>, so for now use the Label3
+style
 
 -}
 
--- makeLabels6 (words "x y z")
+-- makeLabels6 (words "x y z") -- works for ghc-7.6
 makeLabels3 "examples_cmdargs" (words "x y z")
 
 
