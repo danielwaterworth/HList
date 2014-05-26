@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleContexts, TemplateHaskell, DataKinds, PolyKinds #-}
 {- | Demonstrates @hLens'@
 
@@ -14,6 +15,12 @@ import Text.Read
 
 makeLabelable "x y"
 
+#if GLASGOW_HASKELL < 707
+#define INT_SIG_76 :: Integer
+#else
+#define INT_SIG_76 ""
+#endif
+
 r = x .==. "hi" .*.
     y .==. (y .==. 321 .*. x .==. 123 .*. emptyRecord) .*.
     emptyRecord
@@ -22,7 +29,11 @@ main = do
     print (r ^. x)
     print (r & x .~ ())
 
-    print (r ^. y . y)
+    -- ghc-7.6 doesn't default when r is involved lower down,
+    -- while 7.8.2 does
+    print (r ^. y . y  INT_SIG_76)
+    print (r ^. y . x  INT_SIG_76)
+
     print (r & y . y .~ "xy")
 
     putStrLn "\nread-show"
