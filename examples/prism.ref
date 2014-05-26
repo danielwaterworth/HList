@@ -1,0 +1,27 @@
+Lookup and set
+Just 'x'
+Nothing
+Nothing
+Just ()
+
+repeat with Labelable
+Just 'x'
+Nothing
+Nothing
+Just ()
+
+Setting the missing tag does nothing:
+Record{right=Nothing,left=Just 'x',up=Nothing}
+
+Lenses compose:
+Just "leftleft"
+
+Internal Structure:
+Record{v=Record{right=Nothing,left=Just 'x',up=Nothing}
+        ,v2=Record{right=Nothing,left=Just (),up=Nothing}
+        ,v2'=Record{right=Nothing,left=Just (),up=Nothing}
+        ,v3=Record{right=Nothing,left=Just 'x',up=Nothing}
+        ,v4=Record{right=Nothing,left=Just Record{right=Nothing,left=Just "leftleft",up=Nothing}
+            ,up=Nothing}
+        }
+    
