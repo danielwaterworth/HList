@@ -87,6 +87,8 @@ library
                        TemplateHaskell
                        OverlappingInstances
 
+  if impl(ghc < 7.7)
+    Cpp-options:       -DOLD_TYPEABLE
 
   if impl(ghc >= 7.7)
     Default-Extensions: AllowAmbiguousTypes

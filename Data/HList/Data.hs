@@ -63,8 +63,11 @@ import Data.HList.HList
 import Data.HList.Record
 import GHC.TypeLits
 import Data.Data
+
+#if OLD_TYPEABLE
 import Data.List
 import GHC.Exts (Constraint)
+#endif
 
 import Unsafe.Coerce
 
@@ -183,7 +186,7 @@ instance RecordLabelsStr '[] where
     recordLabelsStr _ = []
 instance (RecordLabelsStr xs,
           ShowLabel x) => RecordLabelsStr (Tagged x t ': xs) where
-    recordLabelsStr _ = showLabel (undefined :: Label x) :
+    recordLabelsStr _ = showLabel (Label :: Label x) :
                             recordLabelsStr (undefined :: Record xs)
 
 {- |
@@ -203,8 +206,8 @@ instance RecordLabelsStr2 '[] where
     recordLabelsStr2 _ = []
 instance (RecordLabelsStr2 xs,
           ShowLabel x) => RecordLabelsStr2 (x ': xs) where
-    recordLabelsStr2 _ = showLabel (undefined :: Label x) :
-                            recordLabelsStr2 (undefined :: proxy xs)
+    recordLabelsStr2 _ = showLabel (Label :: Label x) :
+                            recordLabelsStr2 (Proxy :: Proxy xs)
 
 
 -- | use only with @instance Data (HList a)@. This is because the HFoldl
@@ -213,7 +216,7 @@ instance (RecordLabelsStr2 xs,
 data C a
 
 -- typeable isntances... either hand written or derived when possible
-#if MIN_VERSION_base(4,7,0)
+#if !OLD_TYPEABLE
 deriving instance Typeable Record
 deriving instance Typeable HList
 deriving instance Typeable HListFlat
@@ -236,14 +239,14 @@ instance (TypeRepsList (Record xs)) => Typeable (Record xs) where
 
 instance ShowLabel sy => Typeable1 (Tagged sy) where
   typeOf1 _ = mkTyConApp
-        (mkTyCon3 "HList" "Data.HList.Data" (showLabel (undefined :: Label sy)))
+        (mkTyCon3 "HList" "Data.HList.Data" (showLabel (Label :: Label sy)))
         []
 
 instance (ShowLabel sy, Typeable x) => Typeable (Tagged sy x) where
   typeOf _ = mkTyConApp
-            (mkTyCon3 "GHC" "GHC.TypeLits" (showLabel (undefined :: Label sy)))
+            (mkTyCon3 "GHC" "GHC.TypeLits" (showLabel (Label :: Label sy)))
             [mkTyConApp (mkTyCon3 "HList" "Data.HList.Record" "=") [],
-                    typeOf (undefined :: x)
+                    typeOf (error "Data.HList.Data:Typeable Tagged" :: x)
                     ]
 
 type TypeablePolyK a = (() :: Constraint)
@@ -252,9 +255,6 @@ type TypeablePolyK a = (() :: Constraint)
 instance Typeable (HList a) => Typeable (HListFlat a) where
     typeOf _ = mkTyConApp (mkTyCon3 "HList" "Data.HList.Data" "HListFlat")
             [typeOf (error "Typeable HListFlat" :: HList a)]
-#endif
-
-
 
 -- pretty-prints sort of like a real list
 tyConList xs = mkTyConApp open ( intersperse comma xs ++ [close] )
@@ -262,6 +262,10 @@ tyConList xs = mkTyConApp open ( intersperse comma xs ++ [close] )
     open = mkTyCon3 "GHC" "GHC.TypeLits" "["
     close = mkTyConApp (mkTyCon3 "GHC" "GHC.TypeLits" "]") []
     comma = mkTyConApp (mkTyCon3 "GHC" "GHC.TypeLits" ",") []
+#endif
+
+
+
 
 
 class TypeRepsList a where
