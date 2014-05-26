@@ -13,9 +13,11 @@ module Data.HList.HListPrelude where
 
 import Data.HList.FakePrelude
 
+
 class HExtend e l where
   type HExtendR e l
   (.*.) :: e -> l -> HExtendR e l
+
 infixr 2 .*.
 
 -- Poly-kinded

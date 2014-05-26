@@ -94,9 +94,6 @@ extracts xs = do
                 let label = [| Label :: Label $(litT (strTyLit x)) |]
                 ])
 
-mkExp :: [String] -> ExpQ
-mkExp xs = foldr (\x acc -> [| $(mkPair x (dyn x)) .*. $acc |]) [| emptyRecord |] xs
-
 mkPair :: String -> ExpQ -> ExpQ
 mkPair x xe = [| (Label :: Label $(litT (strTyLit x))) .=. $xe |]
 

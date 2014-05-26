@@ -10,7 +10,9 @@
 
    * "Data.HList.Label3"
 
-   * "Data.HList.MakeLabels"
+   * "Data.HList.Label6"
+
+   * "Data.HList.Labelable"
 
 
    These used to work:
@@ -35,7 +37,7 @@ module Data.HList.Record
     -- ** Labels
     -- $labels
     module Data.Tagged,
-    (.=.), (.-.),
+    (.=.),
 
     -- ** Record
     Record(..),
@@ -43,14 +45,11 @@ module Data.HList.Record
     emptyRecord,
 
     -- *** Getting Labels
-    RecordLabels,
-    recordLabels,
-
     LabelsOf,
-    hLabels,
+    labelsOf,
 
     -- *** Getting Values
-    RecordValues(..),
+    RecordValues,
     recordValues,
 
     -- * Operations
@@ -61,10 +60,14 @@ module Data.HList.Record
     ShowComponents(..),
     ShowLabel(..),
 
+    -- ** Extension
+    -- | 'hExtend', 'hAppend'
+    (.*.),
 
     -- ** Delete
     -- | 'hDeleteAtLabel' @label record@
     hDeleteAtLabel,
+    (.-.),
 
     -- ** Lookup/update
     -- $lens
@@ -77,12 +80,13 @@ module Data.HList.Record
 
     -- ** Update
     (.@.),
-    hUpdateAtLabel,
+    HUpdateAtLabel(hUpdateAtLabel),
     -- *** type-preserving versions
     -- $note these restrict the resulting record type to be the same as in
     -- input record type, which can help reduce the number of type annotations
     -- needed
     (.<.),
+    HTPupdateAtLabel,
     hTPupdateAtLabel,
 
     -- ** Rename Label
@@ -107,10 +111,8 @@ module Data.HList.Record
     -- ** Reorder Labels
     hRearrange,
 
-    -- ** Extension
-    -- | 'hExtend', 'hAppend'
-    (.*.),
-
+    -- ** Apply a function to all values
+    hMapR, HMapR(..),
 
     -- * Hints for type errors
     DuplicatedLabel,
@@ -118,6 +120,7 @@ module Data.HList.Record
     FieldNotFound(..),
 
     -- * Unclassified
+
     -- | Probably internals, that may not be useful
     H2ProjectByLabels(h2projectByLabels),
     H2ProjectByLabels'(h2projectByLabels'),
@@ -128,6 +131,7 @@ module Data.HList.Record
     HRearrange(hRearrange2),
     HRearrange'(hRearrange2'),
     UnionSymRec'(..),
+    HFindLabel,
     labelLVPair,
     newLVPair,
 ) where
@@ -143,6 +147,7 @@ import Control.Monad
 import Control.Applicative
 
 import Text.ParserCombinators.ReadP
+import GHC.TypeLits
  
 -- imports for doctest/examples
 import Data.HList.Label6 ()
@@ -242,40 +247,30 @@ instance ( HLabelSet (l2 ': r)
          ) => HLabelSet' l1 l2 False r
 instance ( Fail (DuplicatedLabel l1) ) => HLabelSet' l1 l2 True r
 
--- | Construct the (phantom) list of labels of the record.
+-- | Construct the (phantom) list of labels of a record,
+-- or list of Label.
 --
-
-type family RecordLabels (r :: [*]) :: [k]
-type instance RecordLabels '[]               = '[]
-type instance RecordLabels (Tagged l v ': r) = l ': RecordLabels r
-
-recordLabels :: Record r -> Proxy (RecordLabels r)
-recordLabels _ = Proxy
-
-
--- | Construct the HList of values of the record.
-class RecordValues (r :: [*]) where
-  type RecordValuesR r :: [*]
-  recordValues' :: HList r -> HList (RecordValuesR r)
-
-instance RecordValues '[] where
-  type RecordValuesR '[] = '[]
-  recordValues' _ = HNil
-instance RecordValues r=> RecordValues (Tagged l v ': r) where
-   type RecordValuesR (Tagged l v ': r) = v ': RecordValuesR r
-   recordValues' (HCons (Tagged v) r) = HCons v (recordValues' r)
-
-recordValues :: RecordValues r => Record r -> HList (RecordValuesR r)
-recordValues (Record r) = recordValues' r
-
-
--- | Making this ls::[*] and [k] breaks the MainGhcGeneric1.hs...
 type family LabelsOf (ls :: [*]) :: [*]
 type instance LabelsOf '[] = '[]
-type instance LabelsOf (Label l ': r)  = l ': LabelsOf r
+type instance LabelsOf (Label l ': r)  = Label l ': LabelsOf r
+type instance LabelsOf (Tagged l v ': r) = Label l ': LabelsOf r
 
-hLabels :: HList l -> Proxy (LabelsOf l)
-hLabels _ = Proxy
+labelsOf :: hlistOrRecord l -> Proxy (LabelsOf l)
+labelsOf _ = Proxy
+
+type family UnLabel (proxy :: k) (ls :: [*]) :: [k]
+type instance UnLabel proxy (Label x ': xs) = x ': UnLabel proxy xs
+type instance UnLabel proxy '[] = '[]
+
+-- | A version of 'HFind' where the @ls@ type variable is a list of
+-- 'Tagged' or 'Label'. This is a bit indirect, and ideally LabelsOf
+-- could have kind [*] -> [k].
+type HFindLabel (l :: k) (ls :: [*]) (n :: HNat) = HFind l (UnLabel l (LabelsOf ls)) n
+
+recordValues :: RecordValues r rv => Record r -> HList rv
+recordValues (Record r) = hMap HUntag r
+
+type RecordValues r rv = HMapCxt HUntag r rv
 
 -- --------------------------------------------------------------------------
 
@@ -324,10 +319,10 @@ instance (Read v, ShowLabel l,
       return (Tagged v)
 
 
-instance (HMapCxt ReadComponent as bs rs bs',
+instance (HMapCxt ReadComponent rs bs,
           ApplyAB ReadComponent r readP_r,
           ConvHList rs,
-          HSequence ReadP (readP_r ': bs') (r ': rs)) => Read (Record (r ': rs)) where
+          HSequence ReadP (readP_r ': bs) (r ': rs)) => Read (Record (r ': rs)) where
     readsPrec _ = readP_to_S $ do
         _ <- string "Record{"
         content <- hSequence parsers
@@ -343,7 +338,7 @@ instance (HMapCxt ReadComponent as bs rs bs',
                       (ReadComponent False)
                       (error "Data.HList.Record reads z" :: r)
 
-        parsers = readP_r `HCons` (hMap (ReadComponent True) zs :: bs)
+        parsers = readP_r `HCons` (hMap (ReadComponent True) zs :: HList bs)
 
 
 
@@ -353,9 +348,10 @@ instance (HMapCxt ReadComponent as bs rs bs',
 
 -- Extension
 
-instance HRLabelSet (Tagged l v ': r) 
-    => HExtend (Tagged (l :: k) v) (Record r) where
-  type HExtendR (Tagged l v) (Record r) = Record (Tagged l v ': r)
+instance (HRLabelSet (t ': r),
+          t ~ Tagged l v)
+    => HExtend t (Record r) where
+  type HExtendR t (Record r) = Record (t ': r)
   f .*. (Record r) = mkRecord (HCons f r)
 
 
@@ -396,7 +392,7 @@ class HasField (l::k) r v | l r -> v where
     hLookupByLabel:: Label l -> r -> v
 
 {- alternative "straightforward" implementation
-instance ( RecordLabels r ~ ls
+instance ( LabelsOf r ~ ls
          , HFind l ls n
          , HLookupByHNat n r
          , HLookupByHNatR n r ~ LVPair l v
@@ -413,7 +409,9 @@ instance (HEq l l1 b, HasField' b l (Tagged l1 v1 ': r) v)
     => HasField l (Record (Tagged l1 v1 ': r)) v where
     hLookupByLabel l (Record r) =
              hLookupByLabel' (Proxy::Proxy b) l r
-instance Fail (FieldNotFound l) => HasField l (Record '[]) ()
+
+instance Fail (FieldNotFound l) => HasField l (Record '[]) () where
+    hLookupByLabel _ _ = error "Data.HList.Record.HasField: Fail instances should not exist"
 
 
 class HasField' (b::Bool) (l :: k) (r::[*]) v | b l r -> v where
@@ -467,10 +465,10 @@ r .!. l =  hLookupByLabel l r
 -- Delete
 
 hDeleteAtLabel :: forall l t t1 t2. 
-   (H2ProjectByLabels '[l] t t1 t2) =>
+   (H2ProjectByLabels '[Label l] t t1 t2) =>
    Label l -> Record t -> Record t2
 hDeleteAtLabel _ (Record r) = 
-  Record $ snd $ h2projectByLabels (Proxy::Proxy '[l]) r
+  Record $ snd $ h2projectByLabels (Proxy::Proxy '[Label l]) r
 
 infixl 2 .-.
 {-|
@@ -495,7 +493,7 @@ infixl 2 .-.
   >         .-. label1
 
 -}
-(.-.) :: (H2ProjectByLabels '[l] r _r' r') =>
+(.-.) :: (H2ProjectByLabels '[Label l] r _r' r') =>
     Record r -> Label l -> Record r'
 r .-. l =  hDeleteAtLabel l r
 
@@ -505,11 +503,20 @@ r .-. l =  hDeleteAtLabel l r
 -- Update
 
 -- | 'hUpdateAtLabel' @label value record@
-hUpdateAtLabel :: forall (r :: [*]) (l :: k) (n::HNat) (v :: *). 
-  (HFind l (RecordLabels r) n, HUpdateAtHNat n (Tagged l v) r) =>
-  Label l -> v -> Record r -> Record (HUpdateAtHNatR n (Tagged l v) r)
-hUpdateAtLabel l v (Record r) = 
+
+class (HasField l (Record r') v) =>
+    HUpdateAtLabel (l :: k) (v :: *) (r :: [*]) (r' :: [*]) where
+    hUpdateAtLabel :: SameLength r r' => Label l -> v -> Record r -> Record r'
+
+instance (HasField l (Record r') v,
+          HFindLabel l r n,
+          HUpdateAtHNat n (Tagged l v) r,
+          HUpdateAtHNatR n (Tagged l v) r ~ r',
+          SameLength r r') =>
+  HUpdateAtLabel l v r r' where
+  hUpdateAtLabel l v (Record r) =
     Record (hUpdateAtHNat (Proxy::Proxy n) (newLVPair l v) r)
+
 
 infixr 2 .@.
 {-|
@@ -550,7 +557,7 @@ hProjectByLabels2 ls (Record r) = (mkRecord rin, mkRecord rout)
 --  > r === rin `disjoint-union` rout
 --  > labels rin === ls
 --  >     where (rin,rout) = hProjectByLabels ls r
-class H2ProjectByLabels (ls::[k]) r rin rout | ls r -> rin rout where
+class H2ProjectByLabels (ls::[*]) r rin rout | ls r -> rin rout where
     h2projectByLabels :: Proxy ls -> HList r -> (HList rin,HList rout)
 
 instance H2ProjectByLabels '[] r '[] r where
@@ -559,12 +566,12 @@ instance H2ProjectByLabels '[] r '[] r where
 instance H2ProjectByLabels (l ': ls) '[] '[] '[] where
     h2projectByLabels _ _ = (HNil,HNil)
 
-instance (HMemberM l1 ((l::k) ': ls) (b :: Maybe [k]),
+instance (HMemberM (Label l1) ((l :: *) ': ls) (b :: Maybe [*]),
           H2ProjectByLabels' b (l ': ls) (Tagged l1 v1 ': r1) rin rout)
     => H2ProjectByLabels (l ': ls) (Tagged l1 v1 ': r1) rin rout where
     h2projectByLabels = h2projectByLabels' (Proxy::Proxy b)
 
-class H2ProjectByLabels' (b::Maybe [k]) (ls::[k]) r rin rout 
+class H2ProjectByLabels' (b::Maybe [*]) (ls::[*]) r rin rout
                          | b ls r -> rin rout where
     h2projectByLabels' :: Proxy b -> Proxy ls -> 
 				     HList r -> (HList rin,HList rout)
@@ -595,12 +602,11 @@ hRenameLabel l l' r = r''
 
 -- --------------------------------------------------------------------------
 
+type HTPupdateAtLabel l v r = (HUpdateAtLabel l v r r, SameLength' r r)
+
 -- | A variation on 'hUpdateAtLabel': type-preserving update.
+hTPupdateAtLabel :: HTPupdateAtLabel l v r => Label l -> v -> Record r -> Record r
 hTPupdateAtLabel l v r = hUpdateAtLabel l v r
- where
-   _te :: a -> a -> ()
-   _te _ _ = ()
-   _ = _te v (hLookupByLabel l r)
 
 {- ^
 
@@ -623,9 +629,11 @@ f@(Tagged v) .<. r = hTPupdateAtLabel (labelLVPair f) v r
 -- --------------------------------------------------------------------------
 -- | Subtyping for records
 
-instance H2ProjectByLabels (RecordLabels r2) r1 r2 rout
+instance H2ProjectByLabels (LabelsOf r2) r1 r2 rout
     => SubType (Record r1) (Record r2)
 
+
+type HMemberLabel l r b = HMember l (UnLabel l (LabelsOf r)) b
 
 -- --------------------------------------------------------------------------
 
@@ -637,8 +645,7 @@ class  HLeftUnion r r' r'' | r r' -> r''
 instance HLeftUnion r '[] r
  where   hLeftUnion r _ = r
 
-instance ( RecordLabels r ~ ls
-         , HMember l ls b
+instance ( HMemberLabel l r b
          , HLeftUnionBool b r (Tagged l v) r'''
          , HLeftUnion r''' r' r''
          )
@@ -700,11 +707,10 @@ r .<++. r' = hLeftUnion r r'
 class UnionSymRec r1 r2 ru | r1 r2 -> ru where
     unionSR :: Record r1 -> Record r2 -> (Record ru, Record ru)
 
-instance UnionSymRec r1 '[] r1 where
+instance (r1 ~ r1') => UnionSymRec r1 '[] r1' where
     unionSR r1 _ = (r1, r1)
 
-instance ( RecordLabels r1 ~ ls
-         , HMember l ls b
+instance ( HMemberLabel l r1 b
          , UnionSymRec' b r1 (Tagged l v) r2' ru
          )
     => UnionSymRec r1 (Tagged l v ': r2') ru
@@ -717,29 +723,25 @@ class UnionSymRec' (b :: Bool) r1 f2 r2' ru | b r1 f2 r2' -> ru where
 
 
 
-{-
 -- | Field f2 is already in r1, so it will be in the union of r1
 -- with the rest of r2.
 --
 -- To inject (HCons f2 r2) in that union, we should replace the
 -- field f2
--}
 instance (UnionSymRec r1 r2' ru,
-          HasField l2 (Record ru) v2,
-          HUpdateAtHNat n (Tagged l2 v2) ru,
-          ru ~ HUpdateAtHNatR n (Tagged l2 v2) ru,
-          RecordLabels ru ~ ls,
-          f2 ~ Tagged l2 v2,
-          HFind l2 ls n)
+          HTPupdateAtLabel l2 v2 ru,
+          f2 ~ Tagged l2 v2)
     => UnionSymRec' True r1 f2 r2' ru where
     unionSR' _ r1 (Tagged v2) r2' =
        case unionSR r1 r2'
         of (ul,ur) -> (ul, hTPupdateAtLabel (Label :: Label l2) v2 ur)
 
 
+
 instance (UnionSymRec r1 r2' ru,
           HExtend f2 (Record ru),
-          HExtendR f2 (Record ru) ~ Record f2ru)
+          Record f2ru ~ HExtendR f2 (Record ru)
+        )
     => UnionSymRec' False r1 f2 r2' f2ru where
     unionSR' _ r1 f2 r2' = (ul', ur')
        where (ul,ur) = unionSR r1 r2'
@@ -748,7 +750,7 @@ instance (UnionSymRec r1 r2' ru,
 
 -- --------------------------------------------------------------------------
 -- | Rearranges a record by labels. Returns the record r, rearranged such that
--- the labels are in the order given by ls. (recordLabels r) must be a
+-- the labels are in the order given by ls. (LabelsOf r) must be a
 -- permutation of ls.
 hRearrange :: (HLabelSet ls, HRearrange ls r (HList r')) => Proxy ls -> Record r -> Record r'
 hRearrange ls (Record r) = Record (hRearrange2 ls r)
@@ -795,5 +797,48 @@ instance Fail (ExtraField l) =>
 --
 -- This is a provisional method to make a @Lens (Record s) (Record t) a b@,
 -- out of a 'Label' @x@. Refer to @examples/lens.hs@ for an example.
+--
+-- see also "Data.HList.Labelable" for more general labels
 hLens lab f rec = fmap (\v -> hUpdateAtLabel lab v rec) (f (rec .!. lab)) 
+
+
+{- | map over the values of a record. This is a shortcut for
+
+  > \ f (Record a) -> Record (hMap (HFmap f) a)
+
+[@Example@]
+
+suppose we have a function that should be applied to every element
+of a record:
+>>> let circSucc_ x | x == maxBound = minBound | otherwise = succ x
+
+>>> :t circSucc_
+circSucc_ :: (Eq a, Enum a, Bounded a) => a -> a
+
+Use a shortcut ('Fun') to create a value that has an appropriate 'ApplyAB' instance:
+>>> let circSucc = Fun circSucc_ :: Fun '[Eq,Enum,Bounded] '()
+
+Confirm that we got Fun right:
+>>> :t applyAB circSucc
+applyAB circSucc :: (Eq a, Enum a, Bounded a) => a -> a
+
+>>> applyAB circSucc True
+False
+
+define the actual record:
+>>> let r = x .=. 'a' .*. y .=. False .*. emptyRecord
+>>> r
+Record{x='a',y=False}
+
+>>> hMapR circSucc r
+Record{x='b',y=True}
+
+-}
+hMapR f r = applyAB (HMapR f) r
+
+newtype HMapR f = HMapR f
+
+instance (HMapCxt (HFmap f) x y, rx ~ Record x, ry ~ Record y)
+      => ApplyAB (HMapR f) rx ry where
+        applyAB (HMapR f) (Record x) = Record (hMapAux (HFmap f) x)
 

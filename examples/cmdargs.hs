@@ -31,6 +31,7 @@ d0 = x .=. (5 :: Int)
     .*. emptyRecord
 
 
+-- the equivalent ordinary record for reference
 data E = E { a :: Int, b, c :: Bool }
     deriving (Show, Data, Typeable)
 e0 = E 5 True False

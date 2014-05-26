@@ -2,7 +2,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 {- |
 
-Description : labels which are also lenses
+Description : labels which are also lenses (or prisms)
 
 A simple problem is being solved here, but unfortunately it
 is a bit involved. The idea is to use the same haskell identifier
@@ -22,6 +22,7 @@ Elaboration of some ideas from edwardk.
 module Data.HList.Labelable
     (makeLabelable,
      Labelable(hLens'),
+     LabeledOptic,
      (.==.),
 
     -- * comparison with 'hLens'
@@ -29,6 +30,7 @@ module Data.HList.Labelable
 
     -- * likely unneeded (re)exports
     -- $note needed to make a needed instance visible
+    LabeledCxt, LabeledCxt1,
     Labeled(Labeled),
     toLabel,
     Identity,
@@ -37,60 +39,73 @@ module Data.HList.Labelable
 
 
 import Data.HList.FakePrelude
-import Data.HList.HArray
 import Data.HList.HList
 import Data.HList.Record
+import Data.HList.Variant
 
 import Control.Monad.Identity
 import GHC.TypeLits
 
 import Language.Haskell.TH
 
-{- | @f s t a b@ type parameters are the same as those that make
-"Control.Lens" work.
+{- | This alias is the same as Control.Lens.Optic, except the (->) in Optic
+is a type parameter 'to' in LabeledOptic. Usually \"to\" is @->@, but it
+can also be set to @Labeled x@ to recover that type parameter when used as
+an argument to '.==.' or equivalently 'toLabel'
+-}
+type LabeledOptic (to :: * -> * -> *)
+                  (p :: * -> * -> *)
+                  (f :: * -> *)
+                  s t a b = (a `p` f b) `to` (s `p` f t)
 
-[@n@] is the index in the HList at which the value will be found
+{- |
 
-[@l@] is the label for the field (tends to be 'GHC.TypeLits.Symbol')
+[@r@] is 'Record' or 'Variant'
 
-[@p@] is @->@ when the result is used as a lens, or 'Labeled' when used
-      as an argument to '.==.'
+[@l@] is the label for the field. It tends to have kind 'GHC.TypeLits.Symbol',
+but others are supported in principle.
 
 -}
-class Labelable l p f s t a b
-#if MIN_VERSION_base(4,7,0)
-     {- no fundeps in this case: they are potentially inconsistent
-        according to ghc-7.8
-        <http://ghc.haskell.org/trac/ghc/ticket/2247>
-
-        these fundeps are mostly documentation, since the two
-        instances have contexts that encode roughly the same
-        dependencies provided you choose a specific `p'
-     -}
-#else
-        | l s -> a, l t -> b,     -- lookup
-          l s b -> t, l t a -> s  -- update
-#endif
+class SameLength s t =>
+    Labelable (x :: k) (r :: [*] -> *) (to :: * -> * -> *)
+          p (f :: * -> *)
+          s t a b
   where
-    hLens' :: Label l -> p (a -> f b) (Record s -> f (Record t))
+    hLens' :: Label x -> LabeledOptic to p f (r s) (r t) a b
 
-data Labeled (l :: k) (a :: *) (b :: *) = Labeled deriving (Show)
+data Labeled (x :: k) (a :: *) (b :: *) = Labeled deriving (Show)
 
--- | make a lens
+
+-- | make a @Lens (Record s) (Record t) a b@
 instance (Functor f,
-          HasField x (Record s) a,
-          HasField x (Record t) b,
-          HFind x (RecordLabels t) n,
-          HFind x (RecordLabels s) n,
-          HUpdateAtHNat n (Tagged x b) s,
-          t ~ HUpdateAtHNatR n (Tagged x b) s)
-        => Labelable x (->) f s t a b where
+          HUpdateAtLabel x b s t,
+          HUpdateAtLabel x a t s,
+          SameLength s t,
+          (->) ~ to,
+          (->) ~ p)
+        => Labelable x Record to p f s t a b where
             hLens' lab f rec = fmap (\v -> hUpdateAtLabel lab v rec) (f (rec .!. lab))
 
--- | make a data type that allows recovering the field name
-instance (f ~ Identity, s ~ '[], t ~ '[], a ~ (), b ~ (),
-           x' ~ x) => Labelable x' (Labeled x) f s t a b where
-        hLens' _ = Labeled :: Labeled x (a -> f b) (Record s -> f (Record t))
+-- | used with 'toLabel' and/or '.==.'
+instance LabeledCxt1 x' r (Labeled x) p f s t a b
+    => Labelable x' r (Labeled x) p f s t a b where
+        hLens' _ = Labeled :: LabeledOptic (Labeled x) p f (r s) (r t) a b
+
+
+-- | sets all type variables to dummy values: only the @Labeled x@
+-- part is actually needed
+type LabeledCxt1 x r to p f s t a b =
+        (to ~ Labeled x, f ~ Identity,
+        s ~ '[], t ~ '[], a ~ (), b ~ (),
+        r ~ Proxy, p ~ (->))
+
+type LabeledCxt x r to p f s t a b = (LabeledCxt1 x r to p f s t a b,
+                                      Labelable x r to p f s t a b)
+
+-- | make a @Prism (Variant s) (Variant t) a b@
+instance (HPrism x p f s t a b,
+          to ~ (->)) => Labelable x Variant to p f s t a b where
+    hLens' x s = hPrism x s
 
 
 -- | modification of '.=.' which works with the labels from this module,
@@ -106,7 +121,9 @@ infixr 4 .==.
 class ToSym a b
 
 -- | for labels in this module
-instance (x ~ x', p ~ Labeled x') => ToSym (p a b) x'
+instance (LabeledCxt1 x r (Labeled x) p f s t a b,
+          (v1 v2 v3) ~ LabeledOptic (Labeled x) p f (r s) (r t) a b)
+  => ToSym (v1 v2 v3) x
 
 -- | for "Data.HList.Label6" labels
 instance (x ~ x') => ToSym (Label x) x'
@@ -138,7 +155,10 @@ makeLabelable xs = fmap concat $ mapM makeLabel1 (words xs)
             where lt = [| Label :: $([t| Label $l |]) |]
                   l = litT (strTyLit x)
 
-                  makeSig = [t| Labelable $l p f s t a b => p (a -> f b) (Record s -> f (Record t)) |]
+                  makeSig = [t| (Labelable $l r to p f s t a b) =>
+                              -- (a `p` f b) `to` (r s `p` f (r t))
+                              LabeledOptic to p f (r s) (r t) a b
+                              |]
 
 
 {- $comparisonWithhLensFunction
@@ -166,5 +186,7 @@ This alternative won't need a type signature
 
 It may work to use 'hLens'' instead of 'hLens' in the second code,
 but that is a bit beside the point being made here.
+
+The same points apply to the use of 'hPrism' over 'hLens''.
 
 -}

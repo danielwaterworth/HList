@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 
 {- |
 
@@ -38,8 +39,15 @@ import Data.HList.FakePrelude
 import Data.Typeable
 
 
-data Lbl (x :: HNat) ns desc  -- labels are exclusively type-level entities
+data Lbl (x :: HNat) (ns :: *) (desc :: *)  -- labels are exclusively type-level entities
+#if !OLD_TYPEABLE
   deriving Typeable
+#else
+instance (ShowLabel x) => Typeable2 (Lbl x) where
+  typeOf2 _ = mkTyConApp (mkTyCon3 "HList" "Data.HList.Label3" "Lbl")
+    [mkTyConApp (mkTyCon3 "GHC" "GHC.TypeLits" (showLabel (Label :: Label x)))
+      []]
+#endif
 
 -- Public constructors for labels
 

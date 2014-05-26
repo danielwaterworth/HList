@@ -149,23 +149,23 @@ instance DataHListFlatCxt g a => Data (HListFlat a) where
 hListFlatDataRep = mkDataType "Data.HList.HList" [hListFlatConRep]
 hListFlatConRep = mkConstr hListFlatDataRep "HListFlat" [] Prefix
 
-type DataRecordCxt a =
-    (Data (HListFlat (RecordValuesR a)),
+type DataRecordCxt a valA =
+    (Data (HListFlat valA),
             TypeablePolyK a,
             TypeRepsList (Record a),
-            RecordValues a,
+            RecordValues a valA,
             RecordLabelsStr a)
 
-instance DataRecordCxt a => Data (Record a) where
+instance DataRecordCxt a valA => Data (Record a) where
     gfoldl k z xs = c1 (gfoldl k z (HListFlat (recordValues xs)))
         where
-            c1 :: forall c. c (HListFlat (RecordValuesR a)) -> c (Record a)
+            c1 :: forall c. c (HListFlat valA) -> c (Record a)
             c1 = unsafeCoerce
 
     gunfold k z con = c1 (gunfold k z con)
         where
             -- LVPair and Record are newtypes, so this should be safe...
-            c1 :: forall c. c (HListFlat (RecordValuesR a)) -> c (Record a)
+            c1 :: forall c. c (HListFlat valA) -> c (Record a)
             c1 = unsafeCoerce
 
     dataTypeOf x = snd (recordReps (recordLabelsStr x))

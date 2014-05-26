@@ -38,7 +38,9 @@ Source-Repository head
 
 library
   Build-Depends:       base >= 4.6 && < 5, template-haskell, ghc-prim, mtl,
-                       tagged
+                       tagged,
+                       profunctors
+
 
   Exposed-modules:     Data.HList,
                        Data.HList.CommonMain,

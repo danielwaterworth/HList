@@ -458,11 +458,13 @@ hMap f xs = applyAB (HMap f) xs
 
 newtype HMap f = HMap f
 
-instance (HMapCxt f as bs as' bs') => ApplyAB (HMap f) as bs where
+instance (HMapCxt f a b, as ~ HList a, bs ~ HList b) => ApplyAB (HMap f) as bs where
     applyAB (HMap f) = hMapAux f
 
-type HMapCxt f as bs as' bs' = (HMapAux f as' bs', as ~ HList as', bs ~ HList bs',
-    SameLength as' bs')
+
+class (SameLength a b, HMapAux f a b) => HMapCxt f a b
+
+instance (SameLength a b, HMapAux f a b) => HMapCxt f a b
 
 
 -- | Ensure two lists have the same length. We do case analysis on the

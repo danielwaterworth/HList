@@ -12,6 +12,7 @@ module Data.HList.FakePrelude
      module Data.Proxy) where
 
 import Data.Proxy
+import Data.Tagged
 import GHC.Prim (Constraint)
 import GHC.TypeLits
 
@@ -246,6 +247,23 @@ data HFlip = HFlip
 
 instance (f1 ~ (a -> b -> c), f2 ~ (b -> a -> c))  => ApplyAB HFlip f1 f2 where
     applyAB _ = flip
+
+
+-- | 'fmap'
+data HFmap f = HFmap f
+
+instance (x ~ t a,
+          y ~ t b,
+          Functor t,
+          ApplyAB f a b) =>
+  ApplyAB (HFmap f) x y where
+    applyAB (HFmap f) = fmap (applyAB f)
+
+-- | 'untag'
+data HUntag = HUntag
+instance (Tagged t x ~ tx) => ApplyAB HUntag tx x where
+    applyAB _ (Tagged x) = x
+
 
 -- --------------------------------------------------------------------------
 -- * Proxy

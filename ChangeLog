@@ -1,3 +1,39 @@
+26 May 2014
+Add prisms for Variant. This adds a dependency on "profunctors".
+
+Parameterize Labelable on the collection type. This allows
+labelable labels to be used with RecordS or VariantS, where
+the resulting Optic is a Lens or Prism respectively.
+
+Remove recordLabels in favor of labelsOf: a kind variable which
+only appears on the RHS required a lengthy type annotation to fix
+that variable. Pattern matching to convert a `Label (a :: k)` to
+`a :: k` happens later on when another value with kind `k` is a
+available on the LHS.
+
+Improve type errors when accessing missing fields when using
+Labelable labels. Except for HPrism, the error message contains
+`Fail (FieldNotFound "x")`. This involved adding a HUpdateAtLabel
+class and HTPupdateAtLabel type which hides the `n` type
+variable.
+
+Reduce the number of parameters to HMapCxt. The old version could
+be defined in terms of the new version as:
+
+	type HMapCxt_old f a b ha hb = (HMapCxt f a b,
+																	HList a ~ ha,
+																	HList b ~ hb)
+
+Reimplement RecordValues in terms of HMap.
+
+Add hMapR and hMapV to map over the values in a Record or the
+value in a Variant respectively. These functions are defined in
+terms of HFmap which may be useful on it's own.
+
+Add a typeable instance for Label3, and change examples/cmdargs.hs
+to use this label kind. This allows the example to work with
+ghc-7.8.2 which lacks an instance Typeable (x :: Symbol).
+
 28 Mar 2014
 	Release 0.3.4.1
 	Fix build with ghc-7.8 broken by changes in HList 0.3.4

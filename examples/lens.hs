@@ -12,6 +12,8 @@ r = x .=. "hi" .*.
     y .=. (y .=. 321 .*. x .=. 123 .*. emptyRecord) .*.
     emptyRecord
 
+rSmall = x .=. "" .*. emptyRecord
+
 x' a = hLens x a
 y' a = hLens y a
 

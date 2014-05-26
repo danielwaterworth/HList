@@ -62,6 +62,7 @@ instance HUpdateAtHNat n e1 l => HUpdateAtHNat (HSucc n) e1 (e ': l) where
 
 instance Fail (FieldNotFound (Proxy n, e1)) => HUpdateAtHNat n e1 '[] where
   type HUpdateAtHNatR n e1 '[] = '[]
+  hUpdateAtHNat _ _ _ = error "Data.HList.HArray.HUpdateAtHNat: Fail must have no instances"
 
 -- --------------------------------------------------------------------------
 -- * Projection

@@ -14,6 +14,7 @@ import Data.HList.HListPrelude
 import Data.HList.HList
 import Data.HList.HArray ()
 import Data.HList.HTypeIndexed
+import Data.HList.HOccurs -- for doctest
 
 import Data.HList.TypeEqO () -- for doctest
 
@@ -158,9 +159,15 @@ TIPH[Key 42, Name "Angus", Sheep, Price 75.5]
 
 Don't bother repeating the type error:
 
->>> let doctestEq x y = x == y || "No instance for" `Data.List.isInfixOf` x
+
+>>> import Data.Char
+>>> :{
+let doctestCleanActual x
+      | null x = x
+      | otherwise = dropWhile isSpace $ lines x !! 2 ++ "\n"
+:}
 
 >>> Sheep .*. myTipyCow
--- type error --
+No instance for (Fail (TypeFound Breed))
 
 -}
