@@ -120,6 +120,7 @@ Here is an example of how much better that is:
 >>> :set -XNoMonomorphismRestriction -XDataKinds -XPolyKinds
 >>> import Control.Lens
 >>> let x = hLens' (Label :: Label "x")
+>>> let y = hLens' (Label :: Label "y")
 
 The Label6 method:
 
@@ -137,6 +138,26 @@ The Labelable way:
 
 >>> r & x .~ ()
 Record{x=()}
+
+
+Cut out the important line in a message like
+
+> <interactive>:1:4:
+>     No instance for (Fail (FieldNotFound "y"))
+>       arising from a use of ‘y’
+>     In the second argument of ‘(^.)’, namely ‘y’
+>     In the expression: r ^. y
+
+>>> import Data.Char
+
+>>> :{
+let doctestCleanActual x
+      | null x = x
+      | otherwise = dropWhile isSpace $ lines x !! 2 ++ "\n"
+:}
+
+>>> :t r^.y
+No instance for (Fail (FieldNotFound "y"))
 
 -}
 
