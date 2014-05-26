@@ -41,7 +41,7 @@ instance (HOccursNot e l,HTypeIndexed l) => HTypeIndexed (e ': l)
 -- --------------------------------------------------------------------------
 -- Implementing the HListPrelude interface
 
-instance (HOccursNot e l, HTypeIndexed l) => HExtend e (TIP l) 
+instance (HOccursNot e l, HTypeIndexed l) => HExtend e (TIP l)
  where
   type HExtendR e (TIP l) = TIP (e ': l)
   e .*. TIP l = mkTIP (HCons e l)

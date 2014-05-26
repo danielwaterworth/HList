@@ -5,7 +5,7 @@
 Description : labels which are also lenses
 
 A simple problem is being solved here, but unfortunately it
-is a bit involved. The idea is to use the same haskell identifier 
+is a bit involved. The idea is to use the same haskell identifier
 for a lens and for other purposes. In other words, get the same
 behavior as:
 
