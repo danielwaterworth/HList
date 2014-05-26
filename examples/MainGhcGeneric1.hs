@@ -1,13 +1,8 @@
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE DeriveDataTypeable #-}
-{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE TypeOperators #-}
-{-# LANGUAGE EmptyDataDecls #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE OverlappingInstances#-}
-{-# LANGUAGE UndecidableInstances#-}
 {-# LANGUAGE ScopedTypeVariables #-}
+{-# LANGUAGE TemplateHaskell #-}
 
 {-
 
@@ -17,32 +12,13 @@
    cast and generic type equality. Because of generic type equality,
    this model works with GHC but it does not work with Hugs.
 
-   Note: even though there are no overlapping instances in *this*
-   module, one must still enable overlapping instances here; otherwise
-   overlapping (for type equality) is not resolved properly for the
-   imported modules.
-
 -}
 
-module MainGhcGeneric1 (
-
-{-
- module Datatypes2,
- module Data.HList.CommonMain,
- module Data.HList.TypeEqO,
- module Data.HList.Label3,
--- mainExport
--}
-
-) where
+module MainGhcGeneric1 where
 
 import Datatypes2
-import Data.HList.CommonMain -- hiding (HDeleteMany, hDeleteMany)
+import Data.HList.CommonMain
 
-{-
-import Data.HList.RecordAdv
-import Data.HList.RecordP
--}
 
 
 -- --------------------------------------------------------------------------
@@ -184,7 +160,7 @@ testTIP = do
   putStrLn "\ntestTIP"
   print $ (hOccurs myTipyCow :: Breed)
   print $ BSE .*. myTipyCow
-  -- print $ hExtend Sheep $ myTipyCow
+  -- print $ Sheep .*. myTipyCow
   {- if we uncomment the line above, we get the type error
      about the violation of the TIP condition: Breed type
      occurs twice.
@@ -227,7 +203,7 @@ testRecords = do
   print $ test3
   print $ test4
   print $ test5
-  print $ hProjectByLabels (hLabels (breed `HCons` price `HCons` HNil)) test5
+  print $ hProjectByLabels (labelsOf (breed `HCons` price `HCons` HNil)) test5
  where
   test3 = hDeleteAtLabel breed unpricedAngus
   test4 = breed .=. Sheep .@. unpricedAngus
@@ -301,7 +277,11 @@ Type error ...
 
 -}
 
-testVariant = (testVar1,(testVar2,(testVar3)))
+testVariant = do
+    putStrLn "\ntestVariant"
+    print testVar1
+    print testVar2
+    print testVar3
  where
   animalVar =  key   .=. (Proxy::Proxy Integer)
            .*. name  .=. (Proxy::Proxy String)
@@ -339,3 +319,4 @@ main = do
        testTIP
        testRecords
        testTIC
+       testVariant
