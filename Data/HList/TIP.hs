@@ -63,9 +63,6 @@ instance HOccurs e (HList (x ': y ': l))
   hOccurs (TIP l) = hOccurs l
 
 
-instance HOccursNot e l => HOccursNot e (TIP l)
-
-
 instance (HAppend (HList l) (HList l'), HTypeIndexed (HAppendList l l'))
            => HAppend (TIP l) (TIP l')
  where

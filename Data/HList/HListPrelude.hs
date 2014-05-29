@@ -40,14 +40,14 @@ class HOccurs e l where
 
 -- Class to test that a type is "free" in a type sequence
 -- polykinded
-class HOccursNot e l
+class HOccursNot (e :: k) (l :: [k])
 
 class HProject l l' where
   hProject :: l -> l'
 
 -- | Map a type (key) to a natural (index) within the collection
 -- This is a purely type-level computation
-class HType2HNat e l (n :: HNat) | e l -> n
+class HType2HNat (e :: k) (l :: [k]) (n :: HNat) | e l -> n
 
 --  | and lift to the list of types
 class HTypes2HNats es l (ns :: [HNat]) | es l -> ns
