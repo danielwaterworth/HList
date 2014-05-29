@@ -170,6 +170,11 @@ TIPH[Sheep, Key 42, Name "Angus", Price 75.5]
 >>> tipyUpdate Sheep myTipyCow
 TIPH[Key 42, Name "Angus", Sheep, Price 75.5]
 
+
+>>> tipySplit (Proxy :: Proxy '[Name,Price]) myTipyCow
+(TIPH[Price 75.5, Name "Angus"],TIPH[Key 42, Cow])
+
+
 -}
 
 
