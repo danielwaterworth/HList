@@ -39,7 +39,7 @@ import Data.HList.FakePrelude
 import Data.HList.Record
 import Data.HList.RecordPuns -- for doctest
 import Data.HList.HList
-import Data.HList.HArray
+import Data.HList.HListPrelude
 
 import Control.Applicative
 import Data.Profunctor
@@ -180,3 +180,26 @@ instance (x ~ Variant x',
           HMapCxt (HFmap (HFmap f)) x' y')
      => ApplyAB (HMapV f) x y where
     applyAB (HMapV f) (Variant x) = Variant $ hMap (HFmap (HFmap f)) x
+
+
+{- | Extension for Variants prefers the first value
+
+> (l .=. Nothing) .*. v = v
+> (l .=. Just e)  .*. _ = mkVariant l e undefined
+
+-}
+instance (ConvHList p,
+          SameLength' v v,
+          HMapCxt HMaybeF p v,
+          le ~ Tagged l (Maybe e)) =>
+    HExtend le (Variant v) where
+
+    type HExtendR le (Variant v) = Variant (le ': v)
+
+    Tagged (Just e) .*. _ = mkVariant l e p
+        where p :: Record (Tagged l (Proxy e) ': p)
+              p = error "Data.Variant.HExtend"
+              l = Label :: Label l
+    n .*. Variant v = Variant (n `HCons` v)
+
+
