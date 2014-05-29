@@ -1,3 +1,11 @@
+28 May 2014
+Add tipyLens and ticPrism.
+
+Add a HExtend instance for Variant.
+
+Add functional dependencies to Labelable (and corresponding
+superclasses) to avoid ambiguous types.
+
 26 May 2014
 Add prisms for Variant. This adds a dependency on "profunctors".
 
