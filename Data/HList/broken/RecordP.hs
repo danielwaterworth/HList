@@ -1,3 +1,4 @@
+{-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE DataKinds #-}
@@ -33,23 +34,18 @@ import Data.HList.HArray
 -- --------------------------------------------------------------------------
 -- Record types as Phantom labels with values
 
-newtype RecordP (ls::[*]) vs = RecordP (HList vs)
+newtype RecordP (ls::[k]) vs = RecordP (HList vs)
 
 
 -- Build a record. I wonder if the 'ls' argument of mkRecordP can be
 -- removed. So far, we had no need for it...
 
-mkRecordP :: (HSameLength ls vs, HLabelSet ls) => ls -> vs -> RecordP ls vs
+mkRecordP :: (SameLength ls vs, HLabelSet ls) => proxy ls -> HList vs -> RecordP ls vs
 mkRecordP _ vs = RecordP vs
-
--- The contraint that two type level lists have the same length
-class HSameLength l1 l2
-instance HSameLength '[] '[]
-instance HSameLength l1 l2 => HSameLength (e1 ': l1) (e2 ': l2)
 
 -- Build an empty record
 emptyRecordP :: RecordP ('[]) ('[])
-emptyRecordP = mkRecordP HNil HNil
+emptyRecordP = mkRecordP Proxy HNil
 
 -- Converting between RecordP and Record (label/value pairs)
 
@@ -62,16 +58,14 @@ instance RecordR2P ('[]) ('[]) ('[]) where
     record_r2p _ = emptyRecordP
     record_p2r _ = emptyRecord
 
-{-
-instance (RecordR2P r ls vs, HRLabelSet (HCons (LVPair l v) r),
-          HLabelSet (HCons l ls), HSameLength ls vs)
-    => RecordR2P (HCons (LVPair l v) r) (HCons l ls) (HCons v vs) where
-    record_r2p (Record (HCons f r)) = hExtend f (record_r2p (Record r))
-    record_p2r (RecordP (HCons v r)) = hExtend (LVPair v) (record_p2r (RecordP r))
+instance (RecordR2P r ls vs, HRLabelSet (Tagged l v ': r),
+          HLabelSet (l ': ls), SameLength ls vs)
+    => RecordR2P (Tagged l v ': r) (l ': ls) (v ': vs) where
+    record_r2p (Record (HCons f r)) = f  .*. record_r2p (Record r)
+    record_p2r (RecordP (HCons v r)) = Tagged v .*. record_p2r (RecordP r)
 
-labels_of_recordp :: RecordP ls vs -> ls
-labels_of_recordp = undefined
-
+labels_of_recordp :: RecordP ls vs -> Proxy ls
+labels_of_recordp _ = Proxy
 
 -- --------------------------------------------------------------------------
 -- A Show instance to appeal to normal records
@@ -85,23 +79,28 @@ instance (RecordR2P r ls vs, ShowComponents r, HRLabelSet r) =>
 -- --------------------------------------------------------------------------
 -- Extension for records
 
-instance (HLabelSet (HCons l ls), HSameLength ls vs)
-    => HExtend (LVPair l v) (RecordP ls vs) (RecordP (HCons l ls) (HCons v vs))
+instance (HLabelSet (l ': ls), SameLength ls vs)
+    => HExtend (Tagged l v) (RecordP ls vs)
  where
-  hExtend (LVPair v) (RecordP vs) = mkRecordP undefined (HCons v vs)
+  type HExtendR (Tagged l v) (RecordP ls vs) = RecordP (l ': ls) (v ': vs)
+  Tagged v .*. RecordP vs = mkRecordP Proxy (HCons v vs)
+
 
 
 -- --------------------------------------------------------------------------
 -- Record concatenation
 
 instance ( HLabelSet ls''
-         , HAppend ls ls' ls''
-         , HAppend vs vs' vs''
-         , HSameLength ls'' vs''
+         , HAppendR (RecordP ls vs) (RecordP ls' vs') ~ RecordP ls'' vs''
+         , HAppendList ls ls' ~ ls''
+         , HAppendList vs vs' ~ vs''
+         , SameLength ls'' vs''
          )
-    => HAppend (RecordP ls vs) (RecordP ls' vs') (RecordP ls'' vs'')
+    => HAppend (RecordP ls vs) (RecordP ls' vs')
  where
-  hAppend (RecordP vs) (RecordP vs') = mkRecordP undefined (hAppend vs vs')
+  hAppend (RecordP vs) (RecordP vs') = mkRecordP Proxy (hAppend vs vs')
+
+type instance HAppendR (RecordP ls vs) (RecordP ls' vs') = RecordP (HAppendR ls ls') (HAppendR vs vs')
 
 -- --------------------------------------------------------------------------
 -- Lookup operation
@@ -110,22 +109,23 @@ instance ( HLabelSet ls''
 -- implement it separately. The algorithm is familiar assq,
 -- only the comparison operation is done at compile-time
 
-instance (HEq l l' b, HasFieldP' b l (RecordP (HCons l' ls) vs) v)
-    => HasField l (RecordP (HCons l' ls) vs) v where
-    hLookupByLabel = hLookupByLabelP' (undefined::b)
+instance (HEq l l' b, HasFieldP' b l (l' ': ls) vs v)
+    => HasField l (RecordP (l' ': ls) vs) v where
+    hLookupByLabel = hLookupByLabelP' (Proxy :: Proxy b)
 
-class HasFieldP' b l r v | b l r -> v where
-    hLookupByLabelP' :: b -> l -> r -> v
+class HasFieldP' b l ls vs v | b l ls vs -> v where
+    hLookupByLabelP' :: Proxy b -> Label l -> RecordP ls vs -> v
 
-instance HasFieldP' HTrue l (RecordP (HCons l ls) (HCons v vs)) v where
+instance HasFieldP' True l (l ': ls) (v ': vs) v where
     hLookupByLabelP' _ _ (RecordP (HCons v _)) = v
 
 instance HasField l (RecordP ls vs) v
-    => HasFieldP' HFalse l (RecordP (HCons l' ls) (HCons v' vs)) v where
+    => HasFieldP' False l (l' ': ls) (v' ': vs) v where
     hLookupByLabelP' _ l (RecordP (HCons _ vs)) =
         hLookupByLabel l ((RecordP vs)::RecordP ls vs)
 
 
+{-
 -- --------------------------------------------------------------------------
 -- Delete operation
 hDeleteAtLabelP :: HProjectByLabelP l ls vs lso v vso =>
@@ -140,6 +140,7 @@ hUpdateAtLabelP :: (HUpdateAtHNat n e1 t1 l', HFind e t n) =>
 hUpdateAtLabelP l v rp@(RecordP vs) = RecordP (hUpdateAtHNat n v vs)
  where
   n       = hFind l (labels_of_recordp rp)
+-}
 
 -- --------------------------------------------------------------------------
 -- Projection for records
@@ -148,21 +149,21 @@ hUpdateAtLabelP l v rp@(RecordP vs) = RecordP (hUpdateAtHNat n v vs)
 
 -- Project by a single label
 class HProjectByLabelP l ls vs lso v vso | l ls vs -> lso v vso where
-    h2ProjectByLabelP :: l -> RecordP ls vs -> (v,RecordP lso vso)
+    h2ProjectByLabelP :: Label l -> RecordP ls vs -> (v,RecordP lso vso)
 
-instance (HEq l l' b, HProjectByLabelP' b l (HCons l' ls) vs lso v vso)
-    => HProjectByLabelP l (HCons l' ls) vs lso v vso where
-    h2ProjectByLabelP = h2ProjectByLabelP' (undefined::b)
+instance (HEq l l' b, HProjectByLabelP' b l (l' ': ls) vs lso v vso)
+    => HProjectByLabelP l (l' ': ls) vs lso v vso where
+    h2ProjectByLabelP = h2ProjectByLabelP' (Proxy :: Proxy b)
 
 class HProjectByLabelP' b l ls vs lso v vso | b l ls vs -> lso v vso where
-    h2ProjectByLabelP' :: b -> l -> RecordP ls vs -> (v,RecordP lso vso)
+    h2ProjectByLabelP' :: Proxy b -> Label l -> RecordP ls vs -> (v,RecordP lso vso)
 
-instance HProjectByLabelP' HTrue l (HCons l ls) (HCons v vs) ls v vs where
+instance HProjectByLabelP' True l (l ': ls) (v ': vs) ls v vs where
     h2ProjectByLabelP' _ _ (RecordP (HCons v vs)) = (v,RecordP vs)
 
 instance (HProjectByLabelP l ls vs lso' v vso')
-    => HProjectByLabelP' HFalse l (HCons l' ls) (HCons v' vs)
-       (HCons l' lso') v (HCons v' vso') where
+    => HProjectByLabelP' False l (l' ': ls) (v' ': vs)
+       (l' ': lso') v (v' ': vso') where
     h2ProjectByLabelP' _ l (RecordP (HCons v' vs)) =
         let (v,RecordP vso) = h2ProjectByLabelP l ((RecordP vs)::RecordP ls vs)
         in (v, RecordP (HCons v' vso))
@@ -173,34 +174,36 @@ instance (HProjectByLabelP l ls vs lso' v vso')
 -- classes H2ProjectByLabels and H2ProjectByLabels' are declared in
 -- Record.hs
 
-instance H2ProjectByLabels (HCons l ls)
-                           (RecordP HNil HNil) (RecordP HNil HNil)
-                           (RecordP HNil HNil)
+{- need to change H2ProjectByLabels kind variables back to * from [*]
+instance H2ProjectByLabels (l ': ls)
+                           (RecordP '[] '[]) (RecordP '[] '[])
+                           (RecordP '[] '[])
     where
     h2projectByLabels _ _ = (emptyRecordP,emptyRecordP)
 
 instance (HMember l' ls b,
-          H2ProjectByLabels' b ls (RecordP (HCons l' ls') vs') rin rout)
-    => H2ProjectByLabels ls (RecordP (HCons l' ls') vs') rin rout where
-    h2projectByLabels = h2projectByLabels' (undefined::b)
+          H2ProjectByLabels' b ls (RecordP (l' ': ls') vs') rin rout)
+    => H2ProjectByLabels ls (RecordP (l' ': ls') vs') rin rout where
+    h2projectByLabels = h2projectByLabels' (Proxy :: Proxy b)
 
 instance H2ProjectByLabels ls (RecordP ls' vs') (RecordP lin vin) rout =>
-    H2ProjectByLabels' HTrue ls (RecordP (HCons l' ls') (HCons v' vs'))
-                             (RecordP (HCons l' lin) (HCons v' vin)) rout where
+    H2ProjectByLabels' True ls (RecordP (l' ': ls') (v' ': vs'))
+                             (RecordP (l' ': lin) (v' ': vin)) rout where
     h2projectByLabels' _ ls (RecordP (HCons v' vs')) =
         (RecordP (HCons v' vin), rout)
         where (RecordP vin,rout) =
                   h2projectByLabels ls ((RecordP vs')::RecordP ls' vs')
 
 instance H2ProjectByLabels ls (RecordP ls' vs') rin (RecordP lo vo) =>
-    H2ProjectByLabels' HFalse ls (RecordP (HCons l' ls') (HCons v' vs'))
-                              rin (RecordP (HCons l' lo) (HCons v' vo)) where
+    H2ProjectByLabels' False ls (RecordP (l' ': ls') (v' ': vs'))
+                              rin (RecordP (l' ': lo) (v' ': vo)) where
     h2projectByLabels' _ ls (RecordP (HCons v' vs')) =
         (rin, RecordP (HCons v' vo))
         where (rin,RecordP vo) =
                   h2projectByLabels ls ((RecordP vs')::RecordP ls' vs')
+-}
 
-
+{-
 -- --------------------------------------------------------------------------
 -- Subtyping for records
 
