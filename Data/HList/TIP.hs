@@ -11,8 +11,9 @@ module Data.HList.TIP where
 
 
 import Data.HList.HListPrelude
+import Data.HList.FakePrelude
 import Data.HList.HList
-import Data.HList.HArray ()
+import Data.HList.HArray
 import Data.HList.HTypeIndexed
 import Data.HList.HOccurs -- for doctest
 
@@ -35,6 +36,8 @@ emptyTIP = mkTIP HNil
 -- --------------------------------------------------------------------------
 -- * Type-indexed type sequences
 
+-- | this constraint ensures that a TIP created by 'mkTIP' has no
+-- duplicates
 class HTypeIndexed (l :: [*])
 instance HTypeIndexed '[]
 instance (HOccursNot e l,HTypeIndexed l) => HTypeIndexed (e ': l)
@@ -83,6 +86,24 @@ onTIP f (TIP l) = mkTIP (f l)
 tipyDelete  p t  = onTIP (hDeleteAt p) t
 tipyUpdate  e t  = onTIP (hUpdateAt e) t
 tipyProject ps t = onTIP (hProjectBy ps) t
+
+-- | provides a @Lens' (TIP s) a@.
+tipyLens' f s = tipyLens (isSimple f) s
+  where
+    isSimple :: (a -> f a) -> (a -> f a)
+    isSimple = id
+
+{- | provides a @Lens (TIP s) (TIP t) a b@
+
+When using @set@ (also known as @.~@), 'tipyLens'' can address the
+ambiguity as to which field \"a\" should actually be updated.
+
+-}
+tipyLens f (TIP s) = fmap (\b -> mkTIP (hUpdateAtHNat n b s) ) (f (hLookupByHNat n s))
+  where
+    n = hType2HNat (getA f) s
+    getA :: (a -> f b) -> Proxy a
+    getA _ = Proxy
 
 
 -- | Split produces two TIPs

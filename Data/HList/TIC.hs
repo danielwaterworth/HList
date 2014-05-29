@@ -1,7 +1,3 @@
-{-# LANGUAGE FlexibleInstances, FlexibleContexts #-}
-{-# LANGUAGE DataKinds #-}
-{-# LANGUAGE KindSignatures #-}
-{-# LANGUAGE TypeOperators #-}
 
 {- |
    The HList library
@@ -19,7 +15,14 @@ import Data.Dynamic
 
 import Data.HList.HList
 import Data.HList.TIP
+import Data.HList.HTypeIndexed ()
+import Data.HList.HListPrelude
+import Data.HList.HArray
 
+
+
+import Data.Profunctor
+import Control.Applicative
 
 -- --------------------------------------------------------------------------
 -- | A datatype for type-indexed co-products
@@ -30,13 +33,18 @@ newtype TIC (l :: [*]) = TIC Dynamic
 -- --------------------------------------------------------------------------
 -- | Public constructor (or, open union's injection function)
 
-mkTIC :: ( HTypeIndexed l
+mkTIC' :: ( HTypeIndexed l
          , HMember i l True
          , Typeable i
          )
-      => i -> TIC l
+      => i
+      -> Proxy l -- ^ the ordering of types in the @l :: [*]@ matters.
+                 -- This argument is intended to fix the ordering 
+      -> TIC l
 
-mkTIC i = TIC (toDyn i)
+mkTIC' i _ = TIC (toDyn i)
+
+mkTIC i = mkTIC' i Proxy
 
 
 -- --------------------------------------------------------------------------
@@ -50,6 +58,31 @@ unTIC :: ( HTypeIndexed l
 
 unTIC (TIC i) = fromDynamic i
 
+-- | @Prism (TIC s) (TIC t) a b@
+ticPrism
+  :: (Choice p,
+      Applicative f,
+
+      HTypeIndexed s,
+      HTypeIndexed t,
+
+      HType2HNat a s n,
+      HType2HNat b t n,
+
+      HUpdateAtHNatR n b s ~ t,
+      HUpdateAtHNatR n a t ~ s,
+
+      HMember a s True,
+      HMember b t True,
+
+      Typeable a,
+      Typeable b) =>
+     p a (f b) -> p (TIC s) (f (TIC t))
+ticPrism = prism mkTIC (\s @ (TIC s') -> case unTIC s of
+                       Just a -> Right a
+                       Nothing -> Left (TIC s'))
+  where
+    prism bt seta = dimap seta (either pure (fmap bt)) . right'
 
 -- --------------------------------------------------------------------------
 -- | TICs are opaque
