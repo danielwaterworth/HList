@@ -134,6 +134,7 @@ module Data.HList.Record
     HFindLabel,
     labelLVPair,
     newLVPair,
+    UnLabel(..),
 ) where
 
 
