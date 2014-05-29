@@ -16,7 +16,7 @@ import Control.Lens
 makeLabels6 (words "left right up down")
 
 --- define the Labelable labels manually
-left_ = hLens' left 
+left_ = hLens' left
 right_ = hLens' right
 up_ = hLens' up
 down_ = hLens' down
@@ -48,10 +48,19 @@ main = do
     Just 'x' <- v3 ^? left_ & return
     v4 ^? left_.left_ & print
 
+    putStrLn "\n\"extension\""
+    extensionTests
+
     putStrLn "\nInternal Structure:"
     putStrLn $ indent $ show $ Record $ hMap (HFmap VariantToRec) vs
 
-Record vs = [pun| v v2 v2' v3 v4 |]
+lazyX = mkVariant (Label :: Label "x") 'a' lazyProto
+lazyY = mkVariant (Label :: Label "y") (2.5 :: Double) lazyProto
+
+lazyProto = undefined :: Record
+  '[Tagged "x" (Proxy x), Tagged "y" (Proxy y)]
+
+Record vs = [pun| v v2 v2' v3 v4 v5 v6 v7 |]
 
 inspectV = do
     v ^? hPrism left & print
@@ -77,6 +86,18 @@ v2' = set left_ () v
 v3 = v & up_ .~ v & up_.up_ .~ "upup"
 v4 = v & left_ .~ v & left_.left_ .~ "leftleft"
 
+
+extensionTests = do
+    Just "hi" <- v5 ^? down_ & return
+    Just "hi" <- v6 ^? down_ & return
+    Nothing   <- v7 ^? down_ & return
+    Just 'x'  <- v7 ^? left_ & return
+    return ()
+
+
+v5 = down .=. Just "hi" .*. v
+v6 = down_ .==. Just "hi" .*. v
+v7 = down .=. (Nothing :: Maybe String) .*. v
 
 data VariantToRec = VariantToRec
 

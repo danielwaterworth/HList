@@ -16,6 +16,8 @@ Record{right=Nothing,left=Just 'x',up=Nothing}
 Lenses compose:
 Just "leftleft"
 
+"extension"
+
 Internal Structure:
 Record{v=Record{right=Nothing,left=Just 'x',up=Nothing}
         ,v2=Record{right=Nothing,left=Just (),up=Nothing}
@@ -23,5 +25,8 @@ Record{v=Record{right=Nothing,left=Just 'x',up=Nothing}
         ,v3=Record{right=Nothing,left=Just 'x',up=Nothing}
         ,v4=Record{right=Nothing,left=Just Record{right=Nothing,left=Just "leftleft",up=Nothing}
             ,up=Nothing}
+        ,v5=Record{down=Just "hi",right=Nothing,left=Nothing,up=Nothing}
+        ,v6=Record{down=Just "hi",right=Nothing,left=Nothing,up=Nothing}
+        ,v7=Record{down=Nothing,right=Nothing,left=Just 'x',up=Nothing}
         }
     
