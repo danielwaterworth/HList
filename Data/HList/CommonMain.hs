@@ -17,6 +17,7 @@ module Data.HList.CommonMain (
  , module Data.HList.HOccurs
  , module Data.HList.HTypeIndexed
  , module Data.HList.Record
+-- , module Data.HList.RecordOrd
  , module Data.HList.HList
  , module Data.HList.TypeEqO
  , module Data.HList.TIP
@@ -78,6 +79,7 @@ import Data.HList.HArray
 import Data.HList.HOccurs
 import Data.HList.HTypeIndexed
 import Data.HList.Record
+-- import Data.HList.RecordOrd
 import Data.HList.HList
 import Data.HList.MakeLabels
 import Data.HList.TypeEqO
