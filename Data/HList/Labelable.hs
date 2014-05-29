@@ -70,6 +70,8 @@ class SameLength s t =>
     Labelable (x :: k) (r :: [*] -> *) (to :: * -> * -> *)
           p (f :: * -> *)
           s t a b
+          | x s -> a, x t -> b,    -- lookup
+            x s b -> t, x t a -> s -- update
   where
     hLens' :: Label x -> LabeledOptic to p f (r s) (r t) a b
 

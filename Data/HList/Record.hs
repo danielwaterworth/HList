@@ -505,7 +505,8 @@ r .-. l =  hDeleteAtLabel l r
 -- | 'hUpdateAtLabel' @label value record@
 
 class (HasField l (Record r') v) =>
-    HUpdateAtLabel (l :: k) (v :: *) (r :: [*]) (r' :: [*]) where
+    HUpdateAtLabel (l :: k) (v :: *) (r :: [*]) (r' :: [*])
+          | l v r -> r', l r' -> v where
     hUpdateAtLabel :: SameLength r r' => Label l -> v -> Record r -> Record r'
 
 instance (HasField l (Record r') v,

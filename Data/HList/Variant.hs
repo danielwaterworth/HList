@@ -53,8 +53,11 @@ in \"s\" is replaced with \"b\".
 
 -}
 class (Choice p, Applicative f, SameLength s t)
-        => HPrism l p f s t a b where
-    hPrism :: Label l -> p a (f b) -> p (Variant s) (f (Variant t))
+        => HPrism x p f s t a b
+          | x s -> a, x t -> b,    -- lookup
+            x s b -> t, x t a -> s -- update
+  where
+    hPrism :: Label x -> p a (f b) -> p (Variant s) (f (Variant t))
 
 instance (
     ConvHList proxyT,
@@ -65,9 +68,12 @@ instance (
        is `no instance for (HasField "w" (Record '[]) (Maybe ()))`,
        which is not as pretty as the Fail (FieldNotFound "w') => ...
     -}
-    HasField l (Record s) (Maybe a),
-    HTPupdateAtLabel l (Maybe b) t,
-    HUpdateAtLabel l (Maybe b) s t,
+    HasField x (Record s) (Maybe a),
+    HTPupdateAtLabel x (Maybe b) t,
+    HUpdateAtLabel x (Maybe b) s t,
+    HUpdateAtLabel x (Maybe a) t s, -- type level only: needed to
+                                    -- convince GHC that the x t a -> s
+                                    -- fundep is correct
 
     -- labels in the HList are not changed at all:
     -- number, ordering, actual values are all constant
@@ -77,19 +83,21 @@ instance (
     s_ ~ t_,
 
     -- only the target of the prism can have it's type changed
-    H2ProjectByLabels '[Label l] s si so,
-    H2ProjectByLabels '[Label l] t ti to,
+    H2ProjectByLabels '[Label x] s si so,
+    H2ProjectByLabels '[Label x] t ti to,
     so ~ to,
+
+    -- required based on how definition of 'prism' works
     Choice p,
     Applicative f
-   ) => HPrism l p f s t a b where
-    hPrism l = prism (\b -> toV $ hUpdateAtLabel l (Just b) t)
-                  (\s -> case unVariant l s of
+   ) => HPrism x p f s t a b where
+    hPrism x = prism (\b -> toV $ hUpdateAtLabel x (Just b) t)
+                  (\s -> case unVariant x s of
                     Just a -> Right a
-                    Nothing -> Left $ toV $ hUpdateAtLabel l Nothing (toR s))
+                    Nothing -> Left $ toV $ hUpdateAtLabel x Nothing (toR s))
       where
         t :: Record t
-        t = Record $ hMaybied (unPrime (error "hPrism") :: HList proxyT)
+        t = Record (hMaybied (unPrime (error "hPrism" :: Prime proxyT)))
         toV (Record a) = Variant a
         toR (Variant a) = Record a
 
