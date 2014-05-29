@@ -153,8 +153,11 @@ hMaybied x = hMap HMaybeF x
 -- --------------------------------------------------------------------------
 -- | Public constructor
 mkVariant x y (Record v) =
-    case hTPupdateAtLabel x (Just y) $ Record (hMaybied v) of
-    Record t -> Variant t
+    r2v $ hTPupdateAtLabel x (Just y) $ Record $ hMaybied (unPrime err `asTypeOf` v)
+  where
+    err = error "Data.HList.Variant.mkVariant: impossible"
+
+r2v (Record t) = Variant t
 
 -- --------------------------------------------------------------------------
 -- | Public destructor. 'hPrism' and 'hLens'' can do the same thing.
