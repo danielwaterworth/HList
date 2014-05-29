@@ -49,7 +49,7 @@ module Data.HList.Record
     labelsOf,
 
     -- *** Getting Values
-    RecordValues,
+    RecordValues(..),
     recordValues,
 
     -- * Operations
@@ -267,10 +267,28 @@ type instance UnLabel proxy '[] = '[]
 -- could have kind [*] -> [k].
 type HFindLabel (l :: k) (ls :: [*]) (n :: HNat) = HFind l (UnLabel l (LabelsOf ls)) n
 
+-- | Construct the HList of values of the record.
+class SameLength r (RecordValuesR r)
+      => RecordValues (r :: [*]) where
+  type RecordValuesR r :: [*]
+  recordValues' :: HList r -> HList (RecordValuesR r)
+
+instance RecordValues '[] where
+  type RecordValuesR '[] = '[]
+  recordValues' _ = HNil
+instance RecordValues r=> RecordValues (Tagged l v ': r) where
+   type RecordValuesR (Tagged l v ': r) = v ': RecordValuesR r
+   recordValues' (HCons (Tagged v) r) = HCons v (recordValues' r)
+
+recordValues :: RecordValues r => Record r -> HList (RecordValuesR r)
+recordValues (Record r) = recordValues' r
+
+{- shorter, but 
 recordValues :: RecordValues r rv => Record r -> HList rv
 recordValues (Record r) = hMap HUntag r
 
 type RecordValues r rv = HMapCxt HUntag r rv
+-}
 
 -- --------------------------------------------------------------------------
 

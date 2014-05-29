@@ -24,7 +24,9 @@ be defined in terms of the new version as:
 																	HList a ~ ha,
 																	HList b ~ hb)
 
-Reimplement RecordValues in terms of HMap.
+Reimplement RecordValues in terms of HMap. The original
+implementation is kept because it avoids the need for
+-XAllowAmbiguousTypes.
 
 Add hMapR and hMapV to map over the values in a Record or the
 value in a Variant respectively. These functions are defined in
