@@ -16,6 +16,11 @@ Record{right=Nothing,left=Just 'x',up=Nothing}
 Lenses compose:
 Just "leftleft"
 
+Lenses+prisms compose:
+Just 'x'
+Nothing
+Nothing
+
 "extension"
 
 Internal Structure:

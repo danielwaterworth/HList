@@ -23,8 +23,9 @@ down_ = hLens' down
 
 -- this definition is needed to decide what order
 -- to put the fields in, as well as their initial types
-vProto = toVariant [pun|right left up|]
+(vProto,r) = (toVariant r, r)
   where
+  r = [pun|right left up|]
   left = 'a'
   right = 2 :: Int
   up = 2.3 :: Double
@@ -48,11 +49,16 @@ main = do
     Just 'x' <- v3 ^? left_ & return
     v4 ^? left_.left_ & print
 
+    putStrLn "\nLenses+prisms compose:"
+    inspectRV
+
     putStrLn "\n\"extension\""
     extensionTests
 
     putStrLn "\nInternal Structure:"
-    putStrLn $ indent $ show $ Record $ hMap (HFmap VariantToRec) vs
+    putStrLn $ indent $ show $ hMapR VariantToRec vs
+
+
 
 lazyX = mkVariant (Label :: Label "x") 'a' lazyProto
 lazyY = mkVariant (Label :: Label "y") (2.5 :: Double) lazyProto
@@ -60,7 +66,7 @@ lazyY = mkVariant (Label :: Label "y") (2.5 :: Double) lazyProto
 lazyProto = undefined :: Record
   '[Tagged "x" (Proxy x), Tagged "y" (Proxy y)]
 
-Record vs = [pun| v v2 v2' v3 v4 v5 v6 v7 |]
+vs = [pun| v v2 v2' v3 v4 v5 v6 v7 |]
 
 inspectV = do
     v ^? hPrism left & print
@@ -77,6 +83,16 @@ inspectV_ = do
     v ^? right_ & print
     v ^? up_ & print
     v2' ^? left_ & print
+
+
+inspectRV = do
+    r2 ^? down_.left_ & print
+    r2 ^? down_.right_ & print
+    r2 ^? du & print
+
+du = down_.up_
+
+r2 = down_ .==. v .*. r
 
 
 -- or with the "better" label

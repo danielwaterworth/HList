@@ -15,10 +15,10 @@ import Text.Read
 
 makeLabelable "x y"
 
-#if GLASGOW_HASKELL < 707
-#define INT_SIG_76 :: Integer
+#if __GLASGOW_HASKELL__ < 707
+#define INT_SIG_76 :: Int
 #else
-#define INT_SIG_76 ""
+#define INT_SIG_76
 #endif
 
 r = x .==. "hi" .*.
