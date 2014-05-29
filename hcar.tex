@@ -1,0 +1,46 @@
+% HListALibraryforTypedHete-AH.tex
+\begin{hcarentry}[updated]{HList --- A Library for Typed Heterogeneous Collections}
+\label{hlist}
+\report{Adam Vogt}%05/14
+\participants{Oleg Kiselyov, Ralf L\"ammel, Keean Schupke}
+\makeheader
+
+HList is a comprehensive, general purpose Haskell library for typed
+heterogeneous collections including extensible polymorphic records and
+variants. HList is analogous to the standard list
+library, providing a host of various construction, look-up, filtering,
+and iteration primitives. In contrast to the regular lists, elements
+of heterogeneous lists do not have to have the same type. HList lets
+the user formulate statically checkable constraints: for example, no
+two elements of a collection may have the same type (so the elements
+can be unambiguously indexed by their type).
+
+An immediate application of HLists is the implementation of open,
+extensible records with first-class, reusable, and compile-time only
+labels. The dual application is extensible polymorphic variants (open
+unions). HList contains several implementations of open records,
+including records as sequences of field values, where the type of each
+field is annotated with its phantom label.  We and others have also used
+HList for type-safe database access in Haskell. HList-based Records
+form the basis of OOHaskell. The HList library relies on common
+extensions of Haskell 2010. HList is being used in AspectAG (\url{http://www.haskell.org/communities/11-2011/html/report.html#sect5.4.2})%\cref{aspectag}
+, typed EDSL of attribute grammars, and in Rlang-QQ.
+
+The October 2012 version of HList library marks the significant
+re-write to take advantage of the fancier types offered by GHC 7.4 and
+7.6. HList now relies on promoted data types and on kind polymorphism.
+
+Since the last update, there have been several minor releases. These include
+features such as support for ghc-7.8 as well as additional syntax for the pun
+quasiquote.
+
+\FurtherReading
+\begin{compactitem}
+\item HList repository:
+  \url{http://code.haskell.org/HList/}
+\item HList:
+  \url{http://okmij.org/ftp/Haskell/types.html#HList}
+\item OOHaskell:
+  \url{https://web.archive.org/web/20130129031410/http://homepages.cwi.nl/~ralf/OOHaskell}
+\end{compactitem}
+\end{hcarentry}
