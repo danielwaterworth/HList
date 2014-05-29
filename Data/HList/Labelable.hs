@@ -62,7 +62,7 @@ type LabeledOptic (to :: * -> * -> *)
 
 [@r@] is 'Record' or 'Variant'
 
-[@l@] is the label for the field. It tends to have kind 'GHC.TypeLits.Symbol',
+[@x@] is the label for the field. It tends to have kind 'GHC.TypeLits.Symbol',
 but others are supported in principle.
 
 -}
