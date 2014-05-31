@@ -26,8 +26,6 @@ import GHC.TypeLits
 class Apply f a where
   type ApplyR f a :: *
   apply :: f -> a -> ApplyR f a
-  apply = undefined                     -- In case we use Apply for
-                                        -- type-level computations only
 
 {- $note
 
@@ -63,7 +61,6 @@ class Apply f a where
 -- | No constraints on result and argument types
 class ApplyAB f a b where
   applyAB :: f -> a -> b
-  applyAB = undefined -- In case we use Apply for type-level computations only
 
 
 {- $fun
@@ -275,7 +272,7 @@ instance (Tagged t x ~ tx) => ApplyAB HUntag tx x where
 data Label l = Label
 
 labelToProxy :: Label l -> Proxy l
-labelToProxy = undefined
+labelToProxy _ = Proxy
 
 class ShowLabel l where
   showLabel :: Label l -> String
@@ -306,8 +303,8 @@ The above line is equivalent to
 -}
 
 -- ** Value-level proxies
-hTrue  :: Proxy True ; hTrue  = undefined
-hFalse :: Proxy False; hFalse = undefined
+hTrue  :: Proxy True ; hTrue  = Proxy
+hFalse :: Proxy False; hFalse = Proxy
 
 
 -- **  Conjunction
@@ -318,7 +315,7 @@ type instance HAnd True  t  = t
 
 -- | `demote' to values
 hAnd :: Proxy t1 -> Proxy t2 -> Proxy (HAnd t1 t2)
-hAnd = undefined
+hAnd _ _ = Proxy
 
 
 -- ** Disjunction
@@ -329,7 +326,7 @@ type instance HOr True t     = True
 
 -- | `demote' to values
 hOr :: Proxy t1 -> Proxy t2 -> Proxy (HOr t1 t2)
-hOr = undefined
+hOr _ _ = Proxy
 
 {- $boolHistoricalNote
 
@@ -389,9 +386,9 @@ type instance HBoolEQ True  True     = True
 data HNat = HZero | HSucc HNat
 
 
-hZero :: Proxy HZero; hZero = undefined
-hSucc :: Proxy (n :: HNat) -> Proxy (HSucc n); hSucc _ = undefined
-hPred :: Proxy (HSucc n) -> Proxy n; hPred _ = undefined
+hZero :: Proxy HZero; hZero = Proxy
+hSucc :: Proxy (n :: HNat) -> Proxy (HSucc n); hSucc _ = Proxy
+hPred :: Proxy (HSucc n) -> Proxy n; hPred _ = Proxy
 
 class HNat2Integral (n::HNat) where
     hNat2Integral :: Integral i => Proxy n -> i
@@ -425,7 +422,7 @@ type instance HLt (HSucc n) HZero      = False
 type instance HLt (HSucc n) (HSucc n') = HLt  n n'
 
 hLt :: Proxy x -> Proxy y -> Proxy (HLt x y)
-hLt = undefined
+hLt _ _ = Proxy
 
 
 -- --------------------------------------------------------------------------
@@ -451,7 +448,7 @@ instance HEq (HSucc n) HZero False
 instance HEq  n n' b => HEq (HSucc n) (HSucc n') b
 
 hEq :: HEq x y b => x -> y -> Proxy b
-hEq =  undefined
+hEq _ _ = Proxy
 
 
 -- --------------------------------------------------------------------------

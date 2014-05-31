@@ -112,7 +112,7 @@ instance (ch ~ Proxy (HBoolEQ sel (KMember n ns)),
     type ApplyR (FHUProj sel ns) (HList (e ': l),Proxy n) = 
        ApplyR (Proxy (HBoolEQ sel (KMember n ns)), FHUProj sel ns)
 	      (HList (e ': l),Proxy n)
-    apply fn s = apply (undefined::ch,fn) s
+    apply fn s = apply (Proxy::ch,fn) s
 
 instance Apply (Proxy True, FHUProj sel ns) 
                (HList (e ': l),Proxy (n::HNat)) where

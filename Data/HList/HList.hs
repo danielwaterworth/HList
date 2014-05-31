@@ -101,7 +101,7 @@ type instance HLength '[] = HZero
 type instance HLength (x ': xs) = HSucc (HLength xs)
 
 hLength   :: HList l -> Proxy (HLength l)
-hLength _ =  undefined
+hLength _ =  Proxy
 
 -- ** Append
 instance HExtend e (HList l) where
@@ -530,7 +530,7 @@ instance ApplyAB f e e' => ApplyAB (MapCar f) (e,HList l) (HList (e' ': l)) wher
 -}
 hComposeList
   :: (HFoldr Comp (a -> a) l (t -> a)) => HList l -> t -> a
-hComposeList fs v0 = let r = hFoldr (undefined :: Comp) (\x -> x `asTypeOf` r) fs v0 in r
+hComposeList fs v0 = let r = hFoldr (Comp :: Comp) (\x -> x `asTypeOf` r) fs v0 in r
 
 
 -- --------------------------------------------------------------------------
@@ -698,7 +698,7 @@ type instance HNats '[] = '[]
 type instance HNats (Proxy n ': l) = n ': HNats l
 
 hNats :: HList l -> Proxy (HNats l)
-hNats = undefined
+hNats _ = Proxy
 
 
 -- --------------------------------------------------------------------------
@@ -726,7 +726,7 @@ type instance HMemberP' pred e1 l (Proxy False) = HMemberP pred e1 l
  
 
 hMember :: HMember e l b => Proxy e -> Proxy l -> Proxy b
-hMember = undefined
+hMember _ _ = Proxy
 
 -- ** Another type-level membership test
 --

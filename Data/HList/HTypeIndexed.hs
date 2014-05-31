@@ -27,7 +27,7 @@ instance HOccursNot e l => HType2HNatCase True e l HZero
 instance HType2HNat e l n => HType2HNatCase False e l (HSucc n)
 
 hType2HNat :: HType2HNat e l n => Proxy e -> proxy l -> Proxy n
-hType2HNat _ _ = undefined
+hType2HNat _ _ = Proxy
 
 -- | And lift to the list of types
 
@@ -38,7 +38,7 @@ instance (HType2HNat e l n, HTypes2HNats es l ns)
 
 hTypes2HNats :: HTypes2HNats es l ns => 
 		Proxy (es :: [*]) -> HList l -> Proxy (ns :: [HNat])
-hTypes2HNats = undefined
+hTypes2HNats _ _ = Proxy
 
 -- --------------------------------------------------------------------------
 -- Implementing the generic interfaces
@@ -49,7 +49,7 @@ instance HDeleteMany e (HList '[]) (HList '[]) where
 instance (HEq e1 e b, HDeleteManyCase b e1 e l l1)
       => HDeleteMany e1 (HList (e ': l)) (HList l1) where
   hDeleteMany p (HCons e l) = 
-      hDeleteManyCase (undefined:: Proxy b) p e l
+      hDeleteManyCase (Proxy :: Proxy b) p e l
 
 class HDeleteManyCase (b :: Bool) e1 e l l1 | b e1 e l -> l1 where
   hDeleteManyCase :: Proxy b -> Proxy e1 -> e -> HList l -> HList l1
@@ -68,22 +68,22 @@ instance HDeleteMany e1 (HList l) (HList l1)
 
 hDeleteAt :: forall e l n. (HDeleteAtHNat n l, HType2HNat e l n) => 
 	   Proxy e -> HList l -> HList (HDeleteAtHNatR n l)
-hDeleteAt _p l = hDeleteAtHNat (undefined :: Proxy n) l
+hDeleteAt _p l = hDeleteAtHNat (Proxy :: Proxy n) l
 
 hUpdateAt :: forall n e l.
 		 (HUpdateAtHNat n e l, HType2HNat e l n) => 
 		 e -> HList l -> (HList (HUpdateAtHNatR n e l))
-hUpdateAt e l = hUpdateAtHNat (undefined:: Proxy n) e l
+hUpdateAt e l = hUpdateAtHNat (Proxy :: Proxy n) e l
 
 hProjectBy :: forall (ns :: [HNat]) (ps :: [*]) (l :: [*]).
 	      (HProjectByHNatsCtx ns l, HTypes2HNats ps l ns,
 	      ps ~ (HProjectByHNatsR ns l)) =>
 	      Proxy ps -> HList l -> HList ps
-hProjectBy _ps l = hProjectByHNats (undefined::Proxy ns) l
+hProjectBy _ps l = hProjectByHNats (Proxy ::Proxy ns) l
 
 hSplitBy :: forall (ps :: [*]) l ns.
 	    (HProjectByHNatsCtx ns l, HProjectAwayByHNatsCtx ns l,
 	     HTypes2HNats ps l ns) =>
 	    Proxy ps -> HList l -> (HList (HProjectByHNatsR ns l), 
 				    HList (HProjectAwayByHNatsR ns l))
-hSplitBy _ps l = hSplitByHNats (undefined::Proxy ns) l
+hSplitBy _ps l = hSplitByHNats (Proxy ::Proxy ns) l
