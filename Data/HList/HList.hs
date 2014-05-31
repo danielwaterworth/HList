@@ -825,21 +825,24 @@ instance HList2List l e
 -- >>> toHJust2 (2 .*. 'a' .*. HNil)
 -- H[HJust 2, HJust 'a']
 
-class ToHJust l l' | l -> l', l' -> l
+class FromHJustR (ToHJustR l) ~ l => ToHJust l
  where
-  toHJust :: HList l -> HList l'
+  type ToHJustR l :: [*]
+  toHJust :: HList l -> HList (ToHJustR l)
 
-instance ToHJust '[] '[]
+instance ToHJust '[]
  where
+  type ToHJustR '[] = '[]
   toHJust HNil = HNil
 
-instance ToHJust l l' => ToHJust (e ': l) (HJust e ': l')
+instance ToHJust l => ToHJust (e ': l)
  where
+  type ToHJustR (e ': l) = HJust e ': ToHJustR l
   toHJust (HCons e l) = HCons (HJust e) (toHJust l)
 
 -- | alternative implementation. The Apply instance is in "Data.HList.FakePrelude".
 -- A longer type could be inferred.
--- toHJust2 :: (HMap' (HJust ()) a b) => HList a -> HList b
+toHJust2 :: (HMapCxt (HJust ()) a b) => HList a -> HList b
 toHJust2 xs = hMap (HJust ()) xs
 
 -- --------------------------------------------------------------------------
@@ -849,7 +852,7 @@ toHJust2 xs = hMap (HJust ()) xs
 -- >>> fromHJust (toHJust xs) == xs
 -- True
 
-class FromHJust l
+class (FromHJustR (ToHJustR l) ~ l) => FromHJust l
  where
   type FromHJustR l :: [*]
   fromHJust :: HList l -> HList (FromHJustR l)
@@ -871,8 +874,8 @@ instance FromHJust l => FromHJust (HJust e ': l)
 
 -- *** alternative implementation
 
--- | A longer type could be inferred.
--- fromHJust2 :: (HMap' HFromJust a b) => HList a -> HList b
+-- | This implementation is shorter.
+fromHJust2 :: (HMapCxt HFromJust a b) => HList a -> HList b
 fromHJust2 xs = hMap HFromJust xs
 
 data HFromJust = HFromJust
@@ -886,10 +889,10 @@ instance (hJustA ~ HJust a) => ApplyAB HFromJust hJustA a where
 data HAddTag t = HAddTag t
 data HRmTag    = HRmTag
 
--- hAddTag :: HMap' (HAddTag t) l r => t -> HList l -> HList r
+-- hAddTag :: HMapCxt (HAddTag t) l r => t -> HList l -> HList r
 hAddTag t l = hMap (HAddTag t) l
 
--- hRmTag ::  HMap HRmTag l => HList l -> HList (HMapR HRmTag l)
+-- hRmTag ::  HMapCxt HRmTag l => HList l -> HList (HMapR HRmTag l)
 hRmTag l    = hMap HRmTag l
 
 instance (et ~ (e,t)) => ApplyAB (HAddTag t) e et
@@ -903,7 +906,7 @@ instance (e' ~ e) => ApplyAB HRmTag (e,t) e'
 
 
 -- | Annotate list with a type-level Boolean
--- hFlag :: HMap' (HAddTag (Proxy True)) l r => HList l -> HList r
+-- hFlag :: HMapCxt (HAddTag (Proxy True)) l r => HList l -> HList r
 hFlag l = hAddTag hTrue l
 
 
