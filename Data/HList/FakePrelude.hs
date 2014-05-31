@@ -16,6 +16,7 @@ import Data.Proxy
 import Data.Tagged
 import GHC.Prim (Constraint)
 import GHC.TypeLits
+import Control.Applicative
 #if NEW_TYPE_EQ
 import Data.Type.Equality (type (==))
 #endif
@@ -262,6 +263,17 @@ instance (x ~ t a,
           ApplyAB f a b) =>
   ApplyAB (HFmap f) x y where
     applyAB (HFmap f) = fmap (applyAB f)
+
+
+-- | 'liftA2'
+newtype LiftA2 f = LiftA2 f
+
+instance (ApplyAB f (x,y) z,
+          mz ~ m z,
+          mxy ~ (m x, m y),
+          Applicative m) => ApplyAB (LiftA2 f) mxy mz where
+    applyAB (LiftA2 f) xy = liftA2 (curry (applyAB f)) `uncurry` xy
+
 
 -- | 'untag'
 data HUntag = HUntag

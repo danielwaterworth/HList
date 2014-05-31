@@ -586,23 +586,6 @@ instance (m1 ~ m, Applicative m, HSequence m as bs) =>
     HSequence m (m1 a ': as) (a ': bs) where
     hSequence (HCons a b) = liftA2 HCons a (hSequence b)
 
--- data ConsM = ConsM
--- consM = LiftA2 FHCons
-newtype LiftA2 f = LiftA2 f
-
-instance (ApplyAB f (x,y) z, mz ~ m z, mxy ~ (m x, m y), Applicative m) => ApplyAB (LiftA2 f) mxy mz where
-    applyAB (LiftA2 f) xy = liftA2 (curry (applyAB f)) `uncurry` xy
-
-{-
-instance (m1 ~ m, Applicative m) => ApplyAB ConsM (m a, m1 (HList l)) (m (HList (a ': l)))  where
-{-
-    type ApplyB ConsM (m a, m1 (HList l)) = Just (m (HList (a ': l)))
-    type ApplyA ConsM (m (HList (a ': l))) = Just (m a, m (HList l))
-    -}
-    applyAB _ (me,ml) = liftA2 HCons me ml
-    -}
-
-
 -- **** alternative implementation
 
 -- | 'hSequence2' is not recommended over 'hSequence' since it possibly doesn't
@@ -614,18 +597,11 @@ instance (m1 ~ m, Applicative m) => ApplyAB ConsM (m a, m1 (HList l)) (m (HList 
 --
 --  > hSequence l = hFoldr ConsM (return HNil) l
 
-
-{-
-hSequence2 :: HSequence2 l f a => HList l -> f a
 hSequence2 l =
-    let rHNil = pure HNil `asTypeOf` (liftA undefined x)
-        x = hFoldr ConsM rHNil l
+    let rHNil = pure HNil `asTypeOf` (fmap undefined x)
+        x = hFoldr (LiftA2 FHCons) rHNil l
     in x
 
-
--- | abbreviation for the constraint on 'hSequence2'
-type HSequence2 l f a = (Applicative f, HFoldr ConsM (f (HList ('[]))) l (f a))
--}
 
 
 -- --------------------------------------------------------------------------
