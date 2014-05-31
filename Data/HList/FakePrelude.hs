@@ -255,7 +255,7 @@ instance (f1 ~ (a -> b -> c), f2 ~ (b -> a -> c))  => ApplyAB HFlip f1 f2 where
 
 
 -- | 'fmap'
-data HFmap f = HFmap f
+newtype HFmap f = HFmap f
 
 instance (x ~ t a,
           y ~ t b,
