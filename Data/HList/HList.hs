@@ -655,15 +655,6 @@ hMapM_ f =  sequence_ .  disambiguate . hMapM f
 
 
 -- --------------------------------------------------------------------------
--- * Type-level equality for lists ('HEq')
-
-instance HEq '[] '[]      True
-instance HEq '[] (e ': l) False
-instance HEq (e ': l) '[] False
-instance (HEq e1 e2 b1, HEq l1 l2 b2, br ~ HAnd b1 b2)
-      => HEq (e1 ': l1) (e2 ': l2) br
-
--- --------------------------------------------------------------------------
 -- * Ensure a list to contain HNats only
 -- | We do so constructively, converting the HList whose elements
 -- are Proxy HNat to [HNat]. The latter kind is unpopulated and
@@ -729,42 +720,6 @@ instance HMemberM2 (Just l1) e1 (e ': l) (Just (e ': l1))
 -- * Staged equality for lists
 -- $note removed. use Typeable instead
 
-{-
-instance HStagedEq (HList '[]) (HList '[])
- where
-  hStagedEq _ _ = True
-
-instance HStagedEq (HList '[]) (HList (e ': l))
- where
-  hStagedEq _ _ = False
-
-instance HStagedEq (HList (e ': l)) (HList '[])
- where
-  hStagedEq _ _ = False
-
-instance ( HEq e e' b
-         , HStagedEq (HList l) (HList l')
-         , HStagedEq' b e e'
-         )
-      =>   HStagedEq (HList (e ': l)) (HList (e' ': l'))
- where
-  hStagedEq (HCons e l) (HCons e' l') = (hStagedEq' b e e') && b'
-   where
-    b  = proxy :: Proxy b
-    b' = hStagedEq l l'
-
-class HStagedEq' (b :: Bool) e e'
- where
-  hStagedEq' :: Proxy b -> e -> e' -> Bool
-
-instance HStagedEq' False e e'
- where
-  hStagedEq' _ _ _ = False
-
-instance Eq e => HStagedEq' True e e
- where
-  hStagedEq' _ = (==)
--}
 
 {-
 

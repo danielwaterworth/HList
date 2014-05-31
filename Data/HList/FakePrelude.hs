@@ -480,44 +480,10 @@ hEq _ _ = Proxy
 --  * Establish remaining value-level equality dynamically
 --
 -- removed: use typeable
-{-
 
-class HStagedEq x y
- where
-  hStagedEq :: x -> y -> Bool
--}
-
-
-{-
--- --------------------------------------------------------------------------
-
--- | A predicate for type equality
---
--- There are different implementations: see TypeEq*.hs
-
-class HBool b => TypeEq x y b | x y -> b
-
-
--- Rely on lazy show for type-level Booleans
-typeEq :: TypeEq t t' b => t -> t' -> b
-typeEq = undefined
-
-
--- A more disciplined version: based on proxies
-proxyEq :: TypeEq t t' b => Proxy t -> Proxy t' -> b
-proxyEq _ _ = undefined
-
--}
 
 -- --------------------------------------------------------------------------
 -- * Type-safe cast -- no longer need. We use a a ~ b
-
-{-
-class TypeCast x y | x -> y, y -> x
- where
-  typeCast :: x -> y
--}
-
 
 -- --------------------------------------------------------------------------
 
