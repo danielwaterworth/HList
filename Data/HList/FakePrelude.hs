@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 
 {- |
    The HList library
@@ -15,6 +16,12 @@ import Data.Proxy
 import Data.Tagged
 import GHC.Prim (Constraint)
 import GHC.TypeLits
+#if NEW_TYPE_EQ
+import Data.Type.Equality (type (==))
+#endif
+
+
+
 
 -- --------------------------------------------------------------------------
 -- * A heterogeneous apply operator
@@ -440,12 +447,12 @@ newtype HJust x   = HJust x   deriving Show
 -- for the sake of the generic equality.
 class HEq (x :: k) (y :: k) (b :: Bool) | x y -> b
 
--- Equality instances for naturals
-
-instance HEq HZero HZero     True
-instance HEq HZero (HSucc n) False
-instance HEq (HSucc n) HZero False
-instance HEq  n n' b => HEq (HSucc n) (HSucc n') b
+#if NEW_TYPE_EQ
+-- unclear why this
+instance ((Proxy x == Proxy y) ~ b) => HEq x y b
+-- works better the version using (==) :: k -> k -> Bool
+-- instance ((x == y) ~ b) => HEq x y b
+#endif
 
 hEq :: HEq x y b => x -> y -> Proxy b
 hEq _ _ = Proxy

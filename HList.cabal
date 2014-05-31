@@ -36,6 +36,12 @@ Source-Repository head
     location: http://code.haskell.org/HList
 
 
+flag new_type_eq
+  Default: False
+  Description: use Data.Type.Equality.== to define the instance of HEq
+               instead of overlapping instances (in Data.HList.TypeEqO)
+
+
 library
   Build-Depends:       base >= 4.6 && < 5, template-haskell, ghc-prim, mtl,
                        tagged,
@@ -95,6 +101,10 @@ library
 
   if impl(ghc >= 7.7)
     Default-Extensions: AllowAmbiguousTypes
+
+
+  if flag(new_type_eq)
+    Cpp-options:       -DNEW_TYPE_EQ
 
 Test-Suite examples
   Type:     exitcode-stdio-1.0

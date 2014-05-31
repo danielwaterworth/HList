@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE OverlappingInstances #-}
 
 {- |
@@ -15,9 +16,12 @@ module Data.HList.TypeEqO where
 
 import Data.HList.FakePrelude
 
+#if !NEW_TYPE_EQ
 instance HEq x x True
 instance False ~ b => HEq x y b
 -- instance TypeEq x y HFalse -- would violate functional dependency
+#endif
+
 
 
 class TupleType t (b :: Bool) | t -> b
