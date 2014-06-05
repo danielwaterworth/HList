@@ -9,11 +9,7 @@
 
    One approach to their implementation would be to consider both
    the favoured label and the corresponding value as dynamics upon
-   variant construction. Since we are too lazy to programme some
-   Typeable instances for non-ghc systems (NB: in GHC, Typeable
-   is derivable), we rather model variants as (opaque) records
-   with maybies for the values. Only one value will actually hold
-   non-Nothing, as guaranteed by the constructor.
+   variant construction.
 
    See VariantP.hs for a different approach to open sums.
 -}

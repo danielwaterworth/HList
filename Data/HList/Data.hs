@@ -1,6 +1,9 @@
 {-# LANGUAGE CPP #-}
 
-{- | 'Data.Data.Data' instances for 'HListFlat' and 'Record' which pretend
+{- | Description: Data instances
+
+
+'Data.Data.Data' instances for 'HListFlat' and 'Record' which pretend
 to be flat data structures. The @Data@ instance for 'HList' gives a nested
 structure.
 

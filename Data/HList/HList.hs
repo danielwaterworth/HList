@@ -40,7 +40,10 @@ instance (ConvHList l, Eq (Prime l)) => Eq (HList l) where
 HNil' and HCons' are the older ADT-style. This has some advantages
 over the GADT:
 
-* lazy pattern matches are allowed
+* lazy pattern matches are allowed, so that @unPrime (error "x")@
+  behaves like @hReplicate Proxy (error "x")@. In other words,
+  unPrime allows a straightforward way to create the spine of a
+  HList given only the type.
 
 * type inference is better if you want to directly pattern match
 <http://stackoverflow.com/questions/19077037/is-there-any-deeper-type-theoretic-reason-ghc-cant-infer-this-type see stackoverflow post here>
@@ -411,10 +414,6 @@ type instance UnHList (HList a) = a
 can be determined from the length of the argument list (and
 the other way around). Similarly, the type of the elements
 of the list is propagated in both directions too.
-
-Excuse the ugly types printed. Unfortunately ghc (still?)
-shows types like @'[a,b]@ using the actual constructors involved
-@(':) a ((':) b '[])@ (or even worse when the kind variables are printed).
 
 >>> :set -XNoMonomorphismRestriction
 >>> let xs = 1 .*. 'c' .*. HNil

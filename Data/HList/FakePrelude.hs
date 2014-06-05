@@ -28,18 +28,43 @@ import Data.Type.Equality (type (==))
 -- * A heterogeneous apply operator
 
 -- | simpler/weaker version where type information only propagates forward
--- with this one. 'app' defined below, is more complicated / verbose to define,
+-- with this one. 'applyAB' defined below, is more complicated / verbose to define,
 -- but it offers better type inference. Most uses have been converted to
--- 'app', so there is not much that can be done with 'Apply'.
+-- 'applyAB', so there is not much that can be done with 'Apply'.
 class Apply f a where
   type ApplyR f a :: *
   apply :: f -> a -> ApplyR f a
 
 {- $note
 
- Polymorphic functions are not first-class in haskell. One solution is to
- write an instance of 'ApplyAB' for a data type that takes the place of
- the original function. In other words,
+ Polymorphic functions are not first-class in haskell. An example of this
+ is:
+
+ > f op = (op (1 :: Double), op (1 :: Int))
+
+ [@RankNTypes@]
+
+ One solution is to enable `-XRankNTypes` and then write a type
+ signature which might be `f :: (forall a. Num a => a -> a)`. This
+ does not work in the context of HList, since we want to use functions
+ that do not necessarily fall into the pattern of (forall a. c a => a -> a).
+
+ [@MultipleArguments@]
+
+ Another solution is to rewrite @op@ to look like
+
+ > f op1 op2 = (op1 (1:: Double), op2 (1 :: Int))
+
+ In some sense this approach works (see HZip), but the result
+ is constrained to as many function applications as you are willing to
+ write (ex. a function that works for records of six entries would
+ look like @hBuild f f f f f f@).
+
+
+ [@Defunctionalization@]
+
+ Therefore the selected solution is to write an instance of 'ApplyAB' for a data
+ type that takes the place of the original function. In other words,
 
  > data Fn = Fn
  > instance ApplyAB Fn a b where applyAB Fn a = actual_fn a
@@ -61,8 +86,48 @@ class Apply f a where
  The first instance allows types to be inferred as if we had
  @class ApplyAB a b c | a -> b c@, while the second instance
  only matches if ghc already knows that it needs
- @ApplyAB Fn Int Double@. Additional explanation can be found
+ @ApplyAB Fn Int Double@. Since @applyAB Fn :: Int -> Double@
+ has a monomorphic type, this trimmed down example does not
+ really make sense because @applyAB (fromIntegral :: Int -> Double)@
+ is exactly the same. Nontheless, the other uses of @ApplyAB@
+ follow this pattern, and the benefits are seen when the type of
+ @applyAB Fn@ has at least one type variable.
+
+ Additional explanation can be found
  in <http://okmij.org/ftp/Haskell/typecast.html#local-fd local functional dependencies>
+
+
+ [@AmbiguousTypes@]
+
+ Note that ghc only allows AllowAmbiguousTypes when a type
+ signature is provided. Thus expressions such as:
+
+ > data AddJust = AddJust
+ > instance (y ~ Maybe x) => ApplyAB AddJust x y where
+ >    applyAB _ x = Just x
+ >
+ > twoJustsBad = hMap AddJust . hMap AddJust -- ambiguous type
+
+ Are not accepted without a type signature that references the
+ intermediate \"b\":
+
+ > twoJusts :: forall r a b c. (HMapCxt r AddJust a b, HMapCxt r AddJust b c) =>
+ >        r a -> r c
+ > twoJusts a = hMap AddJust (hMap AddJust a :: r b)
+
+ An apply class with functional dependencies
+
+ > class ApplyAB' f a b | f a -> b, f b -> a
+
+ Or with equivalent type families
+
+ > class (GetB f a ~ b, GetA f b ~ a) => ApplyAB' f a b
+
+ would not require an annotation for @twoJusts@. However, 
+ not all instances of ApplyAB will satisfy those functional
+ dependencies, and thus the number of classes would proliferate.
+ Furthermore, inference does not have to be in one direction
+ only, as the example of 'HMap' shows.
 
 -}
 
@@ -285,7 +350,7 @@ instance (Tagged t x ~ tx) => ApplyAB HUntag tx x where
 -- * Proxy
 --
 
--- $note see "Data.HList.Proxy"
+-- $note see "Data.Proxy"
 
 -- | A special 'Proxy' for record labels, polykinded
 data Label l = Label
