@@ -525,10 +525,11 @@ newtype HJust x   = HJust x   deriving Show
 class HEq (x :: k) (y :: k) (b :: Bool) | x y -> b
 
 #if NEW_TYPE_EQ
--- unclear why this
+-- | Uses @(==) :: * -> * -> Bool@ because
+-- there is no polykinded instance of (==),
+-- since that one overlaps "more productive"
+-- instances that pattern match on types.
 instance ((Proxy x == Proxy y) ~ b) => HEq x y b
--- works better the version using (==) :: k -> k -> Bool
--- instance ((x == y) ~ b) => HEq x y b
 #endif
 
 hEq :: HEq x y b => x -> y -> Proxy b
