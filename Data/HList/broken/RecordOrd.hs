@@ -73,12 +73,14 @@ In principle this could be an appropriate proxy to use
 for Variant: once the field ordering and number of fields
 is fixed, as it would be for
 
-(vx,vy) = case sortedProxyLength (hSucc (hSucc hZero)) of
-  p -> (mkVariant x 'x' p,
-        mkVariant y 'y' p)
+_left = Label :: Label "left"
+_right = Label :: Label "right"
 
-However ghc does not try (x ~ "left") or (y ~ "right")
-and see that only one will satisfy @CmpSymbol x y ~ LT@
+(v,w) = case sortedProxyLen (hSucc (hSucc hZero)) of
+              e -> (mkVariant _left 'x' e,
+                    mkVariant _right (5 :: Int) e)
+
+Then:
 
 v :: (HasField' b1 "right" '[Tagged x a, Tagged y a1] Int,
       HasField' b "left" '[Tagged x a, Tagged y a1] Char,
@@ -86,6 +88,12 @@ v :: (HasField' b1 "right" '[Tagged x a, Tagged y a1] Int,
       HNat2Integral n1, HNat2Integral n, HEq "right" x b1,
       HEq "left" x b, GHC.TypeLits.CmpSymbol x y ~ 'LT) =>
      Variant '[Tagged x a, Tagged y a1]
+
+Does not reduce to v :: Variant '[Tagged "left" Char, Tagged "right" Int]
+
+If only ghc would backtrack after trying (x ~ "left") or (y ~ "right")
+and see that only one will satisfy @CmpSymbol x y ~ LT@,
+
 
 -}
 sortedProxyLen :: (HSorted r,
