@@ -453,17 +453,26 @@ sl
 
 -}
 
-hMap f xs = applyAB (HMap f) xs
-
 newtype HMap f = HMap f
 
-instance (HMapCxt f a b, as ~ HList a, bs ~ HList b) => ApplyAB (HMap f) as bs where
+hMap f xs = applyAB (HMap f) xs
+
+instance (HMapCxt r f a b, as ~ r a, bs ~ r b)
+    => ApplyAB (HMap f) as bs where
     applyAB (HMap f) = hMapAux f
 
 
-class (SameLength a b, HMapAux f a b) => HMapCxt f a b
+hMapL f xs = applyAB (HMapL f) xs
 
-instance (SameLength a b, HMapAux f a b) => HMapCxt f a b
+newtype HMapL f = HMapL f
+
+instance (HMapCxt HList f a b, as ~ HList a, bs ~ HList b) => ApplyAB (HMapL f) as bs where
+    applyAB (HMapL f) = hMapAux f
+
+
+class (SameLength a b, HMapAux r f a b) => HMapCxt r f a b
+
+instance (SameLength a b, HMapAux r f a b) => HMapCxt r f a b
 
 
 -- | Ensure two lists have the same length. We do case analysis on the
@@ -486,15 +495,14 @@ class (SameLength' x y, SameLength' y x) =>
 instance (SameLength' x y, SameLength' y x) => SameLength x y
 
 
+class HMapAux (r :: [*] -> *) f (x :: [*]) (y :: [*]) where
+  hMapAux :: SameLength x y => f -> r x -> r y
 
-class HMapAux f (l :: [*]) (r :: [*]) where
-  hMapAux :: SameLength l r => f -> HList l -> HList r
-
-instance HMapAux f '[] '[] where
+instance HMapAux HList f '[] '[] where
   hMapAux       _  _  = HNil
 
-instance (ApplyAB f e e', HMapAux f l l', SameLength l l')
-    => HMapAux f (e ': l) (e' ': l') where
+instance (ApplyAB f e e', HMapAux HList f l l', SameLength l l')
+    => HMapAux HList f (e ': l) (e' ': l') where
   hMapAux f (HCons x l)    = applyAB f x `HCons` hMapAux f l
 
 
@@ -721,9 +729,6 @@ instance HMemberM2 (Just l1) e1 (e ': l) (Just (e ': l1))
 
 
 {-
-
-
-
 -- * Static set property based on HEq
 class HSet l
 instance HSet HNil
@@ -841,7 +846,7 @@ instance ToHJust l => ToHJust (e ': l)
 
 -- | alternative implementation. The Apply instance is in "Data.HList.FakePrelude".
 -- A longer type could be inferred.
-toHJust2 :: (HMapCxt (HJust ()) a b) => HList a -> HList b
+toHJust2 :: (HMapCxt HList (HJust ()) a b) => HList a -> HList b
 toHJust2 xs = hMap (HJust ()) xs
 
 -- --------------------------------------------------------------------------
@@ -874,7 +879,7 @@ instance FromHJust l => FromHJust (HJust e ': l)
 -- *** alternative implementation
 
 -- | This implementation is shorter.
-fromHJust2 :: (HMapCxt HFromJust a b) => HList a -> HList b
+fromHJust2 :: (HMapCxt r HFromJust a b) => r a -> r b
 fromHJust2 xs = hMap HFromJust xs
 
 data HFromJust = HFromJust

@@ -11,7 +11,7 @@ Nothing
 Just ()
 
 Setting the missing tag does nothing:
-Record{right=Nothing,left=Just 'x',up=Nothing}
+V{left='x'}
 
 Lenses compose:
 Just "leftleft"
@@ -24,14 +24,14 @@ Nothing
 "extension"
 
 Internal Structure:
-Record{v=Record{right=Nothing,left=Just 'x',up=Nothing}
-        ,v2=Record{right=Nothing,left=Just (),up=Nothing}
-        ,v2'=Record{right=Nothing,left=Just (),up=Nothing}
-        ,v3=Record{right=Nothing,left=Just 'x',up=Nothing}
-        ,v4=Record{right=Nothing,left=Just Record{right=Nothing,left=Just "leftleft",up=Nothing}
-            ,up=Nothing}
-        ,v5=Record{down=Just "hi",right=Nothing,left=Nothing,up=Nothing}
-        ,v6=Record{down=Just "hi",right=Nothing,left=Nothing,up=Nothing}
-        ,v7=Record{down=Nothing,right=Nothing,left=Just 'x',up=Nothing}
+Record{v=V{left='x'}
+        ,v2=V{left=()}
+        ,v2'=V{left=()}
+        ,v3=V{left='x'}
+        ,v4=V{left=V{left="leftleft"}
+            }
+        ,v5=V{down="hi"}
+        ,v6=V{down="hi"}
+        ,v7=V{left='x'}
         }
     

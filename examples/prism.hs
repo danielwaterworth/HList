@@ -1,13 +1,7 @@
 {-# LANGUAGE DataKinds #-}
-{-# LANGUAGE FlexibleContexts #-}
-{-# LANGUAGE FlexibleInstances #-}
-{-# LANGUAGE MultiParamTypeClasses #-}
 {-# LANGUAGE NoMonomorphismRestriction #-}
-{-# LANGUAGE OverlappingInstances #-} -- for VariantToRec pretty printing only
 {-# LANGUAGE QuasiQuotes #-} -- for pun
 {-# LANGUAGE TemplateHaskell #-}
-{-# LANGUAGE TypeFamilies #-}
-{-# LANGUAGE UndecidableInstances #-}
 module Main where
 import Data.HList.CommonMain
 import Control.Lens
@@ -23,14 +17,12 @@ down_ = hLens' down
 
 -- this definition is needed to decide what order
 -- to put the fields in, as well as their initial types
-(vProto,r) = (toVariant r, r)
-  where
-  r = [pun|right left up|]
+r = [pun|right left up|] where
   left = 'a'
   right = 2 :: Int
   up = 2.3 :: Double
 
-v = mkVariant left 'x' vProto
+v = mkVariant left 'x' r
 
 main = do
     putStrLn "Lookup and set"
@@ -40,7 +32,7 @@ main = do
     inspectV_
 
     putStrLn "\nSetting the missing tag does nothing:"
-    print $ applyAB VariantToRec $ set right_ () v
+    print $ set right_ () v
     Left 'x' <- set _Right () (Left 'x') -- prisms for Either do the same thing
                 & return
 
@@ -56,7 +48,7 @@ main = do
     extensionTests
 
     putStrLn "\nInternal Structure:"
-    putStrLn $ indent $ show $ hMapR VariantToRec vs
+    putStrLn $ indent $ show vs
 
 
 
@@ -64,7 +56,7 @@ lazyX = mkVariant (Label :: Label "x") 'a' lazyProto
 lazyY = mkVariant (Label :: Label "y") (2.5 :: Double) lazyProto
 
 lazyProto = undefined :: Record
-  '[Tagged "x" (Proxy x), Tagged "y" (Proxy y)]
+  '[Tagged "x" x, Tagged "y" y]
 
 vs = [pun| v v2 v2' v3 v4 v5 v6 v7 |]
 
@@ -114,20 +106,6 @@ extensionTests = do
 v5 = down .=. Just "hi" .*. v
 v6 = down_ .==. Just "hi" .*. v
 v7 = down .=. (Nothing :: Maybe String) .*. v
-
-data VariantToRec = VariantToRec
-
--- | recursively change "Variant a" to "Record a" for a better show
--- instance
-instance (HMapCxt (HFmap (HFmap VariantToRec)) x y, r ~ Record y) 
-    => ApplyAB VariantToRec (Variant x) r where
-    applyAB _ x = case hMapV VariantToRec x of
-                    Variant x -> Record x
-
--- fallback case
-instance (x ~ y) => ApplyAB VariantToRec x y where
-    applyAB _ x = x
-
 
 -- start a newline after every } to make the results readable
 indent :: String -> String

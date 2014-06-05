@@ -1,3 +1,14 @@
+5 Jun 2014
+Start to parameterize operations on the collection type. This
+means that where we previously had HMapCxt f x y another
+type parameter with kind [*] -> * is added. This means
+previous uses of HMapCxt f x y become HMap HList f x y.
+This allows hMap to be used with Record and Variant.
+HUpdateAtLabel is similarly generalized.
+
+Rework Variant: the implementation is now similar to Dynamic
+and TIC.
+
 28 May 2014
 Add tipyLens and ticPrism.
 

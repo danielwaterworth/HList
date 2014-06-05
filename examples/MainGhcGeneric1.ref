@@ -54,6 +54,6 @@ Just Cow
 Nothing
 
 testVariant
-<Cannot show Variant content!>
+V{name="angus"}
 Nothing
 Just "angus"

@@ -80,8 +80,8 @@ data Labeled (x :: k) (a :: *) (b :: *) = Labeled deriving (Show)
 
 -- | make a @Lens (Record s) (Record t) a b@
 instance (Functor f,
-          HUpdateAtLabel x b s t,
-          HUpdateAtLabel x a t s,
+          HUpdateAtLabel Record x b s t,
+          HUpdateAtLabel Record x a t s,
           SameLength s t,
           (->) ~ to,
           (->) ~ p)

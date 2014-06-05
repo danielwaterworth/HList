@@ -581,8 +581,7 @@ A bit of setup:
 
 
 -}
-recToKW :: forall a b. (HMapAux TaggedToKW a b, SameLength a b,
-      SameLength b a, HConcat b) =>
+recToKW :: forall a b. (HMapCxt HList TaggedToKW a b, HConcat b) =>
      Record a -> HList (HConcatR b)
 recToKW (Record r) = hConcat (hMap TaggedToKW r :: HList b)
 

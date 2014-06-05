@@ -1,3 +1,4 @@
+{-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE FlexibleContexts #-}
@@ -19,6 +20,8 @@ module MainGhcGeneric1 where
 import Datatypes2
 import Data.HList.CommonMain
 
+reproxy :: proxy a -> Proxy a
+reproxy _ = Proxy
 
 
 -- --------------------------------------------------------------------------
@@ -283,14 +286,15 @@ testVariant = do
     print testVar2
     print testVar3
  where
-  animalVar =  key   .=. (Proxy::Proxy Integer)
-           .*. name  .=. (Proxy::Proxy String)
-           .*. breed .=. (Proxy::Proxy Breed)
-           .*. emptyRecord
   testVar1 = mkVariant name "angus" animalVar
-  testVar2 = unVariant key testVar1
-  testVar3 = unVariant name testVar1
+  testVar2 = testVar1 .!. key
+  testVar3 = testVar1 .!. name
 
+animalVar = reproxy $ 
+               key   .=. (undefined :: Integer)
+           .*. name  .=. (undefined :: String)
+           .*. breed .=. (undefined :: Breed)
+           .*. emptyRecord
 {-
 -- --------------------------------------------------------------------------
 

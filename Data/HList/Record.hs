@@ -338,7 +338,7 @@ instance (Read v, ShowLabel l,
       return (Tagged v)
 
 
-instance (HMapCxt ReadComponent rs bs,
+instance (HMapCxt HList ReadComponent rs bs,
           ApplyAB ReadComponent r readP_r,
           ConvHList rs,
           HSequence ReadP (readP_r ': bs) (r ': rs)) => Read (Record (r ': rs)) where
@@ -524,16 +524,16 @@ r .-. l =  hDeleteAtLabel l r
 -- | 'hUpdateAtLabel' @label value record@
 
 class (HasField l (Record r') v) =>
-    HUpdateAtLabel (l :: k) (v :: *) (r :: [*]) (r' :: [*])
+    HUpdateAtLabel record (l :: k) (v :: *) (r :: [*]) (r' :: [*])
           | l v r -> r', l r' -> v where
-    hUpdateAtLabel :: SameLength r r' => Label l -> v -> Record r -> Record r'
+    hUpdateAtLabel :: SameLength r r' => Label l -> v -> record r -> record r'
 
 instance (HasField l (Record r') v,
           HFindLabel l r n,
           HUpdateAtHNat n (Tagged l v) r,
           HUpdateAtHNatR n (Tagged l v) r ~ r',
           SameLength r r') =>
-  HUpdateAtLabel l v r r' where
+  HUpdateAtLabel Record l v r r' where
   hUpdateAtLabel l v (Record r) =
     Record (hUpdateAtHNat (Proxy::Proxy n) (newLVPair l v) r)
 
@@ -622,10 +622,10 @@ hRenameLabel l l' r = r''
 
 -- --------------------------------------------------------------------------
 
-type HTPupdateAtLabel l v r = (HUpdateAtLabel l v r r, SameLength' r r)
+type HTPupdateAtLabel record l v r = (HUpdateAtLabel record l v r r, SameLength' r r)
 
 -- | A variation on 'hUpdateAtLabel': type-preserving update.
-hTPupdateAtLabel :: HTPupdateAtLabel l v r => Label l -> v -> Record r -> Record r
+hTPupdateAtLabel :: HTPupdateAtLabel record l v r => Label l -> v -> record r -> record r
 hTPupdateAtLabel l v r = hUpdateAtLabel l v r
 
 {- ^
@@ -749,7 +749,7 @@ class UnionSymRec' (b :: Bool) r1 f2 r2' ru | b r1 f2 r2' -> ru where
 -- To inject (HCons f2 r2) in that union, we should replace the
 -- field f2
 instance (UnionSymRec r1 r2' ru,
-          HTPupdateAtLabel l2 v2 ru,
+          HTPupdateAtLabel Record l2 v2 ru,
           f2 ~ Tagged l2 v2)
     => UnionSymRec' True r1 f2 r2' ru where
     unionSR' _ r1 (Tagged v2) r2' =
@@ -858,7 +858,12 @@ hMapR f r = applyAB (HMapR f) r
 
 newtype HMapR f = HMapR f
 
-instance (HMapCxt (HFmap f) x y, rx ~ Record x, ry ~ Record y)
+instance (HMapCxt Record f x y, rx ~ Record x, ry ~ Record y)
       => ApplyAB (HMapR f) rx ry where
-        applyAB (HMapR f) (Record x) = Record (hMapAux (HFmap f) x)
+        applyAB (HMapR f) = hMapAux f
+
+instance HMapAux HList (HFmap f) x y =>
+    HMapAux Record f x y where
+      hMapAux f (Record x) = Record (hMapAux (HFmap f) x)
+
 
