@@ -32,13 +32,15 @@ instance (x ~ (l1 ': rest),
     insertOrd2 _ _ _ = error "Data.HList.RecordOrd: ghc bug"
 
 
-instance Fail (DuplicatedLabel kv) => InsertOrd2 EQ kv x '[DuplicatedLabel kv]
+instance Fail (DuplicatedLabel kv) => InsertOrd2 EQ kv x '[DuplicatedLabel kv] where
+    insertOrd2 _ _ _ = error "Data.HList.RecordOrd: there must be no instances of Fail"
 
 
 instance (  b ~ CmpSymbol k k',
-            tagged ~ Tagged,
-            InsertOrd2 b (tagged k v) (tagged k' v' ': kvs) kvs')
-          => InsertOrd1 (tagged k v) (tagged k' v' ': kvs) kvs' where
+            taggedkv ~ Tagged k v,
+            taggedk'v' ~ Tagged k' v',
+            InsertOrd2 b taggedkv (taggedk'v' ': kvs) kvs')
+          => InsertOrd1 taggedkv (taggedk'v' ': kvs) kvs' where
     insertOrd1 kv kvs = insertOrd2 (Proxy :: Proxy b) kv kvs
 
 instance InsertOrd1 x '[] '[x] where
@@ -54,7 +56,43 @@ instance (x ~ (e, HList r),
 hSort' xs = hFoldr InsertOrd HNil xs
 
 
-type HSorted r = HFoldr InsertOrd (HList '[]) r (HList r)
+class HSorted (r :: [*])
+
+instance HSorted '[]
+instance HSorted '[x]
+instance (HSorted (ty ': rest),
+          tx ~ Tagged x vx,
+          ty ~ Tagged y vy,
+          CmpSymbol x y ~ LT) 
+      => HSorted (tx ': ty ': rest)
+
+
+{-
+
+In principle this could be an appropriate proxy to use
+for Variant: once the field ordering and number of fields
+is fixed, as it would be for
+
+(vx,vy) = case sortedProxyLength (hSucc (hSucc hZero)) of
+  p -> (mkVariant x 'x' p,
+        mkVariant y 'y' p)
+
+However ghc does not try (x ~ "left") or (y ~ "right")
+and see that only one will satisfy @CmpSymbol x y ~ LT@
+
+v :: (HasField' b1 "right" '[Tagged x a, Tagged y a1] Int,
+      HasField' b "left" '[Tagged x a, Tagged y a1] Char,
+      HFind2 b1 "right" '[y] n1, HFind2 b "left" '[y] n,
+      HNat2Integral n1, HNat2Integral n, HEq "right" x b1,
+      HEq "left" x b, GHC.TypeLits.CmpSymbol x y ~ 'LT) =>
+     Variant '[Tagged x a, Tagged y a1]
+
+-}
+sortedProxyLen :: (HSorted r,
+                   SameLength' (HReplicateR n ()) r_,
+                   HMapCxt (HFmap (Fun '[] ())) r r_) 
+        => Proxy n -> Proxy r
+sortedProxyLen _ = Proxy
 
 class HSort xs xs' where
     hSort :: SameLength xs xs' => Record xs -> Record xs'
