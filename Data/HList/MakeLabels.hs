@@ -8,12 +8,13 @@ module Data.HList.MakeLabels (
     makeLabels,
     makeLabels3,
     makeLabels6,
-    -- | see also 'Data.HList.Labelable.makeLabelable'
+    makeLabelable,
     ) where
 
 import Data.Typeable
 import Data.HList.FakePrelude
 import Data.HList.Label3
+import Data.HList.Labelable
 
 import Language.Haskell.TH
 import Data.Char
@@ -118,3 +119,32 @@ makeLabels6 :: [String] -> Q [Dec]
 makeLabels6 ns = fmap concat $ forM ns $ \n -> sequence
   [sigD (make_dname n) [t| Label $(litT (strTyLit n)) |],
    valD (varP (make_dname n)) (normalB [| Label |]) []]
+
+
+{- | @makeLabelable \"x y z\"@ expands out to
+
+> x = hLens' (Label :: Label "x")
+> y = hLens' (Label :: Label "y")
+> z = hLens' (Label :: Label "z")
+
+Refer to "Data.HList.Labelable" for usage.
+
+-}
+makeLabelable :: String -> Q [Dec]
+makeLabelable xs = fmap concat $ mapM makeLabel1 (words xs)
+    where
+        -- a bit indirect, ghc-7.6 TH is a bit too eager to reject
+        -- mis-matched kind variables
+        makeLabel1 x = sequence
+              [
+                sigD (mkName x) makeSig,
+                valD (varP (mkName x)) (normalB (varE 'hLens' `appE` lt))
+                            []
+                ]
+            where lt = [| Label :: $([t| Label $l |]) |]
+                  l = litT (strTyLit x)
+
+                  makeSig = [t| (Labelable $l r to p f s t a b) =>
+                              -- (a `p` f b) `to` (r s `p` f (r t))
+                              LabeledOptic to p f (r s) (r t) a b
+                              |]
