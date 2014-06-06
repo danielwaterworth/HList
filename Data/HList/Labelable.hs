@@ -120,15 +120,22 @@ infixr 4 .==.
 
 
 -- | extracts the type that is actually the label in @a@ and puts it in @b@
-class ToSym a b
+class ToSym (a :: *) (b :: k) | a -> b
 
 -- | for labels in this module
+instance XFromLabeled v1 v2 v3 x => ToSym (v1 v2 v3) (x :: Symbol)
+
+
+-- | extracts the label from a LabeledOptic ... ~ v1 v2 v3
+class XFromLabeled v1 v2 v3 x | v1 v2 v3 -> x
+
 instance (LabeledCxt1 x r (Labeled x) p f s t a b,
-          (v1 v2 v3) ~ LabeledOptic (Labeled x) p f (r s) (r t) a b)
-  => ToSym (v1 v2 v3) x
+          (v1 v2 v3) ~ LabeledOptic (Labeled x) p f (r s) (r t) a b) =>
+    XFromLabeled v1 v2 v3 x
 
 -- | for "Data.HList.Label6" labels
 instance (x ~ x') => ToSym (Label x) x'
+
 
 toLabel :: ToSym t t' => t -> Label (t' :: Symbol)
 toLabel _ = Label
