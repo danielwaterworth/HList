@@ -16,16 +16,22 @@ import Data.HList.HList
 import Data.HList.HArray
 import Data.HList.HTypeIndexed
 import Data.HList.HOccurs -- for doctest
+import Data.HList.Record
 
 import Data.HList.TypeEqO () -- for doctest
 
 -- --------------------------------------------------------------------------
 -- * The newtype for type-indexed products
 
+-- | TIPs are like 'Record', except every element of the list 'l'
+-- has type @Tagged e e@
 newtype TIP (l :: [*]) = TIP{unTIP:: HList l}
 
-instance Show (HList l) => Show (TIP l) where
-  show (TIP l) = "TIP" ++ show l
+instance ShowComponents l => Show (TIP l) where
+  show (TIP l) = "TIP{" ++ showComponents "" l ++ "}"
+
+
+
 
 mkTIP :: HTypeIndexed l => HList l -> TIP l
 mkTIP = TIP
@@ -38,18 +44,26 @@ emptyTIP = mkTIP HNil
 
 -- | this constraint ensures that a TIP created by 'mkTIP' has no
 -- duplicates
-class HTypeIndexed (l :: [*])
-instance HTypeIndexed '[]
-instance (HOccursNot e l,HTypeIndexed l) => HTypeIndexed (e ': l)
+class (HAllTaggedEq l, HRLabelSet l) => HTypeIndexed (l :: [*])
+
+instance (HAllTaggedEq l, HRLabelSet l) => HTypeIndexed l
+
+class HAllTaggedEq (l :: [*])
+instance HAllTaggedEq '[]
+instance (HAllTaggedEq l, tee ~ Tagged e e') => HAllTaggedEq (tee ': l)
 
 -- --------------------------------------------------------------------------
 -- Implementing the HListPrelude interface
 
-instance (HOccursNot e l, HTypeIndexed l) => HExtend e (TIP l)
+instance (HRLabelSet (Tagged e e ': l), HTypeIndexed l) => HExtend e (TIP l)
  where
-  type HExtendR e (TIP l) = TIP (e ': l)
-  e .*. TIP l = mkTIP (HCons e l)
+  type HExtendR e (TIP l) = TIP (Tagged e e ': l)
+  e .*. TIP l = mkTIP (HCons (Tagged e) l)
 
+
+
+instance (e ~ e', HasField e (Record l) e') => HasField e (TIP l) e' where
+    hLookupByLabel lab (TIP l) = hLookupByLabel lab (Record l)
 
 -- | One occurrence and nothing is left
 --
@@ -58,8 +72,8 @@ instance (HOccursNot e l, HTypeIndexed l) => HExtend e (TIP l)
 -- Hence the explicit provision of a result type can be omitted.
 --
 
-instance e' ~ e => HOccurs e' (TIP '[e]) where
-  hOccurs (TIP (HCons e' _)) = e'
+instance (e' ~ e, e ~ f) => HOccurs e' (TIP '[Tagged e f]) where
+  hOccurs (TIP (HCons (Tagged e') _)) = e'
 
 instance HOccurs e (HList (x ': y ': l))
       => HOccurs e (TIP (x ': y ': l)) where
@@ -73,21 +87,39 @@ instance (HAppend (HList l) (HList l'), HTypeIndexed (HAppendList l l'))
 
 type instance HAppendR (TIP l) (TIP l') = TIP (HAppendList l l')
 
--- instance HOccurrence e l l' => HOccurrence e (TIP l) l'
---  where
---   hOccurrence e = hOccurrence e . unTIP
+
+instance HOccurrence HList e l l' => HOccurrence TIP e l l'
+ where
+  hOccurrence e = TIP . hOccurrence e . unTIP
 
 -- --------------------------------------------------------------------------
 -- * Shielding type-indexed operations
 -- $note The absence of signatures is deliberate! They all must be inferred.
 
-onTIP f (TIP l) = mkTIP (f l)
+onTIP f (TIP l) = let Record l' = f (Record l) in mkTIP l'
 
-tipyDelete  p t  = onTIP (hDeleteAt p) t
-tipyUpdate  e t  = onTIP (hUpdateAt e) t
-tipyProject ps t = onTIP (hProjectBy ps) t
+tipyDelete  p t  = onTIP (hDeleteAtLabel p) t
 
--- | provides a @Lens' (TIP s) a@.
+instance (HDeleteAtLabel Record e v v',
+          HTypeIndexed v')
+      => HDeleteAtLabel TIP e v v' where
+  hDeleteAtLabel e v = onTIP (hDeleteAtLabel e) v
+
+
+tipyUpdate  e t  = hTPupdateAtLabel (fromValue e) e t
+  where fromValue :: e -> Label e
+        fromValue _ = Label
+
+instance (HUpdateAtLabel Record e' e r r',
+          HTypeIndexed r',
+         e ~ e') => HUpdateAtLabel TIP e' e r r' where
+  hUpdateAtLabel l e r = onTIP (hUpdateAtLabel l e) r
+
+
+-- tipyProject ps t = onTIP (hProjectBy ps) t
+
+-- | provides a @Lens' (TIP s) a@. 'hLens'' @:: Label a -> Lens' (TIP s) a@
+-- is another option.
 tipyLens' f s = tipyLens (isSimple f) s
   where
     isSimple :: (a -> f a) -> (a -> f a)
@@ -99,11 +131,11 @@ When using @set@ (also known as @.~@), 'tipyLens'' can address the
 ambiguity as to which field \"a\" should actually be updated.
 
 -}
-tipyLens f (TIP s) = fmap (\b -> mkTIP (hUpdateAtHNat n b s) ) (f (hLookupByHNat n s))
+tipyLens f s = hLens x f s
   where
-    n = hType2HNat (getA f) s
-    getA :: (a -> f b) -> Proxy a
-    getA _ = Proxy
+    x = getA f
+    getA :: (a -> f b) -> Label a
+    getA _ = Label
 
 
 -- | Split produces two TIPs
@@ -164,7 +196,7 @@ TIPH[BSE, Key 42, Name "Angus", Cow, Price 75.5]
 
 
 
->>> Sheep .*. tipyDelete (Proxy::Proxy Breed) myTipyCow
+>>> Sheep .*. tipyDelete (Label::Label Breed) myTipyCow
 TIPH[Sheep, Key 42, Name "Angus", Price 75.5]
 
 >>> tipyUpdate Sheep myTipyCow

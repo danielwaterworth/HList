@@ -40,6 +40,7 @@ import Data.HList.FakePrelude
 import Data.HList.HList
 import Data.HList.Record
 import Data.HList.Variant
+import Data.HList.TIP
 
 import Control.Monad.Identity
 import GHC.TypeLits
@@ -106,6 +107,23 @@ type LabeledCxt x r to p f s t a b = (LabeledCxt1 x r to p f s t a b,
 instance (HPrism x p f s t a b,
           to ~ (->)) => Labelable x Variant to p f s t a b where
     hLens' x s = hPrism x s
+
+
+-- | make a @Lens' (TIP s) a@.
+--
+-- 'tipyLens' provides a @Lens (TIP s) (TIP t) a b@, which tends to need
+-- too many type annotations to be practical
+instance (s ~ t, a ~ b, x ~ a,
+
+      HUpdateAtLabel TIP x b s t,
+      HUpdateAtLabel TIP x a t s,
+      SameLength s t,
+
+      Functor f,
+      (->) ~ to,
+      (->) ~ p) =>
+    Labelable x TIP to p f s t a b where
+    hLens' x f s = fmap (\b -> hUpdateAtLabel x b s) (f (s .!. x))
 
 
 -- | modification of '.=.' which works with the labels from this module,
