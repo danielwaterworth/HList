@@ -284,7 +284,8 @@ instance RecordValues r=> RecordValues (Tagged l v ': r) where
 recordValues :: RecordValues r => Record r -> HList (RecordValuesR r)
 recordValues (Record r) = recordValues' r
 
-{- shorter, but 
+{- shorter, but worse in terms needing annotations to allow ambiguous types
+- but better in terms of inference
 recordValues :: RecordValues r rv => Record r -> HList rv
 recordValues (Record r) = hMap HUntag r
 
