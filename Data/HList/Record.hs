@@ -564,12 +564,12 @@ f@(Tagged v) .@. r  =  hUpdateAtLabel (labelLVPair f) v r
 
 
 -- | @hProjectByLabels ls r@ returns @r@ with only the labels in @ls@ remaining
-hProjectByLabels :: (HRLabelSet a, H2ProjectByLabels ls t a b) => 
+hProjectByLabels :: (HRLabelSet a, H2ProjectByLabels ls t a b) =>
 	Proxy ls -> Record t -> Record a
 hProjectByLabels ls (Record r) = mkRecord (fst $ h2projectByLabels ls r)
 
 -- | See 'H2ProjectByLabels'
-hProjectByLabels2 :: 
+hProjectByLabels2 ::
     (H2ProjectByLabels ls t t1 t2, HRLabelSet t1, HRLabelSet t2) =>
     Proxy ls -> Record t -> (Record t1, Record t2)
 hProjectByLabels2 ls (Record r) = (mkRecord rin, mkRecord rout)
@@ -596,7 +596,7 @@ instance (HMemberM (Label l1) ((l :: *) ': ls) (b :: Maybe [*]),
 
 class H2ProjectByLabels' (b::Maybe [*]) (ls::[*]) r rin rout
                          | b ls r -> rin rout where
-    h2projectByLabels' :: Proxy b -> Proxy ls -> 
+    h2projectByLabels' :: Proxy b -> Proxy ls ->
 				     HList r -> (HList rin,HList rout)
 
 instance H2ProjectByLabels ls1 r rin rout =>
@@ -796,7 +796,7 @@ instance (H2ProjectByLabels '[l] r rin rout,
 -- | Helper class 2 for 'hRearrange'
 class HRearrange' l ls rin rout r' where
     hRearrange2' :: Proxy l -> Proxy ls -> HList rin -> HList rout -> r'
- 
+
 instance (HRearrange ls rout (HList r'),
          r'' ~ HList (Tagged l v ': r')) =>
         HRearrange' l ls '[Tagged l v] rout r'' where
@@ -804,12 +804,12 @@ instance (HRearrange ls rout (HList r'),
         = HCons (Tagged v `asTypeOf` lv) (hRearrange2 ls rout)
 
 -- | For improved error messages
-instance Fail (FieldNotFound l) => 
+instance Fail (FieldNotFound l) =>
         HRearrange' l ls '[] rout (FieldNotFound l) where
    hRearrange2' _ _ _ _ = FieldNotFound
 
 -- | For improved error messages
-instance Fail (ExtraField l) => 
+instance Fail (ExtraField l) =>
           HRearrange '[] (Tagged l v ': a) (ExtraField l) where
    hRearrange2 _ _ = ExtraField
 
@@ -822,7 +822,7 @@ instance Fail (ExtraField l) =>
 -- out of a 'Label' @x@. Refer to @examples/lens.hs@ for an example.
 --
 -- see also "Data.HList.Labelable" for more general labels
-hLens lab f rec = fmap (\v -> hUpdateAtLabel lab v rec) (f (rec .!. lab)) 
+hLens lab f rec = fmap (\v -> hUpdateAtLabel lab v rec) (f (rec .!. lab))
 
 
 {- | map over the values of a record. This is a shortcut for
