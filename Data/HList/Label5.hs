@@ -1,5 +1,3 @@
-{-# LANGUAGE FlexibleInstances, UndecidableInstances, MultiParamTypeClasses #-}
-
 {- |
    The HList library
 
@@ -27,10 +25,9 @@ import Data.HList.Record
 
 
 -- | Show label
-
-instance Typeable x => ShowLabel x
+instance Typeable (x :: *) => ShowLabel x
  where
-  showLabel = (\(x:xs) -> toLower x:xs)
+  showLabel _ = (\(x:xs) -> toLower x:xs)
             . reverse
             . takeWhile (not . (==) '.')
             . reverse
@@ -39,4 +36,4 @@ instance Typeable x => ShowLabel x
             . tyConString
             . typeRepTyCon
 -}
-            . typeOf
+            . typeOf $ (error "Data.HList.Label5 has a strict typeOf" :: x)

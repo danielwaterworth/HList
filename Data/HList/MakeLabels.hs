@@ -60,13 +60,13 @@ dcl n = let
 
         dd,
 
-        showLabelInst,
+        -- showLabelInst,
         showInst ]
 
 
 {- |
 
-Labels like "Data.HList.Label4" used to provide (only no Typeable).
+Labels like "Data.HList.Label5".
 
  The following TH declaration splice should be placed at top-level, before the
  created values are used. Enable @-XTemplateHaskell@ too.
@@ -75,20 +75,15 @@ Labels like "Data.HList.Label4" used to provide (only no Typeable).
 
 should expand into the following declarations
 
-> data LabelGetX
-> data LabelGetY
-> data LabelDraw
-> data LabelX
+> data LabelGetX deriving Typeable
+> data LabelGetY deriving Typeable
+> data LabelDraw deriving Typeable
+> data LabelX deriving Typeable
 
 > getX = Label :: Label LabelGetX
 > getY = Label :: Label LabelGetY
 > draw = Label :: Label LabelDraw
 > x    = Label :: Label LabelX
-
-
-> instance ShowLabel LabelGetX where showLabel = \_ -> "getX"
-> instance ShowLabel LabelGetY where showLabel = \_ -> "getY"
-> instance ShowLabel LabelDraw where showLabel = \_ -> "draw"
 
 -}
 makeLabels :: [String] -> Q [Dec]

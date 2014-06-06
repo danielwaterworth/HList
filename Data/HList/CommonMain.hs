@@ -88,6 +88,7 @@ import Data.HList.TIC
 
 import Data.HList.HZip
 import Data.HList.Label3
+import Data.HList.Label5 () -- only instances
 import Data.HList.Label6 () -- only instances
 import Data.HList.Labelable
 
