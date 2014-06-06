@@ -7,6 +7,8 @@
 module Data.HList.MakeLabels (
     makeLabels,
     makeLabels3,
+
+    -- * labels using kind 'Symbol'
     makeLabels6,
     makeLabelable,
     ) where
@@ -114,7 +116,16 @@ makeLabels3 ns (k:ks) =
 -- possibly there is a better option
 makeLabels3 ns [] = fail ("makeLabels3 "++ ns ++ " []")
 
--- | for "Data.HList.Label6"
+{- | for "Data.HList.Label6"
+
+> makeLabels6 ["x","y"]
+
+is a shortcut for
+
+> x = Label :: Label "x"
+> y = Label :: Label "y"
+
+-}
 makeLabels6 :: [String] -> Q [Dec]
 makeLabels6 ns = fmap concat $ forM ns $ \n -> sequence
   [sigD (make_dname n) [t| Label $(litT (strTyLit n)) |],
