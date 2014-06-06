@@ -53,12 +53,12 @@ instance (ShowLabel x) => Typeable2 (Lbl x) where
 
 -- | Construct the first label
 firstLabel :: ns -> desc -> Label (Lbl HZero ns desc)
-firstLabel = undefined
+firstLabel _ _ = Label
 
 
 -- | Construct the next label
 nextLabel :: Label (Lbl x ns desc) -> desc' -> Label (Lbl (HSucc x) ns desc')
-nextLabel = undefined
+nextLabel _ _ = Label
 
 
 -- | Equality on labels (descriptions are ignored)
@@ -76,11 +76,11 @@ instance ( HEq x x' b
 instance Show desc => ShowLabel (Lbl x ns desc) where
   showLabel = show . getd
       where getd :: Label (Lbl x ns desc) -> desc -- for the sake of Hugs
-            getd = undefined
+            getd = error "Data.HList.Label3 desc"
 
 instance Show desc => Show (Label (Lbl x ns desc))
  where
   show = show . getd
       where getd :: Label (Lbl x ns desc) -> desc -- for the sake of Hugs
-            getd = undefined
+            getd = error "Data.HList.Label3 desc"
 
