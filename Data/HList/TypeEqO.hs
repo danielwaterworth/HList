@@ -36,3 +36,9 @@ instance False ~ b => TupleType x b
 instance Show (Proxy True)  where show _ = "HTrue"
 instance Show (Proxy False) where show _ = "HFalse"
 
+instance HNat2Integral n => HNat2Integral (HSucc n) where
+    hNat2Integral n = hNat2Integral (hPred n) + 1
+
+instance HNat2Integral n => Show (Proxy (n :: HNat)) where
+    show n = "H" ++ show (hNat2Integral n :: Integer)
+

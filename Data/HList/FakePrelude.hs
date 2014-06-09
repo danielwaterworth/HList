@@ -480,11 +480,6 @@ class HNat2Integral (n::HNat) where
 instance HNat2Integral HZero where
     hNat2Integral _ = 0
 
-instance HNat2Integral n => HNat2Integral (HSucc n) where
-    hNat2Integral n = hNat2Integral (hPred n) + 1
-
-instance HNat2Integral n => Show (Proxy (n :: HNat)) where
-    show n = "H" ++ show (hNat2Integral n :: Integer)
 
 
 -- | Equality on natural numbers
