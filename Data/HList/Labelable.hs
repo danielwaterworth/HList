@@ -85,7 +85,7 @@ instance (Functor f,
           (->) ~ to,
           (->) ~ p)
         => Labelable x Record to p f s t a b where
-            hLens' lab f rec = fmap (\v -> hUpdateAtLabel lab v rec) (f (rec .!. lab))
+            hLens' = hLens
 
 -- | used with 'toLabel' and/or '.==.'
 instance LabeledCxt1 x' r (Labeled x) p f s t a b
@@ -123,7 +123,7 @@ instance (s ~ t, a ~ b, x ~ a,
       (->) ~ to,
       (->) ~ p) =>
     Labelable x TIP to p f s t a b where
-    hLens' x f s = fmap (\b -> hUpdateAtLabel x b s) (f (s .!. x))
+    hLens' = hLens
 
 
 -- | modification of '.=.' which works with the labels from this module,
