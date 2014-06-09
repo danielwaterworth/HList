@@ -1,3 +1,4 @@
+{-# LANGUAGE OverlappingInstances #-}
 {- |
    The HList library
 
