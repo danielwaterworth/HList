@@ -970,3 +970,54 @@ ERROR - Unresolved overloading
 
 
 -}
+
+-- --------------------------------------------------------------------------
+-- * Splitting by Length
+
+{- | 'splitAt'
+
+setup
+
+>>> let two = hSucc (hSucc hZero)
+>>> let xsys = hEnd $ hBuild 1 2 3 4
+
+If a length is explicitly provided, the resulting lists are inferred
+
+>>> hSplitAt two xsys
+(H[1, 2],H[3, 4])
+
+>>> let sameLength :: SameLength a b => r a -> r b -> r a; sameLength = const
+>>> let len2 x = x `sameLength` HCons () (HCons () HNil)
+
+If the first chunk of the list (a) has to be a certain length, the type of the
+Proxy argument can be inferred.
+
+>>> case hSplitAt Proxy xsys of (a,b) -> (len2 a, b)
+(H[1, 2],H[3, 4])
+
+-}
+class HSplitAt (n :: HNat) xsys xs ys
+                   | n xsys -> xs ys,
+                     xs -> n,
+                     xs ys -> xsys where
+    hSplitAt :: Proxy n -> HList xsys -> (HList xs, HList ys)
+
+
+instance (HSplitAt1 '[] n xsys xsRev ys,
+          xsys ~ HRevApp xsRev ys,
+          HRevApp xsRev '[] ~ xs,
+          HLength xs ~ n) =>
+    HSplitAt n xsys xs ys where
+      hSplitAt n xsys = case hSplitAt1 HNil n xsys of
+                          (revXs, ys) -> (hReverse revXs, ys)
+
+-- | helper for 'HSplitAt'
+class HSplitAt1 accum (n :: HNat) xsys xs ys | accum n xsys -> xs ys where
+    hSplitAt1 :: HList accum -> Proxy n -> HList xsys -> (HList xs, HList ys)
+
+instance HSplitAt1 accum HZero ys accum ys where
+    hSplitAt1 xs _zero ys = (xs, ys)
+
+instance HSplitAt1 (b ': accum) n bs xs ys
+    => HSplitAt1 accum (HSucc n) (b ': bs) xs ys where
+    hSplitAt1 accum n (HCons b bs) = hSplitAt1 (HCons b accum) (hPred n) bs
