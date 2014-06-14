@@ -33,13 +33,14 @@ newtype TIC (l :: [*]) = TIC Dynamic
 -- --------------------------------------------------------------------------
 -- | Public constructor (or, open union's injection function)
 
-mkTIC' :: ( HTypeIndexed l
-         , HMember i l True
-         , Typeable i
+mkTIC' :: forall i l proxy.
+         ( HTypeIndexed l
+         , MkVariant i i l
          )
       => i
-      -> Proxy l -- ^ the ordering of types in the @l :: [*]@ matters.
+      -> proxy l -- ^ the ordering of types in the @l :: [*]@ matters.
                  -- This argument is intended to fix the ordering 
+                 -- it can be a Record, Variant, TIP, Proxy
       -> TIC l
 
 mkTIC' i _ = TIC (toDyn i)
