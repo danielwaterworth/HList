@@ -66,7 +66,6 @@ module Data.HList.Record
 
     -- ** Delete
     -- | 'hDeleteAtLabel' @label record@
-    HDeleteAtLabel(hDeleteAtLabel),
     (.-.),
 
     -- ** Lookup/update
@@ -483,9 +482,6 @@ r .!. l =  hLookupByLabel l r
 -- --------------------------------------------------------------------------
 
 -- Delete
-
-class HDeleteAtLabel r l v v' | l v -> v' where
-    hDeleteAtLabel :: Label l -> r v -> r v'
 
 instance (H2ProjectByLabels '[Label l] v t1 v')
       => HDeleteAtLabel Record l v v' where

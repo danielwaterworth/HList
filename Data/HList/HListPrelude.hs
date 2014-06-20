@@ -60,3 +60,8 @@ class HTypes2HNats es l (ns :: [HNat]) | es l -> ns
 class HDeleteMany e l l' | e l -> l' where
   hDeleteMany :: Proxy e -> l -> l'
 
+
+class HDeleteAtLabel r l v v' | l v -> v' where
+    hDeleteAtLabel :: Label l -> r v -> r v'
+
+
