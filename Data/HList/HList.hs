@@ -800,17 +800,21 @@ instance HTIntersect t l1 l2
 
 -- * Turn a heterogeneous list into a homogeneous one
 
--- | Same as @hMapOut Id@
-class HList2List l e
+-- | @hMapOut id@ is similar, except this function is restricted
+-- to HLists that actually contain a value (so the list produced
+-- will be nonempty). This restriction allows adding a functional
+-- dependency, which means that less type annotations can be necessary.
+class HList2List l e | l -> e
  where
   hList2List :: HList l -> [e]
 
-instance HList2List '[] e
+instance HList2List '[e] e
  where
-  hList2List HNil = []
+  hList2List (HCons e HNil) = [e]
+  hList2List _ = error "ghc bug"
 
-instance HList2List l e
-      => HList2List (e ': l) e
+instance HList2List (e' ': l) e
+      => HList2List (e ': e' ': l) e
  where
   hList2List (HCons e l) = e:hList2List l
 
