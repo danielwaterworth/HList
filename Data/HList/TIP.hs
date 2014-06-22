@@ -17,6 +17,7 @@ import Data.HList.HArray
 import Data.HList.HTypeIndexed
 import Data.HList.HOccurs -- for doctest
 import Data.HList.Record
+import Data.List (intercalate)
 
 import Data.HList.TypeEqO () -- for doctest
 
@@ -27,10 +28,10 @@ import Data.HList.TypeEqO () -- for doctest
 -- has type @Tagged e e@
 newtype TIP (l :: [*]) = TIP{unTIP:: HList l}
 
-instance ShowComponents l => Show (TIP l) where
-  show (TIP l) = "TIP{" ++ showComponents "" l ++ "}"
-
-
+instance HMapOut (HShow `HComp` HUntag) l String => Show (TIP l) where
+  showsPrec _ (TIP l) = ("TIP{" ++)
+                              . (intercalate "," (hMapOut (HShow `HComp` HUntag) l) ++)
+                              . ('}' :)
 
 
 mkTIP :: HTypeIndexed l => HList l -> TIP l
