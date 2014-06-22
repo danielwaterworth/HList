@@ -1,35 +1,18 @@
 
 
 {- |
+   Description: Variants, i.e., labelled sums, generalizations of Either
+
    The HList library
 
-   (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
+   The implementation here follows "Data.Dynamic", though Typeable is not
+   needed.
 
-   Variants, i.e., labelled sums.
-
-   One approach to their implementation would be to consider both
-   the favoured label and the corresponding value as dynamics upon
-   variant construction.
-
-   See VariantP.hs for a different approach to open sums.
+   See broken/VariantP.hs and broken/VariantOld.hs for different approaches
+   to open sums.
 -}
 
-module Data.HList.Variant (
-
-   -- * Labels for doctests
-   -- $setup
-
-   Variant,
-   -- ** Alternative methods to define variants
-   -- $AltDefiningVariants
-   MkVariant(mkVariant),
-
-   hMapV,
-   HMapV(..),
-
-   HPrism(hPrism),
-   unsafeMkVariant,
-  ) where
+module Data.HList.Variant where
 
 import Data.HList.FakePrelude
 import Data.HList.Record
@@ -44,7 +27,9 @@ import Unsafe.Coerce
 import GHC.Prim (Any)
 
 import Control.Applicative
-import Data.Profunctor
+import LensDefs
+
+-- * Labels for doctests
 
 {- $setup
 
@@ -56,7 +41,8 @@ import Data.Profunctor
 
 >>> :set -XQuasiQuotes -XViewPatterns -XDataKinds
 
-[@Example variant@]
+
+-- * Creating Variants
 
 It is necessary to specify the order in which the fields occur, using
 a data type like
@@ -80,9 +66,9 @@ w :: Variant '[Tagged "left" Char, Tagged "right" Int]
 
 -}
 
-{- $AltDefiningVariants
 
-[@Record as Proxy@]
+-- ** Alternative: a 'Record' as the Proxy
+{- $mkVariant2
 
 The type of mkVariant also allows using a 'Record' as the proxy. For example:
 
@@ -104,10 +90,13 @@ w2 :: Variant '[Tagged "left" Char, Tagged "right" Int]
 >>> (v2,w2)
 (V{left='x'},V{right=5})
 
-[@Polymorphic Proxy@]
+-}
 
-It is also possible to leave the @Char@ and @Int@ as type variables by
-with the following
+-- ** A polymorphic Proxy
+{- $mkVariant3
+
+It is also possible to leave the @Char@ and @Int@ as type variables,
+and have them inferred.
 
 >>> let p3 = Proxy :: Proxy '[Tagged "left" a, Tagged "right" b]
 
@@ -177,8 +166,6 @@ w3 :: Variant '[Tagged "left" Char, Tagged "right" Int]
 contained value is one of the elements of the @vs@ list, rather than
 being one particular instance of 'Typeable'.
 
-
-
 >>> v .!. _right
 Nothing
 
@@ -207,8 +194,33 @@ In some cases the 'pun' quasiquote works with variants,
 -}
 data Variant (vs :: [*]) = Variant !Int Any
 
+-- ** Unsafe operations
+
+-- | This is only safe if the n'th element of vs has type @Tagged t v@
+unsafeMkVariant :: Int -- ^ n
+                -> v
+                -> Variant vs
+unsafeMkVariant n a = Variant n (unsafeCoerce a)
+
+{- | Safe when (e ~ e') given that
+
+> Tagged t e ~ HLookupByHNatR n v
+> Tagged t' e' ~ HLookupByHNatR n v'
+
+'hUpdateAtLabel' is the safe version
+
+-}
+unsafeCastVariant :: Variant v -> Variant v'
+unsafeCastVariant (Variant n e) = Variant n e
+
+-- | private destructor. This is safe only if the value
+-- contained actually has type `e`
+unsafeUnVariant :: Variant v -> e
+unsafeUnVariant (Variant _ e) = unsafeCoerce e
+
+
 -- --------------------------------------------------------------------------
--- | Public constructor
+-- * Public constructor
 
 class HasField x (Variant vs) (Maybe v) =>
       MkVariant x v vs | x vs -> v where
@@ -231,16 +243,16 @@ instance (HFindLabel x vs n,
   -- done as a one-instance class instead of a function to be able to hide
   -- the 'n' type variable
 
--- | This is only safe if the n'th element of vs has type @Tagged t v@
-unsafeMkVariant :: Int -- ^ n
-                -> v
-                -> Variant vs
-unsafeMkVariant n a = Variant n (unsafeCoerce a)
-
-
 -- --------------------------------------------------------------------------
--- | 'hLookupByLabel' is a public destructor. 'hPrism' and 'hLens'' combine
--- this with 'mkVariant'
+-- * public destructor
+
+{- $note 'hLookupByLabel' (synonym '.!.')
+
+> (.!.)             :: Variant v -> Label x -> Maybe e
+> hLookupByLabel    :: Label x -> Variant v -> Maybe e
+
+'hPrism' and 'hLens'' combine this with 'mkVariant'
+-}
 instance (HasField x (Record vs) a,
           HFindLabel x vs n,
           HNat2Integral n)
@@ -296,12 +308,7 @@ instance (
     hPrism x = prism (\b -> mkVariant x b Proxy)
                   (\s -> case hLookupByLabel x s of
                     Just a -> Right a
-                    Nothing -> Left (hUpdateAtLabel x (error "hPrism: impossible") s)
-                     )
-
-      where
-        prism bt seta = dimap seta (either pure (fmap bt)) . right'
-
+                    Nothing -> Left (unsafeCastVariant s :: Variant t))
 
 
 
@@ -328,6 +335,13 @@ instance ShowVariant '[] where
 -- --------------------------------------------------------------------------
 -- | A corresponding read instance
 
+instance ReadVariant v => Read (Variant v) where
+    readsPrec _ = readP_to_S $ do
+      _ <- string "Variant{"
+      r <- readVariant
+      _ <- string "}"
+      return r
+
 class ReadVariant vs where
     readVariant :: ReadP (Variant vs)
 
@@ -347,6 +361,7 @@ instance (ShowLabel l, Read v, ReadVariant vs)
             _ <- string (showLabel l)
             _ <- string "="
             readS_to_P reads
+
         l = Label :: Label l
 
         p = Proxy :: Proxy (Tagged l v ': vs)
@@ -389,25 +404,26 @@ instance (ApplyAB f e e', HMapAux Variant f l l', SameLength l l')
 
 -}
 instance
-   (HFindLabel l v n,
-    HFindLabel l v' n,
-    HUpdateAtHNatR n (Tagged l e) v ~ v',
-    HasField l (Variant v) (Maybe _e),
-    HasField l (Record v') e,
-    MkVariant l e v') =>
+   (HUpdateVariantAtLabelCxt l e v v' n _e) =>
     HUpdateAtLabel Variant l e v v' where
     hUpdateAtLabel l e v = case hLookupByLabel l v of
           Just _e -> mkVariant l e (Proxy :: Proxy v')
           Nothing -> unsafeCastVariant v
 
-unsafeCastVariant :: Variant v -> Variant v'
-unsafeCastVariant (Variant n e) = Variant n e
+type HUpdateVariantAtLabelCxt l e v v' n _e =
+   (HFindLabel l v n,
+    HFindLabel l v' n,
+    HUpdateAtHNatR n (Tagged l e) v ~ v',
+    HasField l (Variant v) (Maybe _e),
+    HasField l (Record v') e,
+    MkVariant l e v')
+
 
 -- --------------------------------------------------------------------------
 {- | Extension for Variants prefers the first value
 
 > (l .=. Nothing) .*. v = v
-> (l .=. Just e)  .*. _ = mkVariant l e undefined
+> (l .=. Just e)  .*. _ = mkVariant l e Proxy
 
 -}
 instance (le ~ Tagged l (Maybe e)) =>
