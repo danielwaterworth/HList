@@ -6,7 +6,7 @@ module Main where
 import Data.HList.CommonMain
 import Control.Lens
 
-makeLabels6 (words "x y")
+makeLabels6 (words "x y z")
 
 r = x .=. "hi" .*.
     y .=. (y .=. 321 .*. x .=. 123 .*. emptyRecord) .*.
@@ -34,3 +34,16 @@ main = do
     print (r ^. y' . y')
     print (r & y' . y' .~ "xy")
 
+    putStrLn "\n\nIsos"
+    print (r & unlabeled . hTuple . _1 .~ ())
+    print (r & unlabeled . hTuple . _2 .~ ())
+
+    print (z .=. () .*. r
+              & unlabeled . from tipHList %~ ttip (\x z -> x ++ show (z :: ())))
+
+    r ^! unlabeled . from tipHList . act tipPutStrLn
+
+
+tipPutStrLn tip = ttipM ?? tip $ \x -> do
+  putStrLn x
+  return x
