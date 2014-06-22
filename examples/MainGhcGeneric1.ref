@@ -49,7 +49,7 @@ Record{price=8.8,key=42,name="Angus",breed=Cow}
 Record{price=8.8,breed=Cow}
 
 testTIC
-<Cannot show TIC content!>
+TIC{breed=Cow}
 Just Cow
 Nothing
 

@@ -74,9 +74,17 @@ ticPrism' = ticVariant . hPrism (Label :: Label a)
 
 
 -- --------------------------------------------------------------------------
--- | TICs are opaque
+-- | TICs are not opaque
 
-instance Show (TIC l)
+instance ShowVariant l => Show (TIC l)
  where
-  show _ = "<Cannot show TIC content!>"
+  showsPrec _ (TIC v) = ("TIC{"++) . showVariant v . ('}':)
 
+
+instance (ReadVariant l, HAllTaggedEq l, HRLabelSet l) => Read (TIC l)
+ where
+   readsPrec _ = readP_to_S $ do
+     _ <- string "TIC{"
+     r <- readVariant
+     _ <- string "}"
+     return (TIC r)
