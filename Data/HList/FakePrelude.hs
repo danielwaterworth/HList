@@ -127,7 +127,7 @@ class Apply f a where
  not all instances of ApplyAB will satisfy those functional
  dependencies, and thus the number of classes would proliferate.
  Furthermore, inference does not have to be in one direction
- only, as the example of 'HMap' shows.
+ only, as the example of 'Data.HList.HList.HMap' shows.
 
 -}
 

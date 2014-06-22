@@ -421,7 +421,7 @@ of the list is propagated in both directions too.
 hMap (HJust ()) xs :: Num y => HList '[HJust y, HJust Char]
 
 
-These 4 examples show that the constraint on the length (2 in this cae)
+These 4 examples show that the constraint on the length (2 in this case)
 can be applied before or after the 'hMap'. That inference is independent of the
 direction that type information is propagated for the individual elements.
 
@@ -462,6 +462,7 @@ instance (HMapCxt r f a b, as ~ r a, bs ~ r b)
     applyAB (HMap f) = hMapAux f
 
 
+-- | hMap constrained to HList
 hMapL f xs = applyAB (HMapL f) xs
 
 newtype HMapL f = HMapL f
@@ -688,7 +689,7 @@ class HMember' (b0 :: Bool) (e1 :: k) (l :: [k]) (b :: Bool) | b0 e1 l -> b
 instance HMember' True e1 l True
 instance (HMember e1 l br) => HMember' False e1 l br
 
--- The following is a similar type-only membership test
+-- | The following is a similar type-only membership test
 -- It uses the user-supplied curried type equality predicate pred
 type family HMemberP pred e1 (l :: [*]) :: Bool
 type instance HMemberP pred e1 '[] = False
