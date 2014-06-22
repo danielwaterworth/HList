@@ -15,10 +15,9 @@ module Data.HList.TIP
 import Data.HList.HListPrelude
 import Data.HList.FakePrelude
 import Data.HList.HList
-import Data.HList.HArray
-import Data.HList.HTypeIndexed
-import Data.HList.HOccurs -- for doctest
 import Data.HList.Record
+import Data.HList.HTypeIndexed ()
+import Data.HList.HOccurs
 import Data.HList.TypeEqO
 import Data.HList.TIPtuple
 import Data.List (intercalate)
@@ -146,7 +145,7 @@ tipyLens f s = hLens x f (asTIP s)
 -- | Split produces two TIPs
 tipyProject2 ps (TIP l) = (mkTIP l',mkTIP l'')
  where
-  (l',l'') = hSplitBy ps l
+  (l',l'') = h2projectByLabels ps l
 
 
 -- --------------------------------------------------------------------------
@@ -350,6 +349,7 @@ _ = tipyTuple ( '1' .*. True .*. emptyTIP ) :: (Bool, Char)
 [@Assume@]
 
 >>> import Data.HList.FakePrelude
+>>> import Data.HList.HOccurs
 
 >>> :{
 newtype Key    = Key Integer deriving (Show,Eq,Ord)
@@ -357,12 +357,12 @@ newtype Name   = Name String deriving (Show,Eq)
 data Breed     = Cow | Sheep deriving (Show,Eq)
 newtype Price  = Price Float deriving (Show,Eq,Ord)
 data Disease   = BSE | FM deriving (Show,Eq)
-type Animal =  '[Key,Name,Breed,Price]
+type Animal =  TagR '[Key,Name,Breed,Price]
 :}
 
 >>> :{
 let myAnimal :: HList Animal
-    myAnimal = hBuild (Key 42) (Name "Angus") Cow (Price 75.5)
+    myAnimal = hTagSelf $ hBuild (Key 42) (Name "Angus") Cow (Price 75.5)
     myTipyCow = TIP myAnimal
     animalKey :: (HOccurs Key l, SubType l (TIP Animal)) => l -> Key
     animalKey = hOccurs
@@ -413,6 +413,6 @@ let doctestCleanActual x
 :}
 
 >>> Sheep .*. myTipyCow
-No instance for (Fail (TypeFound Breed))
+No instance for (Fail (DuplicatedLabel Breed))
 
 -}
