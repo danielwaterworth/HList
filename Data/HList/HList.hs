@@ -1025,3 +1025,46 @@ instance HSplitAt1 accum HZero ys accum ys where
 instance HSplitAt1 (b ': accum) n bs xs ys
     => HSplitAt1 accum (HSucc n) (b ': bs) xs ys where
     hSplitAt1 accum n (HCons b bs) = hSplitAt1 (HCons b accum) (hPred n) bs
+
+
+-- * Conversion to and from tuples
+
+class HTuple v t | v -> t, t -> v where
+    hToTuple :: HList v -> t
+    hFromTuple :: t -> HList v
+
+-- | @Iso (HList v) (HList v') a b@
+hTuple x = iso hToTuple hFromTuple x
+
+-- | @Iso' (HList v) a@
+hTuple' x = simple (hTuple x)
+
+instance HTuple '[] () where
+    hToTuple HNil = ()
+    hFromTuple () = HNil
+
+instance HTuple '[a,b] (a,b) where
+    hToTuple (a `HCons` b `HCons` HNil) = (a,b)
+    hToTuple _ = error "HTuple impossible"
+    hFromTuple (a,b) = (a `HCons` b `HCons` HNil)
+
+instance HTuple '[a,b,c] (a,b,c) where
+    hToTuple (a `HCons` b `HCons` c `HCons` HNil) = (a,b,c)
+    hToTuple _ = error "HTuple impossible"
+    hFromTuple (a,b,c) = (a `HCons` b `HCons` c `HCons` HNil)
+
+instance HTuple '[a,b,c,d] (a,b,c,d) where
+    hToTuple (a `HCons` b `HCons` c `HCons` d `HCons` HNil) = (a,b,c,d)
+    hToTuple _ = error "HTuple impossible"
+    hFromTuple (a,b,c,d) = (a `HCons` b `HCons` c `HCons` d `HCons` HNil)
+
+instance HTuple '[a,b,c,d,e] (a,b,c,d,e) where
+    hToTuple (a `HCons` b `HCons` c `HCons` d `HCons` e `HCons` HNil) = (a,b,c,d,e)
+    hToTuple _ = error "HTuple impossible"
+    hFromTuple (a,b,c,d,e) = (a `HCons` b `HCons` c `HCons` d `HCons` e `HCons` HNil)
+
+instance HTuple '[a,b,c,d,e,f] (a,b,c,d,e,f) where
+    hToTuple (a `HCons` b `HCons` c `HCons` d `HCons` e `HCons` f `HCons` HNil) = (a,b,c,d,e,f)
+    hToTuple _ = error "HTuple impossible"
+    hFromTuple (a,b,c,d,e,f) = (a `HCons` b `HCons` c `HCons` d `HCons` e `HCons` f `HCons` HNil)
+
