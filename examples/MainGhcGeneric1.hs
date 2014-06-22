@@ -113,12 +113,14 @@ testTypeIndexed = do
 -- This example from the TIR paper challenges singleton lists.
 -- Thanks to the HW 2004 reviewer who pointed out the value of this example.
 -- We note that the explicit type below is richer than the inferred type.
--- This richer type is needed for making this operation more polymorphic.
+-- This richer type was needed for making this operation more polymorphic.
 -- That is, /a)/ would not work without the explicit type, 
 -- while /b/ would:
 --
 -- >  a)  ((+) (1::Int)) $ snd $ tuple oneTrue
 -- >  b)  ((+) (1::Int)) $ fst $ tuple oneTrue
+--
+-- Currently (2014) type signatures are not needed to define tipyTuple.
 
 tuple l = tipyTuple l
 
@@ -134,7 +136,6 @@ testTuple = do
   print $ let b = not $ fst $ tuple oneTrue in (1::Int,b)
   print $ tuple oneTrue == (1::Int,True)
   print $ ((+) (1::Int)) $ fst $ tuple oneTrue
-  -- requires explicit type for tuple
   print $ ((+) (1::Int)) $ snd $ tuple oneTrue
 
 
