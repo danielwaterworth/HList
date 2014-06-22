@@ -27,8 +27,8 @@ import LensDefs
 -- --------------------------------------------------------------------------
 -- * The newtype for type-indexed products
 
--- | TIPs are like 'Record', except every element of the list 'l'
--- has type @Tagged e e@
+-- | TIPs are like 'Record', except element \"i\" of the list \"l\"
+-- has type @Tagged e_i e_i@
 newtype TIP (l :: [*]) = TIP{unTIP:: HList l}
 
 instance HMapOut (HShow `HComp` HUntag) l String => Show (TIP l) where
@@ -101,8 +101,6 @@ type instance HAppendR (TIP l) (TIP l') = TIP (HAppendList l l')
 -- $note The absence of signatures is deliberate! They all must be inferred.
 
 onRecord f (TIP l) = let Record l' = f (Record l) in mkTIP l'
-
-tipyDelete  p t  = onRecord (hDeleteAtLabel p) t
 
 instance (HDeleteAtLabel Record e v v',
           HTypeIndexed v')
@@ -384,7 +382,7 @@ TIPH[BSE, Key 42, Name "Angus", Cow, Price 75.5]
 
 
 
->>> Sheep .*. tipyDelete (Label::Label Breed) myTipyCow
+>>> Sheep .*. hDeleteAtLabel (Label::Label Breed) myTipyCow
 TIPH[Sheep, Key 42, Name "Angus", Price 75.5]
 
 >>> tipyUpdate Sheep myTipyCow

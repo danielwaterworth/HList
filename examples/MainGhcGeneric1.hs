@@ -161,7 +161,7 @@ testTIP = do
     No instance for (Fail * (TypeFound Breed))
       arising from a use of `hExtend'
   -}
-  print $ Sheep .*. tipyDelete (Label::Label Breed) myTipyCow
+  print $ Sheep .*. hDeleteAtLabel (Label::Label Breed) myTipyCow
   print $ tipyUpdate Sheep myTipyCow
 
 {-

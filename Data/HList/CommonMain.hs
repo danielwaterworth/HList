@@ -38,9 +38,7 @@ module Data.HList.CommonMain (
  -- * TIC
  -- $tic "Data.HList.TIP"
  , TIP
- , mkTIP
  , emptyTIP
- , tipyDelete
  , tipyUpdate
  , tipyLens
  , tipyLens'
