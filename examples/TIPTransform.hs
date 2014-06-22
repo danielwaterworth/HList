@@ -1,3 +1,5 @@
+{-# LANGUAGE ConstraintKinds #-}
+{-# LANGUAGE DeriveDataTypeable #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE DataKinds #-}
@@ -21,10 +23,14 @@
 module TIPTransform where
 
 import Data.HList
+import Data.Typeable
 
 -- We start with the examples
 
-newtype MyVal = MyVal Int deriving Show
+newtype MyVal = MyVal Int deriving (Show, Typeable)
+
+-- or if no typeable, use
+-- instance ShowLabel MyVal where showLabel _ = "MyVal"
 
 -- A sample TIP
 tip1 = MyVal 20 .*. (1::Int) .*. True .*. emptyTIP
@@ -54,27 +60,7 @@ tip5' = ttip (\b y (MyVal x)-> MyVal $ if b then x+y else 0) tip1
 -- TIP (HCons (MyVal 21) (HCons 1 (HCons True HNil)))
 
 -- The implementation
-
-class TransTIP op db where
-    ttip :: op -> db -> db
-
-instance (HMember op db b, TransTIP' b op (TIP db)) 
-    => TransTIP op (TIP db) where
-    ttip = ttip' (Proxy ::Proxy b)
-
-class TransTIP' (b :: Bool) op db where
-    ttip' :: Proxy b -> op -> db -> db
-
--- If op is found in a TIP, update the TIP with op
-instance (HTypeIndexed db, HUpdateAtHNat n op db, HUpdateAtHNatR n op db ~ db, HType2HNat op db n)
-    => TransTIP' True op (TIP db) where
-    ttip' _ = tipyUpdate
-
--- If op is not found in a TIP, it must be a function. Look up
--- its argument in a TIP and recur.
-instance (HOccurs arg db, TransTIP op db) 
-    => TransTIP' False (arg -> op) db where
-    ttip' _ f db = ttip (f (hOccurs db)) db
+-- part of HList proper now
 
 
 main = mapM_ putStrLn [show tip1, show tip2, show tip3, show tip4,

@@ -42,3 +42,8 @@ instance HNat2Integral n => HNat2Integral (HSucc n) where
 instance HNat2Integral n => Show (Proxy (n :: HNat)) where
     show n = "H" ++ show (hNat2Integral n :: Integer)
 
+
+-- | the number of arguments a function can take
+class Arity f (n :: HNat) | f -> n
+instance hZero ~ HZero => Arity f hZero
+instance Arity f n => Arity (x -> f) (HSucc n)

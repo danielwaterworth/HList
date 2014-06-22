@@ -19,10 +19,10 @@ import Data.HList.HArray
 import Data.HList.HTypeIndexed
 import Data.HList.HOccurs -- for doctest
 import Data.HList.Record
+import Data.HList.TypeEqO
 import Data.HList.TIPtuple
 import Data.List (intercalate)
 
-import Data.HList.TypeEqO () -- for doctest
 import LensDefs
 
 -- --------------------------------------------------------------------------
@@ -211,6 +211,127 @@ tipRecord x = isoNewtype (\(TIP a) -> Record a) (\(Record b) -> TIP b) x
 -- | @Iso' (TIP (TagR s)) (HList a)@
 tipRecord' x = simple (tipRecord x)
 
+
+-- --------------------------------------------------------------------------
+-- * TIP Transform
+
+{- |
+
+Transforming a TIP: applying to a TIP a (polyvariadic) function
+that takes arguments from a TIP and updates the TIP with the result.
+
+In more detail: we have a typed-indexed collection TIP and we
+would like to apply a transformation function to it, whose argument
+types and the result type are all in the TIP. The function should locate
+its arguments based on their types, and update the TIP
+with the result. The function may have any number of arguments,
+including zero; the order of arguments should not matter.
+
+The problem was posed by Andrew U. Frank on Haskell-Cafe, Sep 10, 2009.
+<http://www.haskell.org/pipermail/haskell-cafe/2009-September/066217.html>
+The problem is an interesting variation of the keyword argument problem.
+
+Examples can be found in @examples/TIPTransform.hs@ and @examples/TIPTransformM.hs@
+-}
+
+class TransTIP op db where
+    ttip :: op -> TIP db -> TIP db
+
+instance (HMember (Tagged op op) db b,
+          Arity op n,
+          TransTIP1 b n op db)
+    => TransTIP op db where
+    ttip = ttip1 (Proxy ::Proxy b) (Proxy :: Proxy n)
+
+class TransTIP1 (b :: Bool) (n :: HNat) op db where
+    ttip1 :: Proxy b -> Proxy n -> op -> TIP db -> TIP db
+
+-- If op is found in a TIP, update the TIP with op
+instance HTPupdateAtLabel TIP op op db
+    => TransTIP1 True n op db where
+    ttip1 _ _ = tipyUpdate
+
+-- If op is not found in a TIP, it must be a function. Try to look up
+-- its argument in a TIP and recur.
+instance (HMember (Tagged arg arg) db b,
+          TransTIP2 b arg op db)
+    => TransTIP1 False (HSucc n) (arg -> op) db where
+    ttip1 _ _ = ttip2 (Proxy :: Proxy b)
+
+instance Fail '(TypeNotFound notfun, "in TIP", db) => TransTIP1 False HZero notfun db where
+    ttip1 = error "TransTIP1 Fail must have no instances"
+
+class TransTIP2 (b :: Bool) arg op db where
+    ttip2 :: Proxy b -> (arg -> op) -> TIP db -> TIP db
+
+instance (HOccurs arg (TIP db),
+         TransTIP op db)
+   => TransTIP2 True arg op db where
+    ttip2 _ f db = ttip (f (hOccurs db)) db
+
+instance Fail '(TypeNotFound arg, "in TIP", db) => TransTIP2 False arg op db where
+    ttip2 = error "TransTIP2 Fail must have no instances"
+
+-- ** Monadic version
+
+{- |
+
+In March 2010, Andrew Frank extended the problem for monadic operations.
+This is the monadic version of @TIPTransform.hs@ in the present directory.
+
+This is the TF implementation. When specifying the operation to perform over
+a TIP, we can leave it polymorphic over the monad. The type checker
+will instantiate the monad based on the context.
+
+-}
+class Monad m => TransTIPM m op db where
+    ttipM :: op -> TIP db -> m (TIP db)
+
+-- Check to see if the operation is a computation whose result
+-- is in the TIP. The type variable m' of the kind *->* below
+-- can be instantiated either to a monad type constructor, or (arg->).
+instance (Monad m, HMember (Tagged op op) db b,
+           Arity (m' op) n,
+           TransTIPM1 b n m (m' op) db)
+    => TransTIPM m (m' op) db where
+    ttipM = ttipM1 (Proxy :: Proxy b) (Proxy :: Proxy n)
+
+class Monad m => TransTIPM1 (b :: Bool) (n :: HNat) m op db where
+    ttipM1 :: Proxy b -> Proxy n -> op -> TIP db -> m (TIP db)
+
+-- If op is found in a TIP, update the TIP with op.
+-- The type variable m' must be equal to the type of the monad
+-- in which the final result is reported.
+instance (Monad m, m ~ m', HTPupdateAtLabel TIP op op db)
+    => TransTIPM1 True n m (m' op) db where
+    ttipM1 _ _ op db = do
+         op' <- op
+         return $ tipyUpdate op' db
+
+instance (Fail '(TypeNotFound op, "in TIP", db), Monad m)
+    => TransTIPM1 False HZero m op db where
+    ttipM1 _ _ = error "TransTIPM1 Fail must have no instances"
+
+-- If op is not found in a TIP, it must be a function. Look up
+-- its argument in a TIP and recur.
+instance (Monad m,
+          HMember (Tagged arg arg) db b,
+          TransTIPM2 b m arg op db)
+    => TransTIPM1 False (HSucc n) m (arg-> op) db where
+    ttipM1 _ _ = ttipM2 (Proxy :: Proxy b)
+
+
+class TransTIPM2 (b :: Bool) m arg op db where
+    ttipM2 :: Proxy b -> (arg -> op) -> TIP db -> m (TIP db)
+
+instance (HOccurs arg (TIP db), TransTIPM m op db)
+      => TransTIPM2 True m arg op db where
+    ttipM2 _ f db = ttipM (f (hOccurs db)) db
+
+
+instance (Fail '(TypeNotFound op, "in TIP", db))
+    => TransTIPM2 False m arg op db where
+    ttipM2 _ _ = error "TransTIPM1 Fail must have no instances"
 
 -- --------------------------------------------------------------------------
 
