@@ -33,6 +33,7 @@ module Data.HList.Labelable
     toLabel,
     Identity,
     ToSym,
+    XFromLabeled,
     ) where
 
 
@@ -44,8 +45,6 @@ import Data.HList.TIP
 
 import Control.Monad.Identity
 import GHC.TypeLits
-
-import Language.Haskell.TH
 
 {- | This alias is the same as Control.Lens.Optic, except the (->) in Optic
 is a type parameter 'to' in LabeledOptic. Usually \"to\" is @->@, but it

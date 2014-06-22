@@ -17,7 +17,6 @@ module Data.HList.Label5 where
 import Data.Typeable
 import Data.Char
 import Data.HList.FakePrelude
-import Data.HList.Record
 
 
 -- | Equality on labels

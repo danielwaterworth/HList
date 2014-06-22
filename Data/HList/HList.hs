@@ -15,7 +15,7 @@ module Data.HList.HList where
 import Data.HList.FakePrelude
 import Data.HList.HListPrelude
 
-import Control.Applicative (Applicative, liftA2, pure)
+import LensDefs
 
 
 -- --------------------------------------------------------------------------
