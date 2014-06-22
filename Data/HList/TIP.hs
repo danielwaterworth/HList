@@ -100,14 +100,14 @@ type instance HAppendR (TIP l) (TIP l') = TIP (HAppendList l l')
 -- * Shielding type-indexed operations
 -- $note The absence of signatures is deliberate! They all must be inferred.
 
-onTIP f (TIP l) = let Record l' = f (Record l) in mkTIP l'
+onRecord f (TIP l) = let Record l' = f (Record l) in mkTIP l'
 
-tipyDelete  p t  = onTIP (hDeleteAtLabel p) t
+tipyDelete  p t  = onRecord (hDeleteAtLabel p) t
 
 instance (HDeleteAtLabel Record e v v',
           HTypeIndexed v')
       => HDeleteAtLabel TIP e v v' where
-  hDeleteAtLabel e v = onTIP (hDeleteAtLabel e) v
+  hDeleteAtLabel e v = onRecord (hDeleteAtLabel e) v
 
 
 tipyUpdate  e t  = hTPupdateAtLabel (fromValue e) e t
@@ -117,10 +117,10 @@ tipyUpdate  e t  = hTPupdateAtLabel (fromValue e) e t
 instance (HUpdateAtLabel Record e' e r r',
           HTypeIndexed r',
          e ~ e') => HUpdateAtLabel TIP e' e r r' where
-  hUpdateAtLabel l e r = onTIP (hUpdateAtLabel l e) r
+  hUpdateAtLabel l e r = onRecord (hUpdateAtLabel l e) r
 
 
--- tipyProject ps t = onTIP (hProjectBy ps) t
+tipyProject ps t = onRecord (hProjectByLabels ps) t
 
 -- | provides a @Lens' (TIP s) a@. 'hLens'' @:: Label a -> Lens' (TIP s) a@
 -- is another option.
