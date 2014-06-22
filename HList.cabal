@@ -76,6 +76,7 @@ library
 --                       Data.HList.RecordOrd,
                        Data.HList.TIC,
                        Data.HList.TIP,
+                       Data.HList.TIPtuple,
                        Data.HList.TypeEqO,
                        Data.HList.Variant
   Other-modules:       LensDefs
