@@ -43,6 +43,7 @@ module Data.HList.Record
     Record(..),
     mkRecord,
     emptyRecord,
+    unlabeled,
 
     -- *** Getting Labels
     LabelsOf,
@@ -92,6 +93,9 @@ module Data.HList.Record
     hRenameLabel,
 
     -- ** Projection
+
+    Labels,
+
     -- $projection
     hProjectByLabels,
     hProjectByLabels2,
@@ -133,7 +137,8 @@ module Data.HList.Record
     HFindLabel,
     labelLVPair,
     newLVPair,
-    UnLabel(..),
+    UnLabel,
+    HMemberLabel,
 ) where
 
 
@@ -149,6 +154,8 @@ import Control.Applicative
 import Text.ParserCombinators.ReadP
 import GHC.TypeLits
  
+import LensDefs
+
 -- imports for doctest/examples
 import Data.HList.Label6 ()
 import Data.HList.TypeEqO ()
@@ -210,6 +217,23 @@ mkRecord = Record
 emptyRecord :: Record '[]
 emptyRecord = mkRecord HNil
 
+-- | @Iso (Record s) (Record t) (HList a) (HList b)@ where
+unlabeled :: forall p f s t a b.
+    (HMapCxt HList TaggedFn b t,
+     RecordValues s,
+     LabelsOf s ~ LabelsOf t,
+     a ~ RecordValuesR s,
+     b ~ RecordValuesR t,
+     Profunctor p, Functor f) =>
+  p (HList a) (f (HList b)) ->
+  p (Record s) (f (Record t))
+unlabeled = iso
+    recordValues
+    (\ t -> Record (hMap TaggedFn (t :: HList b)))
+
+data TaggedFn = TaggedFn
+instance (tx ~ Tagged t x) => ApplyAB TaggedFn x tx where
+    applyAB _ = Tagged
 
 -- | Propery of a proper label set for a record: no duplication of labels
 
