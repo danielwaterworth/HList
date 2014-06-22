@@ -95,6 +95,13 @@ instance Fail (TypeNotFound e) => HOccurs' e '[] where
 instance (e ~ e1, HOccursNot e l) => HOccurs' e (e ': l) where
     hOccurs' (HCons e _) = e
 
+-- | lookup a value in the collection (TIP usually) and return the TIP with that
+-- element deleted. Used to implement 'tipyTuple'.
+hOccursRest tip = case hOccurs tip of
+  x -> (x, hDeleteAtLabel (asLabel x) tip)
+  where asLabel :: x -> Label x
+        asLabel _ = Label
+
 
 -- --------------------------------------------------------------------------
 -- Zero or at least one occurrence
