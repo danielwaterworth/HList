@@ -92,9 +92,9 @@ instance (HAppend (HList l) (HList l'), HTypeIndexed (HAppendList l l'))
 type instance HAppendR (TIP l) (TIP l') = TIP (HAppendList l l')
 
 
-instance HOccurrence HList e l l' => HOccurrence TIP e l l'
- where
-  hOccurrence e = TIP . hOccurrence e . unTIP
+-- instance HOccurrence HList e l l' => HOccurrence TIP e l l'
+--  where
+--   hOccurrence e = TIP . hOccurrence e . unTIP
 
 -- --------------------------------------------------------------------------
 -- * Shielding type-indexed operations
