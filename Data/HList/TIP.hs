@@ -23,6 +23,7 @@ import Data.HList.TIPtuple
 import Data.List (intercalate)
 
 import Data.HList.TypeEqO () -- for doctest
+import LensDefs
 
 -- --------------------------------------------------------------------------
 -- * The newtype for type-indexed products
@@ -124,10 +125,7 @@ tipyProject ps t = onRecord (hProjectByLabels ps) t
 
 -- | provides a @Lens' (TIP s) a@. 'hLens'' @:: Label a -> Lens' (TIP s) a@
 -- is another option.
-tipyLens' f s = tipyLens (isSimple f) s
-  where
-    isSimple :: (a -> f a) -> (a -> f a)
-    isSimple = id
+tipyLens' x = simple (tipyLens x)
 
 {- | provides a @Lens (TIP s) (TIP t) a b@
 
@@ -135,11 +133,14 @@ When using @set@ (also known as @.~@), 'tipyLens'' can address the
 ambiguity as to which field \"a\" should actually be updated.
 
 -}
-tipyLens f s = hLens x f s
+tipyLens f s = hLens x f (asTIP s)
   where
     x = getA f
     getA :: (a -> f b) -> Label a
     getA _ = Label
+
+    asTIP :: TIP a -> TIP a
+    asTIP = id
 
 
 -- | Split produces two TIPs
