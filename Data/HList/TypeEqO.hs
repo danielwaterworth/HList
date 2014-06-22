@@ -9,6 +9,7 @@
    Generic type equality predicate: 
    The implementation based on overlapping instances
    The only place where overlapping instances are really used
+   besides Label5
 
 -}
 
