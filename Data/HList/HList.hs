@@ -692,7 +692,7 @@ instance (HMember e1 l br) => HMember' False e1 l br
 -- It uses the user-supplied curried type equality predicate pred
 type family HMemberP pred e1 (l :: [*]) :: Bool
 type instance HMemberP pred e1 '[] = False
---type instance HMemberP pred e1 (e ': l) = HMemberP' pred e1 l (ApplyR pred (e1,e))
+type instance HMemberP pred e1 (e ': l) = HMemberP' pred e1 l (ApplyR pred (e1,e))
 
 type family HMemberP' pred e1 (l :: [*]) pb :: Bool
 type instance HMemberP' pred e1 l (Proxy True) = True
