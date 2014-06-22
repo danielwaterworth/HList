@@ -335,6 +335,14 @@ instance (Fail '(TypeNotFound op, "in TIP", db))
 
 -- --------------------------------------------------------------------------
 
+-- tests for tipyTuple. These only work if tipyTuple is compiled
+-- in a module that has NoMonoLocalBinds enabled
+_ = tipyTuple ( '1' .*. True .*. emptyTIP ) :: (Char, Bool)
+_ = tipyTuple ( '1' .*. True .*. emptyTIP ) :: (Bool, Char)
+
+
+-- --------------------------------------------------------------------------
+
 -- * Sample code
 
 {- $setup
