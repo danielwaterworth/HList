@@ -1,6 +1,6 @@
-TIP{myVal=MyVal 20,int=1,bool=True}
-TIP{myVal=MyVal 20,int=2,bool=True}
-TIP{myVal=MyVal 20,int=1,bool=False}
-TIP{myVal=MyVal 20,int=21,bool=True}
-TIP{myVal=MyVal 21,int=1,bool=True}
-TIP{myVal=MyVal 21,int=1,bool=True}
+TIPH[MyVal 20, 1, True]
+TIPH[MyVal 20, 2, True]
+TIPH[MyVal 20, 1, False]
+TIPH[MyVal 20, 21, True]
+TIPH[MyVal 21, 1, True]
+TIPH[MyVal 21, 1, True]
