@@ -11,13 +11,27 @@
 
 module Data.HList.CommonMain (
 
+ -- * Faking dependent types in Haskell
    module Data.HList.FakePrelude
+
+ -- * Functions for all collections
  , module Data.HList.HListPrelude
+ -- * Array-like access to HLists
  , module Data.HList.HArray
+ -- * Result-type-driven operations
  , module Data.HList.HOccurs
+ -- * Type-indexed operations
  , module Data.HList.HTypeIndexed
+
+ -- * Record
  , module Data.HList.Record
--- , module Data.HList.RecordOrd
+ -- | quasiquoter 'pun' helps to avoid needing a proxy value with
+ -- type 'Label' in the first place: when you take values out of or into
+ -- records with pattern matching, the variable name determines the label
+ -- name.
+ , module Data.HList.RecordPuns
+
+ -- * HList
  , module Data.HList.HList
  , module Data.HList.TypeEqO
  , module Data.HList.TIP
@@ -30,13 +44,13 @@ module Data.HList.CommonMain (
  , Kw(..), recToKW, IsKeyFN, K,  ErrReqdArgNotFound,  ErrUnexpectedKW
 
  -- * Labels
- {- | there are really only two options for now, but there are
+ {- | there are three options for now. However, there are
    a couple different styles for the first option here:
 
    GHC supports type-level strings ('GHC.TypeLits.Symbol'), and these can be
-   labels. You can refer to these strings using an unwieldy syntax. For
-   example if you want to store a value @5@ in a record @rec@ with a field
-   called @\"x\"@, and then get it out again:
+   labels. You can refer to these strings using an unwieldy syntax described
+   below. For example if you want to store a value @5@ in a record @rec@
+   with a field called @\"x\"@, and then get it out again:
 
    let rec = ('Label' :: Label \"x\") '.=.' 5 '.*.' 'emptyRecord'
 
@@ -48,7 +62,7 @@ module Data.HList.CommonMain (
 
    > rec .!. x
 
-   See 'makeLabels6' for automating the @x = Label :: Label \"x\"@.
+   'makeLabels6' automates definitions like @x = Label :: Label \"x\"@.
 
  -}
  -- $label6demo
@@ -59,18 +73,23 @@ module Data.HList.CommonMain (
  -- ** namespaced labels
  , module Data.HList.Label3
 
- -- | template haskell for automating different types of labels
+ -- ** labels as any instance of Typeable
+ , module Data.HList.Label5
+
+ -- ** template haskell
  , module Data.HList.MakeLabels
- -- | quasiquoter 'pun' helps to avoid needing a proxy value with
- -- type 'Label' in the first place: when you take values out of or into
- -- records with pattern matching, the variable name determines the label
- -- name.
- , module Data.HList.RecordPuns
 
 
  -- * "Data.HList.Data"
  -- | This modules provide useful instances. A useful application can be
  -- found in @examples/cmdargs.hs@
+
+ -- | Overlapping instances are restricted to here
+ , module Data.HList.TypeEqO
+
+ -- * Internals
+ -- $internals exported for type signature purposes
+ , HAllTaggedEq
 ) where
 
 import Data.HList.FakePrelude
