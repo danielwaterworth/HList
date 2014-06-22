@@ -1069,3 +1069,49 @@ instance HTuple '[a,b,c,d,e,f] (a,b,c,d,e,f) where
     hToTuple _ = error "HTuple impossible"
     hFromTuple (a,b,c,d,e,f) = (a `HCons` b `HCons` c `HCons` d `HCons` e `HCons` f `HCons` HNil)
 
+
+-- | 'tails'
+class HTails a b | a -> b, b -> a where
+    hTails :: HList a -> HList b
+
+instance HTails '[] '[HList '[]] where
+    hTails _ = HCons HNil HNil
+
+instance (HTails xs ys) => HTails (x ': xs) (HList (x ': xs) ': ys) where
+    hTails xxs@(HCons _x xs) = xxs `HCons` hTails xs
+
+
+-- | 'inits'
+class HInits a b | a -> b, b -> a where
+    hInits :: HList a -> HList b
+
+
+instance HInits '[] '[HList '[]] where
+    hInits _ = HCons HNil HNil
+
+instance (HInits xs ys,
+          HMapCxt HList (FHCons2 x) ys ys',
+          HMapCons x ys ~ ys',
+          HMapTail ys' ~ ys)
+  => HInits (x ': xs) (HList '[x] ':  ys') where
+    hInits (HCons x xs) = HCons x HNil `HCons` hMap (FHCons2 x) (hInits xs)
+
+
+-- | similar to 'FHCons'
+data FHCons2 x = FHCons2 x
+
+instance (hxs ~ HList xs,
+          hxxs ~ HList (x ': xs))
+  => ApplyAB (FHCons2 x) hxs hxxs where
+  applyAB (FHCons2 x) xs = HCons x xs
+
+
+-- | evidence to satisfy the fundeps in HInits
+type family HMapCons (x :: *) (xxs :: [*]) :: [*]
+type instance HMapCons x (HList a ': b) = HList (x ': a) ': HMapCons x b
+type instance HMapCons x '[] = '[]
+
+-- | evidence to satisfy the fundeps in HInits
+type family HMapTail (xxs :: [*]) :: [*]
+type instance HMapTail ( HList (a ': as) ': bs) = HList as ': HMapTail bs
+type instance HMapTail '[] = '[]
