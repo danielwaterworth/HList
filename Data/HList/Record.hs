@@ -595,6 +595,30 @@ hProjectByLabels2 ::
 hProjectByLabels2 ls (Record r) = (mkRecord rin, mkRecord rout)
    where (rin,rout) = h2projectByLabels ls r
 
+
+{- | A helper to make the Proxy needed by hProjectByLabels,
+and similar functions which accept a list of kind [*].
+
+For example:
+
+@(rin,rout) = 'hProjectByLabels2' (Proxy :: Labels ["x","y"]) r@
+
+behaves like
+
+> rin = r .!. (Label :: Label "x") .*.
+>       r .!. (Label :: Label "y") .*.
+>       emptyRecord
+>
+> rout = r .-. (Label :: Label "x") .-. (Label :: Label "y")
+
+-}
+type family Labels (xs :: [k]) :: *
+type instance Labels xs = Proxy (Labels1 xs)
+
+type family Labels1 (xs :: [k]) :: [*]
+type instance Labels1 '[] = '[]
+type instance Labels1 (x ': xs) = Label x ': Labels1 xs
+
 -- | /Invariant/:
 --
 --  > r === rin `disjoint-union` rout
