@@ -159,6 +159,60 @@ instance (HOccurs e (TIP l1), SubType (TIP l1) (TIP l2))
 
 
 -- --------------------------------------------------------------------------
+-- * conversion to and from 'HList'
+
+{- | 'TagR' can also be used to avoid redundancy when defining types for TIC and TIP.
+
+>  type XShort = TagR [A,B,C,D]
+
+>  type XLong = [Tagged A A, Tagged B B, Tagged C C, Tagged D D]
+
+
+an equivalent FD version, which is slightly better with respect to
+simplifying types containing type variables (in ghc-7.8 and 7.6):
+<http://stackoverflow.com/questions/24110410/>
+
+-}
+class (UntagR (TagR a) ~ a) => TagUntag a where
+    type TagR a :: [*]
+    type UntagR (xs :: [*]) :: [*]
+    hTagSelf :: HList a -> HList (TagR a)
+    hUntagSelf :: HList (TagR a) -> HList a
+
+instance TagUntag '[] where
+    type TagR '[] = '[]
+    type UntagR '[] = '[]
+    hTagSelf _ = HNil
+    hUntagSelf _ = HNil
+
+instance TagUntag xs => TagUntag (x ': xs) where
+    type TagR (x ': xs) = Tagged x x ': TagR xs
+    type UntagR (x ': xs) = Untag1 x ': UntagR xs
+    hTagSelf (HCons x xs) = Tagged x `HCons` hTagSelf xs
+    hUntagSelf (HCons (Tagged x) xs) = x `HCons` hUntagSelf xs
+    hUntagSelf _ = error "Data.HList.TIP:ghc gadt bug"
+
+type family Untag1 (x :: *) :: *
+type instance Untag1 (Tagged k x) = x
+
+
+-- | @Iso (TIP (TagR a)) (TIP (TagR b)) (HList a) (HList b)@
+tipHList x = iso (\(TIP a) -> hUntagSelf a) (TIP . hTagSelf) x
+
+-- | @Iso' (TIP (TagR s)) (HList a)@
+tipHList' x = simple (tipHList x)
+
+
+-- * conversion to and from 'Record'
+
+-- | @Iso (TIP s) (TIP t) (Record s) (Record t)@
+tipRecord x = isoNewtype (\(TIP a) -> Record a) (\(Record b) -> TIP b) x
+
+-- | @Iso' (TIP (TagR s)) (HList a)@
+tipRecord' x = simple (tipRecord x)
+
+
+-- --------------------------------------------------------------------------
 
 -- * Sample code
 
