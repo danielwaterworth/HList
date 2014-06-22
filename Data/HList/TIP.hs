@@ -359,9 +359,8 @@ type Animal =  TagR '[Key,Name,Breed,Price]
 :}
 
 >>> :{
-let myAnimal :: HList Animal
-    myAnimal = hTagSelf $ hBuild (Key 42) (Name "Angus") Cow (Price 75.5)
-    myTipyCow = TIP myAnimal
+let myTipyCow :: TIP Animal -- optional
+    myTipyCow = Key 42 .*.  Name "Angus" .*.  Cow .*.  Price 75.5 .*. emptyTIP
     animalKey :: (HOccurs Key l, SubType l (TIP Animal)) => l -> Key
     animalKey = hOccurs
 :}
