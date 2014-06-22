@@ -1000,7 +1000,8 @@ Proxy argument can be inferred.
 (H[1, 2],H[3, 4])
 
 -}
-class HSplitAt (n :: HNat) xsys xs ys
+class (n ~ HLength xs)
+      => HSplitAt (n :: HNat) xsys xs ys
                    | n xsys -> xs ys,
                      xs -> n,
                      xs ys -> xsys where
