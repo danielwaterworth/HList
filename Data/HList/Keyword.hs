@@ -1,4 +1,3 @@
-{-# LANGUAGE OverlappingInstances #-}
 
 {- | keyword functions
 
@@ -58,11 +57,13 @@ module Data.HList.Keyword (
   -- * todo
   -- $todo
 
+  -- * internal for type signature prettiness
+  TaggedToKW,
   ) where
 
 import GHC.TypeLits
 import Data.HList.FakePrelude
-import Data.HList.TypeEqO ()
+import Data.HList.TypeEqO
 import Data.HList.HListPrelude
 import Data.HList.HList
 import Data.HList.Record
@@ -318,12 +319,7 @@ to give informative error messages.
 data ErrReqdArgNotFound x
 data ErrUnexpectedKW x
 
--- | All our keywords must be registered
 
-
-class IsKeyFN   t (flag :: Bool) | t-> flag
--- | overlapping/fallback case
-instance (False ~ flag) => IsKeyFN t flag
 instance IsKeyFN (Label (s :: Symbol) -> a -> b) True
 {- ^ labels that impose no restriction on the type of the (single) argument
  which follows

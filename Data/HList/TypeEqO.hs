@@ -47,3 +47,10 @@ instance HNat2Integral n => Show (Proxy (n :: HNat)) where
 class Arity f (n :: HNat) | f -> n
 instance hZero ~ HZero => Arity f hZero
 instance Arity f n => Arity (x -> f) (HSucc n)
+
+
+-- | All our keywords must be registered
+class IsKeyFN   t (flag :: Bool) | t-> flag
+-- | overlapping/fallback case
+instance (False ~ flag) => IsKeyFN t flag
+
