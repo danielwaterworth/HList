@@ -76,8 +76,8 @@ instance (e ~ e', HasField e (Record l) e') => HasField e (TIP l) e' where
 -- Hence the explicit provision of a result type can be omitted.
 --
 
-instance (e' ~ e, e ~ f) => HOccurs e' (TIP '[Tagged e f]) where
-  hOccurs (TIP (HCons (Tagged e') _)) = e'
+instance (tee ~ Tagged e e) => HOccurs e (TIP '[tee]) where
+  hOccurs (TIP (HCons (Tagged e) _)) = e
 
 instance HOccurs e (HList (x ': y ': l))
       => HOccurs e (TIP (x ': y ': l)) where
