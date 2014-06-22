@@ -79,9 +79,9 @@ instance (e ~ e', HasField e (Record l) e') => HasField e (TIP l) e' where
 instance (tee ~ Tagged e e) => HOccurs e (TIP '[tee]) where
   hOccurs (TIP (HCons (Tagged e) _)) = e
 
-instance HOccurs e (HList (x ': y ': l))
+instance HasField e (Record (x ': y ': l)) e
       => HOccurs e (TIP (x ': y ': l)) where
-  hOccurs (TIP l) = hOccurs l
+  hOccurs (TIP l) = Record l .!. (Label :: Label e)
 
 
 instance (HAppend (HList l) (HList l'), HTypeIndexed (HAppendList l l'))
