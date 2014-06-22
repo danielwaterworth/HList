@@ -33,9 +33,9 @@ import LensDefs
 newtype TIP (l :: [*]) = TIP{unTIP:: HList l}
 
 instance HMapOut (HShow `HComp` HUntag) l String => Show (TIP l) where
-  showsPrec _ (TIP l) = ("TIP{" ++)
-                              . (intercalate "," (hMapOut (HShow `HComp` HUntag) l) ++)
-                              . ('}' :)
+  showsPrec _ (TIP l) = ("TIPH[" ++)
+                              . (intercalate ", " (hMapOut (HShow `HComp` HUntag) l) ++)
+                              . (']' :)
 
 
 mkTIP :: HTypeIndexed l => HList l -> TIP l

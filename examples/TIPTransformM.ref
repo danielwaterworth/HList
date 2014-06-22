@@ -1,8 +1,8 @@
-TIPH[MyVal 20, 1, True, 3.5]
-TIPH[MyVal 20, 2, True, 3.5]
-TIPH[MyVal 20, 1, False, 3.5]
-TIPH[MyVal 20, 21, True, 3.5]
-TIPH[MyVal 21, 1, True, 3.5]
-TIPH[MyVal 21, 1, True, 3.5]
+TIP{myVal=MyVal 20,int=1,bool=True,float=3.5}
+TIP{myVal=MyVal 20,int=2,bool=True,float=3.5}
+TIP{myVal=MyVal 20,int=1,bool=False,float=3.5}
+TIP{myVal=MyVal 20,int=21,bool=True,float=3.5}
+TIP{myVal=MyVal 21,int=1,bool=True,float=3.5}
+TIP{myVal=MyVal 21,int=1,bool=True,float=3.5}
 MyVal is now MyVal 5
-tip2 isTIPH[MyVal 5, 1, True, 3.5]
+tip2 isTIP{myVal=MyVal 5,int=1,bool=True,float=3.5}
