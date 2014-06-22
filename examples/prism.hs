@@ -4,6 +4,7 @@
 {-# LANGUAGE TemplateHaskell #-}
 module Main where
 import Data.HList.CommonMain
+import Data.HList.Labelable (hLens')
 import Control.Lens
 
 -- generate left = Label :: Label "left"

@@ -33,11 +33,43 @@ module Data.HList.CommonMain (
 
  -- * HList
  , module Data.HList.HList
- , module Data.HList.TypeEqO
- , module Data.HList.TIP
- , module Data.HList.TIC
  , module Data.HList.HZip
- , module Data.HList.Variant
+
+ -- * TIC
+ -- $tic "Data.HList.TIP"
+ , TIP
+ , mkTIP
+ , emptyTIP
+ , tipyDelete
+ , tipyUpdate
+ , tipyLens
+ , tipyLens'
+ -- ** projection
+ , tipyProject
+ , tipyProject2
+ , tipyTuple
+ , tipyTuple3
+ , tipyTuple4
+ , tipyTuple5
+ -- ** conversions between TIP and other collections
+ , tipHList, tipHList'
+ , tipRecord, tipRecord'
+ , TagUntag(..)
+
+ -- ** TIP transform
+ , TransTIP(..)
+ , TransTIPM(..)
+
+ -- * TIC
+ , module Data.HList.TIC
+ -- * Variant
+ -- | Public interface of "Data.HList.Variant"
+ , Variant
+ , mkVariant
+ , emptyVariant
+ , HMapV(..), hMapV
+ , HPrism(..)
+
 
  -- * "Data.HList.Keyword"
  -- | the \"public\" parts. More examples are in the module documentation.
@@ -99,9 +131,16 @@ import Data.HList.HOccurs
 import Data.HList.HTypeIndexed
 import Data.HList.Record
 -- import Data.HList.RecordOrd
-import Data.HList.HList
+import Data.HList.HList hiding (append',
+                                hAppend',
+                                FHCons(..),
+                                hMapAux,
+                                MapCar(..),
+                                hMapMapCar,
+                                hSequence2,
+                                )
 import Data.HList.MakeLabels
-import Data.HList.TypeEqO
+import Data.HList.TypeEqO hiding (IsKeyFN)
 import Data.HList.TIP
 import Data.HList.TIC
 
@@ -109,7 +148,10 @@ import Data.HList.HZip
 import Data.HList.Label3
 import Data.HList.Label5 () -- only instances
 import Data.HList.Label6 () -- only instances
-import Data.HList.Labelable
+import Data.HList.Labelable (Labelable,
+                             toLabel,
+                             (.==.),
+                             LabeledOptic)
 
 import Data.HList.Variant
 
@@ -141,6 +183,7 @@ Here is an example of how much better that is:
 
 >>> :set -XNoMonomorphismRestriction -XDataKinds -XPolyKinds
 >>> import Control.Lens
+>>> import Data.HList.Labelable
 >>> let x = hLens' (Label :: Label "x")
 >>> let y = hLens' (Label :: Label "y")
 
