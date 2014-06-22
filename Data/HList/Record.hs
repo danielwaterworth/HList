@@ -10,6 +10,8 @@
 
    * "Data.HList.Label3"
 
+   * "Data.HList.Label5"
+
    * "Data.HList.Label6"
 
    * "Data.HList.Labelable"
@@ -22,8 +24,6 @@
    * "Data.HList.Label2"
 
    * "Data.HList.Label4"
-
-   * "Data.HList.Label5"
 
 -}
 
@@ -282,6 +282,8 @@ type instance LabelsOf (Tagged l v ': r) = Label l ': LabelsOf r
 labelsOf :: hlistOrRecord l -> Proxy (LabelsOf l)
 labelsOf _ = Proxy
 
+-- | remove the Label type constructor. The @proxy@ argument is
+-- supplied to make it easier to fix the kind variable @k@.
 type family UnLabel (proxy :: k) (ls :: [*]) :: [k]
 type instance UnLabel proxy (Label x ': xs) = x ': UnLabel proxy xs
 type instance UnLabel proxy '[] = '[]
