@@ -144,7 +144,7 @@ tipyLens f s = hLens x f (asTIP s)
 
 
 -- | Split produces two TIPs
-tipySplit ps (TIP l) = (mkTIP l',mkTIP l'')
+tipyProject2 ps (TIP l) = (mkTIP l',mkTIP l'')
  where
   (l',l'') = hSplitBy ps l
 
@@ -208,9 +208,11 @@ TIPH[Sheep, Key 42, Name "Angus", Price 75.5]
 TIPH[Key 42, Name "Angus", Sheep, Price 75.5]
 
 
->>> tipySplit (Proxy :: Proxy '[Name,Price]) myTipyCow
+>>> tipyProject2 (Proxy :: Labels '[Name,Price]) myTipyCow
 (TIPH[Name "Angus", Price 75.5],TIPH[Key 42, Cow])
 
+>>> tipyProject (Proxy :: Labels '[Name,Price]) myTipyCow
+TIPH[Name "Angus", Price 75.5]
 
 -}
 
