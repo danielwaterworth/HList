@@ -7,7 +7,9 @@
    Type-indexed products.
 -}
 
-module Data.HList.TIP where
+module Data.HList.TIP
+  (module Data.HList.TIPtuple,
+   module Data.HList.TIP) where
 
 
 import Data.HList.HListPrelude
@@ -17,6 +19,7 @@ import Data.HList.HArray
 import Data.HList.HTypeIndexed
 import Data.HList.HOccurs -- for doctest
 import Data.HList.Record
+import Data.HList.TIPtuple
 import Data.List (intercalate)
 
 import Data.HList.TypeEqO () -- for doctest

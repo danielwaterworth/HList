@@ -118,20 +118,8 @@ testTypeIndexed = do
 -- >  a)  ((+) (1::Int)) $ snd $ tuple oneTrue
 -- >  b)  ((+) (1::Int)) $ fst $ tuple oneTrue
 
-tuple :: forall e1 e2 n l n2.
-    (HDeleteAtHNat n l,
-     HOccurs e1 (TIP l),
-     HOccurs e2 (TIP (HDeleteAtHNatR n l)),
-     HType2HNat e1 l n,
-     -- extra, not inferred
-     HType2HNat e2 l n2,
-     HOccurs e1 (TIP (HDeleteAtHNatR n2 l))
-    ) => TIP l -> (e1,e2)
-tuple (TIP l) = let
-                 x  = hOccurs (TIP l)
-                 l' = hDeleteAt (undefined::Proxy e1) l
-                 y  = hOccurs (TIP l')
-                in (x,y)
+tuple l = tipyTuple l
+
 
 -- | A specific tuple
 -- Need to import an instance of TypeEq to be able to run the examples
