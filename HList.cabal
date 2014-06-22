@@ -78,6 +78,7 @@ library
                        Data.HList.TIP,
                        Data.HList.TypeEqO,
                        Data.HList.Variant
+  Other-modules:       LensDefs
   Default-Language:    Haskell2010
 
 
