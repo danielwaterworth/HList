@@ -535,8 +535,8 @@ infixl 2 .-.
   >         .-. label1
 
 -}
-(.-.) :: (H2ProjectByLabels '[Label l] r _r' r') =>
-    Record r -> Label l -> Record r'
+(.-.) :: (HDeleteAtLabel r l xs xs') =>
+    r xs -> Label l -> r xs'
 r .-. l =  hDeleteAtLabel l r
 
 
@@ -585,7 +585,7 @@ f@(Tagged v) .@. r  =  hUpdateAtLabel (labelLVPair f) v r
 
 -- | @hProjectByLabels ls r@ returns @r@ with only the labels in @ls@ remaining
 hProjectByLabels :: (HRLabelSet a, H2ProjectByLabels ls t a b) =>
-	Proxy ls -> Record t -> Record a
+	proxy ls -> Record t -> Record a
 hProjectByLabels ls (Record r) = mkRecord (fst $ h2projectByLabels ls r)
 
 -- | See 'H2ProjectByLabels'
@@ -601,7 +601,7 @@ hProjectByLabels2 ls (Record r) = (mkRecord rin, mkRecord rout)
 --  > labels rin === ls
 --  >     where (rin,rout) = hProjectByLabels ls r
 class H2ProjectByLabels (ls::[*]) r rin rout | ls r -> rin rout where
-    h2projectByLabels :: Proxy ls -> HList r -> (HList rin,HList rout)
+    h2projectByLabels :: proxy ls -> HList r -> (HList rin,HList rout)
 
 instance H2ProjectByLabels '[] r '[] r where
     h2projectByLabels _ r = (HNil,r)
@@ -616,7 +616,7 @@ instance (HMemberM (Label l1) ((l :: *) ': ls) (b :: Maybe [*]),
 
 class H2ProjectByLabels' (b::Maybe [*]) (ls::[*]) r rin rout
                          | b ls r -> rin rout where
-    h2projectByLabels' :: Proxy b -> Proxy ls ->
+    h2projectByLabels' :: Proxy b -> proxy ls ->
 				     HList r -> (HList rin,HList rout)
 
 instance H2ProjectByLabels ls1 r rin rout =>
@@ -800,7 +800,7 @@ hRearrange ls (Record r) = Record (hRearrange2 ls r)
 
 -- | Helper class for 'hRearrange'
 class HRearrange ls r r' where
-    hRearrange2 :: Proxy ls -> HList r -> r'
+    hRearrange2 :: proxy ls -> HList r -> r'
 
 instance (HList '[] ~ r) => HRearrange '[] '[] r where
    hRearrange2 _ _ = HNil
@@ -815,7 +815,7 @@ instance (H2ProjectByLabels '[l] r rin rout,
 
 -- | Helper class 2 for 'hRearrange'
 class HRearrange' l ls rin rout r' where
-    hRearrange2' :: Proxy l -> Proxy ls -> HList rin -> HList rout -> r'
+    hRearrange2' :: proxy l -> Proxy ls -> HList rin -> HList rout -> r'
 
 instance (HRearrange ls rout (HList r'),
          r'' ~ HList (Tagged l v ': r')) =>
