@@ -87,3 +87,9 @@ hSplitBy :: forall (ps :: [*]) l ns.
 	    Proxy ps -> HList l -> (HList (HProjectByHNatsR ns l), 
 				    HList (HProjectAwayByHNatsR ns l))
 hSplitBy _ps l = hSplitByHNats (Proxy ::Proxy ns) l
+
+
+-- | should this instead delete the first element of that type?
+instance (HDeleteAtHNat n l, HType2HNat e l n, l' ~ HDeleteAtHNatR n l)
+      => HDeleteAtLabel HList e l l' where
+    hDeleteAtLabel _ = hDeleteAtHNat (Proxy :: Proxy n)
