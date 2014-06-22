@@ -13,21 +13,23 @@ module Data.HList.TIC where
 
 import Data.Dynamic
 
-import Data.HList.HList
 import Data.HList.TIP
-import Data.HList.HTypeIndexed ()
-import Data.HList.HListPrelude
-import Data.HList.HArray
+import Data.HList.FakePrelude
 
+import Data.HList.Record
+import Data.HList.Variant
 
-
-import Data.Profunctor
-import Control.Applicative
+import Text.ParserCombinators.ReadP
+import LensDefs
 
 -- --------------------------------------------------------------------------
 -- | A datatype for type-indexed co-products
 
-newtype TIC (l :: [*]) = TIC Dynamic
+newtype TIC (l :: [*]) = TIC (Variant l)
+
+
+-- | Iso (TIC s) (TIC t) (Variant s) (Variant t)
+ticVariant x = isoNewtype (\(TIC a) -> a) TIC x
 
 
 -- --------------------------------------------------------------------------
@@ -43,47 +45,33 @@ mkTIC' :: forall i l proxy.
                  -- it can be a Record, Variant, TIP, Proxy
       -> TIC l
 
-mkTIC' i _ = TIC (toDyn i)
+mkTIC' i p = TIC (mkVariant (Label :: Label i) i p)
 
 mkTIC i = mkTIC' i Proxy
 
 
 -- --------------------------------------------------------------------------
 -- | Public destructor (or, open union's projection function)
+instance HasField o (Variant l) (Maybe o) =>
+      HasField o (TIC l) (Maybe o) where
+    hLookupByLabel l (TIC i) = hLookupByLabel l i
 
-unTIC :: ( HTypeIndexed l
-         , HMember o l True
-         , Typeable o
-         )
-      => TIC l -> Maybe o
-
-unTIC (TIC i) = fromDynamic i
+unTIC x = let r = hLookupByLabel (toLabel r) x
+              toLabel :: Maybe a -> Label a
+              toLabel _ = Label
+  in r
 
 -- | @Prism (TIC s) (TIC t) a b@
-ticPrism
-  :: (Choice p,
-      Applicative f,
+ticPrism :: forall p f s t a b. (HPrism a p f s t a b)
+  => (a `p` f b) -> (TIC s `p` f (TIC t))
+ticPrism = ticVariant . hPrism (Label :: Label a)
 
-      HTypeIndexed s,
-      HTypeIndexed t,
 
-      HType2HNat a s n,
-      HType2HNat b t n,
+-- | @Prism' (TIC s) a@
+ticPrism' :: forall p f s t a b. (HPrism a p f s t a b, a~b, s~t)
+  => (a `p` f b) -> (TIC s `p` f (TIC t))
+ticPrism' = ticVariant . hPrism (Label :: Label a)
 
-      HUpdateAtHNatR n b s ~ t,
-      HUpdateAtHNatR n a t ~ s,
-
-      HMember a s True,
-      HMember b t True,
-
-      Typeable a,
-      Typeable b) =>
-     p a (f b) -> p (TIC s) (f (TIC t))
-ticPrism = prism mkTIC (\s @ (TIC s') -> case unTIC s of
-                       Just a -> Right a
-                       Nothing -> Left (TIC s'))
-  where
-    prism bt seta = dimap seta (either pure (fmap bt)) . right'
 
 -- --------------------------------------------------------------------------
 -- | TICs are opaque
