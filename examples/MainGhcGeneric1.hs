@@ -19,6 +19,7 @@ module MainGhcGeneric1 where
 
 import Datatypes2
 import Data.HList.CommonMain
+import Control.Lens
 
 reproxy :: proxy a -> Proxy a
 reproxy _ = Proxy
@@ -87,11 +88,12 @@ myProj4 = print $
 	    angus
 -- (H[Key 42, Name "Angus"],H[Cow, Price 75.5])
 
+
 testHOccurs = do
   putStrLn "\ntestHOccurs"
   print (hOccurs angus :: Breed)
-  print $ hOccurs (TIP (HCons 1 HNil))
-  print $ null $ hOccurs (TIP (HCons [] HNil))
+  print $ hOccurs $ hBuild 1 ^. from tipHList
+  print $ null $ hOccurs $ hBuild [] ^. from tipHList
   print (hProject angus :: HList '[Key, Name])
 
 
@@ -123,7 +125,7 @@ tuple l = tipyTuple l
 
 -- | A specific tuple
 -- Need to import an instance of TypeEq to be able to run the examples
-oneTrue :: TIP '[Int, Bool]		-- inferred
+-- oneTrue :: TIP (TagR [Int, Bool])		-- inferred
 oneTrue = (1::Int) .*. True .*. emptyTIP
 
 testTuple = do
@@ -136,7 +138,7 @@ testTuple = do
   print $ ((+) (1::Int)) $ snd $ tuple oneTrue
 
 
-myTipyCow = TIP angus
+myTipyCow = angus ^. from tipHList
 
 animalKey :: ( SubType l (TIP Animal) -- explicit
              , HOccurs Key l          -- implicit
@@ -159,7 +161,7 @@ testTIP = do
     No instance for (Fail * (TypeFound Breed))
       arising from a use of `hExtend'
   -}
-  print $ Sheep .*. tipyDelete (undefined::Proxy Breed) myTipyCow
+  print $ Sheep .*. tipyDelete (Label::Label Breed) myTipyCow
   print $ tipyUpdate Sheep myTipyCow
 
 {-
@@ -243,7 +245,8 @@ testRecordsP =   ( test1
 
 -}
 
-type AnimalCol = [Key,Name,Breed,Price]
+
+type AnimalCol = TagR [Key,Name,Breed,Price]
 
 testTIC = do
   putStrLn "\ntestTIC"
