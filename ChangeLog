@@ -1,3 +1,20 @@
+23 Jun 2014
+TIPTransform and TIPTransformM become part of the distribution,
+and missing fields are reported with the Fail superclass
+technique.
+
+Projection of a TIP to a tuple is reimplemented without an explicit
+type signature. The functions are exported as tipyTuple,
+tipyTuple3 etc.
+
+Conversion between HLists and up to 6-tuples done with HTuple.
+
+Add ZipVariant, Unvariant, splitVariant, extendVariant,
+an instance Eq (Variant v) and an instance Labelable TIC.
+
+Add quickcheck in examples/Properties.hs. Coverage measured with
+HPC is about 40%.
+
 5 Jun 2014
 Start to parameterize operations on the collection type. This
 means that where we previously had HMapCxt f x y another
