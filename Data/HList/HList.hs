@@ -300,10 +300,11 @@ instance (ApplyAB f (e, r) r', HFoldr f v l r)
 class HScanr f z ls rs where
     hScanr :: f -> z -> HList ls -> HList rs
 
-instance HScanr f z '[] '[z] where
+instance lz ~ '[z] => HScanr f z '[] lz where
     hScanr _ z _ = HCons z HNil
 
-instance (ApplyAB f (x,r) s, HScanr f z xs (r ': rs)) => HScanr f z (x ': xs) (s ': r ': rs) where
+instance (ApplyAB f (x,r) s, HScanr f z xs (r ': rs),
+          srrs ~ (s ': r ': rs)) => HScanr f z (x ': xs) srrs where
     hScanr f z (HCons x xs) =
         case hScanr f z xs :: HList (r ': rs) of
             HCons r rs -> (applyAB f (x,r) :: s) `HCons` r `HCons` rs
