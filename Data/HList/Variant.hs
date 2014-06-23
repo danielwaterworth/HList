@@ -512,3 +512,31 @@ instance Fail "Unvariant applied to empty variant"
       => Unvariant1 b '[] Void where
     unvariant1 _ = error "Data.HList.Variant.Unvariant1 Fail must have no instances"
 
+
+-- * zip
+
+{- | Applies to variants that have the same labels
+in the same order. A generalization of
+
+> zipEither :: Either a b -> Either a b -> Maybe (Either (a,a) (b,b))
+> zipEither (Left a) (Left a') = Just (Left (a,a'))
+> zipEither (Right a) (Right a') = Just (Right (a,a'))
+> zipEither _ _ = Nothing
+
+-}
+class ZipVariant x y xy | x y -> xy, xy -> x y where
+    zipVariant :: Variant x -> Variant y -> Maybe (Variant xy)
+
+instance ZipVariant '[] '[] '[] where
+    zipVariant _ _ = Nothing
+
+instance (tx ~ Tagged t x,
+          ty ~ Tagged t y,
+          txy ~ Tagged t (x,y),
+          ZipVariant xs ys zs,
+          MkVariant t (x,y) (txy ': zs))
+  => ZipVariant (tx ': xs) (ty ': ys) (txy ': zs) where
+    zipVariant x y = case (splitVariant x, splitVariant y) of
+        (Left x', Left y') -> Just (mkVariant (Label :: Label t) (x',y') Proxy)
+        (Right x', Right y') -> extendVariant <$> zipVariant x' y'
+        _ -> Nothing
