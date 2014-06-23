@@ -540,3 +540,21 @@ instance (tx ~ Tagged t x,
         (Left x', Left y') -> Just (mkVariant (Label :: Label t) (x',y') Proxy)
         (Right x', Right y') -> extendVariant <$> zipVariant x' y'
         _ -> Nothing
+
+
+-- * Eq
+instance (ZipVariant v v vv,
+          HMapCxt Variant (HFmap UncurryEq) vv bools,
+          Unvariant bools Bool) => Eq (Variant v)
+  where
+    v == v' = maybe
+                False
+                (\vv -> unvariant (hMapV UncurryEq vv :: Variant bools))
+               $ zipVariant v v'
+
+
+data UncurryEq = UncurryEq
+
+instance (ee ~ (e,e), Eq e, bool ~ Bool) =>
+    ApplyAB UncurryEq ee bool where
+      applyAB _ (e,e') = e == e'
