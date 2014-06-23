@@ -11,6 +11,7 @@
 module Data.HList.FakePrelude
     (module Data.HList.FakePrelude,
      module Data.Proxy,
+     module Data.Tagged,
      module Data.Void) where
 
 import Data.Void

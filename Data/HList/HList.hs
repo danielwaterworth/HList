@@ -939,7 +939,8 @@ hFlag l = hAddTag hTrue l
 
 -- | Analogus to Data.List.'Data.List.partition' 'snd'
 --
--- >>> hSplit $ (2,hTrue) .*. (3,hTrue) .*. (1,hFalse) .*. HNil
+-- >>> let (.=.) :: p x -> y -> Tagged x y; _ .=. y = Tagged y
+-- >>> hSplit $ hTrue .=. 2 .*. hTrue .=. 3 .*. hFalse .=. 1 .*. HNil
 -- (H[2, 3],H[1])
 --
 -- it might make more sense to instead have @LVPair Bool e@
@@ -977,6 +978,25 @@ instance HSplit l => HSplit ((e,Proxy False) ': l)
    where
     (l',l'') = hSplit l
 
+
+instance HSplit l => HSplit (Tagged True e ': l)
+ where
+
+  type HSplitT (Tagged True e ': l) = e ': HSplitT l
+  type HSplitF (Tagged True e ': l) = HSplitF l
+
+  hSplit (HCons (Tagged e) l) = (HCons e l',l'')
+   where
+    (l',l'') = hSplit l
+
+instance HSplit l => HSplit (Tagged False e ': l)
+ where
+  type HSplitT (Tagged False e ': l) = HSplitT l
+  type HSplitF (Tagged False e ': l) = e ': HSplitF l
+
+  hSplit (HCons (Tagged e) l) = (l',HCons e l'')
+   where
+    (l',l'') = hSplit l
 {-
 
 Let expansion makes a difference to Hugs:
