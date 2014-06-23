@@ -64,7 +64,7 @@ module Data.HList.CommonMain (
  -- | #Variant# Public interface of "Data.HList.Variant"
  , Variant
  , mkVariant
- , emptyVariant
+ , mkVariant1
  , HMapV(..), hMapV
  , HPrism(..)
 

@@ -221,6 +221,18 @@ unsafeUnVariant :: Variant v -> e
 unsafeUnVariant (Variant _ e) = unsafeCoerce e
 
 
+{- | This function is unsafe because it can lead to a runtime error
+when used together with the 'HExtend' instance (.*.)
+
+>>> print $ (Label :: Label "x") .=. (Nothing :: Maybe ()) .*. unsafeEmptyVariant
+V{*** Exception: empty variant: invariant broken
+
+use 'mkVariant1' instead
+
+-}
+unsafeEmptyVariant :: Variant '[]
+unsafeEmptyVariant = unsafeMkVariant 0 ()
+
 -- --------------------------------------------------------------------------
 -- * Public constructor
 
@@ -234,8 +246,7 @@ class HasField x (Variant vs) (Maybe v) =>
                     -- another 'Variant'
         -> Variant vs
 
-emptyVariant :: Variant '[]
-emptyVariant = unsafeMkVariant 0 ()
+mkVariant1 l v = l .=. Just v .*. unsafeEmptyVariant
 
 instance (HFindLabel x vs n,
           HNat2Integral n,
