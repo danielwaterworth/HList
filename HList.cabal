@@ -116,6 +116,7 @@ library
 
   if flag(new_type_eq)
     Cpp-options:       -DNEW_TYPE_EQ
+    Build-Depends:     base >= 4.7
 
 Test-Suite examples
   Type:     exitcode-stdio-1.0
