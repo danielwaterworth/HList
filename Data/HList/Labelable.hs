@@ -42,6 +42,7 @@ import Data.HList.HList
 import Data.HList.Record
 import Data.HList.Variant
 import Data.HList.TIP
+import Data.HList.TIC
 
 import Control.Monad.Identity
 import GHC.TypeLits
@@ -58,7 +59,8 @@ type LabeledOptic (to :: * -> * -> *)
 
 {- |
 
-[@r@] is 'Record' or 'Variant'
+[@r@] is 'Record', 'Variant'. 'TIP' and 'TIC' also have instances, but generally
+'tipyLens'' and 'ticPrism'' are more appropriate.
 
 [@x@] is the label for the field. It tends to have kind 'GHC.TypeLits.Symbol',
 but others are supported in principle.
@@ -106,6 +108,10 @@ type LabeledCxt x r to p f s t a b = (LabeledCxt1 x r to p f s t a b,
 instance (HPrism x p f s t a b,
           to ~ (->)) => Labelable x Variant to p f s t a b where
     hLens' x s = hPrism x s
+
+instance (HPrism x p f s t a b, to ~ (->)) =>
+    Labelable x TIC to p f s t a b where
+      hLens' x = ticVariant . hPrism x
 
 
 -- | make a @Lens' (TIP s) a@.
