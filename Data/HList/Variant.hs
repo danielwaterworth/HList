@@ -394,7 +394,7 @@ instance (vx ~ Variant x,
 instance HMapAux Variant f '[] '[] where
     hMapAux _ _ = error "HMapVAux: variant invariant broken"
 
-instance (ApplyAB f e e', HMapAux Variant f l l', SameLength l l')
+instance (ApplyAB f e e', HMapCxt Variant f l l')
     => HMapAux Variant f (e ': l) (e' ': l') where
 
       hMapAux f (Variant 0 v) = unsafeMkVariant 0 (applyAB f (toE v) :: e')
