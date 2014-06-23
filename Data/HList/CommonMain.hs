@@ -67,6 +67,8 @@ module Data.HList.CommonMain (
  , mkVariant1
  , HMapV(..), hMapV
  , HPrism(..)
+ , splitVariant
+ , extendVariant
 
 
  -- * "Data.HList.Keyword"

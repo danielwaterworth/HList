@@ -274,6 +274,16 @@ instance (HasField x (Record vs) a,
           | hNat2Integral (Proxy :: Proxy n) == n = Just (unsafeCoerce d)
           | otherwise = Nothing
 
+splitVariant :: Variant (Tagged s x ': xs) -> Either x (Variant xs)
+splitVariant (Variant 0 x) = Left (unsafeCoerce x)
+splitVariant (Variant n x) = Right (Variant (n-1) x)
+
+splitVariant' :: Variant (x ': xs) -> Either x (Variant xs)
+splitVariant' (Variant 0 x) = Left (unsafeCoerce x)
+splitVariant' (Variant n x) = Right (Variant (n-1) x)
+
+extendVariant :: Variant l -> Variant (e ': l)
+extendVariant (Variant m e) = Variant (m+1) e
 
 -- --------------------------------------------------------------------------
 -- * prism
@@ -408,13 +418,9 @@ instance HMapAux Variant f '[] '[] where
 instance (ApplyAB f e e', HMapCxt Variant f l l')
     => HMapAux Variant f (e ': l) (e' ': l') where
 
-      hMapAux f (Variant 0 v) = unsafeMkVariant 0 (applyAB f (toE v) :: e')
-            where toE :: Any -> e
-                  toE = unsafeCoerce
-
-      hMapAux f (Variant n v) = cons (hMapAux f (Variant (n-1) v :: Variant l))
-            where cons :: Variant l' -> Variant (e' ': l')
-                  cons (Variant m e) = Variant (m+1) e
+      hMapAux f v = case splitVariant' v of
+          Left e -> unsafeMkVariant 0 (applyAB f e :: e')
+          Right es -> extendVariant (hMapAux f es)
 
 -- --------------------------------------------------------------------------
 -- * HUpdateAtLabel instance
