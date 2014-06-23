@@ -1,7 +1,7 @@
 all:
 
 test:
-	cd examples; $(MAKE) test
+	cabal test
 
 commit:
 	darcs record -a -m "See ChangeLog"
