@@ -15,6 +15,7 @@ import Data.Dynamic
 
 import Data.HList.TIP
 import Data.HList.FakePrelude
+import Data.HList.HListPrelude
 
 import Data.HList.Record
 import Data.HList.Variant
@@ -88,3 +89,9 @@ instance (ReadVariant l, HAllTaggedEq l, HRLabelSet l) => Read (TIC l)
      r <- readVariant
      _ <- string "}"
      return (TIC r)
+
+
+instance (me ~ Maybe e) => HExtend me (TIC l) where
+    type HExtendR me (TIC l) = TIC (Tagged (UnMaybe me) (UnMaybe me) ': l)
+    Just e .*. _ = TIC (unsafeMkVariant 0 e)
+    Nothing .*. TIC x = TIC (extendVariant x)
