@@ -438,3 +438,77 @@ instance (le ~ Tagged l (Maybe e)) =>
 type family UnMaybe le
 type instance UnMaybe (Tagged l (Maybe e)) = Tagged l e
 
+
+-- --------------------------------------------------------------------------
+-- * Conversion to an untagged value
+class HAllEqVal (x :: [*]) (b :: Bool) | x -> b
+instance HAllEqVal '[] True
+instance HAllEqVal '[x] True
+instance (HEq a a' b,
+          HAllEqVal (Tagged t a' ': xs) b2,
+          HAnd b b2 ~ b3) =>
+  HAllEqVal (Tagged s a ': Tagged t a' ': xs) b3
+
+
+class HAllEqVal' (x :: [*])
+instance HAllEqVal' '[]
+instance HAllEqVal' '[x]
+instance (HAllEqVal' (ta ': xs),
+          a' ~ a,
+          ta ~ Tagged t a,
+          ta' ~ Tagged t' a')
+  => HAllEqVal' (ta' ': ta ': xs)
+
+
+{- | Similar to 'unvariant', except type variables in @v@
+will be made equal to @e@ if possible. That allows the type
+of @Nothing@ to be inferred as @Maybe Char@.
+
+>>> unvariant' $ x .=. Nothing .*. mkVariant1 y 'y'
+'y'
+
+However, this difference leads to more local error messages
+(@Couldn't match type ‘()’ with ‘Char’@), rather than the following
+with @unvariant@:
+
+> Fail
+>    '("Variant",
+>      '[Tagged "left" Char, Tagged "right" ()],
+>      "must have all values equal to ",
+>      e))
+
+-}
+unvariant' :: (HAllEqVal' (Tagged () e ': v),
+               Unvariant v e)
+  => Variant v -> e
+unvariant' = unvariant
+
+{- | Convert a Variant which has all possibilities having the same type
+into a value of that type. Analogous to @either id id@.
+
+See also 'unvariant'' -}
+class Unvariant v e | v -> e where
+    unvariant :: Variant v -> e
+
+instance (Unvariant1 b v e,
+          HAllEqVal v b,
+          HAllEqVal (Tagged () e ': v) b)
+    => Unvariant v e where
+      unvariant = unvariant1 (Proxy :: Proxy b)
+
+
+class Unvariant1 b v e | b v -> e where
+    unvariant1 :: Proxy b -> Variant v -> e
+
+instance (v ~ Tagged t1 e)
+    => Unvariant1 True (v ': vs) e where
+    unvariant1 _ = unsafeUnVariant
+
+instance Fail '("Variant", v ': vs, "must have all values equal to ", e)
+      => Unvariant1 False (v ': vs) Void where
+    unvariant1 _ = error "Data.HList.Variant.Unvariant1 Fail must have no instances"
+
+instance Fail "Unvariant applied to empty variant"
+      => Unvariant1 b '[] Void where
+    unvariant1 _ = error "Data.HList.Variant.Unvariant1 Fail must have no instances"
+
