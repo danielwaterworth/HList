@@ -66,7 +66,10 @@ module Data.HList.CommonMain (
  , mkVariant
  , mkVariant1
  , HMapV(..), hMapV
+ , zipVariant
  , HPrism(..)
+ , Unvariant(..)
+ , unvariant'
  , splitVariant
  , extendVariant
 
