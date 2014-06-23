@@ -10,8 +10,10 @@
 
 module Data.HList.FakePrelude
     (module Data.HList.FakePrelude,
-     module Data.Proxy) where
+     module Data.Proxy,
+     module Data.Void) where
 
+import Data.Void
 import Data.Proxy
 import Data.Tagged
 import GHC.Prim (Constraint)

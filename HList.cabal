@@ -52,7 +52,8 @@ flag new_type_eq
 library
   Build-Depends:       base >= 4.6 && < 5, template-haskell, ghc-prim, mtl,
                        tagged,
-                       profunctors
+                       profunctors,
+                       void
 
 
   Exposed-modules:     Data.HList,
