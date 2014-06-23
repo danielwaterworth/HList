@@ -337,13 +337,16 @@ instance ShowVariant '[] where
 
 instance ReadVariant v => Read (Variant v) where
     readsPrec _ = readP_to_S $ do
-      _ <- string "Variant{"
+      _ <- string "V{"
       r <- readVariant
       _ <- string "}"
       return r
 
 class ReadVariant vs where
     readVariant :: ReadP (Variant vs)
+
+instance ReadVariant '[] where
+    readVariant = return unsafeEmptyVariant
 
 instance (ShowLabel l, Read v, ReadVariant vs)
     => ReadVariant (Tagged l v ': vs) where
