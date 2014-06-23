@@ -50,7 +50,10 @@ flag new_type_eq
                (needs ghc >= 7.8)
 
 library
-  Build-Depends:       base >= 4.6 && < 5, template-haskell, ghc-prim, mtl,
+  Build-Depends:       base >= 4.6 && < 5,
+                       template-haskell,
+                       ghc-prim,
+                       mtl,
                        tagged,
                        profunctors,
                        void
