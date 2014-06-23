@@ -3,8 +3,8 @@ Version:             0.3.4.1
 Category:            Data
 Synopsis:            Heterogeneous lists
 Description:         HList provides many operations to create and manipulate
-                     heterogenous lists (HLists) whose length and contents are known
-                     at compile-time. HLists are used to implement
+                     heterogenous lists (HLists) whose length and element
+                     types are known at compile-time. HLists are used to implement
                     .
                       * records
                       * variants
@@ -47,7 +47,7 @@ flag new_type_eq
   Default: False
   Description: use Data.Type.Equality.== to define the instance of HEq
                instead of overlapping instances (in Data.HList.TypeEqO)
-
+               (needs ghc >= 7.8)
 
 library
   Build-Depends:       base >= 4.6 && < 5, template-haskell, ghc-prim, mtl,

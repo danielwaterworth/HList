@@ -5,10 +5,12 @@
 
    The HList library
 
+   See "Data.HList.CommonMain#Variant" for the public (safe) interface.
+
    The implementation here follows "Data.Dynamic", though Typeable is not
    needed.
 
-   See broken/VariantP.hs and broken/VariantOld.hs for different approaches
+   See @broken/VariantP.hs@ and @broken/VariantOld.hs@ for different approaches
    to open sums.
 -}
 
@@ -263,6 +265,8 @@ instance (HasField x (Record vs) a,
 
 
 -- --------------------------------------------------------------------------
+-- * prism
+
 {- | Make a @Prism (Variant s) (Variant t) a b@ out of a Label.
 
 See "Data.HList.Labelable".'hLens'' is a more overloaded version.
@@ -313,6 +317,7 @@ instance (
 
 
 -- --------------------------------------------------------------------------
+-- * Read
 -- | Variants are not opaque
 instance (ShowVariant vs) => Show (Variant vs) where
     showsPrec _ v = ("V{"++) . showVariant v . ('}':)
@@ -333,6 +338,7 @@ instance ShowVariant '[] where
     showVariant = error "empty variant: invariant broken"
 
 -- --------------------------------------------------------------------------
+-- * Show
 -- | A corresponding read instance
 
 instance ReadVariant v => Read (Variant v) where
@@ -370,6 +376,7 @@ instance (ShowLabel l, Read v, ReadVariant vs)
         p = Proxy :: Proxy (Tagged l v ': vs)
 
 -- --------------------------------------------------------------------------
+-- * Map
 -- Apply a function to all possible elements of the variant
 newtype HMapV f = HMapV f
 
@@ -399,6 +406,7 @@ instance (ApplyAB f e e', HMapAux Variant f l l', SameLength l l')
                   cons (Variant m e) = Variant (m+1) e
 
 -- --------------------------------------------------------------------------
+-- * HUpdateAtLabel instance
 
 {- |
 
@@ -423,6 +431,7 @@ type HUpdateVariantAtLabelCxt l e v v' n _e =
 
 
 -- --------------------------------------------------------------------------
+-- * HExtend instance
 {- | Extension for Variants prefers the first value
 
 > (l .=. Nothing) .*. v = v

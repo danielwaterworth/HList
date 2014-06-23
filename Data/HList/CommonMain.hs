@@ -35,8 +35,8 @@ module Data.HList.CommonMain (
  , module Data.HList.HList
  , module Data.HList.HZip
 
- -- * TIC
- -- $tic "Data.HList.TIP"
+ -- * TIP
+ -- | #TIP# Public interface of "Data.HList.TIP"
  , TIP
  , emptyTIP
  , tipyUpdate
@@ -61,7 +61,7 @@ module Data.HList.CommonMain (
  -- * TIC
  , module Data.HList.TIC
  -- * Variant
- -- | Public interface of "Data.HList.Variant"
+ -- | #Variant# Public interface of "Data.HList.Variant"
  , Variant
  , mkVariant
  , emptyVariant
