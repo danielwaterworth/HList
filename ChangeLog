@@ -24,7 +24,7 @@ This allows hMap to be used with Record and Variant.
 HUpdateAtLabel is similarly generalized.
 
 Rework Variant: the implementation is now similar to Dynamic
-and TIC.
+and TIC. Likewise, TIP is implemented in terms of Record.
 
 28 May 2014
 Add tipyLens and ticPrism.

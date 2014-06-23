@@ -70,11 +70,15 @@ provided. In other words
 
 Where the @s1@ and @s2@ are allowed to fit whatever is in the HList.
 
-See also @examples/pun.hs@.
+See also @examples/pun.hs@. In @{}@ patterns, @pun@ can work with
+'Variant' too.
+
 -}
 
 
--- | requires the use of "Data.HList.Label6" (ie. the label for foo is @Label :: Label \"foo\"@)
+-- | requires labels to be promoted strings (kind Symbol), as provided by
+-- "Data.HList.Label6" (ie. the label for foo is @Label :: Label \"foo\"@),
+-- or "Data.HList.Labelable"
 pun :: QuasiQuoter
 pun = QuasiQuoter {
     quotePat = mp . parseRec,
