@@ -1101,16 +1101,23 @@ instance (HTails xs ys) => HTails (x ': xs) (HList (x ': xs) ': ys) where
 class HInits a b | a -> b, b -> a where
     hInits :: HList a -> HList b
 
+instance HInits1 a b => HInits a (HList '[] ': b) where
+    hInits xs = HNil `HCons` hInits1 xs
 
-instance HInits '[] '[HList '[]] where
-    hInits _ = HCons HNil HNil
 
-instance (HInits xs ys,
+-- | behaves like @tail . inits@
+class HInits1 a b | a -> b, b -> a where
+    hInits1 :: HList a -> HList b
+
+instance HInits1 '[] '[HList '[]] where
+    hInits1 _ = HCons HNil HNil
+
+instance (HInits1 xs ys,
           HMapCxt HList (FHCons2 x) ys ys',
           HMapCons x ys ~ ys',
           HMapTail ys' ~ ys)
-  => HInits (x ': xs) (HList '[x] ':  ys') where
-    hInits (HCons x xs) = HCons x HNil `HCons` hMap (FHCons2 x) (hInits xs)
+  => HInits1 (x ': xs) (HList '[x] ':  ys') where
+    hInits1 (HCons x xs) = HCons x HNil `HCons` hMap (FHCons2 x) (hInits1 xs)
 
 
 -- | similar to 'FHCons'
