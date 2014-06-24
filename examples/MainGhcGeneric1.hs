@@ -252,8 +252,8 @@ type AnimalCol = TagR [Key,Name,Breed,Price]
 testTIC = do
   putStrLn "\ntestTIC"
   print $ myCol
-  print $ (unTIC myCol :: Maybe Breed)
-  print $ (unTIC myCol :: Maybe Price)
+  print $ (hOccurs myCol :: Maybe Breed)
+  print $ (hOccurs myCol :: Maybe Price)
  where
   myCol = mkTIC Cow :: TIC AnimalCol
 
@@ -261,13 +261,13 @@ testTIC = do
 
 myCol = mkTIC Cow :: TIC AnimalCol
 
-*TIC> unTIC myCol :: Maybe Breed
+*TIC> hOccurs myCol :: Maybe Breed
 Just Cow
-*TIC> unTIC myCol :: Maybe Price
+*TIC> hOccurs myCol :: Maybe Price
 Nothing
 *TIC> mkTIC "42" :: TIC AnimalCol
 Type error ...
-*TIC> unTIC myCol :: Maybe String
+*TIC> hOccurs myCol :: Maybe String
 Type error ...
 
 -}

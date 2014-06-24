@@ -115,7 +115,7 @@ instance HasField o (Variant l) (Maybe o) =>
     hLookupByLabel l (TIC i) = hLookupByLabel l i
 
 
-instance (HasField o (TIC l) mo) => HOccurs mo (TIC l) where
+instance (HasField o (TIC l) mo, mo ~ Maybe o) => HOccurs mo (TIC l) where
     hOccurs = hLookupByLabel (Label :: Label o)
 
 -- | @Prism (TIC s) (TIC t) a b@
