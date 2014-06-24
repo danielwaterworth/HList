@@ -100,6 +100,11 @@ mkTIC' :: forall i l proxy.
 
 mkTIC' i p = TIC (mkVariant (Label :: Label i) i p)
 
+-- | make a TIC that contains one element
+mkTIC1 :: forall i. MkVariant i i '[Tagged i i] => i -> TIC '[Tagged i i]
+mkTIC1 i = TIC (mkVariant1 (Label :: Label i) i)
+
+-- | make a TIC for use in contexts where the result type is fixed
 mkTIC i = mkTIC' i Proxy
 
 
