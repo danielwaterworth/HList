@@ -11,27 +11,79 @@
 
 module Data.HList.TIC where
 
-import Data.Dynamic
-
 import Data.HList.TIP
 import Data.HList.FakePrelude
 import Data.HList.HListPrelude
 
 import Data.HList.Record
 import Data.HList.Variant
+import Data.HList.HList
 
 import Text.ParserCombinators.ReadP
 import LensDefs
 
 -- --------------------------------------------------------------------------
--- | A datatype for type-indexed co-products
+-- | A datatype for type-indexed co-products. A 'TIC' is just a 'Variant',
+-- where the elements of the type-level list @\"l\"@ are in the form
+-- @Tagged x x@.
 
 newtype TIC (l :: [*]) = TIC (Variant l)
 
 
--- | Iso (TIC s) (TIC t) (Variant s) (Variant t)
+-- | @Iso (TIC s) (TIC t) (Variant s) (Variant t)@
+--
+-- 'typeIndexed' may be more appropriate
 ticVariant x = isoNewtype (\(TIC a) -> a) TIC x
 
+-- | @Iso' (TIC s) (Variant s)@
+ticVariant' x = simple (ticVariant x)
+
+
+-- --------------------------------------------------------------------------
+
+{- | Conversion between type indexed collections ('TIC' and 'TIP')
+and the corresponding collection that has other label types ('Variant'
+and 'Record' respectively)
+
+-}
+class TypeIndexed r tr | r -> tr, tr -> r where
+    typeIndexed :: forall p f s t a b.
+       (TypeIndexedCxt s t a b, Profunctor p, Functor f) =>
+      p (tr (TagR a)) (f (tr (TagR b))) -> p (r s) (f (r t))
+
+type TypeIndexedCxt s t a b =
+ (HMapCxt HList TaggedFn b t,
+  RecordValues s,
+  LabelsOf s ~ LabelsOf t,
+  a ~ RecordValuesR s,
+  b ~ RecordValuesR t,
+  {- to use castVariant instead of unsafeCastVariant
+  RecordValuesR (TagR a) ~ a,
+  RecordValuesR (TagR b) ~ b,
+  SameLength (TagR a) s,
+  SameLength (TagR b) t,
+  -}
+  TagUntag a,
+  TagUntag b)
+
+instance TypeIndexed Record TIP where
+    typeIndexed = unlabeled . fromTipHList
+      where fromTipHList = iso (TIP . hTagSelf) (\(TIP a) -> hUntagSelf a)
+
+instance TypeIndexed Variant TIC where
+    typeIndexed = isoNewtype unsafeCastVariant unsafeCastVariant
+                . isoNewtype TIC (\(TIC a) -> a)
+
+{- |
+
+@'Iso'' ('Variant' s) ('TIC' a)@
+
+@'Iso'' ('Record' s) ('TIP' a)@
+
+where @s@ has a type like @'[Tagged \"x\" Int]@, and
+@a@ has a type like @'[Tagged Int Int]@.
+-}
+typeIndexed' x = simple (typeIndexed x)
 
 -- --------------------------------------------------------------------------
 -- | Public constructor (or, open union's injection function)
