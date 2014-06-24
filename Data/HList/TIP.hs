@@ -5,7 +5,8 @@
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
    Type-indexed products.
-   The public interface is described in Data.HList.CommonMain#TIP
+   The public interface is described in
+   <Data-HList-CommonMain.html#t:TIP CommonMain#TIP>
 -}
 
 module Data.HList.TIP

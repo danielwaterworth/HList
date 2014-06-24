@@ -27,7 +27,6 @@ module Data.HList.Labelable
     -- $comparisonWithhLensFunction
 
     -- * likely unneeded (re)exports
-    -- $note needed to make a needed instance visible
     LabeledCxt, LabeledCxt1,
     Labeled(Labeled),
     toLabel,

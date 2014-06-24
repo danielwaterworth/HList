@@ -32,11 +32,12 @@ module Data.HList.CommonMain (
  , module Data.HList.RecordPuns
 
  -- * HList
+ -- | A subset of "Data.HList.HList" is re-exported.
  , module Data.HList.HList
  , module Data.HList.HZip
 
  -- * TIP
- -- | #TIP# Public interface of "Data.HList.TIP"
+ -- | Public interface of "Data.HList.TIP"
  , TIP
  , emptyTIP
  , tipyUpdate
@@ -56,6 +57,7 @@ module Data.HList.CommonMain (
  , TransTIPM(..)
 
  -- * TIC
+ -- | Public interface of "Data.HList.TIC"
  , TIC
  -- ** creating TIC
  , mkTIC
@@ -66,7 +68,7 @@ module Data.HList.CommonMain (
  , ticPrism, ticPrism'
 
  -- * Variant
- -- | #Variant# Public interface of "Data.HList.Variant"
+ -- | Public interface of "Data.HList.Variant"
  , Variant
  , mkVariant
  , mkVariant1
@@ -128,7 +130,7 @@ module Data.HList.CommonMain (
  , module Data.HList.Label3
 
  -- ** labels as any instance of Typeable
- , module Data.HList.Label5
+ --  | "Data.HList.Label5"
 
  -- ** template haskell
  , module Data.HList.MakeLabels
@@ -142,7 +144,7 @@ module Data.HList.CommonMain (
  , module Data.HList.TypeEqO
 
  -- * Internals
- -- $internals exported for type signature purposes
+ -- | internals exported for type signature purposes
  , HAllTaggedEq
 ) where
 

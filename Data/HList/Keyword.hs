@@ -1,5 +1,7 @@
 
-{- | keyword functions
+{- | Description: keyword arguments
+
+The public interface is exposed in <Data-HList-CommonMain.html#t:Kw CommonMain#Kw>
 
 -}
 module Data.HList.Keyword (

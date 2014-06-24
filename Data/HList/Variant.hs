@@ -5,7 +5,8 @@
 
    The HList library
 
-   See "Data.HList.CommonMain#Variant" for the public (safe) interface.
+   See <Data-HList-CommonMain.html#t:Variant CommonMain#Variant>
+   for the public (safe) interface.
 
    The implementation here follows "Data.Dynamic", though Typeable is not
    needed.

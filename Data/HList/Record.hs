@@ -84,7 +84,7 @@ module Data.HList.Record
     (.@.),
     HUpdateAtLabel(hUpdateAtLabel),
     -- *** type-preserving versions
-    -- $note these restrict the resulting record type to be the same as in
+    -- | Note: these restrict the resulting record type to be the same as in
     -- input record type, which can help reduce the number of type annotations
     -- needed
     (.<.),
@@ -142,6 +142,7 @@ module Data.HList.Record
     UnLabel,
     HMemberLabel,
     TaggedFn(..),
+    ReadComponent,
 ) where
 
 

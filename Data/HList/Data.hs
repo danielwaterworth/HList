@@ -59,6 +59,7 @@ module Data.HList.Data (
     GfoldlK(..),
     GunfoldK(..),
     HListFlat(..),
+    TypeablePolyK,
     ) where
 
 import Data.HList.FakePrelude

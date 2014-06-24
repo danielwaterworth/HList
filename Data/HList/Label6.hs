@@ -12,7 +12,7 @@
    Labels are promoted Strings or Integers "GHC.TypeLits" inside the
    'Label'. Needs ghc7.6 or higher.
 
-   See "Data.HList.CommonMain#label6demo" for an example.
+   See <Data-HList-CommonMain.html#label6demo CommonMain#label6demo> for an example.
 
 -}
 

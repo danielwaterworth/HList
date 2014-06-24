@@ -4,7 +4,8 @@
 
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
-   Type-indexed co-products.
+   Type-indexed co-products. The public interface is exposed
+   in <Data-HList-CommonMain.html#t:TIC CommonMain#TIC>
 
    (There are other ways: see ConsUnion.hs, for example)
 -}
