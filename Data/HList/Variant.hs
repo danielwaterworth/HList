@@ -215,6 +215,10 @@ unsafeMkVariant n a = Variant n (unsafeCoerce a)
 unsafeCastVariant :: Variant v -> Variant v'
 unsafeCastVariant (Variant n e) = Variant n e
 
+castVariant :: (RecordValuesR v ~ RecordValuesR v',
+              SameLength v v') => Variant v -> Variant v'
+castVariant = unsafeCastVariant
+
 -- | private destructor. This is safe only if the value
 -- contained actually has type `e`
 unsafeUnVariant :: Variant v -> e
