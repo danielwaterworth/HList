@@ -43,7 +43,6 @@ module Data.HList.Record
     Record(..),
     mkRecord,
     emptyRecord,
-    unlabeled,
 
     -- *** Getting Labels
     LabelsOf,
@@ -52,6 +51,9 @@ module Data.HList.Record
     -- *** Getting Values
     RecordValues(..),
     recordValues,
+
+    unlabeled,
+    unlabeled',
 
     -- * Operations
     -- ** Show
@@ -139,6 +141,7 @@ module Data.HList.Record
     newLVPair,
     UnLabel,
     HMemberLabel,
+    TaggedFn(..),
 ) where
 
 
@@ -217,7 +220,9 @@ mkRecord = Record
 emptyRecord :: Record '[]
 emptyRecord = mkRecord HNil
 
--- | @Iso (Record s) (Record t) (HList a) (HList b)@ where
+-- | @Iso (Record s) (Record t) (HList a) (HList b)@
+--
+-- @view unlabeled == 'recordValues'@
 unlabeled :: forall p f s t a b.
     (HMapCxt HList TaggedFn b t,
      RecordValues s,
@@ -230,6 +235,9 @@ unlabeled :: forall p f s t a b.
 unlabeled = iso
     recordValues
     (\ t -> Record (hMap TaggedFn (t :: HList b)))
+
+-- | @Iso (Record s) (HList a)@
+unlabeled' x = simple (unlabeled x)
 
 data TaggedFn = TaggedFn
 instance (tx ~ Tagged t x) => ApplyAB TaggedFn x tx where

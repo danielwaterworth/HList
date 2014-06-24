@@ -34,6 +34,7 @@ module Data.HList.Labelable
     Identity,
     ToSym,
     XFromLabeled,
+    LabelableTIPCxt,
     ) where
 
 
@@ -118,7 +119,12 @@ instance (HPrism x p f s t a b, to ~ (->)) =>
 --
 -- 'tipyLens' provides a @Lens (TIP s) (TIP t) a b@, which tends to need
 -- too many type annotations to be practical
-instance (s ~ t, a ~ b, x ~ a,
+instance LabelableTIPCxt x to p f s t a b =>
+    Labelable x TIP to p f s t a b where
+    hLens' = hLens
+
+type LabelableTIPCxt x to p f s t a b =
+     (s ~ t, a ~ b, x ~ a,
 
       HUpdateAtLabel TIP x b s t,
       HUpdateAtLabel TIP x a t s,
@@ -126,9 +132,7 @@ instance (s ~ t, a ~ b, x ~ a,
 
       Functor f,
       (->) ~ to,
-      (->) ~ p) =>
-    Labelable x TIP to p f s t a b where
-    hLens' = hLens
+      (->) ~ p)
 
 
 -- | modification of '.=.' which works with the labels from this module,

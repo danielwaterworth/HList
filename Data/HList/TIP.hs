@@ -119,6 +119,7 @@ instance (HUpdateAtLabel Record e' e r r',
   hUpdateAtLabel l e r = onRecord (hUpdateAtLabel l e) r
 
 
+-- | Use 'Labels' to specify the first argument
 tipyProject ps t = onRecord (hProjectByLabels ps) t
 
 -- | provides a @Lens' (TIP s) a@. 'hLens'' @:: Label a -> Lens' (TIP s) a@
@@ -141,7 +142,8 @@ tipyLens f s = hLens x f (asTIP s)
     asTIP = id
 
 
--- | Split produces two TIPs
+-- | The same as 'tipyProject', except also return the
+-- types not requested in the @proxy@ argument
 tipyProject2 ps (TIP l) = (mkTIP l',mkTIP l'')
  where
   (l',l'') = h2projectByLabels ps l
@@ -204,6 +206,8 @@ tipHList' x = simple (tipHList x)
 -- * conversion to and from 'Record'
 
 -- | @Iso (TIP s) (TIP t) (Record s) (Record t)@
+--
+-- 'typeIndexed' may be more appropriate
 tipRecord x = isoNewtype (\(TIP a) -> Record a) (\(Record b) -> TIP b) x
 
 -- | @Iso' (TIP (TagR s)) (HList a)@

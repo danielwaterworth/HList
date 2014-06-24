@@ -49,9 +49,6 @@ module Data.HList.CommonMain (
  , tipyTuple3
  , tipyTuple4
  , tipyTuple5
- -- ** conversions between TIP and other collections
- , tipHList, tipHList'
- , tipRecord, tipRecord'
  , TagUntag(..)
 
  -- ** TIP transform
@@ -59,19 +56,41 @@ module Data.HList.CommonMain (
  , TransTIPM(..)
 
  -- * TIC
- , module Data.HList.TIC
+ , TIC
+ -- ** creating TIC
+ , mkTIC
+ , mkTIC1
+ , mkTIC'
+
+ -- ** get,set,modify
+ , ticPrism, ticPrism'
+
  -- * Variant
  -- | #Variant# Public interface of "Data.HList.Variant"
  , Variant
  , mkVariant
  , mkVariant1
  , HMapV(..), hMapV
- , zipVariant
+ , ZipVariant(..)
  , HPrism(..)
  , Unvariant(..)
  , unvariant'
  , splitVariant
  , extendVariant
+
+ -- * Conversions between collections
+ , TypeIndexed(..)
+ , typeIndexed'
+ -- ** HList and Record
+ -- | 'unlabeled' 'unlabeled''
+
+ -- ** HList and TIP
+ , tipHList, tipHList'
+
+ -- ** TIC newtype wrappers
+ , ticVariant, ticVariant'
+ -- ** TIP newtype wrappers
+ , tipRecord, tipRecord'
 
 
  -- * "Data.HList.Keyword"
