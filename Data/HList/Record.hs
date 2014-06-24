@@ -121,8 +121,8 @@ module Data.HList.Record
 
     -- * Hints for type errors
     DuplicatedLabel,
-    ExtraField(..),
-    FieldNotFound(..),
+    ExtraField,
+    FieldNotFound,
 
     -- * Unclassified
 
