@@ -43,13 +43,6 @@ dcl n = let
                   (normalB [| Label |])
                   []
 
-    showLabelInst = instanceD
-            (return [])
-            [t| ShowLabel $(conT c) |]
-            [valD (varP 'showLabel)
-                (normalB [| \_ -> n |])
-                [] ]
-
     showInst = instanceD
             (return [])
             [t| Show $(conT c) |]
@@ -63,7 +56,6 @@ dcl n = let
 
         dd,
 
-        -- showLabelInst,
         showInst ]
 
 
