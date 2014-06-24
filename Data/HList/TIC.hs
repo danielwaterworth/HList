@@ -114,10 +114,9 @@ instance HasField o (Variant l) (Maybe o) =>
       HasField o (TIC l) (Maybe o) where
     hLookupByLabel l (TIC i) = hLookupByLabel l i
 
-unTIC x = let r = hLookupByLabel (toLabel r) x
-              toLabel :: Maybe a -> Label a
-              toLabel _ = Label
-  in r
+
+instance (HasField o (TIC l) mo) => HOccurs mo (TIC l) where
+    hOccurs = hLookupByLabel (Label :: Label o)
 
 -- | @Prism (TIC s) (TIC t) a b@
 ticPrism :: forall p f s t a b. (HPrism a p f s t a b)
