@@ -31,7 +31,6 @@ Extra-Source-Files:
                      examples/broken/*.lhs,
 
                      examples/*.ref,
-                     examples/*.out,
 
                      examples/broken/*.ref,
 
