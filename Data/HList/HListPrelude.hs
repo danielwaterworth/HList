@@ -61,7 +61,7 @@ class HDeleteMany e l l' | e l -> l' where
   hDeleteMany :: Proxy e -> l -> l'
 
 
-class HDeleteAtLabel r l v v' | l v -> v' where
+class HDeleteAtLabel (r :: [*] -> *) (l :: k) v v' | l v -> v' where
     hDeleteAtLabel :: Label l -> r v -> r v'
 
 
