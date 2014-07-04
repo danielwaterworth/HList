@@ -46,8 +46,11 @@ ticVariant' x = simple (ticVariant x)
 and the corresponding collection that has other label types ('Variant'
 and 'Record' respectively)
 
+See 'typeIndexed''
+
 -}
 class TypeIndexed r tr | r -> tr, tr -> r where
+    -- | @Iso (r s) (r t) (tr a) (tr b)@
     typeIndexed :: forall p f s t a b.
        (TypeIndexedCxt s t a b, Profunctor p, Functor f) =>
       p (tr (TagR a)) (f (tr (TagR b))) -> p (r s) (f (r t))
