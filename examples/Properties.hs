@@ -1,4 +1,5 @@
 {-# OPTIONS_GHC -fcontext-stack=100 #-}
+{-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE FlexibleInstances #-}
@@ -31,6 +32,7 @@ import Control.Lens
 import Data.Typeable
 import Control.Monad.Identity
 
+import Data.Array.Unboxed
 
 instance Arbitrary (HList '[]) where
     arbitrary = return HNil
@@ -54,6 +56,7 @@ instance Arbitrary (Identity (BoolN n)) where
 
 lx = Label :: Label "x"
 ly = Label :: Label "y"
+lz = Label :: Label "z"
 
 main = hspec $ do
  hl0
@@ -279,6 +282,35 @@ hl0 = describe "0 -- length independent"  $ do
 
     -- XXX ticVariant needs to adjust the labels
     -- show (map (^. from ticVariant) v) `shouldBe` "[TIC['a'], TIC[\"ly\"]]"
+
+  it "unboxed" $ do
+    property $ do
+      (x :: Bool) <- arbitrary
+      (y :: Bool) <- arbitrary
+      (z :: Bool) <- arbitrary
+      let r = [pun| x y z |]
+          ru = r ^. unboxed
+      return $ conjoin
+       [ ru .!. lx === x,
+         ru .!. ly === y,
+         ru .!. lz === z,
+         hUpdateMany r ru === ru,
+         hMapRU not ru ^. from unboxed . unlabeled . hListAsList
+                === map not [x,y,z],
+         r === ru ^. from unboxed ]
+
+  it "unboxedS" $ do
+    property $ do
+      (x :: Bool) <- arbitrary
+      (y :: Int) <- arbitrary
+      (z :: Int) <- arbitrary
+      let r = [pun| x y z |]
+          ru = r ^. unboxedS
+      return $ conjoin
+        [ ru .!. lx === x,
+          ru .!. ly === y,
+          ru .!. lz === z,
+          r === ru ^. from unboxedS ]
 
 hTuples = do
   it "HTuple0" $ HNil ^. hTuple `shouldBe` ()

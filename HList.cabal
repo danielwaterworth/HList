@@ -55,7 +55,8 @@ library
                        mtl,
                        tagged,
                        profunctors,
-                       void
+                       void,
+                       array
 
 
   Exposed-modules:     Data.HList,
@@ -75,6 +76,7 @@ library
                        Data.HList.Labelable,
                        Data.HList.MakeLabels,
                        Data.HList.Record,
+                       Data.HList.RecordU,
                        Data.HList.RecordPuns,
 --                       Data.HList.RecordOrd,
                        Data.HList.TIC,
@@ -146,7 +148,8 @@ Test-Suite properties
                  lens,
                  mtl,
                  QuickCheck,
-                 template-haskell
+                 template-haskell,
+                 array
   Main-Is:  Properties.hs
   Hs-Source-Dirs: examples
   Default-Language:    Haskell2010
