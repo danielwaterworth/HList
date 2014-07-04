@@ -507,7 +507,18 @@ result)
 
 -}
 class (SameLength' x y, SameLength' y x) =>
-        SameLength (x :: [k]) (y :: [m])
+        SameLength (x :: [k]) (y :: [m]) where
+
+  {- | @SameLength a b => Iso (r a) (q b) (r a) (q b)@
+
+  used like 'Control.Lens.simple', except it restricts
+  the type-level lists involved to have the same length,
+  without fixing the type of container or the elements
+  in the list.
+  -}
+  sameLength :: r x `p` f (q y) -> r x `p` f (q y)
+  sameLength = id
+
 instance (SameLength' x y, SameLength' y x) => SameLength x y
 
 
