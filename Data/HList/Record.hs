@@ -147,6 +147,7 @@ module Data.HList.Record
     HMemberLabel,
     TaggedFn(..),
     ReadComponent,
+    HMapTaggedFn,
 ) where
 
 
@@ -275,12 +276,11 @@ instance (tx ~ Tagged t x) => ApplyAB TaggedFn x tx where
 type HMapTaggedFn l r =
     (HMapCxt HList TaggedFn l r,
      RecordValuesR r ~ l,
-     RecordValues r,
-     HRLabelSet r)
+     RecordValues r)
 
 -- | \"inverse\" to 'recordValues'
 hMapTaggedFn :: HMapTaggedFn a b => HList a -> Record b
-hMapTaggedFn = mkRecord . hMap TaggedFn
+hMapTaggedFn = Record . hMap TaggedFn
 
 -- | Propery of a proper label set for a record: no duplication of labels
 
