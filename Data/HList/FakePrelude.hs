@@ -487,6 +487,20 @@ instance HNat2Integral n => HNat2Integral (HSucc n) where
     hNat2Integral n = hNat2Integral (hPred n) + 1
 
 
+class HNats2Integrals (ns :: [HNat]) where
+    hNats2Integrals :: Integral i => Proxy ns -> [i]
+
+instance HNats2Integrals '[] where
+    hNats2Integrals _ = []
+
+instance (HNats2Integrals ns,
+          HNat2Integral n)
+  => HNats2Integrals (n ': ns) where
+    hNats2Integrals _ = hNat2Integral (Proxy :: Proxy n) :
+                        hNats2Integrals (Proxy :: Proxy ns)
+
+
+
 -- | Equality on natural numbers
 -- (eventually to be subsumed by the universal polykinded HEq)
 type family HNatEq (t1 :: HNat) (t2 :: HNat) :: Bool
