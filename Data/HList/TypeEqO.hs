@@ -25,7 +25,7 @@ instance False ~ b => HEq x y b
 
 
 
-class TupleType t (b :: Bool) | t -> b
+class TupleType (t :: *) (b :: Bool) | t -> b
 instance TupleType () True
 instance TupleType (x,y) True
 instance TupleType (x,y,z) True
@@ -42,13 +42,13 @@ instance HNat2Integral n => Show (Proxy (n :: HNat)) where
 
 
 -- | the number of arguments a function can take
-class Arity f (n :: HNat) | f -> n
+class Arity (f :: *) (n :: HNat) | f -> n
 instance hZero ~ HZero => Arity f hZero
 instance Arity f n => Arity (x -> f) (HSucc n)
 
 
 -- | All our keywords must be registered
-class IsKeyFN   t (flag :: Bool) | t-> flag
+class IsKeyFN (t :: *) (flag :: Bool) | t-> flag
 -- | overlapping/fallback case
 instance (False ~ flag) => IsKeyFN t flag
 
