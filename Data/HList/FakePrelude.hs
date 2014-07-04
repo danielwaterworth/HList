@@ -536,6 +536,11 @@ hEq :: HEq x y b => x -> y -> Proxy b
 hEq _ _ = Proxy
 
 
+-- | this class generalizes HEq by allowing the choice of @f@ to allow
+-- equating only part of x and y
+class HEqBy (f :: t) (x :: k) (y :: k) (b :: Bool) | f x y -> b
+
+
 -- --------------------------------------------------------------------------
 
 -- * Staged equality

@@ -966,7 +966,7 @@ hFlag l = hAddTag hTrue l
 -- --------------------------------------------------------------------------
 -- * Splitting by HTrue and HFalse
 
--- | Analogus to Data.List.'Data.List.partition' 'snd'
+-- | Analogus to Data.List.'Data.List.partition' 'snd'. See also 'HPartition'
 --
 -- >>> let (.=.) :: p x -> y -> Tagged x y; _ .=. y = Tagged y
 -- >>> hSplit $ hTrue .=. 2 .*. hTrue .=. 3 .*. hFalse .=. 1 .*. HNil
@@ -1187,3 +1187,94 @@ type instance HMapCons x '[] = '[]
 type family HMapTail (xxs :: [*]) :: [*]
 type instance HMapTail ( HList (a ': as) ': bs) = HList as ': HMapTail bs
 type instance HMapTail '[] = '[]
+
+
+-- * partition
+
+{- | @HPartitionEq f x1 xs xi xo@ is analogous to
+
+> (xi,xo) = partition (f x1) xs
+
+where @f@ is a \"function\" passed in using it's instance of 'HEqBy'
+-}
+class HPartitionEq f x1 xs xi xo | f x1 xs -> xi xo where
+    hPartitionEq :: Proxy f -> Proxy x1 -> HList xs -> (HList xi, HList xo)
+
+instance HPartitionEq f x1 '[] '[] '[] where
+    hPartitionEq _ _ _ = (HNil, HNil)
+
+instance
+   (HEqBy f x1 x b,
+    HPartitionEq1 b f x1 x xs xi xo) => HPartitionEq f x1 (x ': xs) xi xo where
+      hPartitionEq f x1 (HCons x xs) = hPartitionEq1 (Proxy :: Proxy b) f x1 x xs
+
+class HPartitionEq1 (b :: Bool) f x1 x xs xi xo | b f x1 x xs -> xi xo where
+    hPartitionEq1 :: Proxy b -> Proxy f -> Proxy x1 -> x -> HList xs -> (HList xi, HList xo)
+
+instance HPartitionEq f x1 xs xi xo =>
+    HPartitionEq1 True f x1 x xs (x ': xi) xo where
+      hPartitionEq1 _ f x1 x xs = case hPartitionEq f x1 xs of
+         (xi, xo) -> (x `HCons` xi, xo)
+
+instance HPartitionEq f x1 xs xi xo =>
+    HPartitionEq1 False f x1 x xs xi (x ': xo) where
+      hPartitionEq1 _ f x1 x xs = case hPartitionEq f x1 xs of
+         (xi, xo) -> (xi, x `HCons` xo)
+
+
+-- * groupBy
+
+{- | @HGroupBy f x y@ is analogous to @y = 'groupBy' f x@
+
+given that @f@ is used by 'HEqBy'
+-}
+class HGroupBy (f :: t) (as :: [*]) (gs :: [*]) | f as -> gs, gs -> as where
+    hGroupBy :: Proxy f -> HList as -> HList gs
+
+instance (HSpanEqBy f a as fst snd,
+          HGroupBy f snd gs) => HGroupBy f (a ': as) (HList (a ': fst) ': gs) where
+    hGroupBy f (HCons x xs) = case hSpanEqBy f x xs of
+                      (first, second) -> (x `HCons` first) `HCons` hGroupBy f second
+
+instance HGroupBy f '[] '[] where
+    hGroupBy _f HNil = HNil
+
+-- * span
+
+-- | @HSpanEq x y fst snd@ is analogous to @(fst,snd) = 'span' (== x) y@
+class HSpanEqBy (f :: t) (x :: *) (y :: [*]) (fst :: [*]) (snd :: [*])
+      | f x y -> fst snd, fst snd -> y where
+  hSpanEqBy :: Proxy f -> x -> HList y -> (HList fst, HList snd)
+
+instance (HSpanEqBy1 f x y revFst snd,
+          HRevApp revFst snd ~ y,
+          HRevApp revFst '[] ~ fst)
+    => HSpanEqBy f x y fst snd where
+  hSpanEqBy f x y =  case hSpanEqBy1 f x y of
+                      (revFst, second) -> (hReverse revFst, second)
+
+class HSpanEqBy1 (f :: t) (x :: *) (y :: [*]) (i :: [*]) (o :: [*])
+      | f x y -> i o where
+  hSpanEqBy1 :: Proxy f -> x -> HList y -> (HList i, HList o)
+
+class HSpanEqBy2 (b :: Bool) (f :: t) (x :: *) (y :: *) (ys :: [*]) (i :: [*]) (o :: [*])
+      | b f x y ys -> i o where
+  hSpanEqBy2 :: Proxy b -> Proxy f -> x -> y -> HList ys -> (HList i, HList o)
+
+
+instance (HEqBy f x y b,
+          HSpanEqBy2 b f x y ys i o) => HSpanEqBy1 f x (y ': ys) i o where
+  hSpanEqBy1 f x (HCons y ys) = hSpanEqBy2 (Proxy :: Proxy b) f x (y :: y) (ys :: HList ys)
+
+instance HSpanEqBy1 f x '[] '[] '[] where
+    hSpanEqBy1 _f _x _xs = (HNil, HNil)
+
+instance HSpanEqBy1 f x zs i o
+    => HSpanEqBy2 True f x y zs (y ': i) o where
+  hSpanEqBy2 _ f x y zs = case hSpanEqBy1 f x zs of
+                                      (i, o) -> (HCons y i, o)
+
+instance HSpanEqBy2 False f x y ys '[] (y ': ys) where
+  hSpanEqBy2 _b _f _x y ys = (HNil, HCons y ys)
+
+
