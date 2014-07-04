@@ -44,6 +44,7 @@ Source-Repository head
 
 flag new_type_eq
   Default: False
+  Manual: True
   Description: use Data.Type.Equality.== to define the instance of HEq
                instead of overlapping instances (in Data.HList.TypeEqO)
                (needs ghc >= 7.8)
