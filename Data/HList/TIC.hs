@@ -57,7 +57,7 @@ class TypeIndexed r tr | r -> tr, tr -> r where
 
 type TypeIndexedCxt s t a b =
  (HMapCxt HList TaggedFn b t,
-  RecordValues s,
+  RecordValues s, RecordValues t,
   LabelsOf s ~ LabelsOf t,
   a ~ RecordValuesR s,
   b ~ RecordValuesR t,
@@ -67,6 +67,7 @@ type TypeIndexedCxt s t a b =
   SameLength (TagR a) s,
   SameLength (TagR b) t,
   -}
+  HRLabelSet t,
   TagUntag a,
   TagUntag b)
 
