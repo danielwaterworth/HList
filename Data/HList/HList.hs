@@ -14,6 +14,7 @@ module Data.HList.HList where
 
 import Data.HList.FakePrelude
 import Data.HList.HListPrelude
+import Data.Maybe (fromMaybe)
 
 import LensDefs
 
@@ -825,7 +826,7 @@ instance HTIntersect t l1 l2
   hTIntersectBool _ _ t l1 = hTIntersect t l1
 
 
--- * Turn a heterogeneous list into a homogeneous one
+-- * Convert between heterogeneous lists and homogeneous ones
 
 -- | @hMapOut id@ is similar, except this function is restricted
 -- to HLists that actually contain a value (so the list produced
@@ -834,18 +835,35 @@ instance HTIntersect t l1 l2
 class HList2List l e | l -> e
  where
   hList2List :: HList l -> [e]
+  list2HList :: [e] -> Maybe (HList l)
 
 instance HList2List '[e] e
  where
   hList2List (HCons e HNil) = [e]
   hList2List _ = error "ghc bug"
 
+  list2HList (e : _) = Just (HCons e HNil)
+  list2HList [] = Nothing
+
+
 instance HList2List (e' ': l) e
       => HList2List (e ': e' ': l) e
  where
   hList2List (HCons e l) = e:hList2List l
 
+  list2HList (e : es) = HCons e <$> list2HList es
+  list2HList [] = Nothing
 
+{- | @Iso (HList s) (HList t) [a] [b]@
+
+calls 'error' if @[b]@ contains too few elements
+-}
+hListAsList x = iso hList2List (fromMaybe (error msg) . list2HList) x
+  where
+    msg = "Data.HList.HList.hListAsList too few elements provided"
+
+-- | @Iso' (HList s) [a]@
+hListAsList' x = simple (hListAsList x)
 
 
 -- --------------------------------------------------------------------------
@@ -1037,8 +1055,8 @@ If a length is explicitly provided, the resulting lists are inferred
 >>> hSplitAt two xsys
 (H[1, 2],H[3, 4])
 
->>> let sameLength :: SameLength a b => r a -> r b -> r a; sameLength = const
->>> let len2 x = x `sameLength` HCons () (HCons () HNil)
+>>> let sameLength_ :: SameLength a b => r a -> r b -> r a; sameLength_ = const
+>>> let len2 x = x `sameLength_` HCons () (HCons () HNil)
 
 If the first chunk of the list (a) has to be a certain length, the type of the
 Proxy argument can be inferred.
