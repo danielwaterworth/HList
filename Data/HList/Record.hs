@@ -161,7 +161,7 @@ import Control.Applicative
 
 import Text.ParserCombinators.ReadP
 import GHC.TypeLits
- 
+
 import LensDefs
 
 -- imports for doctest/examples
