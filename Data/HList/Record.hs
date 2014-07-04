@@ -225,7 +225,7 @@ emptyRecord = mkRecord HNil
 --
 -- @view unlabeled == 'recordValues'@
 unlabeled :: forall p f s t a b.
-    (HMapCxt HList TaggedFn b t,
+    (HMapTaggedFn b t,
      RecordValues s,
      LabelsOf s ~ LabelsOf t,
      a ~ RecordValuesR s,
@@ -233,9 +233,7 @@ unlabeled :: forall p f s t a b.
      Profunctor p, Functor f) =>
   p (HList a) (f (HList b)) ->
   p (Record s) (f (Record t))
-unlabeled = iso
-    recordValues
-    (\ t -> Record (hMap TaggedFn (t :: HList b)))
+unlabeled = iso recordValues hMapTaggedFn
 
 -- | @Iso (Record s) (HList a)@
 unlabeled' x = simple (unlabeled x)
@@ -243,6 +241,16 @@ unlabeled' x = simple (unlabeled x)
 data TaggedFn = TaggedFn
 instance (tx ~ Tagged t x) => ApplyAB TaggedFn x tx where
     applyAB _ = Tagged
+
+type HMapTaggedFn l r =
+    (HMapCxt HList TaggedFn l r,
+     RecordValuesR r ~ l,
+     RecordValues r,
+     HRLabelSet r)
+
+-- | \"inverse\" to 'recordValues'
+hMapTaggedFn :: HMapTaggedFn a b => HList a -> Record b
+hMapTaggedFn = mkRecord . hMap TaggedFn
 
 -- | Propery of a proper label set for a record: no duplication of labels
 
