@@ -43,6 +43,7 @@ module Data.HList.Record
     Record(..),
     mkRecord,
     emptyRecord,
+    hEndR,
 
     -- *** Getting Labels
     LabelsOf,
@@ -965,3 +966,15 @@ instance HMapAux HList (HFmap f) x y =>
       hMapAux f (Record x) = Record (hMapAux (HFmap f) x)
 
 
+
+-- --------------------------------------------------------------------------
+-- | This instance allows creating Record with
+--
+-- @hBuild 3 'a' :: Record '[Tagged "x" Int, Tagged "y" Char]@
+instance (HRevApp l '[] ~ lRev,
+         HMapTaggedFn lRev l') => HBuild' l (Record l') where
+  hBuild' l = hMapTaggedFn (hReverse l)
+
+-- | serves the same purpose as 'hEnd'
+hEndR :: Record a -> Record a
+hEndR = id

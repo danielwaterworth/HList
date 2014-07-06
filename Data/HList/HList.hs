@@ -256,6 +256,16 @@ H[True, 'a']
 >>> let x = hBuild True 'a' "ok" in hEnd x
 H[True, 'a', "ok"]
 
+hBuild can also produce a Record, such that
+
+> hBuild x y ^. from unlabeled
+
+can also be produced using
+
+@
+'hEndR' $ hBuild x y
+@
+
 -}
 
 -- *** historical
