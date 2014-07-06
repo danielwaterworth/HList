@@ -872,7 +872,7 @@ hRearrange :: (HLabelSet ls, HRearrange ls r (HList r')) => Proxy ls -> Record r
 hRearrange ls (Record r) = Record (hRearrange2 ls r)
 
 -- | Helper class for 'hRearrange'
-class HRearrange ls r r' where
+class HRearrange (ls :: [*]) (r :: [*]) r' where
     hRearrange2 :: proxy ls -> HList r -> r'
 
 instance (HList '[] ~ r) => HRearrange '[] '[] r where
@@ -880,6 +880,7 @@ instance (HList '[] ~ r) => HRearrange '[] '[] r where
 
 instance (H2ProjectByLabels '[l] r rin rout,
           HRearrange' l ls rin rout (HList r'),
+          l ~ Label ll,
           r'' ~ HList r') =>
         HRearrange (l ': ls) r r'' where
    hRearrange2 _ r = hRearrange2' (Proxy :: Proxy l) (Proxy :: Proxy ls) rin rout
@@ -891,8 +892,9 @@ class HRearrange' l ls rin rout r' where
     hRearrange2' :: proxy l -> Proxy ls -> HList rin -> HList rout -> r'
 
 instance (HRearrange ls rout (HList r'),
-         r'' ~ HList (Tagged l v ': r')) =>
-        HRearrange' l ls '[Tagged l v] rout r'' where
+         r'' ~ HList (Tagged l v ': r'),
+         ll ~ Label l) =>
+        HRearrange' ll ls '[Tagged l v] rout r'' where
    hRearrange2' _ ls (HCons lv@(Tagged v) _HNil) rout
         = HCons (Tagged v `asTypeOf` lv) (hRearrange2 ls rout)
 
