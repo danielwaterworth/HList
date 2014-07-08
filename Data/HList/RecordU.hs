@@ -103,7 +103,7 @@ Record{x=1.0,i=2,y=3.0,j=4}
 Record is stored as a RecordUS
 
 >>> recordToRecordUS bad
-RecordU H[RecordU (array (0,0) [(0,1.0)]), RecordU (array (0,0) [(0,2)]), RecordU (array (0,0) [(0,3.0)]), RecordU (array (0,0) [(0,4)])]
+RecordUS H[RecordU (array (0,0) [(0,1.0)]), RecordU (array (0,0) [(0,2)]), RecordU (array (0,0) [(0,3.0)]), RecordU (array (0,0) [(0,4)])]
 
 It is possible to sort the record
 
