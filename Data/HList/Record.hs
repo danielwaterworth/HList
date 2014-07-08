@@ -116,6 +116,7 @@ module Data.HList.Record
 
     -- ** Reorder Labels
     hRearrange,
+    hRearrange',
 
     -- ** Apply a function to all values
     hMapR, HMapR(..),
@@ -871,6 +872,33 @@ instance (UnionSymRec r1 r2' ru,
 -- permutation of ls.
 hRearrange :: (HLabelSet ls, HRearrange ls r (HList r')) => Proxy ls -> Record r -> Record r'
 hRearrange ls (Record r) = Record (hRearrange2 ls r)
+
+{- | 'hRearrange'' is 'hRearrange' where ordering specified by the Proxy
+argument is determined by the result type.
+
+With built-in haskell records, these @e1@ and @e2@ have the same type:
+
+> data R = R { x, y :: Int }
+> e1 = R{ x = 1, y = 2}
+> e2 = R{ y = 2, x = 1}
+
+'hRearrange'' can be used to allow either ordering to be accepted:
+
+> h1, h2 :: Record [ Tagged "x" Int, Tagged "y" Int ]
+> h1 = hRearrange' $
+>     x .=. 1 .*.
+>     y .=. 2 .*.
+>     emptyRecord
+>
+> h2 = hRearrange' $
+>     y .=. 2 .*.
+>     x .=. 1 .*.
+>     emptyRecord
+
+-}
+hRearrange' r =
+    let r' = hRearrange (labelsOf r') r
+    in r'
 
 -- | Helper class for 'hRearrange'
 class HRearrange (ls :: [*]) (r :: [*]) r' where
