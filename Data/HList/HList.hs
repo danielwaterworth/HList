@@ -51,18 +51,21 @@ over the GADT:
 
 -}
 data HNil' = HNil' deriving (Eq)
-data HCons' a b = HCons' a b deriving (Eq)
+data IsPrime b => HCons' a b = HCons' a b deriving (Eq)
 
+class IsPrime (a :: *)
+instance IsPrime HNil'
+instance IsPrime b => IsPrime (HCons' a b)
 
 -- | conversion between GADT ('HList') and ADT ('HNil'' 'HCons'')
 -- representations
-class (UnPrime (Prime a) ~ a) => ConvHList (a :: [*]) where
+class (UnPrime (Prime a) ~ a, IsPrime (Prime a)) => ConvHList (a :: [*]) where
     type Prime a :: *
     type UnPrime b :: [*]
     prime :: HList a -> Prime a
     unPrime :: Prime a -> HList a
 
-instance ConvHList as => ConvHList (a ': as) where
+instance (IsPrime (HCons' a (Prime as)), ConvHList as) => ConvHList (a ': as) where
     type Prime   (a ': as) = a `HCons'` Prime as
     type UnPrime (b `HCons'` bs) = (b ': UnPrime bs)
     prime (a `HCons` as) = a `HCons'` prime as

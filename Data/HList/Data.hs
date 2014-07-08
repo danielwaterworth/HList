@@ -279,7 +279,7 @@ class TypeRepsList a where
 instance (TypeRepsList (Prime xs), ConvHList xs) => TypeRepsList (Record xs) where
   typeRepsList (Record xs) = typeRepsList (prime xs)
 
-instance (TypeRepsList xs, Typeable x) => TypeRepsList (HCons' x xs) where
+instance (TypeRepsList xs, Typeable x, IsPrime xs) => TypeRepsList (HCons' x xs) where
   typeRepsList (~(x `HCons'` xs))
         = typeOf x : typeRepsList xs
 
