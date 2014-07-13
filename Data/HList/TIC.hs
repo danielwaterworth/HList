@@ -58,9 +58,10 @@ class TypeIndexed r tr | r -> tr, tr -> r where
 type TypeIndexedCxt s t a b =
  (HMapCxt HList TaggedFn b t,
   RecordValues s, RecordValues t,
-  LabelsOf s ~ LabelsOf t,
   a ~ RecordValuesR s,
   b ~ RecordValuesR t,
+  SameLabels s t,
+  SameLength s t,
   {- to use castVariant instead of unsafeCastVariant
   RecordValuesR (TagR a) ~ a,
   RecordValuesR (TagR b) ~ b,
@@ -72,7 +73,7 @@ type TypeIndexedCxt s t a b =
   TagUntag b)
 
 instance TypeIndexed Record TIP where
-    typeIndexed = unlabeled . fromTipHList
+    typeIndexed = sameLength . unlabeled . fromTipHList
       where fromTipHList = iso (TIP . hTagSelf) (\(TIP a) -> hUntagSelf a)
 
 instance TypeIndexed Variant TIC where

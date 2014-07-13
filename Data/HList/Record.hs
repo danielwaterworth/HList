@@ -49,11 +49,12 @@ module Data.HList.Record
     LabelsOf,
     labelsOf,
 
-    sameLabels,
+    SameLabels(sameLabels),
 
     -- *** Getting Values
     RecordValues(..),
     recordValues,
+    hMapTaggedFn,
 
     unlabeled,
     unlabeled',
@@ -235,14 +236,25 @@ emptyRecord = mkRecord HNil
 -- @view unlabeled == 'recordValues'@
 unlabeled x = sameLabels (iso recordValues hMapTaggedFn x)
 
+class SameLabels (x :: [*]) (y :: [*]) where
+  {- | @sameLabels@ constrains the type of an optic, such that the labels
+     (@t@ in @Tagged t a@) are the same. @x@ or @y@ may have more elements
+     than the other, in which case those elements are not constrained.
 
--- | @sameLabels@ constrains the type of an optic more than 'sameLength'
--- but less than @Control.Lens.simple@: the values of the Records
--- involved can change type, but the field ordering and labels do not
--- change.
-sameLabels :: (LabelsOf x ~ LabelsOf y, SameLength x y) =>
-  p (r x) (f (q y)) -> p (r x) (f (q y))
-sameLabels = id
+     see also 'sameLength'
+  -}
+  sameLabels :: p (r x) (f (q y)) -> p (r x) (f (q y))
+  sameLabels = id
+
+instance SameLabels '[] '[]
+instance SameLabels '[] (x ': xs)
+instance SameLabels (x ': xs) '[]
+instance
+    (ta ~ Tagged t a,
+     tb ~ Tagged t b,
+     SameLabels x y) =>
+  SameLabels (ta ': x) (tb ': y)
+
 
 -- | @Iso (Record s) (HList a)@
 unlabeled' x = simple (unlabeled x)
