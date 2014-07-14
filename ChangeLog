@@ -1,3 +1,11 @@
+13 Jul 2014
+Start RecordU and RecordUS, a variation on Record where the values
+are stored in unboxed array(s).
+
+Add Partition, GroupBy and Span.
+
+Add list2HList and isos sameLength and sameLabels.
+
 23 Jun 2014
 TIPTransform and TIPTransformM become part of the distribution,
 and missing fields are reported with the Fail superclass
