@@ -31,6 +31,7 @@ import GHC.TypeLits
 import Control.Lens
 import Data.Typeable
 import Control.Monad.Identity
+import Data.Monoid
 
 import Data.Array.Unboxed
 
@@ -50,6 +51,10 @@ instance (Arbitrary x, Arbitrary (HList xs)) => Arbitrary (HList (x ': xs)) wher
 -- is a type error
 newtype BoolN (n :: Symbol) = BoolN Bool
   deriving (Eq,CoArbitrary,Arbitrary,Show,Read)
+
+instance Monoid (BoolN n) where
+    mempty = BoolN (getAll mempty)
+    mappend (BoolN x) (BoolN y) = BoolN (getAll (mappend (All x) (All y)))
 
 instance Arbitrary (Identity (BoolN n)) where
     arbitrary = fmap return arbitrary
@@ -168,6 +173,20 @@ main = hspec $ do
         xy <- genHL (BoolN True :: BoolN "x", BoolN True :: BoolN "y")
         let (x,y) = hUnzip xy
         return $ xy == hZip x y
+
+    it "monoid assoc" $
+      property $ do
+        x <- genHL (BoolN True :: BoolN "x")
+        y <- genHL (BoolN True :: BoolN "x")
+        z <- genHL (BoolN True :: BoolN "x")
+        return $ ((x `mappend` y) `mappend` z) === (x `mappend` (y `mappend` z))
+
+    it "monoid unit" $
+      property $ do
+        x <- genHL (BoolN True :: BoolN "x")
+        return $ conjoin
+          [ x === (x `mappend` mempty),
+            x === (mempty `mappend` x) ]
    |]
 
   hl2 n1 n2 = [| do
@@ -311,6 +330,12 @@ hl0 = describe "0 -- length independent"  $ do
           ru .!. ly === y,
           ru .!. lz === z,
           r === ru ^. from unboxedS ]
+
+  it "monoid0" $ do
+    mempty `shouldBe` HNil
+    mempty `shouldBe` emptyRecord
+    mempty `shouldBe` emptyTIP
+
 
 hTuples = do
   it "HTuple0" $ HNil ^. hTuple `shouldBe` ()
