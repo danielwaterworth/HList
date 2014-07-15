@@ -39,11 +39,10 @@ main = do
     print (r & y' . y' .~ "xy")
 
     putStrLn "\n\nIsos"
-    print (r & unlabeled . hTuple . _1 .~ ())
-    print (r & unlabeled . hTuple . _2 .~ ())
-
+    print (r & sameLength . unlabeled . hTuple . _1 .~ ())
+    print (r & sameLength . unlabeled . hTuple . _2 .~ ())
     print (z .=. () .*. r
-              & unlabeled . from tipHList %~ ttip (\x z -> x ++ show (z :: ())))
+              & unlabeled' . from tipHList %~ ttip (\x z -> x ++ show (z :: ())))
 
     r ^! unlabeled . from tipHList . act tipPutStrLn
 
