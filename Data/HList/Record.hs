@@ -161,6 +161,7 @@ import Data.HList.HList
 import Data.HList.HArray
 
 import Data.Tagged
+import Data.Monoid
 import Control.Monad
 import Control.Applicative
 
@@ -218,6 +219,7 @@ l .=. v = newLVPair l v
 
 newtype Record (r :: [*]) = Record (HList r)
 
+deriving instance Monoid (HList r) => Monoid (Record r)
 deriving instance (Eq (Prime r),ConvHList r) => Eq (Record r)
 
 

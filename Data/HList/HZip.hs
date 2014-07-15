@@ -17,17 +17,7 @@ import Data.HList.FakePrelude
 -- * zip
 -- ** functional dependency
 
-class HZip x y l | x y -> l, l -> x y where
-  hZip   :: HList x -> HList y -> HList l
-  hUnzip :: HList l -> (HList x, HList y)
-
-instance HZip '[] '[] '[] where
-  hZip _ _ = HNil
-  hUnzip _ = (HNil, HNil)
-
-instance ((x,y)~z, HZip xs ys zs) => HZip (x ': xs) (y ': ys) (z ': zs) where
-  hZip (HCons x xs) (HCons y ys) = (x,y) `HCons` hZip xs ys
-  hUnzip (HCons ~(x,y) zs) = let ~(xs,ys) = hUnzip zs in (x `HCons` xs, y `HCons` ys)
+-- $note1 moved to "Data.HList.HList" to avoid an orphan instance
 
 -- ** type family
 -- $note 'hZip2' can be written as a standalone function, with an appropriate

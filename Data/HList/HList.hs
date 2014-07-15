@@ -15,6 +15,7 @@ module Data.HList.HList where
 import Data.HList.FakePrelude
 import Data.HList.HListPrelude
 import Data.Maybe (fromMaybe)
+import Data.Monoid
 
 import LensDefs
 
@@ -1290,4 +1291,52 @@ instance HSpanEqBy1 f x zs i o
 instance HSpanEqBy2 False f x y ys '[] (y ': ys) where
   hSpanEqBy2 _b _f _x y ys = (HNil, HCons y ys)
 
+
+
+-- * zip
+
+-- $note see alternative implementations in "Data.HList.HZip"
+
+class HZip x y l | x y -> l, l -> x y where
+  hZip   :: HList x -> HList y -> HList l
+  hUnzip :: HList l -> (HList x, HList y)
+
+instance HZip '[] '[] '[] where
+  hZip _ _ = HNil
+  hUnzip _ = (HNil, HNil)
+
+instance ((x,y)~z, HZip xs ys zs) => HZip (x ': xs) (y ': ys) (z ': zs) where
+  hZip (HCons x xs) (HCons y ys) = (x,y) `HCons` hZip xs ys
+  hUnzip (HCons ~(x,y) zs) = let ~(xs,ys) = hUnzip zs in (x `HCons` xs, y `HCons` ys)
+
+-- * Monoid instance
+
+{- | Analogous to the Monoid instance for tuples
+
+>>> mempty :: HList '[(), All, [Int]]
+H[(), All {getAll = True}, []]
+
+>>> mappend (hBuild "a") (hBuild "b") :: HList '[String]
+H["ab"]
+
+-}
+instance
+   (ConvHList a,
+    HMapCxt HList ConstMempty a a,
+    HZip a a aa,
+    HMapCxt HList UncurryMappend aa a) => Monoid (HList a) where
+  mempty = hMap ConstMempty
+            $ unPrime (error "Data.HList.Record.hmempty" :: Prime a)
+  mappend a b = hMap UncurryMappend $ hZip a b
+
+
+-- ** helper functions
+
+data ConstMempty = ConstMempty
+instance (x ~ y, Monoid y) => ApplyAB ConstMempty x y where
+    applyAB _ _ = mempty
+
+data UncurryMappend = UncurryMappend
+instance (aa ~ (a,a), Monoid a) => ApplyAB UncurryMappend aa a where
+    applyAB _ = uncurry mappend
 

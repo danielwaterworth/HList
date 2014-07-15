@@ -23,6 +23,7 @@ import Data.HList.HOccurs
 import Data.HList.TypeEqO
 import Data.HList.TIPtuple
 import Data.List (intercalate)
+import Data.Monoid
 
 import LensDefs
 
@@ -32,6 +33,8 @@ import LensDefs
 -- | TIPs are like 'Record', except element \"i\" of the list \"l\"
 -- has type @Tagged e_i e_i@
 newtype TIP (l :: [*]) = TIP{unTIP:: HList l}
+
+deriving instance Monoid (HList a) => Monoid (TIP a)
 
 instance HMapOut (HShow `HComp` HUntag) l String => Show (TIP l) where
   showsPrec _ (TIP l) = ("TIPH[" ++)
