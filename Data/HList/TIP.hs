@@ -35,6 +35,7 @@ import LensDefs
 newtype TIP (l :: [*]) = TIP{unTIP:: HList l}
 
 deriving instance Monoid (HList a) => Monoid (TIP a)
+deriving instance Eq (HList a) => Eq (TIP a)
 
 instance HMapOut (HShow `HComp` HUntag) l String => Show (TIP l) where
   showsPrec _ (TIP l) = ("TIPH[" ++)
