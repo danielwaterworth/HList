@@ -56,6 +56,7 @@ module Data.HList.Record
     recordValues,
     hMapTaggedFn,
 
+    unlabeled0,
     unlabeled,
     unlabeled',
 
@@ -240,7 +241,9 @@ emptyRecord = mkRecord HNil
 -- | @Iso (Record s) (Record t) (HList a) (HList b)@
 --
 -- @view unlabeled == 'recordValues'@
-unlabeled x = sameLabels (iso recordValues hMapTaggedFn x)
+unlabeled0 x = sameLabels (iso recordValues hMapTaggedFn x)
+
+unlabeled x = sameLength (unlabeled0 (sameLength x))
 
 class SameLabels (x :: [*]) (y :: [*]) where
   {- | @sameLabels@ constrains the type of an optic, such that the labels
