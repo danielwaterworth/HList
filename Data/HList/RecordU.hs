@@ -284,9 +284,9 @@ instance (RecordValues lv,
 instance (HLeftUnion lv x lvx,
           HRLabelSet x,
           HLabelSet (LabelsOf x),
-          HRearrange (LabelsOf x) lvx (HList x))
+          HRearrange (LabelsOf x) lvx x)
   => HUpdateMany lv (Record x) where
-    hUpdateMany lv x = hRearrange (labelsOf x) (lv .<++. x)
+    hUpdateMany lv x = hRearrange' (lv .<++. x)
 
 -- | behaves like @map 'HFind'@
 class HFindMany (ls :: [k]) (r :: [k]) (ns :: [HNat]) | ls r  -> ns

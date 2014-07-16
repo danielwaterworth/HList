@@ -146,7 +146,8 @@ module Data.HList.Record
     HLabelSet',
     HRLabelSet,
     HRearrange(hRearrange2),
-    HRearrange'(hRearrange2'),
+    HRearrange3(hRearrange3),
+    HRearrange4(hRearrange4),
     UnionSymRec'(..),
     HFindLabel,
     labelLVPair,
@@ -874,7 +875,7 @@ instance (UnionSymRec r1 r2' ru,
 -- | Rearranges a record by labels. Returns the record r, rearranged such that
 -- the labels are in the order given by ls. (LabelsOf r) must be a
 -- permutation of ls.
-hRearrange :: (HLabelSet ls, HRearrange ls r (HList r')) => Proxy ls -> Record r -> Record r'
+hRearrange :: (HLabelSet ls, HRearrange ls r r') => Proxy ls -> Record r -> Record r'
 hRearrange ls (Record r) = Record (hRearrange2 ls r)
 
 {- | 'hRearrange'' is 'hRearrange' where ordering specified by the Proxy
@@ -918,41 +919,49 @@ where @s@ is a permutation of @a@ -}
 rearranged' x = simple (rearranged (simple x))
 
 -- | Helper class for 'hRearrange'
-class HRearrange (ls :: [*]) (r :: [*]) r' where
-    hRearrange2 :: proxy ls -> HList r -> r'
+class (HRearrange3 ls r r', LabelsOf r' ~ ls)
+      => HRearrange (ls :: [*]) r r' | ls r -> r', r' -> ls where
+    hRearrange2 :: proxy ls -> HList r -> HList r'
 
-instance (HList '[] ~ r) => HRearrange '[] '[] r where
-   hRearrange2 _ _ = HNil
+
+instance (HRearrange3 ls r r', LabelsOf r' ~ ls) => HRearrange ls r r' where
+    hRearrange2 = hRearrange3
+
+-- | same as HRearrange, except no backwards FD
+class HRearrange3 (ls :: [*]) r r' | ls r -> r' where
+    hRearrange3 :: proxy ls -> HList r -> HList r'
+
+instance HRearrange3 '[] '[] '[] where
+   hRearrange3 _ _ = HNil
 
 instance (H2ProjectByLabels '[l] r rin rout,
-          HRearrange' l ls rin rout (HList r'),
-          l ~ Label ll,
-          r'' ~ HList r') =>
-        HRearrange (l ': ls) r r'' where
-   hRearrange2 _ r = hRearrange2' (Proxy :: Proxy l) (Proxy :: Proxy ls) rin rout
+          HRearrange4 l ls rin rout r',
+          l ~ Label ll) =>
+        HRearrange3 (l ': ls) r r' where
+   hRearrange3 _ r = hRearrange4 (Proxy :: Proxy l) (Proxy :: Proxy ls) rin rout
       where (rin, rout) = h2projectByLabels (Proxy :: Proxy '[l]) r
 
 
 -- | Helper class 2 for 'hRearrange'
-class HRearrange' l ls rin rout r' where
-    hRearrange2' :: proxy l -> Proxy ls -> HList rin -> HList rout -> r'
+class HRearrange4 (l :: *) (ls :: [*]) rin rout r' | l ls rin rout -> r' where
+    hRearrange4 :: proxy l -> Proxy ls -> HList rin -> HList rout -> HList r'
 
-instance (HRearrange ls rout (HList r'),
-         r'' ~ HList (Tagged l v ': r'),
+instance (HRearrange3 ls rout r',
+         r'' ~ (Tagged l v ': r'),
          ll ~ Label l) =>
-        HRearrange' ll ls '[Tagged l v] rout r'' where
-   hRearrange2' _ ls (HCons lv@(Tagged v) _HNil) rout
-        = HCons (Tagged v `asTypeOf` lv) (hRearrange2 ls rout)
+        HRearrange4 ll ls '[Tagged l v] rout r'' where
+   hRearrange4 _ ls (HCons lv@(Tagged v) _HNil) rout
+        = HCons (Tagged v `asTypeOf` lv) (hRearrange3 ls rout)
 
 -- | For improved error messages
 instance Fail (FieldNotFound l) =>
-        HRearrange' l ls '[] rout Void where
-   hRearrange2' _ _ _ _ = error "Fail has no instances"
+        HRearrange4 l ls '[] rout '[] where
+   hRearrange4 _ _ _ _ = error "Fail has no instances"
 
 -- | For improved error messages
 instance Fail (ExtraField l) =>
-          HRearrange '[] (Tagged l v ': a) Void where
-   hRearrange2 _ _ = error "Fail has no instances"
+          HRearrange3 '[] (Tagged l v ': a) '[] where
+   hRearrange3 _ _ = error "Fail has no instances"
 
 
 -- --------------------------------------------------------------------------
