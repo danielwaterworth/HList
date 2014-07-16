@@ -262,7 +262,7 @@ instance
   SameLabels (ta ': x) (tb ': y)
 
 
--- | @Iso (Record s) (HList a)@
+-- | @Iso' (Record s) (HList a)@
 unlabeled' x = simple (unlabeled x)
 
 {- | @Iso (Record s) (Record t) (Record a) (Record b)@, such that
