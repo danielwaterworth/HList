@@ -16,6 +16,7 @@ import Data.HList.FakePrelude
 import Data.HList.HListPrelude
 import Data.Maybe (fromMaybe)
 import Data.Monoid
+import GHC.Exts (Constraint)
 
 import LensDefs
 
@@ -540,6 +541,10 @@ class (SameLength' x y, SameLength' y x) =>
 
 instance (SameLength' x y, SameLength' y x) => SameLength x y
 
+type family SameLengths (xs :: [[k]]) :: Constraint
+type instance SameLengths (x ': y ': ys) = (SameLength x y, SameLengths (y ': ys))
+type instance SameLengths '[] = ()
+type instance SameLengths '[x] = ()
 
 class HMapAux (r :: [*] -> *) f (x :: [*]) (y :: [*]) where
   hMapAux :: SameLength x y => f -> r x -> r y
