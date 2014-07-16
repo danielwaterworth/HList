@@ -31,6 +31,7 @@ import GHC.Prim (Any)
 
 import Control.Applicative
 import LensDefs
+import Control.Monad
 
 -- * Labels for doctests
 
@@ -589,3 +590,23 @@ data UncurryEq = UncurryEq
 instance (ee ~ (e,e), Eq e, bool ~ Bool) =>
     ApplyAB UncurryEq ee bool where
       applyAB _ (e,e') = e == e'
+
+-- * Projection
+
+class ProjectVariant x y where
+    projectVariant :: Variant x -> Maybe (Variant y)
+
+
+instance (ProjectVariant x ys,
+          ty ~ Tagged t y,
+          HasField t (Variant x) (Maybe y),
+          HOccursNot (Label t) (LabelsOf ys))
+  => ProjectVariant x (ty ': ys) where
+    projectVariant x = y `mplus` ys
+      where t = Label :: Label t
+            y = (\v -> mkVariant t v Proxy) <$> x .!. t
+            ys = (mty  .*.) <$> (projectVariant x :: Maybe (Variant ys))
+            mty = Tagged Nothing :: Tagged t (Maybe y)
+
+instance ProjectVariant x '[] where
+    projectVariant _ = Nothing
