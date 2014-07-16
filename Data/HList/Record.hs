@@ -121,6 +121,10 @@ module Data.HList.Record
     hRearrange,
     hRearrange',
 
+    -- *** isos using hRearrange
+    rearranged, rearranged',
+
+
     -- ** Apply a function to all values
     hMapR, HMapR(..),
 
@@ -899,6 +903,19 @@ With built-in haskell records, these @e1@ and @e2@ have the same type:
 hRearrange' r =
     let r' = hRearrange (labelsOf r') r
     in r'
+
+
+{- | @Iso (Record s) (Record t) (Record a) (Record b)@
+
+where @s@ is a permutation of @a@, @b@ is a permutation of @t@.
+In practice 'sameLabels' and 'sameLength' are likely needed on both
+sides of @rearranged@, to avoid ambiguous types.  -}
+rearranged x = iso hRearrange' hRearrange' x
+
+{- | @Iso' (Record s) (Record a)@
+
+where @s@ is a permutation of @a@ -}
+rearranged' x = simple (rearranged (simple x))
 
 -- | Helper class for 'hRearrange'
 class HRearrange (ls :: [*]) (r :: [*]) r' where
