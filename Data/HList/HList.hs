@@ -78,7 +78,11 @@ instance ConvHList '[] where
     prime _ = HNil'
     unPrime _ = HNil
 
+-- | @Iso (HList s) (HList t) (Prime s) (Prime t)@
+primed x = iso prime unPrime x
 
+-- | @Iso' (HList s) (Prime s)@
+primed' x = simple (primed x)
 
 
 instance Show (HList '[]) where
