@@ -221,6 +221,9 @@ castVariant :: (RecordValuesR v ~ RecordValuesR v',
               SameLength v v') => Variant v -> Variant v'
 castVariant = unsafeCastVariant
 
+instance Relabeled Variant where
+    relabeled = iso castVariant castVariant
+
 -- | private destructor. This is safe only if the value
 -- contained actually has type `e`
 unsafeUnVariant :: Variant v -> e

@@ -130,7 +130,7 @@ module Data.HList.Record
     hMapR, HMapR(..),
 
     -- ** cast labels
-    relabeled,
+    Relabeled(relabeled),
     relabeled',
 
     -- * Hints for type errors
@@ -274,20 +274,24 @@ unlabeled' x = simple (unlabeled x)
 in other words, pretend a record has different labels, but the same values.
 
 -}
-relabeled :: forall p f s t a b.
-    (HMapTaggedFn (RecordValuesR s) a,
-     HMapTaggedFn (RecordValuesR b) t,
-     RecordValuesR t ~ RecordValuesR b,
-     RecordValuesR s ~ RecordValuesR a,
-     RecordValues b, RecordValues s,
-     Profunctor p,
-     Functor f
-     ) => Record a `p` f (Record b) -> Record s `p` f (Record t)
-relabeled = iso
-  (\ s -> hMapTaggedFn (recordValues s))
-  (\ b -> hMapTaggedFn (recordValues b))
-  -- isoNewtype should be safe here, but there are no guarantees
-  -- http://stackoverflow.com/questions/24222552
+class Relabeled r where
+  relabeled :: forall p f s t a b.
+      (HMapTaggedFn (RecordValuesR s) a,
+       HMapTaggedFn (RecordValuesR b) t,
+       SameLengths '[s,a,t,b],
+       RecordValuesR t ~ RecordValuesR b,
+       RecordValuesR s ~ RecordValuesR a,
+       RecordValues b, RecordValues s,
+       Profunctor p,
+       Functor f
+       ) => r a `p` f (r b) -> r s `p` f (r t)
+
+instance Relabeled Record where
+  relabeled = iso
+    (\ s -> hMapTaggedFn (recordValues s))
+    (\ b -> hMapTaggedFn (recordValues b))
+    -- isoNewtype should be safe here, but there are no guarantees
+    -- http://stackoverflow.com/questions/24222552
 
 -- @Iso' (Record s) (Record a)@
 --

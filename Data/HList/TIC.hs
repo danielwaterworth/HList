@@ -62,6 +62,7 @@ type TypeIndexedCxt s t a b =
   b ~ RecordValuesR t,
   SameLabels s t,
   SameLength s t,
+  SameLength b a,
   {- to use castVariant instead of unsafeCastVariant
   RecordValuesR (TagR a) ~ a,
   RecordValuesR (TagR b) ~ b,
