@@ -381,7 +381,8 @@ class ReadVariant vs where
 instance ReadVariant '[] where
     readVariant = return unsafeEmptyVariant
 
-instance (ShowLabel l, Read v, ReadVariant vs)
+instance (ShowLabel l, Read v, ReadVariant vs,
+          HOccursNot (Label l) (LabelsOf vs))
     => ReadVariant (Tagged l v ': vs) where
     readVariant = do
       mlv <- optional lv
@@ -461,7 +462,7 @@ type HUpdateVariantAtLabelCxt l e v v' n _e =
 > (l .=. Just e)  .*. _ = mkVariant l e Proxy
 
 -}
-instance (le ~ Tagged l (Maybe e)) =>
+instance (le ~ Tagged l (Maybe e), HOccursNot (Label l) (LabelsOf v)) =>
     HExtend le (Variant v) where
     type HExtendR le (Variant v) = Variant (UnMaybe le ': v)
     Tagged (Just e) .*. _ = unsafeMkVariant 0 e
