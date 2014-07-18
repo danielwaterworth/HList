@@ -532,7 +532,7 @@ instance (HEq l l1 b, HasField' b l (Tagged l1 v1 ': r) v)
     hLookupByLabel l (Record r) =
              hLookupByLabel' (Proxy::Proxy b) l r
 
-instance Fail (FieldNotFound l) => HasField l (Record '[]) Void where
+instance Fail (FieldNotFound l) => HasField l (Record '[]) (FieldNotFound l) where
     hLookupByLabel _ _ = error "Data.HList.Record.HasField: Fail instances should not exist"
 
 

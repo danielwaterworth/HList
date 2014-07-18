@@ -540,12 +540,14 @@ instance (v ~ Tagged t1 e)
     => Unvariant1 True (v ': vs) e where
     unvariant1 _ = unsafeUnVariant
 
-instance Fail '("Variant", v ': vs, "must have all values equal to ", e)
-      => Unvariant1 False (v ': vs) Void where
+data UnvariantTypeMismatch (vs :: [*])
+
+instance Fail (UnvariantTypeMismatch (v ': vs))
+      => Unvariant1 False (v ': vs) (UnvariantTypeMismatch (v ': vs)) where
     unvariant1 _ = error "Data.HList.Variant.Unvariant1 Fail must have no instances"
 
 instance Fail "Unvariant applied to empty variant"
-      => Unvariant1 b '[] Void where
+      => Unvariant1 b '[] (Proxy "Unvariant applied to empty variant") where
     unvariant1 _ = error "Data.HList.Variant.Unvariant1 Fail must have no instances"
 
 
