@@ -10,7 +10,10 @@ import Data.HList.Record
 import Data.HList.HList
 
 import Data.HList.HArray
+import Data.HList.HOccurs
 import LensDefs
+
+import Data.HList.Labelable
 
 import Unsafe.Coerce
 import GHC.Exts (Any)
@@ -36,7 +39,11 @@ class RecordUSCxt (x :: [*]) (u :: [*]) | x -> u, u -> x where
   {- | @O(1)@ should be possible to implement this without
   unsafeCoerce, but we want to hide the @u@ parameter _and_
   keep the RecordUSCxt as a class (instead of a type
-  family) because of 'HEq' -}
+  family) because of 'HEq'. In some cases it is possible
+  to have instances that do not actually respect the functional
+  dependency, but this should be safe if the check is not
+  disabled (by using @-XDysfunctionalDependencies@
+  <https://phabricator.haskell.org/D69>, or ghc-7.6) -}
   recordUSToHList :: RecordUS x -> HList u
   recordUSToHList (RecordUS x) = unsafeCoerce x
 
@@ -79,7 +86,8 @@ this is that @RecordU@ has the following properties:
   of the 'RecordU'
 
 The benefit is that lookups should be faster and records
-should take up less space.
+should take up less space. However benchmarks do not suggest
+that RecordU is faster than Record.
 -}
 newtype RecordU l = RecordU (UArray Int (GetElemTy l))
 
@@ -138,9 +146,9 @@ instance (HPartitionEq EqTagValue x (x ': xs) xi xo,
 -- * Lookup
 
 -- | works expected. See examples attached to 'bad'.
-instance (HasField l (Record r) v,
-          HFindLabel l r n,
+instance (HFindLabel l r n,
           HLookupByHNatUS n u (Tagged l v),
+          HasField l (Record r) v,
           RecordUSCxt r u) =>
   HasField l (RecordUS r) v where
   hLookupByLabel _ u = case hLookupByHNatUS n (recordUSToHList u) of Tagged v -> v
@@ -176,6 +184,9 @@ type instance HSubtract HZero HZero = Right HZero
 type instance HSubtract (HSucc x) (HSucc y) = HSubtract x y
 type instance HSubtract HZero (HSucc y) = Right (HSucc y)
 type instance HSubtract (HSucc y) HZero = Left (HSucc y)
+
+
+
 
 -------------------------------------------------------------- 
 -- * Conversion of RecordUS
@@ -244,8 +255,7 @@ instance t1v ~ Tagged t v => ElemTyEq (t1v ': rest)
 instance ElemTyEq '[]
 
 
-instance (HasField l (Record ls) v,
-          IArray UArray v,
+instance (IArray UArray v,
           v ~ GetElemTy ls,
           HFindLabel l ls n,
           HNat2Integral n)
@@ -255,10 +265,10 @@ instance (HasField l (Record ls) v,
 
 instance (r ~ r',
           v ~ GetElemTy r,
-          HasField l (Record r) v,
           HFindLabel l r n,
           HNat2Integral n,
-          IArray UArray v)
+          IArray UArray v,
+          HasField l (Record r') v)
     => HUpdateAtLabel RecordU l v r r' where
   hUpdateAtLabel _ v (RecordU r) = RecordU (r // [(hNat2Integral (Proxy :: Proxy n), v)])
 
@@ -403,3 +413,20 @@ instance (ux ~ RecordU x,
          RecordUToRecord x) =>
   ApplyAB BoxF ux hx where
   applyAB _ ux = case recordUToRecord ux of Record hx -> hx
+
+
+-- | make a @Lens' (RecordU s) a@
+instance (Functor f, s ~ t, a ~ b,
+          IArray UArray a, a ~ GetElemTy s,
+          HLensCxt RecordU x s t a b,
+          (->) ~ to,
+          (->) ~ p)
+        => Labelable x RecordU to p f s t a b where
+            hLens' = hLens
+
+{- TODO
+instance Labelable x RecordUS to p f s t a b where
+instance (r ~ r', HasField l (Record r) v)
+      => HUpdateAtLabel RecordUS l v r r' where
+  hUpdateAtLabel = error "recordus hupdateatlabel"
+-}
