@@ -322,9 +322,7 @@ instance (
     -- labels in the HList are not changed at all:
     -- number, ordering, actual values are all constant
     SameLength s t,
-    HMapCxt Record (Fun '[] ()) s s_,
-    HMapCxt Record (Fun '[] ()) t t_,
-    s_ ~ t_,
+    SameLabels s t,
 
     -- only the target of the prism can have it's type changed
     H2ProjectByLabels '[Label x] s si so,
