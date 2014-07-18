@@ -144,9 +144,7 @@ module Data.HList.Record
     H2ProjectByLabels(h2projectByLabels),
     H2ProjectByLabels'(h2projectByLabels'),
     HLabelSet,
-    HLabelSet',
     HRLabelSet,
-    HRLabelSet',
     HRearrange(hRearrange2),
     HRearrange3(hRearrange3),
     HRearrange4(hRearrange4),
@@ -176,6 +174,7 @@ import Text.ParserCombinators.ReadP
 import GHC.TypeLits
 
 import LensDefs
+import GHC.Exts (Constraint)
 
 -- imports for doctest/examples
 import Data.HList.Label6 ()
@@ -316,18 +315,8 @@ hMapTaggedFn = Record . hMap TaggedFn
 
 data DuplicatedLabel l
 
-class HRLabelSet (ps :: [*])
-instance HRLabelSet '[]
-instance HRLabelSet '[x]
-instance ( HEq l1 l2 leq
-         , HRLabelSet' l1 l2 leq r
-         ) => HRLabelSet (Tagged l1 v1 ': Tagged l2 v2 ': r)
-
-class HRLabelSet' l1 l2 (leq::Bool) (r :: [*])
-instance ( HRLabelSet (Tagged l2 () ': r)
-         , HRLabelSet (Tagged l1 () ': r)
-         ) => HRLabelSet' l1 l2 False r
-instance ( Fail (DuplicatedLabel l1) ) => HRLabelSet' l1 l2 True r
+type family HRLabelSet (ps :: [*]) :: Constraint
+type instance HRLabelSet ps = HLabelSet (LabelsOf ps)
 
 
 -- | Relation between HLabelSet and HRLabelSet
@@ -335,18 +324,11 @@ instance ( Fail (DuplicatedLabel l1) ) => HRLabelSet' l1 l2 True r
 instance (HZip ls vs ps, HLabelSet ls) => HRLabelSet ps
 -}
 
-class HLabelSet ls
-instance HLabelSet '[]
-instance HLabelSet '[x]
-instance ( HEq l1 l2 leq
-         , HLabelSet' l1 l2 leq r
-         ) => HLabelSet (l1 ': l2 ': r)
-
-class HLabelSet' l1 l2 (leq::Bool) r
-instance ( HLabelSet (l2 ': r)
-         , HLabelSet (l1 ': r)
-         ) => HLabelSet' l1 l2 False r
-instance ( Fail (DuplicatedLabel l1) ) => HLabelSet' l1 l2 True r
+type family HLabelSet (ls :: [k]) :: Constraint
+type instance HLabelSet '[] = ()
+type instance HLabelSet '[x] = ()
+type instance HLabelSet (a ': b ': rest)
+    = (HOccursNot a (b ': rest), HLabelSet (b ': rest))
 
 -- | Construct the (phantom) list of labels of a record,
 -- or list of Label.
