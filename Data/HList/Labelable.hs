@@ -46,6 +46,7 @@ import Data.HList.TIC
 
 import Control.Monad.Identity
 import GHC.TypeLits
+import LensDefs
 
 {- | This alias is the same as Control.Lens.Optic, except the (->) in Optic
 is a type parameter 'to' in LabeledOptic. Usually \"to\" is @->@, but it
@@ -80,9 +81,7 @@ data Labeled (x :: k) (a :: *) (b :: *) = Labeled deriving (Show)
 
 -- | make a @Lens (Record s) (Record t) a b@
 instance (Functor f,
-          HUpdateAtLabel Record x b s t,
-          HUpdateAtLabel Record x a t s,
-          SameLength s t,
+          HLens Record x s t a b,
           (->) ~ to,
           (->) ~ p)
         => Labelable x Record to p f s t a b where
@@ -124,11 +123,7 @@ instance LabelableTIPCxt x to p f s t a b =>
 
 type LabelableTIPCxt x to p f s t a b =
      (s ~ t, a ~ b, x ~ a,
-
-      HUpdateAtLabel TIP x b s t,
-      HUpdateAtLabel TIP x a t s,
-      SameLength s t,
-
+      HLens TIP x s t a b,
       Functor f,
       (->) ~ to,
       (->) ~ p)

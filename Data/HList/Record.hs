@@ -78,7 +78,7 @@ module Data.HList.Record
 
     -- ** Lookup/update
     -- $lens
-    hLens,
+    HLens(hLens),
 
     -- ** Lookup
     HasField(..),
@@ -157,6 +157,7 @@ module Data.HList.Record
     TaggedFn(..),
     ReadComponent,
     HMapTaggedFn,
+    HLensCxt,
 ) where
 
 
@@ -607,7 +608,7 @@ r .-. l =  hDeleteAtLabel l r
 
 -- | 'hUpdateAtLabel' @label value record@
 
-class (HasField l (Record r') v) =>
+class
     HUpdateAtLabel record (l :: k) (v :: *) (r :: [*]) (r' :: [*])
           | l v r -> r', l r' -> v where
     hUpdateAtLabel :: SameLength r r' => Label l -> v -> record r -> record r'
@@ -971,13 +972,28 @@ instance Fail (ExtraField l) =>
 
 -- --------------------------------------------------------------------------
 -- $lens
--- Lens-based setters/getters are popular.
+-- Lens-based setters/getters are popular. hLens packages up
+-- 'hUpdateAtLabel' and 'hLookupByLabel'.
 --
--- This is a provisional method to make a @Lens (Record s) (Record t) a b@,
--- out of a 'Label' @x@. Refer to @examples/lens.hs@ for an example.
---
--- see also "Data.HList.Labelable" for more general labels
-hLens lab f rec = fmap (\v -> hUpdateAtLabel lab v rec) (f (rec .!. lab))
+-- Refer to @examples/lens.hs@ and @examples/labelable.hs@ for examples.
+
+-- | constraints needed to implement 'HLens'
+type HLensCxt r x s t a b =
+    (HasField x (r s) a,
+     HUpdateAtLabel r x b s t,
+     HasField x (r t) b,
+     HUpdateAtLabel r x a t s,
+     SameLength s t,
+     SameLabels s t)
+
+class HLensCxt r x s t a b => HLens r x s t a b
+        | x s b -> t, x t a -> s, -- need to repeat fundeps implied by HLensCxt
+          x s -> a, x t -> b where
+    -- | @hLens :: Label x -> Lens (r s) (r t) a b@
+    hLens :: Label x -> (forall f. Functor f => (a -> f b) -> (r s -> f (r t)))
+
+instance HLensCxt r x s t a b => HLens r x s t a b where
+  hLens lab f rec = fmap (\v -> hUpdateAtLabel lab v rec) (f (rec .!. lab))
 
 
 {- | map over the values of a record. This is a shortcut for
