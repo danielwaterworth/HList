@@ -1000,7 +1000,9 @@ instance ToHJust l => ToHJust (e ': l)
 
 -- | alternative implementation. The Apply instance is in "Data.HList.FakePrelude".
 -- A longer type could be inferred.
-toHJust2 :: (HMapCxt HList (HJust ()) a b) => HList a -> HList b
+toHJust2 :: (HMapCxt r (HJust ()) a b,
+             ToHJust a, b ~ ToHJustR a -- added to get equivalent inference
+             ) => r a -> r b
 toHJust2 xs = hMap (HJust ()) xs
 
 -- --------------------------------------------------------------------------
