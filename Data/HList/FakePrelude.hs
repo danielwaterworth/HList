@@ -525,6 +525,15 @@ hLt :: Proxy x -> Proxy y -> Proxy (HLt x y)
 hLt _ _ = Proxy
 
 
+-- | Less than or equal to
+type family HLe (x :: HNat) (y :: HNat) :: Bool
+
+type instance HLe HZero HZero          = True
+type instance HLe (HSucc x) y          = HLt x y
+
+hLe :: Proxy x -> Proxy y -> Proxy (HLe x y)
+hLe _ _ = Proxy
+
 -- --------------------------------------------------------------------------
 -- * Maybies
 -- $maybiesNote We cannot use lifted Maybe since the latter are not populated
