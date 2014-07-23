@@ -760,6 +760,7 @@ instance (l ~ [e'], ApplyAB f e e', el ~ (e,l)) => ApplyAB (Mapcar f) el l where
 -- A synonym for the complex constraint
 type HMapOut f l e = (HFoldr (Mapcar f) [e] l [e])
 
+-- | compare @hMapOut f@ with @'hList2List' . 'hMap' f@
 hMapOut :: forall f e l. HMapOut f l e => f -> HList l -> [e]
 hMapOut f l = hFoldr (Mapcar f) ([] :: [e]) l
 
