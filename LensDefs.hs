@@ -28,3 +28,7 @@ isoNewtype sa bt x = fmap bt #. x .# sa
 prism :: (b -> t) -> (s -> Either t a)
     -> (forall p f. (Choice p, Applicative f) => p a (f b) -> p s (f t))
 prism bt seta = dimap seta (either pure (fmap bt)) . right'
+
+prism' :: (a -> s) -> (s -> Maybe a)
+    -> (forall p f. (Choice p, Applicative f) => p a (f a) -> p s (f s))
+prism' bs sma = prism bs (\s -> maybe (Left s) Right (sma s))
