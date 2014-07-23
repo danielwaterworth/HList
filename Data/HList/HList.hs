@@ -365,7 +365,9 @@ instance (z ~ z') => HFoldl f z '[] z' where
 
 
 
--- * unfold
+-- * unfolds
+
+-- ** unfold
 -- $unfoldNote Produce a heterogenous list. Uses the more limited
 -- 'Apply' instead of 'App' since that's all that is needed for uses of this
 -- function downstream. Those could in principle be re-written.
@@ -388,8 +390,23 @@ instance (Apply p s, HUnfold' p (ApplyR p s)) => HUnfold' p (HJust (e,s)) where
     hUnfold' p (HJust (e,s)) = HCons e (hUnfold p s)
 
 
--- * replicate
+-- ** replicate
 
+{- |
+
+Sometimes the result type can fix the type of the
+first argument:
+
+>>> hReplicate Proxy () :: HList '[ (), (), () ]
+H[(), (), ()]
+
+However, with HReplicate all elements must have the same type, so it may be
+easier to use 'HList2List':
+
+>>> list2HList (repeat 3) :: Maybe (HList [Int, Int, Int])
+Just H[3, 3, 3]
+
+-}
 class (HLength (HReplicateR n e) ~ n) =>
       HReplicate (n :: HNat) e where
     hReplicate :: Proxy n -> e -> HList (HReplicateR n e)
@@ -406,6 +423,70 @@ instance HReplicate n e => HReplicate (HSucc n) e where
 type family HReplicateR (n :: HNat) (e :: k) :: [k]
 type instance HReplicateR HZero e = '[]
 type instance HReplicateR (HSucc n) e = e ': HReplicateR n e
+
+{- | HReplicate produces lists that can be converted to ordinary
+lists
+
+>>> let two = hSucc (hSucc hZero)
+>>> let f = Fun' fromInteger :: Fun' Num Integer
+
+>>> :t applyAB f
+applyAB f :: Num b => Integer -> b
+
+>>> hReplicateF two f 3
+H[3, 3]
+
+>>> hReplicateF Proxy f 3 :: HList [Int, Double, Integer]
+H[3, 3.0, 3]
+
+-}
+class (n ~ HLength r) => HReplicateF (n :: HNat) f z r where
+    hReplicateF :: Proxy n -> f -> z -> HList r
+
+instance (r ~ '[]) => HReplicateF HZero f z r where
+    hReplicateF _ _ _ = HNil
+
+instance (r ~ (fz ': r'),
+          ApplyAB f z fz,
+          HReplicateF n f z r')
+  => HReplicateF (HSucc n) f z r where
+    hReplicateF n f z = applyAB f z `HCons` hReplicateF (hPred n) f z
+
+-- ** iterate
+{- |
+
+This function behaves like 'iterate', with an extra
+argument to help figure out the result length
+
+>>> let three = hSucc (hSucc (hSucc hZero))
+>>> let f = Fun Just :: Fun '() Maybe
+
+>>> :t applyAB f
+applyAB f :: a -> Maybe a
+
+f is applied to different types:
+>>> hIterate three f ()
+H[(), Just (), Just (Just ())]
+
+It is also possible to specify the length later on,
+as done with Prelude.'iterate'
+
+>>> let take3 x | _ <- hLength x `asTypeOf` three = x
+>>> take3 $ hIterate Proxy f ()
+H[(), Just (), Just (Just ())]
+
+-}
+class (HLength r ~ n) => HIterate n f z r where
+    hIterate :: Proxy n -> f -> z -> HList r
+
+instance (r ~ '[]) => HIterate HZero f z r where
+    hIterate _ _ _ = HNil
+
+instance (ApplyAB f z z',
+      r ~ (z ': r'),
+      HIterate n f z' r')
+     => HIterate (HSucc n) f z r where
+    hIterate n f z = z `HCons` hIterate (hPred n) f (applyAB f z :: z')
 
 -- * concat
 
