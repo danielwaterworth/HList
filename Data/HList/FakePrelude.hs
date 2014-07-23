@@ -438,6 +438,10 @@ Compare with the original code based on functional dependencies:
 >   hOr _ _ = hTrue
 -}
 
+type family HNot (x :: Bool) :: Bool
+type instance HNot True = False
+type instance HNot False = True
+
 
 class HCond (t :: Bool) x y z | t x y -> z
  where
