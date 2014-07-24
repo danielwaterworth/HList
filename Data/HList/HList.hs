@@ -112,10 +112,9 @@ hTail (HCons _ l) = l
 hLast xs = hHead (hReverse xs)
 
 hInit :: (a ~ (aHead ': aTail)) => HList a -> HList (HInit a)
-hInit (HCons _ HNil) = HNil
 hInit (HCons x xs@(HCons _ _)) = HCons x (hInit xs)
--- hInit HNil = error "hInit impossible"
--- ghc-7.8 complains about non-exhaustive, and "Inaccessible code"
+hInit (HCons _ HNil) = HNil
+hInit _ = error "Data.HList.HList.hInit impossible"
 
 type family HInit (xs :: [*]) :: [*]
 type instance HInit '[] = '[]
