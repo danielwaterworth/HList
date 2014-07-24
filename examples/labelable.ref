@@ -8,3 +8,4 @@ read-show
 Just Record{x="hi",y=Record{y=321,x=123}}
 Just Record{x="hi",y=Record{y=321,x=123}}
 Nothing
+Record{y=Record{y=321,x=123},x="hi"}

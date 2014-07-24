@@ -337,6 +337,27 @@ hl0 = describe "0 -- length independent"  $ do
     mempty `shouldBe` emptyTIP
 
 
+  it "identity: rearranged relabeled unlabeled" $ do
+    let r = lx .=. True .*.
+            ly .=. () .*. emptyRecord
+    (r ^. rearranged) `shouldBe` r
+    (r ^. relabeled) `shouldBe` r
+    (r & unlabeled %~ id) `shouldBe` r
+
+  it "rearranged" $ do
+    let r = lx .=. True .*.
+            ly .=. () .*. emptyRecord
+    let r2 = ly .=. () .*.
+            lx .=. True .*. emptyRecord
+    (r ^. rearranged) `shouldBe` r2
+
+  it "relabeled" $ do
+    let r = lx .=. True .*.
+            ly .=. () .*. emptyRecord
+    let r2 = ly .=. True .*.
+            lx .=. () .*. emptyRecord
+    (r ^. relabeled) `shouldBe` r2
+
 hTuples = do
   it "HTuple0" $ HNil ^. hTuple `shouldBe` ()
 

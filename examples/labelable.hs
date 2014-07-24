@@ -42,3 +42,5 @@ main = do
 
     -- there is no permuting of labels
     print (readMaybe "Record{y=Record{y=321,x=123},x=\"hi\"}" `asTypeOf` Just r)
+
+    print $ (r ^. rearranged) `asTypeOf` (undefined :: Record '[Tagged "y" t, Tagged "x" s])
