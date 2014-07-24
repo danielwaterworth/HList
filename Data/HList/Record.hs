@@ -950,12 +950,14 @@ where @s@ is a permutation of @a@ -}
 rearranged' x = simple (rearranged (simple x))
 
 -- | Helper class for 'hRearrange'
-class (HRearrange3 ls r r', LabelsOf r' ~ ls)
+class (HRearrange3 ls r r', LabelsOf r' ~ ls,
+       SameLength ls r, SameLength r r')
       => HRearrange (ls :: [*]) r r' | ls r -> r', r' -> ls where
     hRearrange2 :: proxy ls -> HList r -> HList r'
 
 
-instance (HRearrange3 ls r r', LabelsOf r' ~ ls) => HRearrange ls r r' where
+instance (HRearrange3 ls r r', LabelsOf r' ~ ls,
+        SameLength ls r, SameLength r r') => HRearrange ls r r' where
     hRearrange2 = hRearrange3
 
 -- | same as HRearrange, except no backwards FD
