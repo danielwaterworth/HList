@@ -108,6 +108,9 @@ module Data.HList.CommonMain (
  , ExtendsVariant(..)
 
  -- * Conversions between collections
+ -- $convention the foo' optic has the same type as
+ -- @Control.Lens.simple . foo@. 'hLens'' is an exception to this rule.
+
  , TypeIndexed(..)
  , typeIndexed'
  -- ** HList and Record
@@ -122,7 +125,6 @@ module Data.HList.CommonMain (
 
  -- | 'hListRecord' 'hListRecord'' are exported under "Data.HList.Record"
  , ticVariant, ticVariant'
- -- ** TIP newtype wrappers
  , tipRecord, tipRecord'
 
  -- ** Record and Variant
