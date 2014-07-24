@@ -302,7 +302,7 @@ instance Relabeled Record where
     -- isoNewtype should be safe here, but there are no guarantees
     -- http://stackoverflow.com/questions/24222552
 
--- @Iso' (Record s) (Record a)@
+-- | @Iso' (Record s) (Record a)@
 --
 -- such that @RecordValuesR s ~ RecordValuesR a@
 relabeled' x = simple (relabeled x)
@@ -338,9 +338,9 @@ instance ( HRLabelSet (Tagged l2 () ': r)
 instance ( Fail (DuplicatedLabel l1) ) => HRLabelSet' l1 l2 True r
 
 
--- | Relation between HLabelSet and HRLabelSet
-{-
-instance (HZip ls vs ps, HLabelSet ls) => HRLabelSet ps
+{- | Relation between HLabelSet and HRLabelSet
+
+instance HLabelSet (LabelsOf ps) => HRLabelSet ps
 -}
 
 class HLabelSet ls
