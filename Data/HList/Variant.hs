@@ -266,7 +266,7 @@ instance (HFindLabel x vs n,
   -- the 'n' type variable
 
 -- --------------------------------------------------------------------------
--- * public destructor
+-- * Public destructor
 
 {- $note 'hLookupByLabel' (synonym '.!.')
 
@@ -287,7 +287,7 @@ splitVariant :: Variant (Tagged s x ': xs) -> Either x (Variant xs)
 splitVariant (Variant 0 x) = Left (unsafeCoerce x)
 splitVariant (Variant n x) = Right (Variant (n-1) x)
 
-splitVariant' :: Variant (x ': xs) -> Either x (Variant xs)
+splitVariant' :: Variant (Tagged t x ': xs) -> Either (Tagged t x) (Variant xs)
 splitVariant' (Variant 0 x) = Left (unsafeCoerce x)
 splitVariant' (Variant n x) = Right (Variant (n-1) x)
 
@@ -295,7 +295,7 @@ extendVariant :: Variant l -> Variant (e ': l)
 extendVariant (Variant m e) = Variant (m+1) e
 
 -- --------------------------------------------------------------------------
--- * prism
+-- * Prism
 
 {- | Make a @Prism (Variant s) (Variant t) a b@ out of a Label.
 
@@ -306,7 +306,7 @@ that `s` and `t` have the same labels in the same order, and to
 get \"t\" the \"a\" in \"s\" is replaced with \"b\".
 
 -}
-class (Choice p, Applicative f, SameLength s t)
+class (Choice p, Applicative f, SameLength s t, SameLabels s t)
         => HPrism x p f s t a b
           | x s -> a, x t -> b,    -- lookup
             x s b -> t, x t a -> s -- update
@@ -406,10 +406,10 @@ instance (ShowLabel l, Read v, ReadVariant vs,
 
 -- --------------------------------------------------------------------------
 -- * Map
--- Apply a function to all possible elements of the variant
+-- | Apply a function to all possible elements of the variant
 newtype HMapV f = HMapV f
 
--- | shortcut for @applyAB . HMapV@
+-- | shortcut for @applyAB . HMapV@. 'hMap' is more general
 hMapV f v = applyAB (HMapV f) v
 
 -- | apply a function to all tags of the variant.
@@ -423,11 +423,13 @@ instance (vx ~ Variant x,
 instance HMapAux Variant f '[] '[] where
     hMapAux _ _ = error "HMapVAux: variant invariant broken"
 
-instance (ApplyAB f e e', HMapCxt Variant f l l')
-    => HMapAux Variant f (e ': l) (e' ': l') where
-
+instance (ApplyAB f te te',
+          HMapCxt Variant f l l',
+          te ~ Tagged t e,
+          te' ~ Tagged t e')
+    => HMapAux Variant f (te ': l) (te' ': l') where
       hMapAux f v = case splitVariant' v of
-          Left e -> unsafeMkVariant 0 (applyAB f e :: e')
+          Left te -> unsafeMkVariant 0 (applyAB f te :: te')
           Right es -> extendVariant (hMapAux f es)
 
 -- --------------------------------------------------------------------------
@@ -512,10 +514,12 @@ with @unvariant@:
 >      e))
 
 -}
-unvariant' :: (HAllEqVal' (Tagged () e ': v),
-               Unvariant v e)
-  => Variant v -> e
-unvariant' = unvariant
+class Unvariant' v e | v -> e where
+    unvariant' :: Variant v -> e
+
+instance (HAllEqVal' (Tagged () e ': v), Unvariant v e) =>
+    Unvariant' v e where
+  unvariant' = unvariant
 
 {- | Convert a Variant which has all possibilities having the same type
 into a value of that type. Analogous to @either id id@.
@@ -548,8 +552,25 @@ instance Fail "Unvariant applied to empty variant"
       => Unvariant1 b '[] (Proxy "Unvariant applied to empty variant") where
     unvariant1 _ = error "Data.HList.Variant.Unvariant1 Fail must have no instances"
 
+{- | @Lens (Variant s) (Variant t) a b@
 
--- * zip
+Analogue of @Control.Lens.chosen :: Lens (Either a a) (Either b b) a b@
+-}
+unvarianted :: (Unvariant' s a,
+                Unvariant' t b,
+                SameLabels s t, -- extra constraints to reduce ambiguity
+                SameLength s t,
+                Functor f) =>
+    (a -> f b) -> Variant s -> f (Variant t)
+unvarianted f v@(Variant n _) = fmap (\e' -> unsafeMkVariant n e')
+                                      (f (unvariant' v))
+
+-- | @Lens' (Variant s) a@
+--
+-- where we might have @s ~ '[Tagged t1 a, Tagged t2 a]@
+unvarianted' x = simple (unvarianted x)
+
+-- * Zip
 
 {- | Applies to variants that have the same labels
 in the same order. A generalization of
@@ -600,7 +621,6 @@ instance (ee ~ (e,e), Eq e, bool ~ Bool) =>
 class ProjectVariant x y where
     projectVariant :: Variant x -> Maybe (Variant y)
 
-
 instance (ProjectVariant x ys,
           ty ~ Tagged t y,
           HasField t (Variant x) (Maybe y),
@@ -614,3 +634,105 @@ instance (ProjectVariant x ys,
 
 instance ProjectVariant x '[] where
     projectVariant _ = Nothing
+
+-- | @projectVariant . extendsVariant = id@ (when the types match up)
+--
+-- 'extendVariant' is a special case
+class ExtendsVariant x y where
+    extendsVariant :: Variant x -> Variant y
+
+instance (a ~ Tagged l e,
+          MkVariant l e y,
+          ExtendsVariant (b ': bs) y) => ExtendsVariant (a ': b ': bs) y where
+    extendsVariant v = case splitVariant v of
+        Left e -> mkVariant (Label :: Label l) (e :: e) Proxy
+        Right vs -> extendsVariant vs
+
+instance (y ~ Tagged l e,
+          MkVariant l e x) => ExtendsVariant '[y] x where
+    extendsVariant v = case splitVariant v of
+        Left e -> mkVariant (Label :: Label l) (e :: e) Proxy
+        Right _ -> error "Data.HList.Variant.ExtendsVariant impossible"
+
+
+-- | @Prism' (Variant s) (Variant a)@
+--
+-- where @y@ is a subset of @x@ (@a ⊆ s@)
+projected' x = prism' extendsVariant projectVariant x
+
+-- | @Prism (Variant s) (Variant t) (Variant a) (Variant b)@
+--
+-- Operate on a variant with a subset of the original fields
+-- (@a ⊆ s, b ⊆ t@) where order is unimportant
+projected  x = prism extendsVariant
+      (\s -> case projectVariant s of
+         Just a -> Right a
+         Nothing -> Left (unsafeCastVariant s))
+      x
+
+
+-- | @Prism (Record tma) (Record tmb) (Variant ta) (Variant tb)@
+--
+-- see 'hMaybied''
+hMaybied x = prism
+                variantToHMaybied
+                (\ s -> case hMaybiedToVariant s of
+                     Just a -> Right a
+                     Nothing -> Left
+                        $ Record
+                        $ hReplicateF Proxy ConstTaggedNothing ())
+                x
+
+{- | @Prism' (Record tma) (Variant ta)@
+
+where @tma@ and @tmb@ are lists like
+
+> tma ~ '[Tagged t (Maybe a)]
+> ta  ~ '[Tagged t        a ]
+-}
+hMaybied' x = prism' variantToHMaybied hMaybiedToVariant x
+
+class VariantToHMaybied v r | v -> r, r -> v where
+    variantToHMaybied :: Variant v -> Record r
+
+instance VariantToHMaybied '[] '[] where
+    variantToHMaybied _ = emptyRecord
+
+instance (VariantToHMaybied v r,
+          HReplicateF (HLength r) ConstTaggedNothing () r,
+
+          tx ~ Tagged t x,
+          tmx ~ Tagged t (Maybe x))
+    => VariantToHMaybied (tx ': v) (tmx ': r) where
+      variantToHMaybied v = case splitVariant v of
+            Left x -> Record
+                $ HCons (Tagged (Just x))
+                $ hReplicateF Proxy ConstTaggedNothing ()
+            Right rest ->
+                case variantToHMaybied rest of
+                  Record a -> Record $ (Tagged Nothing :: Tagged t (Maybe x)) `HCons` a
+          -- don't use (.*.) because we have (LabelsOf v ~ LabelsOf r), so
+          -- the duplicate check (HRLabelSet) implied by (.*.) is redundant
+
+data ConstTaggedNothing = ConstTaggedNothing
+instance (y ~ Tagged t (Maybe e)) => ApplyAB ConstTaggedNothing x y where
+    applyAB _ _ = Tagged Nothing
+
+
+hMaybiedToVariant ::
+  (HFoldr HMaybiedToVariantF (Maybe (Variant '[])) r (Maybe (Variant v)), -- impl
+   VariantToHMaybied v r -- evidence for typechecking
+  ) => Record r -> Maybe (Variant v)
+hMaybiedToVariant (Record r) = hFoldr HMaybiedToVariantF (Nothing :: Maybe (Variant '[])) r
+
+data HMaybiedToVariantF = HMaybiedToVariantF
+
+instance (x ~ (Tagged t (Maybe e), Maybe (Variant v)),
+          y ~ Maybe (Variant (Tagged t e ': v)),
+          MkVariant t e (Tagged t e ': v))
+        => ApplyAB HMaybiedToVariantF x y where
+
+  applyAB _ (_, v @ (Just _)) = fmap extendVariant v
+  applyAB _ (Tagged me, Nothing) = case me of
+    Nothing -> Nothing
+    Just e -> Just (mkVariant (Label :: Label t) e Proxy)

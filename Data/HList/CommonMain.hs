@@ -88,13 +88,24 @@ module Data.HList.CommonMain (
  , Variant
  , mkVariant
  , mkVariant1
+ , castVariant
  , HMapV(..), hMapV
  , ZipVariant(..)
+ -- ** projection
+ -- *** to one value
  , HPrism(..)
+ , unvarianted, unvarianted'
+ -- **** implementation
  , Unvariant(..)
- , unvariant'
+ , Unvariant'(..)
+ -- *** to another variant
+ , projected, projected'
+ , ProjectVariant(..)
+ -- ** operations on the \"Head\"
  , splitVariant
+ , splitVariant'
  , extendVariant
+ , ExtendsVariant(..)
 
  -- * Conversions between collections
  , TypeIndexed(..)
@@ -113,6 +124,12 @@ module Data.HList.CommonMain (
  , ticVariant, ticVariant'
  -- ** TIP newtype wrappers
  , tipRecord, tipRecord'
+
+ -- ** Record and Variant
+ , hMaybied, hMaybied'
+ -- *** implementation
+ , VariantToHMaybied
+ , HMaybiedToVariantF
 
  -- ** Record and RecordU
  , unboxed, unboxed'
