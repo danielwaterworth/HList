@@ -51,6 +51,12 @@ module Data.HList.CommonMain (
  -- | A subset of "Data.HList.HList" is re-exported.
  , module Data.HList.HList
  , module Data.HList.HZip
+ -- ** A subset of "Data.HList.HSort"
+ , hSort
+ , HSortBy(..)
+ , HLeFn, HDown
+ , HAlreadySorted
+ , HSet, HIsSet, HAscList
 
  -- * TIP
  -- | Public interface of "Data.HList.TIP"
@@ -207,6 +213,7 @@ import Data.HList.HList hiding (append',
                                 hMapMapCar,
                                 hSequence2,
                                 )
+import Data.HList.HSort
 import Data.HList.MakeLabels
 import Data.HList.TypeEqO hiding (IsKeyFN)
 import Data.HList.TIP

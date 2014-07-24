@@ -56,7 +56,7 @@ class RecordUSCxt (x :: [*]) (u :: [*]) | x -> u, u -> x where
 instance (HGroupBy EqTagValue x g, HMapUnboxF g u) => RecordUSCxt x u
 
 data EqTagValue
-
+instance HEqByFn EqTagValue
 instance (txv ~ Tagged x v,
           tyw ~ Tagged y w,
           HEq v w b) => HEqBy EqTagValue txv tyw b

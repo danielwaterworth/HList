@@ -68,6 +68,7 @@ library
                        Data.HList.HListPrelude,
                        Data.HList.HOccurs,
                        Data.HList.HTypeIndexed,
+                       Data.HList.HSort,
                        Data.HList.HZip,
                        Data.HList.Keyword,
                        Data.HList.Label3,

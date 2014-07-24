@@ -534,6 +534,14 @@ type instance HLe (HSucc x) y          = HLt x y
 hLe :: Proxy x -> Proxy y -> Proxy (HLe x y)
 hLe _ _ = Proxy
 
+-- | @HDiv2 x@ behaves like @x `div` 2@
+type family HDiv2 (x :: HNat) :: HNat
+type instance HDiv2 HZero = HZero
+type instance HDiv2 (HSucc HZero) = HZero
+type instance HDiv2 (HSucc (HSucc a)) = HSucc (HDiv2 a)
+
+
+
 -- --------------------------------------------------------------------------
 -- * Maybies
 -- $maybiesNote We cannot use lifted Maybe since the latter are not populated
@@ -563,7 +571,13 @@ hEq _ _ = Proxy
 
 -- | this class generalizes HEq by allowing the choice of @f@ to allow
 -- equating only part of x and y
-class HEqBy (f :: t) (x :: k) (y :: k) (b :: Bool) | f x y -> b
+class HEqByFn f => HEqBy (f :: t) (x :: k) (y :: k) (b :: Bool) | f x y -> b
+
+
+
+
+-- | Every instance of this class should have an instance of 'HEqBy'
+class HEqByFn f
 
 
 -- --------------------------------------------------------------------------
