@@ -105,7 +105,11 @@ module Data.HList.CommonMain (
  -- ** HList and TIP
  , tipHList, tipHList'
 
- -- ** TIC newtype wrappers
+ -- ** Newtype wrappers
+ -- $convention these isos unwrap/wrap the newtypes 'TIP' 'TIC' and
+ -- 'Record'. Names follow the pattern @fromTo :: Iso' From To@.
+
+ -- | 'hListRecord' 'hListRecord'' are exported under "Data.HList.Record"
  , ticVariant, ticVariant'
  -- ** TIP newtype wrappers
  , tipRecord, tipRecord'

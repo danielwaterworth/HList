@@ -45,6 +45,8 @@ module Data.HList.Record
     emptyRecord,
     hEndR,
 
+    hListRecord, hListRecord',
+
     -- *** Getting Labels
     LabelsOf,
     labelsOf,
@@ -235,6 +237,11 @@ deriving instance (Eq (Prime r),ConvHList r) => Eq (Record r)
 mkRecord :: HRLabelSet r => HList r -> Record r
 mkRecord = Record
 
+-- | @HRLabelSet t => Iso (HList s) (HList t) (Record s) (Record t)@
+hListRecord x = isoNewtype mkRecord (\(Record r) -> r) x
+
+-- | @Iso' (HList s) (Record s)@
+hListRecord' x = simple (isoNewtype Record (\(Record r) -> r) x)
 
 -- | Build an empty record
 emptyRecord :: Record '[]
