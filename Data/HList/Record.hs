@@ -59,7 +59,10 @@ module Data.HList.Record
     hMapTaggedFn,
 
     unlabeled0,
+
+    Unlabeled,
     unlabeled,
+    Unlabeled',
     unlabeled',
 
     -- * Operations
@@ -252,7 +255,18 @@ emptyRecord = mkRecord HNil
 -- @view unlabeled == 'recordValues'@
 unlabeled0 x = sameLabels (iso recordValues hMapTaggedFn x)
 
+
+unlabeled :: (Unlabeled x y, Profunctor p, Functor f) =>
+    (HList (RecordValuesR x) `p` f (HList (RecordValuesR y))) ->
+    (Record x `p` f (Record y))
 unlabeled x = sameLength (unlabeled0 (sameLength x))
+
+type Unlabeled x y =
+      (HMapCxt HList TaggedFn (RecordValuesR y) y,
+       RecordValues x, RecordValues y,
+       SameLength (RecordValuesR x) (RecordValuesR y),
+       SameLength x y, SameLabels x y)
+type Unlabeled' x = Unlabeled x x
 
 class SameLabels (x :: [*]) (y :: [*]) where
   {- | @sameLabels@ constrains the type of an optic, such that the labels
@@ -274,8 +288,11 @@ instance
   SameLabels (ta ': x) (tb ': y)
 
 
--- | @Iso' (Record s) (HList a)@
-unlabeled' x = simple (unlabeled x)
+-- | @Unlabeled' x => Iso' (Record x) (HList (RecordValuesR x))@
+unlabeled' :: (Unlabeled' x, Profunctor p, Functor f) =>
+    (HList (RecordValuesR x) `p` f (HList (RecordValuesR x))) ->
+    (Record x `p` f (Record x))
+unlabeled' = unlabeled
 
 {- | @Iso (Record s) (Record t) (Record a) (Record b)@, such that
 @relabeled = unlabeled . from unlabeled@
