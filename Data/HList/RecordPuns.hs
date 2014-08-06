@@ -95,13 +95,29 @@ pun = QuasiQuoter {
 -- like  \x -> (x .!. x1, x .!. x2)
 extracts xs = do
     record <- newName "record"
-    lamE [varP record]
-        (tupE
+    let val = tupE
             [ [| $(varE record) .!. $label  |]
                 | x <- xs,
                 let label = [| Label :: Label $(litT (strTyLit x)) |],
                 x /= "_"
                 ]
+
+        -- constrain the type of the supplied record to have at least
+        -- as many elements as are extracted. In other words:
+        --
+        -- > f :: r (e1 ': e2 ': e3 ': e4 ': es) -> () -- is inferred
+        -- > f [pun| { _ _ _ _ } |] = ()
+        ensureLength = [| $(varE record) `asTypeOf` $(minLen xs) |]
+
+    lamE [varP record] [|  $val `const` $ensureLength |]
+
+
+-- | generates an @undefined :: r xs@, such that @xs :: [k]@ has
+-- at least as long as the input list
+minLen :: [t] -> ExpQ
+minLen [] = [| error "Data.HList.RecordPuns.minLen" :: r es |]
+minLen (_ : xs) = [| (error "Data.HList.RecordPuns.minLen"
+                        :: r es -> r (e ': es)) $(minLen xs) |]
 
 mkPair :: String -> ExpQ -> ExpQ
 mkPair x xe = [| (Label :: Label $(litT (strTyLit x))) .=. $xe |]
