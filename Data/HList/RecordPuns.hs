@@ -62,13 +62,17 @@ which are in scope.
 restricts the fields in the record supplied to be exactly the ones
 provided. In other words
 
-> [pun| (x y) |] = list
+> [pun| (x _ y{}) |] = list
 > -- desugars to something like:
-> Record (HCons (Tagged x :: Tagged "x" s1)
->              (HCons (Tagged x :: Tagged "y" s2)
->               HNil)) = list
+> Record ((Tagged x :: Tagged "x" s1) `HCons`
+>         (Tagged _ :: Tagged t   s2) `HCons`
+>         (Tagged _ :: Tagged "y" s3) `HCons`
+>          HNil) = list
 
 Where the @s1@ and @s2@ are allowed to fit whatever is in the HList.
+Note that this also introduces the familiar wild card pattern (@_@),
+and shows again how to ensure a label is present but not bind a variable
+to it.
 
 See also @examples/pun.hs@. In @{}@ patterns, @pun@ can work with
 'Variant' too.
@@ -95,8 +99,9 @@ extracts xs = do
         (tupE
             [ [| $(varE record) .!. $label  |]
                 | x <- xs,
-                let label = [| Label :: Label $(litT (strTyLit x)) |]
-                ])
+                let label = [| Label :: Label $(litT (strTyLit x)) |],
+                x /= "_"
+                ]
 
 mkPair :: String -> ExpQ -> ExpQ
 mkPair x xe = [| (Label :: Label $(litT (strTyLit x))) .=. $xe |]
@@ -120,8 +125,11 @@ mes inp = error $ "Data.HList.RecordPuns.mes: cannot translate remaining:" ++
                         show (map ppTree inp)
 
 mp :: Tree -> PatQ
-mp (C as) = case unzip (mps as) of
-    (a, b) -> viewP (extracts a) (tupP b)
+mp (C as) =
+    let extractPats = mps as
+        tupleP = tupP [ p | (binding, p) <- extractPats, binding /= "_" ]
+    in viewP (extracts (map fst extractPats)) tupleP
+
 
 -- use of prime here (non GADT version) because it is better for type
 -- inference. See commentary surrounding HCons' in Data.HList.HList
@@ -129,9 +137,11 @@ mp (D as) = conP 'Record
   [viewP (varE 'prime) -- nicer to have [p| prime -> $( ... ) |],
                        -- but ghc-7.6 rejects that over types
    (foldr ( \ (n,p) xs -> conP 'HCons'
-                [viewP [| \x -> x `asTypeOf`
-                            (undefined :: Tagged $(litT (strTyLit n)) t) |]
-                (conP 'Tagged [p]),
+                [ let ty
+                          | n == "_"  = [| undefined :: Tagged anyLabel t |]
+                          | otherwise = [| undefined :: Tagged $(litT (strTyLit n)) t |]
+                  in viewP [| \x -> x `asTypeOf` $ty |]
+                      (conP 'Tagged [p]),
                 xs])
           (conP 'HNil' [])
           (mps as))]
@@ -143,6 +153,7 @@ mps :: [Tree] -> [(String, PatQ)]
 mps (V a : V "@" : b : c) = (a, asP (mkName a) (mp b)) :  mps c
 mps (V a : C b : c) = (a, mp (C b)) : mps c
 mps (V a : D b : c) = (a, mp (D b)) : mps c
+mps (V "_" : b) = ("_", wildP) : mps b
 mps (V a : b) = (a, varP (mkName a)) : mps b
 mps [] = []
 mps inp = error $ "Data.HList.RecordPuns.mps: cannot translate remaining pattern:" ++
