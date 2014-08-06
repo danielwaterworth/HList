@@ -55,8 +55,9 @@ module Data.HList.CommonMain (
  , hSort
  , HSortBy(..)
  , HLeFn, HDown
- , HAlreadySorted
- , HSet, HIsSet, HAscList
+ , HSet, HSetBy
+ , HIsSet, HIsSetBy
+ , HAscList, HIsAscList
 
  -- * TIP
  -- | Public interface of "Data.HList.TIP"

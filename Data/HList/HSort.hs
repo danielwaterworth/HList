@@ -46,7 +46,7 @@ instance (HEqBy le x y b1,
           HAnd b1 (HNot b2) ~ b3)
    => HEqBy (HNeq le) x y b3
 
-{- | @HAlreadySorted le xs b@ is analogous to
+{- | @HIsAscList le xs b@ is analogous to
 
 > b = all (\(x,y) -> x `le` y) (xs `zip` tail xs)
 
@@ -55,34 +55,36 @@ in about 8 seconds with the merge sort as implemented here, while checking that
 the list is already sorted takes 3 s.
 
 -}
-class HEqByFn le => HAlreadySorted le (xs :: [*]) (b :: Bool) | le xs -> b
+class HEqByFn le => HIsAscList le (xs :: [*]) (b :: Bool) | le xs -> b
 
-instance HEqByFn le => HAlreadySorted le '[x] True
-instance HEqByFn le => HAlreadySorted le '[] True
+instance HEqByFn le => HIsAscList le '[x] True
+instance HEqByFn le => HIsAscList le '[] True
 instance (HEqBy le x y b1,
-         HAlreadySorted le (x ': ys) b2,
-         HAnd b1 b2 ~ b3)  => HAlreadySorted le (x ': y ': ys) b3
+         HIsAscList le (y ': ys) b2,
+         HAnd b1 b2 ~ b3)  => HIsAscList le (x ': y ': ys) b3
 
 
--- | merge sort with a special case for sorted lists
+-- | quick sort with a special case for sorted lists
 class (SameLength a b, HEqByFn le) => HSortBy le (a :: [*]) (b :: [*]) | le a -> b where
     hSortBy :: Proxy le -> HList a -> HList b
 
 hSort xs = hSortBy (Proxy :: Proxy HLeFn) xs
 
 instance (SameLength a b,
-          HAlreadySorted le a ok,
+          HIsAscList le a ok,
           HSortBy1 ok le a b) => HSortBy le a b where
     hSortBy = hSortBy1 (Proxy :: Proxy ok)
 
 instance HSortBy1 True le a a where
     hSortBy1 _ _ a = a -- already sorted
 
-instance HMSortBy le a b => HSortBy1 False le a b where
-    hSortBy1 _ = hMSortBy
+instance HQSortBy le a b => HSortBy1 False le a b where
+    hSortBy1 _ = hQSortBy
 
 class HSortBy1 ok le (a :: [*]) (b :: [*]) | ok le a -> b where
     hSortBy1 :: Proxy ok -> Proxy le -> HList a -> HList b
+
+-- * Merge Sort
 
 {- | HMSortBy is roughly a transcription of this merge sort
 
@@ -101,12 +103,12 @@ class HSortBy1 ok le (a :: [*]) (b :: [*]) | ok le a -> b where
 >   | otherwise = x : merge xs (y : ys)
 
 -}
-class HMSortBy le (a :: [*]) (b :: [*]) | le a -> b where
+class HEqByFn le => HMSortBy le (a :: [*]) (b :: [*]) | le a -> b where
     hMSortBy :: Proxy le -> HList a -> HList b
 
 
-instance HMSortBy le '[] '[] where hMSortBy _ x = x
-instance HMSortBy le '[x] '[x] where hMSortBy _ x = x
+instance HEqByFn le => HMSortBy le '[] '[] where hMSortBy _ x = x
+instance HEqByFn le => HMSortBy le '[x] '[x] where hMSortBy _ x = x
 instance (HSort2 b x y ab, HEqBy le x y b) =>
     HMSortBy le '[x,y] ab where
       hMSortBy _ (a `HCons` b `HCons` HNil) = hSort2 (Proxy :: Proxy b) a b
@@ -139,59 +141,85 @@ instance HMerge le (x ': xs) '[] (x ': xs) where hMerge _ x _ = x
 instance HMerge le '[] (x ': xs) (x ': xs) where hMerge _ _ x = x
 
 instance (HEqBy le x y b,      
-          HMerge1 b x y low high,
-          HMerge le (high ': xs) ys srt)
-    => HMerge le (x ': xs) (y ': ys) (low ': srt) where
-  hMerge le (HCons x xs) (HCons y ys) = case hMerge1 (Proxy :: Proxy b) x y of
-        (low, high) -> low `HCons` hMerge le (HCons high xs) ys
+          HMerge1 b (x ': xs) (y ': ys) (l ': ls) hhs,
+          HMerge le ls hhs srt)
+    => HMerge le (x ': xs) (y ': ys) (l ': srt) where
+  hMerge le xxs yys = case hMerge1 (Proxy :: Proxy b) xxs yys of
+        (HCons l ls, hhs) -> l `HCons` hMerge le ls hhs
 
-class HMerge1 b x y min max | b x y -> min max where
-    hMerge1 :: Proxy b -> x -> y -> (min, max)
+type HMerge1 b x y min max = (HCond b (HList x) (HList y) (HList min),
+                              HCond b (HList y) (HList x) (HList max))
+hMerge1 b x y = (hCond b x y, hCond b y x)
 
-instance HMerge1 True x y x y where
-    hMerge1 _ x y = (x,y) 
+-- * Quick sort
+{- | HQSortBy is this algorithm
 
-instance HMerge1 False x y y x where
-    hMerge1 _ x y = (y,x) 
+> qsort (x : xs @ (_ : _)) = case partition (<= x) xs of
+>                  (le, gt) -> qsort le ++ x : qsort gt
+> qsort xs = xs
+
+on random inputs that are not pathological (ie. not already sorted or reverse
+sorted) this turns out to be faster than HMSortBy, so it is used by default.
+
+-}
+class HQSortBy le (a :: [*]) (b :: [*]) | le a -> b where
+    hQSortBy :: Proxy le -> HList a -> HList b
+
+instance HQSortBy le '[] '[] where hQSortBy _ x = x
+instance HQSortBy le '[x] '[x] where hQSortBy _ x = x
+instance (HPartitionEq le a (b ': bs) bGeq bLt,
+        HQSortBy le bLt  sortedLt,
+        HQSortBy le bGeq sortedGeq,
+        HAppendList sortedLt (a ': sortedGeq) ~ sorted) =>
+    HQSortBy le (a ': b ': bs) sorted where
+    hQSortBy le (a `HCons` xs) = case hPartitionEq le (Proxy :: Proxy a) xs of
+                      (g,l) -> hQSortBy le l `hAppendList` (a `HCons` hQSortBy le g)
+
+
+
 
 -- * More efficient HRLabelSet / HLabelSet
 {- | Provided the labels involved have an appropriate instance of HEqByFn,
 it would be possible to use the following definitions:
 
-> type HRLabelSet = HSet HLeFn
-> type HLabelSet  = HSet HLeFn
+> type HRLabelSet = HSet (HNeq HLeFn)
+> type HLabelSet  = HSet (HNeq HLeFn)
 
 -}
-class HEqByFn le => HSet le (ps :: [*])
-instance (HSortBy le ps ps', HAscList le ps') => HSet le ps
+class HEqByFn lt => HSetBy lt (ps :: [*])
+instance (HSortBy lt ps ps', HAscList lt ps') => HSetBy lt ps
+
+class HSetBy HLeFn ps => HSet (ps :: [*])
+instance HSetBy HLeFn ps => HSet ps
 
 {- |
 
->>> let xx = Proxy :: HIsSet HLeFn [Label "x", Label "x"] b => Proxy b
+>>> let xx = Proxy :: HIsSet [Label "x", Label "x"] b => Proxy b
 >>> :t xx
-xx :: Proxy False
+xx :: Proxy 'False
 
->>> let xx = Proxy :: HIsSet HLeFn [Label "x", Label "y"] b => Proxy b
+>>> let xy = Proxy :: HIsSet [Label "x", Label "y"] b => Proxy b
 >>> :t xy
-xy :: Proxy True
+xy :: Proxy 'True
 
 -}
-class HEqByFn le => HIsSet le (ps :: [*]) (b :: Bool) | le ps -> b
-instance (HSortBy le ps ps', HAlreadySorted le ps' b) => HIsSet le ps b
+class HIsSet (ps :: [*]) (b :: Bool) | ps -> b
+instance HIsSetBy (HNeq HLeFn) ps b => HIsSet ps b
+
+class HEqByFn lt => HIsSetBy lt (ps :: [*]) (b :: Bool) | lt ps -> b
+instance (HSortBy lt ps ps', HIsAscList lt ps' b) => HIsSetBy lt ps b
 
 
 -- | @HAscList le xs@ confirms that xs is in ascending order,
 -- and reports which element is duplicated otherwise.
 class HEqByFn le => HAscList le (ps :: [*])
 
-class HAscList1 le (b :: Bool) (ps :: [*])
-instance (HAscList1 le (HOr (HNot b1) (HAnd b1 b2)) (y ': ys),
-          HEqBy le x y b1,
-          HEqBy le y x b2)
+class HEqByFn le => HAscList1 le (b :: Bool) (ps :: [*])
+instance (HAscList1 le b (y ': ys), HEqBy le x y b)
   => HAscList le (x ': y ': ys)
 instance HEqByFn le => HAscList le '[]
 instance HEqByFn le => HAscList le '[x]
 
-instance ( Fail '("Duplicated element", y, "using le", le) )
-    => HAscList1 le True (y ': ys)
-instance HAscList le ys => HAscList1 le False ys
+instance ( Fail '("Duplicated element", y, "using le", le), HEqByFn le )
+    => HAscList1 le False (y ': ys)
+instance HAscList le ys => HAscList1 le True ys
