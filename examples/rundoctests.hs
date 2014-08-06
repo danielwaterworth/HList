@@ -1,7 +1,6 @@
 import System.Process
 import System.Exit
 import System.IO
-import Test.DocTest
 import Data.Char
 import System.Environment
 
@@ -30,11 +29,17 @@ main = do
             [] -> ["Data/HList/CommonMain.hs",
                    "Data/HList/HList.hs",
                    "Data/HList/Record.hs",
-                   "Data/HList/Labelable.hs"]
+                   "Data/HList/Labelable.hs",
+                   "Data/HList/HSort.hs"]
             _ -> as
 
-    doctest $ "-i.": "-idist/build/autogen":
+    let args = "-i.": "-idist/build/autogen":
              "-optP-include":
              "-optPdist/build/autogen/cabal_macros.h" :
              "-Idist/build/autogen" : "-w":
+             "-XDatatypeContexts" : -- somehow ghci forgets about this extension. Ex. try:
+                                    -- :set -XDatatypeContexts -XTypeFamilies
+                                    -- :show language
              files ++ flags
+    readProcess "doctest" args ""
+
