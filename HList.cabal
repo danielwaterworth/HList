@@ -94,6 +94,7 @@ library
   Default-Extensions:  ConstraintKinds
                        DataKinds
                        DeriveDataTypeable
+                       DatatypeContexts
                        EmptyDataDecls
                        FlexibleContexts
                        FlexibleInstances
