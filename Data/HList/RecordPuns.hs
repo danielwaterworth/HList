@@ -115,7 +115,7 @@ extracts xs = do
 -- | generates an @undefined :: r xs@, such that @xs :: [k]@ has
 -- at least as long as the input list
 minLen :: [t] -> ExpQ
-minLen [] = [| error "Data.HList.RecordPuns.minLen" :: r es |]
+minLen [] = [| error "Data.HList.RecordPuns.minLen" :: r (es :: [*]) |]
 minLen (_ : xs) = [| (error "Data.HList.RecordPuns.minLen"
                         :: r es -> r (e ': es)) $(minLen xs) |]
 
