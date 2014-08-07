@@ -41,10 +41,7 @@ instance HEqBy f y x b => HEqBy (HDown f) x y b
 -- | The HEqBy instances for @HNeq HLeFn@ gives '<'
 data HNeq le
 instance HEqByFn a => HEqByFn (HNeq a)
-instance (HEqBy le x y b1,
-          HEqBy le y x b2,
-          HAnd b1 (HNot b2) ~ b3)
-   => HEqBy (HNeq le) x y b3
+instance (HEqBy le y x b1, HNot b1 ~ b2) => HEqBy (HNeq le) x y b2
 
 {- | @HIsAscList le xs b@ is analogous to
 
