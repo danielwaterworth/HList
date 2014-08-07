@@ -179,15 +179,15 @@ instance (HPartitionEq le a (b ': bs) bGeq bLt,
 {- | Provided the labels involved have an appropriate instance of HEqByFn,
 it would be possible to use the following definitions:
 
-> type HRLabelSet = HSet (HNeq HLeFn)
-> type HLabelSet  = HSet (HNeq HLeFn)
+> type HRLabelSet = HSet
+> type HLabelSet  = HSet
 
 -}
 class HEqByFn lt => HSetBy lt (ps :: [*])
 instance (HSortBy lt ps ps', HAscList lt ps') => HSetBy lt ps
 
-class HSetBy HLeFn ps => HSet (ps :: [*])
-instance HSetBy HLeFn ps => HSet ps
+class HSetBy (HNeq HLeFn) ps => HSet (ps :: [*])
+instance HSetBy (HNeq HLeFn) ps => HSet ps
 
 {- |
 
@@ -211,12 +211,16 @@ instance (HSortBy lt ps ps', HIsAscList lt ps' b) => HIsSetBy lt ps b
 -- and reports which element is duplicated otherwise.
 class HEqByFn le => HAscList le (ps :: [*])
 
-class HEqByFn le => HAscList1 le (b :: Bool) (ps :: [*])
-instance (HAscList1 le b (y ': ys), HEqBy le x y b)
-  => HAscList le (x ': y ': ys)
-instance HEqByFn le => HAscList le '[]
-instance HEqByFn le => HAscList le '[x]
+instance HAscList0 le ps ps => HAscList le ps
 
-instance ( Fail '("Duplicated element", y, "using le", le), HEqByFn le )
-    => HAscList1 le False (y ': ys)
-instance HAscList le ys => HAscList1 le True ys
+class HEqByFn le => HAscList0 le (ps :: [*]) (ps0 :: [*])
+
+class HEqByFn le => HAscList1 le (b :: Bool) (ps :: [*]) (ps0 :: [*])
+instance (HAscList1 le b (y ': ys) ps0, HEqBy le x y b)
+  => HAscList0 le (x ': y ': ys) ps0
+instance HEqByFn le => HAscList0 le '[] ps0
+instance HEqByFn le => HAscList0 le '[x] ps0
+
+instance ( Fail '("Duplicated element", y, "using le", le, "in", ys0), HEqByFn le )
+    => HAscList1 le False (y ': ys) ys0
+instance HAscList0 le ys ys0 => HAscList1 le True ys ys0
