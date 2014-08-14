@@ -158,7 +158,8 @@ instance (ReadVariant l, HAllTaggedEq l, HRLabelSet l) => Read (TIC l)
 > Nothing .*. x = x
 > Just a .*. y = mkTIC a
 -}
-instance (me ~ Maybe e) => HExtend me (TIC l) where
+instance (me ~ Maybe e, HOccursNot (Tagged e e) l)
+       => HExtend me (TIC l) where
     type HExtendR me (TIC l) = TIC (Tagged (UnMaybe me) (UnMaybe me) ': l)
     Just e .*. _ = TIC (unsafeMkVariant 0 e)
     Nothing .*. TIC x = TIC (extendVariant x)
