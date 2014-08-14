@@ -30,6 +30,10 @@ import LensDefs
 
 newtype TIC (l :: [*]) = TIC (Variant l)
 
+deriving instance Eq (Variant l) => Eq (TIC l)
+
+instance HMapAux Variant f xs ys => HMapAux TIC f xs ys where
+    hMapAux f (TIC a) = TIC (hMapAux f a)
 
 -- | @Iso (TIC s) (TIC t) (Variant s) (Variant t)@
 --
