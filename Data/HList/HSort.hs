@@ -137,7 +137,7 @@ instance HMerge le '[] '[] '[] where hMerge _ _ _ = HNil
 instance HMerge le (x ': xs) '[] (x ': xs) where hMerge _ x _ = x
 instance HMerge le '[] (x ': xs) (x ': xs) where hMerge _ _ x = x
 
-instance (HEqBy le x y b,      
+instance (HEqBy le x y b,
           HMerge1 b (x ': xs) (y ': ys) (l ': ls) hhs,
           HMerge le ls hhs srt)
     => HMerge le (x ': xs) (y ': ys) (l ': srt) where
