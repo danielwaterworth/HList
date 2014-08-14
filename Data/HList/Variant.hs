@@ -474,6 +474,9 @@ instance (le ~ Tagged l (Maybe e), HOccursNot (Label l) (LabelsOf v)) =>
 type family UnMaybe le
 type instance UnMaybe (Tagged l (Maybe e)) = Tagged l e
 
+-- | used for 'HExtend' 'TIP'
+type instance UnMaybe (Maybe e) = e
+
 
 -- --------------------------------------------------------------------------
 -- * Conversion to an untagged value
