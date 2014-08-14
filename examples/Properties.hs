@@ -1,4 +1,5 @@
 {-# OPTIONS_GHC -fcontext-stack=100 #-}
+{-# OPTIONS_GHC -fno-warn-deprecations #-} -- ghc-7.8 has no Typeable (x :: Symbol), so use OldTypeable
 {-# LANGUAGE QuasiQuotes #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE FlexibleContexts #-}
@@ -29,11 +30,12 @@ import Control.Monad
 import Data.Maybe
 import GHC.TypeLits
 import Control.Lens
-import Data.Typeable
+import Data.Typeable hiding (Typeable,cast, mkTyCon3, mkTyConApp)
 import Control.Monad.Identity
 import Data.Monoid
 
 import Data.Array.Unboxed
+import Data.OldTypeable
 
 instance Arbitrary (HList '[]) where
     arbitrary = return HNil
@@ -51,6 +53,10 @@ instance (Arbitrary x, Arbitrary (HList xs)) => Arbitrary (HList (x ': xs)) wher
 -- is a type error
 newtype BoolN (n :: Symbol) = BoolN Bool
   deriving (Eq,CoArbitrary,Arbitrary,Show,Read)
+
+instance ShowLabel x => Typeable (BoolN x) where
+    typeOf _ = mkTyConApp (mkTyCon3 "Properties" "BoolN" (showLabel (Label :: Label x)))
+        []
 
 instance Monoid (BoolN n) where
     mempty = BoolN (getAll mempty)
@@ -237,6 +243,11 @@ instance (bb ~ (b, b), b ~ b') => ApplyAB (BinF b') bb b where
 hl0 = describe "0 -- length independent"  $ do
   hTuples
 
+
+  it "typeable instances" $
+    let x = BoolN True :: BoolN "x"
+    in x `eq` x
+
   let mkXYvariant = do
         (x :: Bool) <- arbitrary
         (my :: Maybe Bool) <- arbitrary
@@ -408,3 +419,11 @@ hTuples = do
                d :: BoolN "d", e :: BoolN "e", f :: BoolN "f")
     return $ hBuild a b c d e f ==  abc ^. from hTuple
       && hBuild a b c d e f ^. hTuple == abc
+
+
+
+-- | A more general type than @===@ used to
+-- ensure that
+eq :: (Show a, Typeable b, Show b, Typeable a, Eq a, Eq b) => a -> b -> Property
+eq x y = cast x === Just y .&&. Just x === cast y
+infix 4 `eq`
