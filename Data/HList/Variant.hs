@@ -735,7 +735,6 @@ instance (x ~ (Tagged t (Maybe e), Maybe (Variant v)),
           MkVariant t e (Tagged t e ': v))
         => ApplyAB HMaybiedToVariantF x y where
 
-  applyAB _ (_, v @ (Just _)) = fmap extendVariant v
-  applyAB _ (Tagged me, Nothing) = case me of
-    Nothing -> Nothing
+  applyAB _ (Tagged me, v) = case me of
+    Nothing -> fmap extendVariant v
     Just e -> Just (mkVariant (Label :: Label t) e Proxy)
