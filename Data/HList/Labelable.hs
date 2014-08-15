@@ -19,7 +19,7 @@ so instead you have to write @x .==. 123@.
 Elaboration of some ideas from edwardk.
 -}
 module Data.HList.Labelable
-    (Labelable(hLens'),
+    (Labelable(..),
      LabeledOptic,
      (.==.),
 
@@ -27,13 +27,13 @@ module Data.HList.Labelable
     -- $comparisonWithhLensFunction
 
     -- * likely unneeded (re)exports
-    LabeledCxt, LabeledCxt1,
-    Labeled(Labeled),
+    LabeledCxt1,
+    LabeledTo(LabeledTo),
+    LabeledR(LabeledR),
     toLabel,
     Identity,
-    ToSym,
-    XFromLabeled,
     LabelableTIPCxt,
+    LabeledOpticType(..),
     ) where
 
 
@@ -47,16 +47,41 @@ import Data.HList.TIC
 import Control.Monad.Identity
 import GHC.TypeLits
 import LensDefs
+import GHC.Exts (Constraint)
 
 {- | This alias is the same as Control.Lens.Optic, except the (->) in Optic
-is a type parameter 'to' in LabeledOptic. Usually \"to\" is @->@, but it
-can also be set to @Labeled x@ to recover that type parameter when used as
-an argument to '.==.' or equivalently 'toLabel'
+is a type parameter 'to' in LabeledOptic.
+
+Depending on the collection type (see instances of 'LabelableTy'),
+the type variables @to, p, f@ are constrained such that the resulting
+type is a @Lens (r s) (r t) a b@, @Prism (r s) (r t) a b@ or a
+@LabeledTo x _ _@. The latter can be used to recover the label (@x@) when
+used as an argument to '.==.' or equivalently 'toLabel'.
 -}
-type LabeledOptic (to :: * -> * -> *)
-                  (p :: * -> * -> *)
-                  (f :: * -> *)
-                  s t a b = (a `p` f b) `to` (s `p` f t)
+type LabeledOptic (x :: k) (r :: [*] -> *) (s :: [*]) (t :: [*]) (a :: *) (b :: *)
+    = forall ty to p f.
+                     (ty ~ LabelableTy r,
+                      LabeledOpticF ty f,
+                      LabeledOpticP ty p,
+                      LabeledOpticTo ty x to) => (a `p` f b) `to` (r s `p` f (r t))
+
+data LabeledOpticType = LabelableLens | LabelablePrism | LabelableLabel
+
+type family LabeledOpticF (ty :: LabeledOpticType) :: (* -> *) -> Constraint
+type instance LabeledOpticF LabelableLens = Functor
+type instance LabeledOpticF LabelablePrism = Applicative
+type instance LabeledOpticF LabelableLabel = (~) Identity
+
+type family LabeledOpticP (ty :: LabeledOpticType) :: (* -> * -> *) -> Constraint
+type instance LabeledOpticP LabelableLens = (~) (->)
+type instance LabeledOpticP LabelablePrism = Choice
+type instance LabeledOpticP LabelableLabel = (~) (->)
+
+type family LabeledOpticTo (ty :: LabeledOpticType) (x :: k) :: (* -> * -> *) -> Constraint
+type instance LabeledOpticTo LabelableLens x = (~) (->)
+type instance LabeledOpticTo LabelablePrism x = (~) (->)
+type instance LabeledOpticTo LabelableLabel x = (~) (LabeledTo x)
+
 
 {- |
 
@@ -67,66 +92,62 @@ type LabeledOptic (to :: * -> * -> *)
 but others are supported in principle.
 
 -}
-class SameLength s t =>
-    Labelable (x :: k) (r :: [*] -> *) (to :: * -> * -> *)
-          p (f :: * -> *)
-          s t a b
+class SameLength s t => Labelable (x :: k) (r :: [*] -> *) s t a b
           | x s -> a, x t -> b,    -- lookup
             x s b -> t, x t a -> s -- update
   where
-    hLens' :: Label x -> LabeledOptic to p f (r s) (r t) a b
+    type LabelableTy r :: LabeledOpticType
+    hLens' :: Label x -> LabeledOptic x r s t a b
 
-data Labeled (x :: k) (a :: *) (b :: *) = Labeled deriving (Show)
+data LabeledTo (x :: k) (a :: *) (b :: *) = LabeledTo deriving (Show)
+
+data LabeledR (x :: [*]) = LabeledR
 
 
 -- | make a @Lens (Record s) (Record t) a b@
-instance (Functor f,
-          HLens Record x s t a b,
-          (->) ~ to,
-          (->) ~ p)
-        => Labelable x Record to p f s t a b where
+instance HLens x Record s t a b
+        => Labelable x Record s t a b where
+            type LabelableTy Record = LabelableLens
             hLens' = hLens
 
 -- | used with 'toLabel' and/or '.==.'
-instance LabeledCxt1 x' r (Labeled x) p f s t a b
-    => Labelable x' r (Labeled x) p f s t a b where
-        hLens' _ = Labeled :: LabeledOptic (Labeled x) p f (r s) (r t) a b
-
+instance LabeledCxt1 s t a b => Labelable x LabeledR s t a b where
+        type LabelableTy LabeledR = LabelableLabel
+        hLens' _ = LabeledTo
 
 -- | sets all type variables to dummy values: only the @Labeled x@
 -- part is actually needed
-type LabeledCxt1 x r to p f s t a b =
-        (to ~ Labeled x, f ~ Identity,
-        s ~ '[], t ~ '[], a ~ (), b ~ (),
-        r ~ Proxy, p ~ (->))
-
-type LabeledCxt x r to p f s t a b = (LabeledCxt1 x r to p f s t a b,
-                                      Labelable x r to p f s t a b)
+type LabeledCxt1 s t a b = (s ~ '[], t ~ '[], a ~ (), b ~ ())
 
 -- | make a @Prism (Variant s) (Variant t) a b@
-instance (HPrism x p f s t a b,
-          to ~ (->)) => Labelable x Variant to p f s t a b where
+instance (HPrism x s t a b,
+          to ~ (->)) => Labelable x Variant s t a b where
+    type LabelableTy Variant = LabelablePrism
     hLens' x s = hPrism x s
 
-instance (HPrism x p f s t a b, to ~ (->)) =>
-    Labelable x TIC to p f s t a b where
-      hLens' x = ticVariant . hPrism x
+-- | @hLens' :: Label a -> Prism' (TIC s) a@
+--
+-- note that a more general function @'ticPrism' :: Prism (TIC s) (TIC t) a b@,
+-- cannot have an instance of Labelable
+instance (TICPrism s t a b, x ~ a, a ~ b, s ~ t,
+          SameLength s t) =>
+    Labelable (x :: *) TIC s t a b where
+      type LabelableTy TIC = LabelablePrism
+      hLens' _ = ticPrism
 
 
 -- | make a @Lens' (TIP s) a@.
 --
 -- 'tipyLens' provides a @Lens (TIP s) (TIP t) a b@, which tends to need
 -- too many type annotations to be practical
-instance LabelableTIPCxt x to p f s t a b =>
-    Labelable x TIP to p f s t a b where
+instance LabelableTIPCxt x s t a b =>
+    Labelable x TIP s t a b where
+    type LabelableTy TIP = LabelableLens
     hLens' = hLens
 
-type LabelableTIPCxt x to p f s t a b =
+type LabelableTIPCxt x s t a b =
      (s ~ t, a ~ b, x ~ a,
-      HLens TIP x s t a b,
-      Functor f,
-      (->) ~ to,
-      (->) ~ p)
+      HLens x TIP s t a b)
 
 
 -- | modification of '.=.' which works with the labels from this module,
@@ -138,25 +159,7 @@ l .==. v = toLabel l .=. v
 infixr 4 .==.
 
 
--- | extracts the type that is actually the label in @a@ and puts it in @b@
-class ToSym (a :: *) (b :: k) | a -> b
-
--- | for labels in this module
-instance XFromLabeled v1 v2 v3 x => ToSym (v1 v2 v3) (x :: Symbol)
-
-
--- | extracts the label from a LabeledOptic ... ~ v1 v2 v3
-class XFromLabeled v1 v2 v3 x | v1 v2 v3 -> x
-
-instance (LabeledCxt1 x r (Labeled x) p f s t a b,
-          (v1 v2 v3) ~ LabeledOptic (Labeled x) p f (r s) (r t) a b) =>
-    XFromLabeled v1 v2 v3 x
-
--- | for "Data.HList.Label6" labels
-instance (x ~ x') => ToSym (Label x) x'
-
-
-toLabel :: ToSym t t' => t -> Label (t' :: Symbol)
+toLabel :: LabeledTo x (a `p` f b) (LabeledR s `p` f (LabeledR t)) -> Label x
 toLabel _ = Label
 
 

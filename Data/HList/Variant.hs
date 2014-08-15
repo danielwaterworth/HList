@@ -306,12 +306,13 @@ that `s` and `t` have the same labels in the same order, and to
 get \"t\" the \"a\" in \"s\" is replaced with \"b\".
 
 -}
-class (Choice p, Applicative f, SameLength s t, SameLabels s t)
-        => HPrism x p f s t a b
+class (SameLength s t, SameLabels s t)
+        => HPrism x s t a b
           | x s -> a, x t -> b,    -- lookup
             x s b -> t, x t a -> s -- update
   where
-    hPrism :: Label x -> p a (f b) -> p (Variant s) (f (Variant t))
+    hPrism :: (Choice p, Applicative f)
+        => Label x -> p a (f b) -> p (Variant s) (f (Variant t))
 
 
 instance (
@@ -331,12 +332,8 @@ instance (
 
     -- to convince GHC the fundeps are satisfied
     HUpdateAtLabel Variant x b s t,
-    HUpdateAtLabel Variant x a t s,
-
-    -- required based on how definition of 'prism' works
-    Choice p,
-    Applicative f
-   ) => HPrism x p f s t a b where
+    HUpdateAtLabel Variant x a t s 
+   ) => HPrism x s t a b where
     hPrism x = prism (\b -> mkVariant x b Proxy)
                   (\s -> case hLookupByLabel x s of
                     Just a -> Right a

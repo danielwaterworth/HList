@@ -1022,7 +1022,7 @@ instance Fail (ExtraField l) =>
 -- Refer to @examples/lens.hs@ and @examples/labelable.hs@ for examples.
 
 -- | constraints needed to implement 'HLens'
-type HLensCxt r x s t a b =
+type HLensCxt x r s t a b =
     (HasField x (r s) a,
      HUpdateAtLabel r x b s t,
      HasField x (r t) b,
@@ -1030,7 +1030,7 @@ type HLensCxt r x s t a b =
      SameLength s t,
      SameLabels s t)
 
-class HLensCxt r x s t a b => HLens r x s t a b
+class HLensCxt x r s t a b => HLens x r s t a b
         | x s b -> t, x t a -> s, -- need to repeat fundeps implied by HLensCxt
           x s -> a, x t -> b where
     -- | @hLens :: Label x -> Lens (r s) (r t) a b@

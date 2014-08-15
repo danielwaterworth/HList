@@ -416,12 +416,11 @@ instance (ux ~ RecordU x,
 
 
 -- | make a @Lens' (RecordU s) a@
-instance (Functor f, s ~ t, a ~ b,
+instance (s ~ t, a ~ b,
           IArray UArray a, a ~ GetElemTy s,
-          HLensCxt RecordU x s t a b,
-          (->) ~ to,
-          (->) ~ p)
-        => Labelable x RecordU to p f s t a b where
+          HLensCxt x RecordU s t a b)
+        => Labelable x RecordU s t a b where
+            type LabelableTy RecordU = LabelableLens
             hLens' = hLens
 
 {- TODO

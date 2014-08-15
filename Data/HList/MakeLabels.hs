@@ -147,6 +147,6 @@ makeLabelable xs = fmap concat $ mapM makeLabel1 (words xs)
             where lt = [| Label :: $([t| Label $l |]) |]
                   l = litT (strTyLit x)
 
-                  makeSig = [t| (Labelable $l r to p f s t a b) =>
-                              LabeledOptic to p f (r s) (r t) a b
+                  makeSig = [t| (Labelable $l r s t a b) =>
+                              LabeledOptic $l r s t a b
                               |]
