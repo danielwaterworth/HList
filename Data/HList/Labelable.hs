@@ -159,11 +159,22 @@ l .==. v = toLabel l .=. v
 infixr 4 .==.
 
 
-toLabel :: LabeledTo x (a `p` f b) (LabeledR s `p` f (LabeledR t)) -> Label x
-toLabel _ = Label
+{- | Create a @'Label' (x :: 'Symbol')@:
 
+> toLabel :: LabeledTo x _ _ -> Label x
+> toLabel :: Label x         -> Label x
+> toLabel :: Proxy x         -> Label x
 
+-}
+class ToSym label (s :: Symbol) | label -> s where
+    toLabel :: label -> Label s
 
+instance LabeledTo x (a `p` f b) (LabeledR s `p` f (LabeledR t)) ~ v1 v2 v3
+    => ToSym (v1 v2 v3) x where
+      toLabel _ = Label
+
+instance ToSym (label x) x where
+    toLabel _ = Label
 
 
 {- $comparisonWithhLensFunction
