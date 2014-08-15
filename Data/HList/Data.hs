@@ -52,7 +52,7 @@ module Data.HList.Data (
     -- * exports for type signatures/ haddock usage
     DataHListFlatCxt,
     DataRecordCxt,
-    TypeRepsList,
+    TypeRepsList(..),
 
     -- ** less likely to be used
     RecordLabelsStr(..),

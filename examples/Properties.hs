@@ -30,12 +30,16 @@ import Control.Monad
 import Data.Maybe
 import GHC.TypeLits
 import Control.Lens
-import Data.Typeable hiding (Typeable,cast, mkTyCon3, mkTyConApp)
+-- import Data.Typeable hiding (Typeable,cast, mkTyCon3, mkTyConApp, Typeable1, typeOf)
 import Control.Monad.Identity
 import Data.Monoid
 
 import Data.Array.Unboxed
+import Data.HList.Variant
+
 import Data.OldTypeable
+
+import Data.List
 
 instance Arbitrary (HList '[]) where
     arbitrary = return HNil
@@ -53,10 +57,6 @@ instance (Arbitrary x, Arbitrary (HList xs)) => Arbitrary (HList (x ': xs)) wher
 -- is a type error
 newtype BoolN (n :: Symbol) = BoolN Bool
   deriving (Eq,CoArbitrary,Arbitrary,Show,Read)
-
-instance ShowLabel x => Typeable (BoolN x) where
-    typeOf _ = mkTyConApp (mkTyCon3 "Properties" "BoolN" (showLabel (Label :: Label x)))
-        []
 
 instance Monoid (BoolN n) where
     mempty = BoolN (getAll mempty)
@@ -154,21 +154,25 @@ main = hspec $ do
         let xs = hReplicate $(toN n1) ()
         in xs `shouldBe` hReverse xs
 
-    let hInitReference xs = hReverse (hTail (hReverse xs))
     it "hInit == tail on reverse" $
         property $ do
+          let hInitReference xs = hReverse (hTail (hReverse xs))
           hl <- genHL True
-          return $ hInit hl == hInitReference hl
+          return $ hInit hl `eq` hInitReference hl
+
+    it "hList2List/list2HList" $ property $ do
+        x <- genHL True
+        return $ list2HList (hList2List x) === Just x
 
     it "hMap equals map" $ property $ do
         f  <- arbitrary
         hl <- genHL True
-        return $ hList2List (hMap f hl) == map (f :: Bool -> BoolN "f") (hList2List hl)
+        return $ hList2List (hMap f hl) `eq` map (f :: Bool -> BoolN "f") (hList2List hl)
 
     it "hZip" $ property $ do
         x <- genHL (BoolN True :: BoolN "x")
         y <- genHL (BoolN True :: BoolN "y")
-        return $ hList2List (hZip x y) == hList2List x `zip` hList2List y
+        return $ hList2List (hZip x y) `eq` hList2List x `zip` hList2List y
 
     it "hZip/hUnZip" $ property $ do
         x <- genHL (BoolN True :: BoolN "x")
@@ -178,14 +182,14 @@ main = hspec $ do
     it "hUnzip/hZip" $ property $ do
         xy <- genHL (BoolN True :: BoolN "x", BoolN True :: BoolN "y")
         let (x,y) = hUnzip xy
-        return $ xy == hZip x y
+        return $ xy `eq` hZip x y
 
     it "monoid assoc" $
       property $ do
         x <- genHL (BoolN True :: BoolN "x")
         y <- genHL (BoolN True :: BoolN "x")
         z <- genHL (BoolN True :: BoolN "x")
-        return $ ((x `mappend` y) `mappend` z) === (x `mappend` (y `mappend` z))
+        return $ ((x `mappend` y) `mappend` z) `eq` (x `mappend` (y `mappend` z))
 
     it "monoid unit" $
       property $ do
@@ -193,6 +197,7 @@ main = hspec $ do
         return $ conjoin
           [ x === (x `mappend` mempty),
             x === (mempty `mappend` x) ]
+
    |]
 
   hl2 n1 n2 = [| do
@@ -200,22 +205,25 @@ main = hspec $ do
       property $ do
         x <- $(hlN n1) True
         y <- $(hlN n2) True
-        return $ hList2List (hAppend x y) == hList2List x ++ hList2List y
+        return $ hList2List (hAppend x y) === hList2List x ++ hList2List y
 
     it "hTranspose involution" $ property $ do
       x <- return (error "hTranspose involution") `asTypeOf` $(hlN n1) True
       xx <- $(hlN n2) x
-      return $ hTranspose (hTranspose xx) == xx
+      return $ hTranspose (hTranspose xx) === xx
 
     |]
 
   hl3 n1 n2 n3 = [| do
-    it "hAppend assoc" $
+    it "hAppend/hAppendList assoc" $
       property $ do
         x <- $(hlN n1) (BoolN True :: BoolN "x")
         y <- $(hlN n2) (BoolN True :: BoolN "y")
         z <- $(hlN n3) (BoolN True :: BoolN "z")
-        return $ ((x `hAppend` y) `hAppend` z) == (x `hAppend` (y `hAppend` z))
+        return $ conjoin
+          [ ((x `hAppend` y) `hAppend` z) === (x `hAppend` (y `hAppend` z)),
+            ((x `hAppendList` y) `hAppendList` z) === (x `hAppendList` (y `hAppendList` z))
+          ]
     |]
 
   in doE $
@@ -263,6 +271,53 @@ hl0 = describe "0 -- length independent"  $ do
     property $ do
       (v, _) <- mkXYvariant
       return $ unvariant v == fromJust (msum [v .!. ly, v .!. lx])
+
+
+  it "variant/tic extend" $ do
+    property $ do
+      x :: BoolN "x" <- arbitrary
+      my :: Maybe (BoolN "y") <- arbitrary
+      let v = ly .=. my .*. mkVariant1 lx x
+          tic1 = my .*. mkTIC1 x
+      return $ conjoin
+        [ -- v == tic1 ^. from typeIndexed,
+          v^. typeIndexed == tic1
+          ]
+
+
+
+  it "variant/typeIndexed" $ do
+    property $ do
+      x :: BoolN "x" <- arbitrary
+      y :: Maybe (BoolN "y") <- arbitrary
+      let v = ly .=. y .*. mkVariant1 lx x
+      let tic = v ^. typeIndexed
+      return $ conjoin
+        [ v .!. ly === hOccurs tic,
+          v .!. ly === tic ^? ticPrism,
+          v .!. ly `eq` tic .!. (Label :: Label (BoolN "y")),
+
+          v .!. lx === hOccurs tic,
+          v .!. lx === tic ^? ticPrism,
+          v .!. lx `eq` tic .!. (Label :: Label (BoolN "x"))
+        ]
+
+  it "Record/typeIndexed" $ do
+    property $ do
+      x :: BoolN "x" <- arbitrary
+      y :: BoolN "y" <- arbitrary
+      let r = ly .=. y .*. lx .=. x .*. emptyRecord
+          tip = r ^. typeIndexed
+      return $ conjoin
+        [ r .!. lx === hOccurs tip,
+          r .!. lx === tip ^. tipyLens,
+          r .!. lx `eq` tip .!. (Label :: Label (BoolN "x")),
+
+          r .!. ly === hOccurs tip,
+          r .!. ly === tip ^. tipyLens,
+          r .!. ly `eq` tip .!. (Label :: Label (BoolN "y"))
+        ]
+
 
   it "HOccurs HList" $ do
     property $ do
@@ -369,6 +424,39 @@ hl0 = describe "0 -- length independent"  $ do
             lx .=. () .*. emptyRecord
     (r ^. relabeled) `shouldBe` r2
 
+  it "hMaybied is left-biased like msum" $ property $ do
+    mx :: Maybe Bool <- arbitrary
+    my :: Maybe Bool <- arbitrary
+    let r = lx .=. mx .*. ly .=. my .*. emptyRecord
+    return $ (r^?hMaybied <&> unvariant) `eq` msum [mx, my]
+
+  it "hMaybied id" $ property $ do
+    x :: BoolN "x"  <- arbitrary
+    my :: Maybe (BoolN "y") <- arbitrary
+    let v = ly .=. my .*. mkVariant1 lx x
+        r = ly .=. my .*. lx .=. Just x .*. emptyRecord
+
+    return $ Just v `eq` r ^? hMaybied
+
+  it "hPrism" $ property $ do
+    x :: Bool <- arbitrary
+    my :: Maybe (Maybe ()) <- arbitrary
+    let 
+        v  = ly .=. my .*. mkVariant1 lx x
+        v' = ly .=. my .*. mkVariant1 lx (not x)
+
+        tic = my .*. mkTIC1 x
+        tic' = my .*. mkTIC1 (not x)
+
+    return $ conjoin
+      [ v' `eq` (v & hPrism lx %~ not),
+        tic' `eq` (tic & hLens' (Label :: Label Bool) %~ not),
+        -- should work, but it doesn't
+        -- tic' `eq` (tic & hLens' Label %~ not),
+        tic' `eq` (tic & ticPrism %~ not)
+      ]
+
+
 hTuples = do
   it "HTuple0" $ HNil ^. hTuple `shouldBe` ()
 
@@ -427,3 +515,62 @@ hTuples = do
 eq :: (Show a, Typeable b, Show b, Typeable a, Eq a, Eq b) => a -> b -> Property
 eq x y = cast x === Just y .&&. Just x === cast y
 infix 4 `eq`
+
+
+
+------------------------------------------------------------
+-- OldTypeable instances
+instance ShowLabel x => Typeable (BoolN x) where
+    typeOf _ = mkTyConApp (mkTyCon3 "Properties" "BoolN" (showLabel (Label :: Label x)))
+        []
+
+
+
+instance TypeRepsList (Record xs) => Typeable (Variant xs) where
+   typeOf x = mkTyConApp (mkTyCon3 "HList" "Data.HList.Variant" "Variant")
+                [ tyConList (typeRepsList (undefined :: Record xs)) ]
+
+instance TypeRepsList (Record xs) => Typeable (TIC xs) where
+   typeOf x = mkTyConApp (mkTyCon3 "HList" "Data.HList.TIC" "TIC")
+                [ tyConList (typeRepsList (undefined :: Record xs)) ]
+
+instance TypeRepsList (Record xs) => Typeable (HList xs) where
+   typeOf x = mkTyConApp (mkTyCon3 "HList" "Data.HList.HList" "HList")
+                [ tyConList (typeRepsList (Record x)) ]
+
+instance (TypeRepsList (Record xs)) => Typeable (Record xs) where
+  typeOf x = mkTyConApp (mkTyCon3 "HList" "Data.HList.Record" "Record")
+                [ tyConList (typeRepsList x) ]
+
+instance ShowLabel sy => Typeable1 (Tagged sy) where
+  typeOf1 _ = mkTyConApp
+        (mkTyCon3 "HList" "Data.HList.Data" (showLabel (Label :: Label sy)))
+        []
+
+instance (ShowLabel sy, Typeable x) => Typeable (Tagged sy x) where
+  typeOf _ = mkTyConApp
+            (mkTyCon3 "GHC" "GHC.TypeLits" (showLabel (Label :: Label sy)))
+            [mkTyConApp (mkTyCon3 "HList" "Data.HList.Record" "=") [],
+                    typeOf (error "Data.HList.Data:Typeable Tagged" :: x)
+                    ]
+
+class TypeRepsList a where
+  typeRepsList :: a -> [TypeRep]
+
+
+instance (TypeRepsList (Prime xs), ConvHList xs) => TypeRepsList (Record xs) where
+  typeRepsList (Record xs) = typeRepsList (prime xs)
+
+instance (TypeRepsList xs, Typeable x, IsPrime xs) => TypeRepsList (HCons' x xs) where
+  typeRepsList (~(x `HCons'` xs))
+        = typeOf x : typeRepsList xs
+
+instance TypeRepsList HNil' where
+  typeRepsList _ = []
+
+
+tyConList xs = mkTyConApp open ( intersperse comma xs ++ [close] )
+    where
+    open = mkTyCon3 "GHC" "GHC.TypeLits" "["
+    close = mkTyConApp (mkTyCon3 "GHC" "GHC.TypeLits" "]") []
+    comma = mkTyConApp (mkTyCon3 "GHC" "GHC.TypeLits" ",") []
