@@ -20,6 +20,8 @@ import Data.HList.Record
 import Data.HList.Variant
 import Data.HList.HList
 
+import Data.HList.HArray
+
 import Text.ParserCombinators.ReadP
 import LensDefs
 
@@ -129,15 +131,32 @@ instance HasField o (Variant l) (Maybe o) =>
 instance (HasField o (TIC l) mo, mo ~ Maybe o) => HOccurs mo (TIC l) where
     hOccurs = hLookupByLabel (Label :: Label o)
 
--- | @Prism (TIC s) (TIC t) a b@
-ticPrism :: forall p f s t a b. (HPrism a p f s t a b)
-  => (a `p` f b) -> (TIC s `p` f (TIC t))
-ticPrism = ticVariant . hPrism (Label :: Label a)
 
+-- | similar to 'HPrism'
+class TICPrism s t a b | s a b -> t, t a b -> s where
+  ticPrism :: (SameLength s t, Choice p, Applicative f)
+      => (a `p` f b) -> (TIC s `p` f (TIC t))
+
+instance (
+    MkVariant b b t,
+    HasField a (Variant s) (Maybe a),
+    SameLength s t,
+
+    HFindLabel b t n,
+    HFindLabel a s n,
+
+    HUpdateAtHNatR n (Tagged b b) s ~ t,
+    HUpdateAtHNatR n (Tagged a a) t ~ s
+
+    ) => TICPrism s t a b where
+  ticPrism = ticVariant . prism (\b -> mkVariant (Label :: Label b) b Proxy)
+      (\s -> case hLookupByLabel (Label :: Label a) s of
+          Just a -> Right a
+          Nothing -> Left (unsafeCastVariant s :: Variant t))
 
 -- | @Prism' (TIC s) a@
-ticPrism' :: forall p f s t a b. (HPrism a p f s t a b, a~b, s~t)
-  => (a `p` f b) -> (TIC s `p` f (TIC t))
+ticPrism' :: forall s t a b. (HPrism a s t a b, a~b, s~t)
+  => (forall f p. (Applicative f, Choice p) => (a `p` f b) -> (TIC s `p` f (TIC t)))
 ticPrism' = ticVariant . hPrism (Label :: Label a)
 
 
