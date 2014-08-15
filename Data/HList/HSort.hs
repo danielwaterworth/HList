@@ -11,7 +11,23 @@ import GHC.TypeLits (type (<=?), CmpSymbol)
 -- | only in ghc >= 7.7
 instance ((x <=? y) ~ b) => HEqBy HLeFn x y b
 -- | only in ghc >= 7.7
-instance (HEq (CmpSymbol x y) GT b) => HEqBy HLeFn y x b
+
+{- |
+
+>>> let b1 = Proxy :: HEqBy HLeFn "x" "y" b => Proxy b
+>>> :t b1
+b1 :: Proxy 'True
+
+>>> let b2 = Proxy :: HEqBy HLeFn "x" "x" b => Proxy b
+>>> :t b2
+b2 :: Proxy 'True
+
+>>> let b3 = Proxy :: HEqBy HLeFn "y" "x" b => Proxy b
+>>> :t b3
+b3 :: Proxy 'False
+
+-}
+instance (HEq (CmpSymbol x y) GT nb, HNot nb ~ b) => HEqBy HLeFn x y b
 #endif
 
 -- | the \"standard\" '<=' for types. Reuses 'HEqBy'
