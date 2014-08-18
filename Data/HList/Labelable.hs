@@ -30,10 +30,14 @@ module Data.HList.Labelable
     LabeledCxt1,
     LabeledTo(LabeledTo),
     LabeledR(LabeledR),
-    toLabel,
+    ToSym(toLabel),
     Identity,
     LabelableTIPCxt,
     LabeledOpticType(..),
+
+    LabeledOpticF,
+    LabeledOpticP,
+    LabeledOpticTo,
     ) where
 
 
