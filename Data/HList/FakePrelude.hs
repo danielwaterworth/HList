@@ -595,6 +595,32 @@ class HEqByFn f
 -- --------------------------------------------------------------------------
 -- * Type-safe cast -- no longer need. We use a a ~ b
 
+
+-- * Cast
+
+-- | Named after 'Data.Typeable.cast', which behaves the same at runtime.
+-- One difference is that there is a HCast instance for every type, while
+-- 'Typeable' instances can be missing sometimes.
+
+class HCast x y where
+    hCast :: x -> Maybe y
+
+instance (HEq x y b, HCast1 b x y) => HCast x y where
+    hCast = hCast1 (Proxy :: Proxy b)
+
+-- | helper for 'HCast'
+class HCast1 (b :: Bool) x y where
+    hCast1 :: Proxy b -> x -> Maybe y
+
+instance (x ~ y) => HCast1 True x y where
+    hCast1 _ x = Just x
+
+instance HCast1 False x y where
+    hCast1 _ _ = Nothing
+
+
+
+
 -- --------------------------------------------------------------------------
 
 -- * Error messages
