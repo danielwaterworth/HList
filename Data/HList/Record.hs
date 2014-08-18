@@ -271,7 +271,8 @@ type Unlabeled' x = Unlabeled x x
 class SameLabels (x :: [*]) (y :: [*]) where
   {- | @sameLabels@ constrains the type of an optic, such that the labels
      (@t@ in @Tagged t a@) are the same. @x@ or @y@ may have more elements
-     than the other, in which case those elements are not constrained.
+     than the other, in which case the elements at the end
+     of the longer list do not have their labels constrained.
 
      see also 'sameLength'
   -}
@@ -357,7 +358,9 @@ instance ( Fail (DuplicatedLabel l1) ) => HRLabelSet' l1 l2 True r
 
 {- | Relation between HLabelSet and HRLabelSet
 
-instance HLabelSet (LabelsOf ps) => HRLabelSet ps
+> instance HLabelSet (LabelsOf ps) => HRLabelSet ps
+
+see also 'HSet'
 -}
 
 class HLabelSet ls

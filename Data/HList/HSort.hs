@@ -1,5 +1,13 @@
 {-# LANGUAGE CPP #-}
--- | Description: sorting
+{- | Description: sorting
+
+Benchmarks for these functions can be found at
+<http://code.haskell.org/~aavogt/HList-nodup/Run.html>.
+
+See <Data-HList-CommonMain.html#v:hSort>
+for the public interface.
+
+-}
 module Data.HList.HSort where
 
 import Data.HList.HList
@@ -62,10 +70,6 @@ instance (HEqBy le y x b1, HNot b1 ~ b2) => HEqBy (HNeq le) x y b2
 {- | @HIsAscList le xs b@ is analogous to
 
 > b = all (\(x,y) -> x `le` y) (xs `zip` tail xs)
-
-This optimization is done because GHC-7.8.2's typechecker can sort @[0 .. 100]@
-in about 8 seconds with the merge sort as implemented here, while checking that
-the list is already sorted takes 3 s.
 
 -}
 class HEqByFn le => HIsAscList le (xs :: [*]) (b :: Bool) | le xs -> b
