@@ -671,26 +671,66 @@ projected  x = prism extendsVariant
       x
 
 
--- | @Prism (Record tma) (Record tmb) (Variant ta) (Variant tb)@
+-- | @Lens (Record tma) (Record tmb) (Maybe (Variant ta)) (Maybe (Variant tb))@
 --
 -- see 'hMaybied''
-hMaybied x = prism
-                variantToHMaybied
-                (\ s -> case hMaybiedToVariant s of
-                     Just a -> Right a
-                     Nothing -> Left
-                        $ Record
-                        $ hReplicateF Proxy ConstTaggedNothing ())
-                x
+hMaybied f s = (\mv ->
+                   zipWithMPlus
+                        (maybe
+                           (Record (hReplicateF Proxy ConstTaggedNothing ()))
+                           variantToHMaybied
+                           mv)
+                        s
+    ) <$> f (hMaybiedToVariant s)
+  where
+  -- @zipWith (\x y -> mplus x (cast =<< y))@
+  zipWithMPlus (Record x) (Record y) = Record $ hMap MPlusF $ hZip x y
 
-{- | @Prism' (Record tma) (Variant ta)@
+
+data MPlusF = MPlusF
+
+instance (xy ~ (tx, Tagged t' (Maybe y)),
+          tx ~ Tagged t (Maybe x),
+          HCast y x) =>
+  ApplyAB MPlusF xy tx where
+    applyAB _ (Tagged x, Tagged y) = Tagged $ msum [x, hCast =<< y]
+
+
+
+{- | @Lens' (Record tma) (Maybe (Variant ta))@
 
 where @tma@ and @tmb@ are lists like
 
-> tma ~ '[Tagged t (Maybe a)]
-> ta  ~ '[Tagged t        a ]
+> tma ~ '[Tagged x (Maybe a), Tagged y (Maybe b)]
+> ta  ~ '[Tagged x        a , Tagged y        b ]
+
+if the @Record@ contains both a @Just a@ and a @Just b@,
+the Variant will contain the @a@ value, and the @b@ value
+(left-biased like @MonadPlus Maybe@).
+
+[@Note@]
+
+The types work out to define a prism:
+
+@l = 'prism'' 'variantToHMaybied' 'hMaybiedToVariant'@
+
+but the law: @s^?l ≡ Just a ==> l # a ≡ s@ is not followed,
+because we could have:
+
+@
+  s, s2 :: Record '[Tagged "x" (Maybe Int), Tagged "y" (Maybe Char)]
+  s = hBuild (Just 1) (Just '2')
+  s2 = hBuild (Just 1) Nothing
+
+  v :: Variant '[Tagged "x" Int, Tagged "y" Char]
+  v = mkVariant (Label :: Label "x") 1 Proxy
+@
+
+So that @s^?l == Just v@. But @l#v == s2 /= s@, while the law
+requires @l#v == s@
+
 -}
-hMaybied' x = prism' variantToHMaybied hMaybiedToVariant x
+hMaybied' x = simple (hMaybied (simple x))
 
 class VariantToHMaybied v r | v -> r, r -> v where
     variantToHMaybied :: Variant v -> Record r
