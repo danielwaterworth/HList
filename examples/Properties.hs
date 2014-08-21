@@ -23,6 +23,7 @@
 module Main where
 
 import Data.HList.CommonMain
+import Control.Applicative
 import Test.QuickCheck
 import Test.Hspec
 import Language.Haskell.TH
@@ -30,16 +31,16 @@ import Control.Monad
 import Data.Maybe
 import GHC.TypeLits
 import Control.Lens
--- import Data.Typeable hiding (Typeable,cast, mkTyCon3, mkTyConApp, Typeable1, typeOf)
 import Control.Monad.Identity
 import Data.Monoid
 
 import Data.Array.Unboxed
 import Data.HList.Variant
 
-import Data.OldTypeable
-
 import Data.List
+
+instance Arbitrary a => Arbitrary (Tagged t a) where
+    arbitrary = fmap Tagged arbitrary
 
 instance Arbitrary (HList '[]) where
     arbitrary = return HNil
@@ -49,6 +50,19 @@ instance (Arbitrary x, Arbitrary (HList xs)) => Arbitrary (HList (x ': xs)) wher
       x <- arbitrary
       xs <- arbitrary
       return $ x `HCons` xs
+
+instance (Arbitrary (Maybe x), Arbitrary (Variant (Tagged t y ': ys)),
+          HExtend (Tagged s (Maybe x)) (Variant (Tagged t y ': ys)))
+        => Arbitrary (Variant (Tagged s x ': Tagged t y ': ys)) where
+    arbitrary = do
+      x :: Maybe x <- arbitrary
+      yys :: Variant (Tagged t y ': ys) <- arbitrary
+      return $ Tagged x .*. yys
+
+instance Arbitrary z => Arbitrary (Variant '[Tagged t z]) where
+    arbitrary = do
+      z <- arbitrary
+      return $ mkVariant1 Label z
 
 -- | This type is used to make unique types with two members.
 --
@@ -251,10 +265,22 @@ instance (bb ~ (b, b), b ~ b') => ApplyAB (BinF b') bb b where
 hl0 = describe "0 -- length independent"  $ do
   hTuples
 
+  it "toLabel 1" $
+    case hCast (toLabel (hLens' lx)) of
+      l -> True `const` (l `asTypeOf` Just lx)
 
-  it "typeable instances" $
-    let x = BoolN True :: BoolN "x"
-    in x `eq` x
+  it "toLabel 2" $ case hCast (toLabel lx) of
+      l -> True `const` (l `asTypeOf` Just lx)
+
+  it "HCast is ==" $ property $ do
+    x :: BoolN "x" <- arbitrary
+    x' :: BoolN "x" <- arbitrary
+    return $ (x == x') ==> (x `eq` x')
+
+  it "HCast neq" $ property $ do
+    x :: BoolN "x" <- arbitrary
+    y :: BoolN "y" <- arbitrary
+    return (expectFailure $ x `eq` y)
 
   let mkXYvariant = do
         (x :: Bool) <- arbitrary
@@ -267,11 +293,88 @@ hl0 = describe "0 -- length independent"  $ do
       (v, my) <- mkXYvariant
       return $ v .!. ly == my
 
+  it "variant update" $ property $ do
+    x :: Maybe (BoolN "x") <- arbitrary
+    x' :: BoolN "x'" <- arbitrary
+    y :: BoolN "y" <- arbitrary
+    let v = lx .=. x .*. mkVariant1 ly y
+        v' | isJust x = lx .=. Just x' .*. mkVariant1 ly y
+           | otherwise = lx .=. Nothing .*. mkVariant1 ly y
+    return $ hUpdateAtLabel lx x' v === v'
+
+
   it "unvariant" $ do
     property $ do
       (v, _) <- mkXYvariant
       return $ unvariant v == fromJust (msum [v .!. ly, v .!. lx])
 
+  it "unvarianted" $ property $ do
+    x :: Maybe Bool <- arbitrary
+    y :: Bool <- arbitrary
+    let v = lx .=. x .*. mkVariant1 ly y
+        vUnitExpected = lx .=. (() <$ x) .*. mkVariant1 ly ()
+        vUnit = v & unvarianted .~ ()
+        vNot = lx .=. (not <$> x) .*. mkVariant1 ly (not y)
+    return $ conjoin [
+        v ^. unvarianted === fromMaybe y x,
+        (v & unvarianted %~ not) === vNot,
+        vUnit === vUnitExpected,
+        vUnit ^. unvarianted === ()  ]
+
+
+  it "zipVariant" $ property $ do
+    x1 :: Maybe (BoolN "x1") <- arbitrary
+    x2 :: Maybe (BoolN "x2") <- arbitrary
+    y1 :: BoolN "y1" <- arbitrary
+    y2 :: BoolN "y2" <- arbitrary
+
+    let v1 = lx .=. x1 .*. mkVariant1 ly y1
+        v2 = lx .=. x2 .*. mkVariant1 ly y2
+
+        vrT = Proxy :: Proxy '[ Tagged "x" (BoolN "x1", BoolN "x2"),
+                                Tagged "y" (BoolN "y1", BoolN "y2") ]
+        vr = case (x1,x2) of
+               (Just a, Just b) -> Just $ mkVariant lx (a,b) vrT
+               (Nothing, Nothing) -> Just $ mkVariant ly (y1,y2) vrT
+               _ -> Nothing
+
+    return $ zipVariant v1 v2 `eq` vr
+
+  it "variant Eq" $ property $ do
+    x1 :: Maybe (BoolN "x") <- arbitrary
+    x2 :: Maybe (BoolN "x") <- arbitrary
+    y1 :: BoolN "y" <- arbitrary
+    y2 :: BoolN "y" <- arbitrary
+
+    let v1 = lx .=. x1 .*. mkVariant1 ly y1
+        v2 = lx .=. x2 .*. mkVariant1 ly y2
+    return $ (v1 == v2) === (x1 == x2 && (isJust x1 || y1 == y2))
+
+
+  it "projectVariant" $ property $ do
+    a <- arbitrary
+    b <- arbitrary
+    c <- arbitrary
+    z <- arbitrary
+
+    let vFull :: Variant [Tagged "a" (BoolN "a"),
+                          Tagged "b" (BoolN "b"),
+                          Tagged "c" (BoolN "c"),
+                          Tagged "z" (BoolN "z")]
+        vFull = a .*. b .*. c .*. mkVariant1 Label z
+
+        isN x = isNothing (untag x)
+        vZJ :: Variant '[Tagged "z" (BoolN "z")]
+        vZJ = mkVariant1 Label z
+
+        vZ | isN a, isN b, isN c = Just vZJ
+           | otherwise = Nothing
+
+    return $ conjoin [
+       vFull ^? projected === vZ,
+       -- XXX maybe projected can be made to work instead of projected'
+       ((projected' # vZJ) `asTypeOf` vFull) ^? projected === Just vZJ
+       ]
 
   it "variant/tic extend" $ do
     property $ do
@@ -341,8 +444,8 @@ hl0 = describe "0 -- length independent"  $ do
       return $ hOccurs (hEnd (hBuild x) ^. from tipHList) == (x :: Bool)
 
   it "HOccurs TIP inference" $
-    Just (hOccurs (HCons True HNil^. from tipHList))
-      `shouldBe` cast True
+    hOccurs (HCons True HNil^. from tipHList)
+      `eq` True
 
   it "ttip 3" $ do
     property $ do
@@ -435,16 +538,21 @@ hl0 = describe "0 -- length independent"  $ do
             lx .=. () .*. emptyRecord
     (r ^. relabeled) `shouldBe` r2
 
-  it "preview hMaybied 2 values" $ property $ do
+  it "hMaybied" $ property $ do
     mx :: Maybe Bool <- arbitrary
     my :: Maybe Bool <- arbitrary
     let r = lx .=. mx .*. ly .=. my .*. emptyRecord
-    return $ (r^?hMaybied <&> unvariant) `eq` case (mx,my) of
-          (Just x, Nothing) -> Just x
-          (Nothing, Just y) -> Just y
-          _ -> Nothing
+        vT = Proxy :: Proxy [Tagged "x" Bool, Tagged "y" Bool]
+        (val, v)  = case (mx,my) of
+          (Just x, Nothing) -> (Just x, Just (mkVariant lx x vT))
+          (Nothing, Just y) -> (Just y, Just (mkVariant ly y vT))
+          _ -> (Nothing, Nothing)
 
-  it "hMaybied id" $ property $ do
+    return $ conjoin [
+      (r^?hMaybied <&> unvariant) `eq` val,
+      isJust v ==> ( hMaybied' # fromJust v === r ) ]
+
+  it "hMaybied 2" $ property $ do
     x :: BoolN "x"  <- arbitrary
     my :: Maybe (BoolN "y") <- arbitrary
     let v = ly .=. my .*. mkVariant1 lx x
@@ -527,66 +635,7 @@ hTuples = do
 
 
 -- | A more general type than @===@ used to
--- ensure that
-eq :: (Show a, Typeable b, Show b, Typeable a, Eq a, Eq b) => a -> b -> Property
-eq x y = cast x === Just y .&&. Just x === cast y
+-- ensure that both sides can infer the same type
+eq :: (Show a, Show b, HCast a b, HCast b a, Eq a, Eq b) => a -> b -> Property
+eq x y = hCast x === Just y .&&. Just x === hCast y
 infix 4 `eq`
-
-
-
-------------------------------------------------------------
--- OldTypeable instances
-instance ShowLabel x => Typeable (BoolN x) where
-    typeOf _ = mkTyConApp (mkTyCon3 "Properties" "BoolN" (showLabel (Label :: Label x)))
-        []
-
-
-
-instance TypeRepsList (Record xs) => Typeable (Variant xs) where
-   typeOf x = mkTyConApp (mkTyCon3 "HList" "Data.HList.Variant" "Variant")
-                [ tyConList (typeRepsList (undefined :: Record xs)) ]
-
-instance TypeRepsList (Record xs) => Typeable (TIC xs) where
-   typeOf x = mkTyConApp (mkTyCon3 "HList" "Data.HList.TIC" "TIC")
-                [ tyConList (typeRepsList (undefined :: Record xs)) ]
-
-instance TypeRepsList (Record xs) => Typeable (HList xs) where
-   typeOf x = mkTyConApp (mkTyCon3 "HList" "Data.HList.HList" "HList")
-                [ tyConList (typeRepsList (Record x)) ]
-
-instance (TypeRepsList (Record xs)) => Typeable (Record xs) where
-  typeOf x = mkTyConApp (mkTyCon3 "HList" "Data.HList.Record" "Record")
-                [ tyConList (typeRepsList x) ]
-
-instance ShowLabel sy => Typeable1 (Tagged sy) where
-  typeOf1 _ = mkTyConApp
-        (mkTyCon3 "HList" "Data.HList.Data" (showLabel (Label :: Label sy)))
-        []
-
-instance (ShowLabel sy, Typeable x) => Typeable (Tagged sy x) where
-  typeOf _ = mkTyConApp
-            (mkTyCon3 "GHC" "GHC.TypeLits" (showLabel (Label :: Label sy)))
-            [mkTyConApp (mkTyCon3 "HList" "Data.HList.Record" "=") [],
-                    typeOf (error "Data.HList.Data:Typeable Tagged" :: x)
-                    ]
-
-class TypeRepsList a where
-  typeRepsList :: a -> [TypeRep]
-
-
-instance (TypeRepsList (Prime xs), ConvHList xs) => TypeRepsList (Record xs) where
-  typeRepsList (Record xs) = typeRepsList (prime xs)
-
-instance (TypeRepsList xs, Typeable x, IsPrime xs) => TypeRepsList (HCons' x xs) where
-  typeRepsList (~(x `HCons'` xs))
-        = typeOf x : typeRepsList xs
-
-instance TypeRepsList HNil' where
-  typeRepsList _ = []
-
-
-tyConList xs = mkTyConApp open ( intersperse comma xs ++ [close] )
-    where
-    open = mkTyCon3 "GHC" "GHC.TypeLits" "["
-    close = mkTyConApp (mkTyCon3 "GHC" "GHC.TypeLits" "]") []
-    comma = mkTyConApp (mkTyCon3 "GHC" "GHC.TypeLits" ",") []
