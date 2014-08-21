@@ -958,16 +958,16 @@ instance HList2List (e' ': l) e
   list2HList (e : es) = HCons e <$> list2HList es
   list2HList [] = Nothing
 
-{- | @Iso (HList s) (HList t) [a] [b]@
+{- | @Prism [s] [t] (HList s) (HList t)@
 
 calls 'error' if @[b]@ contains too few elements
 -}
-hListAsList x = iso hList2List (fromMaybe (error msg) . list2HList) x
-  where
-    msg = "Data.HList.HList.hListAsList too few elements provided"
+listAsHList x = prism hList2List (maybe (Left []) Right . list2HList) x
 
--- | @Iso' (HList s) [a]@
-hListAsList' x = simple (hListAsList x)
+-- | @Prism' [a] (HList s)@
+--
+-- where @s ~ HReplicateR n a@
+listAsHList' x = simple (listAsHList (simple x))
 
 
 -- --------------------------------------------------------------------------

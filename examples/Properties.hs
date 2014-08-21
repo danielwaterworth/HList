@@ -494,7 +494,7 @@ hl0 = describe "0 -- length independent"  $ do
          ru .!. ly === y,
          ru .!. lz === z,
          hUpdateMany r ru === ru,
-         hMapRU not ru ^. from unboxed . unlabeled . hListAsList
+         hMapRU not ru ^. from unboxed . unlabeled . re listAsHList'
                 === map not [x,y,z],
          r === ru ^. from unboxed ]
 
