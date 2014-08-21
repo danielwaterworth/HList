@@ -565,8 +565,7 @@ hl0 = describe "0 -- length independent"  $ do
   it "hPrism" $ property $ do
     x :: Bool <- arbitrary
     my :: Maybe (Maybe ()) <- arbitrary
-    let 
-        v  = ly .=. my .*. mkVariant1 lx x
+    let v  = ly .=. my .*. mkVariant1 lx x
         v' = ly .=. my .*. mkVariant1 lx (not x)
 
         tic = my .*. mkTIC1 x
