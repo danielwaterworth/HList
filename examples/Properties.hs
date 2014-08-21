@@ -38,6 +38,7 @@ import Data.Array.Unboxed
 import Data.HList.Variant
 
 import Data.List
+import Data.HList.HSort (hMSortBy)
 
 instance Arbitrary a => Arbitrary (Tagged t a) where
     arbitrary = fmap Tagged arbitrary
@@ -72,6 +73,8 @@ instance Arbitrary z => Arbitrary (Variant '[Tagged t z]) where
 newtype BoolN (n :: Symbol) = BoolN Bool
   deriving (Eq,CoArbitrary,Arbitrary,Show,Read)
 
+boolN next = simple $ iso (\(BoolN x) -> x) BoolN next
+
 instance Monoid (BoolN n) where
     mempty = BoolN (getAll mempty)
     mappend (BoolN x) (BoolN y) = BoolN (getAll (mappend (All x) (All y)))
@@ -94,6 +97,19 @@ main = hspec $ do
   hlN n = [| \proxy -> hSequence
                 $ hReplicate $(toN n)
                       (arbitrary `asTypeOf` return proxy) |]
+
+  -- > $(rN n) (undefined :: t) :: Arbitrary t => Gen (Record ts)
+  --
+  -- where ts ~ '[Tagged 1 t, Tagged 2 t, Tagged 3 t, ... , Tagged n t]
+  rN :: Int -> ExpQ
+  rN n = [| \proxy -> do
+          hl <- $(hlN n) proxy
+          return $ (unlabeled # hl) `asTypeOf` $sig |]
+      where sig = [| undefined |] `sigE` quantify [t| (Record :: [*] -> *) $ns |]
+            quantify ty = forallT [ PlainTV (mkName ("x" ++ show i)) | i <- [1 .. n]] (return []) ty
+            ns = foldr (\a b -> [t| $a ': $b |])
+                    promotedNilT
+                    [ [t| Tagged $(litT (numTyLit i)) $(varT (mkName ("x"++show i))) |] | i <- [1 .. fromIntegral n] ]
 
   -- specs for 1 HList of length >= 1
   hl1 n1 = [| do
@@ -231,10 +247,36 @@ main = hspec $ do
           [ x === (x `mappend` mempty),
             x === (mempty `mappend` x) ]
 
+    it "hSort (the labels)" $ property $ do
+      x <- $(rN n1) True
+      let rx = x & from hListRecord %~ hReverse
+      -- rN generates a record that has labels in ascending order already
+      return $ conjoin [
+           x `eq` (x  & from hListRecord %~ hSort),
+           x `eq` (rx & from hListRecord %~ hSort),
+           x `eq` (x  & from hListRecord %~ hMSortBy (Proxy :: Proxy HLeFn)),
+           x `eq` (rx & from hListRecord %~ hMSortBy (Proxy :: Proxy HLeFn))
+           ]
+
+    it "hRenameLabel" $ property $ do
+      r <- $(rN n1) True
+      return $ conjoin
+          $(listE [ [| hRenameLabel $ln lx r .!. lx === r .!. $ln |]
+                | i <- [1 .. n1],
+                  let ln = [| Label :: Label $(litT (numTyLit (fromIntegral i))) |]
+              ])
+    it "rearranged / hMapR" $ property $ do
+      r <- $(rN n1) True
+      let revR = r & from hListRecord %~ hReverse
+          asT :: x -> As x
+          asT _ = id
+      -- hMap works on the reversed list
+      return $ hMapR not r === (r & rearranged' . asT revR . unlabeled %~ hMap not)
+
    |]
 
   hl2 n1 n2 = [| do
-    it "equals ++" $
+    it "hAppend equals ++" $
       property $ do
         x <- $(hlN n1) True
         y <- $(hlN n2) True
@@ -245,7 +287,25 @@ main = hspec $ do
       xx <- $(hlN n2) x
       return $ hTranspose (hTranspose xx) === xx
 
-    |]
+    it "leftUnion / unionSR" $
+      property $ do
+        x <- $(rN n1) True
+        y <- $(rN n2) True
+        let asL r = r ^. unlabeled . to hList2List
+            asLs (r1,r2) = (sort $ asL r1, sort $ asL r2)
+            merge xs ys = xs ++ drop (length xs) ys
+            mergeSym xs ys = (sort $ merge xs ys, sort $ merge ys xs)
+            -- XXX sort should not be necessary, but
+            -- odd things happen with the result ordering
+        return $ conjoin [
+          sort (asL (x .<++. y)) === sort (asL x `merge` asL y),
+          (x .<++. x) === x,
+          (y .<++. y) === y,
+          asLs (unionSR x y) === mergeSym (asL x) (asL y),
+          (x `unionSR` x) === (x,x),
+          (y `unionSR` y) === (y,y)]
+
+      |]
 
   hl3 n1 n2 n3 = [| do
     it "hAppend/hAppendList assoc" $
@@ -436,14 +496,27 @@ hl0 = describe "0 -- length independent"  $ do
       y :: BoolN "y" <- arbitrary
       let r = ly .=. y .*. lx .=. x .*. emptyRecord
           tip = r ^. typeIndexed
+
+          asX :: As (BoolN "x")
+          asX = id
+          asY :: As (BoolN "y")
+          asY = id
+
       return $ conjoin
         [ r .!. lx === hOccurs tip,
           r .!. lx === tip ^. tipyLens,
           r .!. lx `eq` tip .!. (Label :: Label (BoolN "x")),
 
+          -- two ways to apply 'not' to the 'x' field
+          (r & hLens lx . boolN %~ not) `eq`
+              (r & typeIndexed %~ ttip (asX . boolN %~ not)),
+
+          -- and repeat everything for the other field
           r .!. ly === hOccurs tip,
           r .!. ly === tip ^. tipyLens,
-          r .!. ly `eq` tip .!. (Label :: Label (BoolN "y"))
+          r .!. ly `eq` tip .!. (Label :: Label (BoolN "y")),
+          (r & hLens ly . boolN %~ not) `eq`
+              (r & typeIndexed %~ ttip (asY . boolN %~ not))
         ]
 
   -- other operations union, projection etc.
