@@ -424,11 +424,14 @@ hl0 = describe "0 -- length independent"  $ do
             lx .=. () .*. emptyRecord
     (r ^. relabeled) `shouldBe` r2
 
-  it "hMaybied is left-biased like msum" $ property $ do
+  it "preview hMaybied 2 values" $ property $ do
     mx :: Maybe Bool <- arbitrary
     my :: Maybe Bool <- arbitrary
     let r = lx .=. mx .*. ly .=. my .*. emptyRecord
-    return $ (r^?hMaybied <&> unvariant) `eq` msum [mx, my]
+    return $ (r^?hMaybied <&> unvariant) `eq` case (mx,my) of
+          (Just x, Nothing) -> Just x
+          (Nothing, Just y) -> Just y
+          _ -> Nothing
 
   it "hMaybied id" $ property $ do
     x :: BoolN "x"  <- arbitrary
@@ -436,7 +439,9 @@ hl0 = describe "0 -- length independent"  $ do
     let v = ly .=. my .*. mkVariant1 lx x
         r = ly .=. my .*. lx .=. Just x .*. emptyRecord
 
-    return $ Just v `eq` r ^? hMaybied
+    return $ (r ^? hMaybied) `eq` do
+      guard $ isNothing my
+      Just v
 
   it "hPrism" $ property $ do
     x :: Bool <- arbitrary

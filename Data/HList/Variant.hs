@@ -671,48 +671,41 @@ projected  x = prism extendsVariant
       x
 
 
--- | @Lens (Record tma) (Record tmb) (Maybe (Variant ta)) (Maybe (Variant tb))@
+-- | @Prism (Record tma) (Record tmb) (Variant ta) (Variant tb)@
 --
 -- see 'hMaybied''
-hMaybied f s = (\mv ->
-                   zipWithMPlus
-                        (maybe
-                           (Record (hReplicateF Proxy ConstTaggedNothing ()))
-                           variantToHMaybied
-                           mv)
-                        s
-    ) <$> f (hMaybiedToVariant s)
-  where
-  -- @zipWith (\x y -> mplus x (cast =<< y))@
-  zipWithMPlus (Record x) (Record y) = Record $ hMap MPlusF $ hZip x y
+hMaybied x = prism variantToHMaybied
+    (\s -> case hMaybiedToVariants s of
+          [a] -> Right a
+          _ -> Left (hMapR HCastF s))
+    x
 
 
-data MPlusF = MPlusF
+data HCastF = HCastF
 
-instance (xy ~ (tx, Tagged t' (Maybe y)),
-          tx ~ Tagged t (Maybe x),
+instance (mx ~ Maybe x,
+          my ~ Maybe y,
           HCast y x) =>
-  ApplyAB MPlusF xy tx where
-    applyAB _ (Tagged x, Tagged y) = Tagged $ msum [x, hCast =<< y]
+  ApplyAB HCastF mx my where
+    applyAB _ x = hCast =<< x
 
 
 
-{- | @Lens' (Record tma) (Maybe (Variant ta))@
+{- | @Prism' (Record tma) (Variant ta)@
 
 where @tma@ and @tmb@ are lists like
 
 > tma ~ '[Tagged x (Maybe a), Tagged y (Maybe b)]
 > ta  ~ '[Tagged x        a , Tagged y        b ]
 
-if the @Record@ contains both a @Just a@ and a @Just b@,
-the Variant will contain the @a@ value, and the @b@ value
-(left-biased like @MonadPlus Maybe@).
+If one element of the record is Just, the Variant will
+contain that element. Otherwise, the prism fails.
 
 [@Note@]
 
 The types work out to define a prism:
 
-@l = 'prism'' 'variantToHMaybied' 'hMaybiedToVariant'@
+@l = 'prism'' 'variantToHMaybied' ('listToMaybe' . 'hMaybiedToVariants')@
 
 but the law: @s^?l ≡ Just a ==> l # a ≡ s@ is not followed,
 because we could have:
@@ -727,7 +720,8 @@ because we could have:
 @
 
 So that @s^?l == Just v@. But @l#v == s2 /= s@, while the law
-requires @l#v == s@
+requires @l#v == s@. hMaybied avoids this problem by only
+producing a value when there is only one present.
 
 -}
 hMaybied' x = simple (hMaybied (simple x))
@@ -758,20 +752,22 @@ data ConstTaggedNothing = ConstTaggedNothing
 instance (y ~ Tagged t (Maybe e)) => ApplyAB ConstTaggedNothing x y where
     applyAB _ _ = Tagged Nothing
 
-
-hMaybiedToVariant ::
-  (HFoldr HMaybiedToVariantF (Maybe (Variant '[])) r (Maybe (Variant v)), -- impl
+-- | Every element of the record that is Just becomes one element
+-- in the resulting list. See 'hMaybied'' example types that @r@
+-- and @v@ can take.
+hMaybiedToVariants ::
+  (HFoldr HMaybiedToVariantFs [Variant '[]] r [Variant v], -- impl
    VariantToHMaybied v r -- evidence for typechecking
-  ) => Record r -> Maybe (Variant v)
-hMaybiedToVariant (Record r) = hFoldr HMaybiedToVariantF (Nothing :: Maybe (Variant '[])) r
+  ) => Record r -> [Variant v]
+hMaybiedToVariants (Record r) = hFoldr HMaybiedToVariantFs ([] :: [Variant '[]]) r
 
-data HMaybiedToVariantF = HMaybiedToVariantF
+data HMaybiedToVariantFs = HMaybiedToVariantFs
 
-instance (x ~ (Tagged t (Maybe e), Maybe (Variant v)),
-          y ~ Maybe (Variant (Tagged t e ': v)),
+instance (x ~ (Tagged t (Maybe e), [Variant v]),
+          y ~ [Variant (Tagged t e ': v)],
           MkVariant t e (Tagged t e ': v))
-        => ApplyAB HMaybiedToVariantF x y where
+        => ApplyAB HMaybiedToVariantFs x y where
 
   applyAB _ (Tagged me, v) = case me of
-    Nothing -> fmap extendVariant v
-    Just e -> Just (mkVariant (Label :: Label t) e Proxy)
+    Just e -> mkVariant (Label :: Label t) e Proxy : map extendVariant v
+    _ -> fmap extendVariant v

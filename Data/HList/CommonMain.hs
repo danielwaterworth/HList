@@ -137,8 +137,9 @@ module Data.HList.CommonMain (
  -- ** Record and Variant
  , hMaybied, hMaybied'
  -- *** implementation
- , VariantToHMaybied
- , HMaybiedToVariantF
+ , VariantToHMaybied(variantToHMaybied)
+ , HMaybiedToVariantFs
+ , hMaybiedToVariants
 
  -- ** Record and RecordU
  , unboxed, unboxed'
