@@ -154,6 +154,25 @@ main = hspec $ do
           hl <- genHL True
           return $ hFoldl (BinF f) a hl == foldl f a (hList2List hl)
 
+    it "hSplitAt" $
+        property $ do
+          hl <- genHL True
+          let n = hLength hl
+              l = hList2List hl
+          -- hList2List doesn't like empty lists, and hMapOut id needs
+          -- annotations, so the following cases are easier to construct
+          -- than a direct comparison with splitAt
+          return $ conjoin
+            [ case hSplitAt hZero hl of
+                (hNil, hl') -> (hNil `eq` HNil) .&&. (hl' `eq` hl),
+              case hSplitAt n hl of
+                (hl', hNil) -> (hNil `eq` HNil) .&&. (hl' `eq` hl),
+
+              hMap (HSplitAtAppend hl) (hIterate (hSucc n) HSuccF hZero) `eq` hReplicate (hSucc n) hl ,
+              map (\n -> uncurry (++) $ splitAt n l) [0 .. length l]      === replicate (length l+1) l
+                -- the equivalent list-version
+             ]
+
     it "hAppend empty is identity" $
         property $ do
           x <- genHL (BoolN True :: BoolN "x")
@@ -291,7 +310,10 @@ hl0 = describe "0 -- length independent"  $ do
   it "variant lookup/extend" $ do
     property $ do
       (v, my) <- mkXYvariant
-      return $ v .!. ly == my
+      return $ conjoin [
+          v .!. ly == my,
+          v ^? hLens' ly == my,
+          v ^? hPrism ly == my ]
 
   it "variant update" $ property $ do
     x :: Maybe (BoolN "x") <- arbitrary
@@ -300,7 +322,10 @@ hl0 = describe "0 -- length independent"  $ do
     let v = lx .=. x .*. mkVariant1 ly y
         v' | isJust x = lx .=. Just x' .*. mkVariant1 ly y
            | otherwise = lx .=. Nothing .*. mkVariant1 ly y
-    return $ hUpdateAtLabel lx x' v === v'
+    return $ conjoin [
+        hUpdateAtLabel lx x' v === v',
+        (v & hLens' lx .~ x') === v',
+        (v & hPrism lx .~ x') === v']
 
 
   it "unvariant" $ do
@@ -638,3 +663,19 @@ hTuples = do
 eq :: (Show a, Show b, HCast a b, HCast b a, Eq a, Eq b) => a -> b -> Property
 eq x y = hCast x === Just y .&&. Just x === hCast y
 infix 4 `eq`
+
+
+data HSuccF = HSuccF
+
+instance (psn ~ Proxy (HSucc n),
+        pn ~ Proxy n) => ApplyAB HSuccF pn psn where
+    applyAB _ = hSucc
+
+
+data HSplitAtAppend l = HSplitAtAppend (HList l)
+instance (pn ~ Proxy n,
+          HSplitAt n l a b,
+          HAppend (HList a) (HList b),
+          y ~ HAppendR (HList a) (HList b)) => ApplyAB (HSplitAtAppend l) pn y where
+    applyAB (HSplitAtAppend l) n = case hSplitAt n l of
+                                     (a,b) -> hAppend a b
