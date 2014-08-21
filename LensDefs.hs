@@ -1,4 +1,4 @@
--- | parts of lens would be imported if we depended on it
+-- | parts of lens that would be imported if we depended on it
 module LensDefs
   (module LensDefs,
    module Control.Applicative,
