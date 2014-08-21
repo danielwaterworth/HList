@@ -318,6 +318,17 @@ hl0 = describe "0 -- length independent"  $ do
           r .!. ly `eq` tip .!. (Label :: Label (BoolN "y"))
         ]
 
+  -- other operations union, projection etc.
+  it "Record lookup mixing labels" $ do
+    property $ do
+      v1 :: BoolN "v1" <- arbitrary
+      v2 :: BoolN "v1" <- arbitrary
+      let l1 = Label :: Label ()
+          l2 = Label :: Label 2
+          r = l1 .=. v1 .*. l2 .=. v2 .*. emptyRecord
+      return $ conjoin
+        [ r.!.l1 `eq` v1,
+          r.!.l2 `eq` v2 ]
 
   it "HOccurs HList" $ do
     property $ do

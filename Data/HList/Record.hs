@@ -345,7 +345,7 @@ data DuplicatedLabel l
 class HRLabelSet (ps :: [*])
 instance HRLabelSet '[]
 instance HRLabelSet '[x]
-instance ( HEq l1 l2 leq
+instance ( HEqK l1 l2 leq
          , HRLabelSet' l1 l2 leq r
          ) => HRLabelSet (Tagged l1 v1 ': Tagged l2 v2 ': r)
 
@@ -366,7 +366,7 @@ see also 'HSet'
 class HLabelSet ls
 instance HLabelSet '[]
 instance HLabelSet '[x]
-instance ( HEq l1 l2 leq
+instance ( HEqK l1 l2 leq
          , HLabelSet' l1 l2 leq r
          ) => HLabelSet (l1 ': l2 ': r)
 
@@ -555,7 +555,7 @@ instance ( LabelsOf r ~ ls
 
 
 
-instance (HEq l l1 b, HasField' b l (Tagged l1 v1 ': r) v)
+instance (HEqK l l1 b, HasField' b l (Tagged l1 v1 ': r) v)
     => HasField l (Record (Tagged l1 v1 ': r)) v where
     hLookupByLabel l (Record r) =
              hLookupByLabel' (Proxy::Proxy b) l r

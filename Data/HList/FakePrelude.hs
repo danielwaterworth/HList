@@ -557,6 +557,11 @@ newtype HJust x   = HJust x   deriving Show
 -- for the sake of the generic equality.
 class HEq (x :: k) (y :: k) (b :: Bool) | x y -> b
 
+-- | Equality for types that may have different kinds. This definition
+-- allows operations on @Record [Tagged \"x\" a, Tagged 2 b]@ to work
+-- as expected.
+type HEqK (x :: k1) (y :: k2) (b :: Bool) = HEq (Proxy x) (Proxy y) b
+
 #if NEW_TYPE_EQ
 -- | Uses @(==) :: * -> * -> Bool@ because
 -- there is no polykinded instance of (==),
