@@ -1,3 +1,19 @@
+9 Sep 2014
+Change the ordering of the list produced by HLeftUnion / (.<++.)
+to better match hAppend / ++ suggested by the name.
+
+25 Aug 2014
+Add HSort, which provides a merge sort and a quick sort.
+
+Support _ (wildcard) with the pun quasiquoter, and make
+patterns such as [pun| x y _ |] constrain the Record or Variant
+to have at least 3 elements.
+
+Reduce the number of parameters for Labelable
+
+Allow operations with different label kinds (ie.
+Record [Tagged 1 x, Tagged "y" Int]) to proceed as expected.
+
 13 Jul 2014
 Start RecordU and RecordUS, a variation on Record where the values
 are stored in unboxed array(s).
