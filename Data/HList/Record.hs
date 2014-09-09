@@ -80,6 +80,7 @@ module Data.HList.Record
     -- ** Delete
     -- | 'hDeleteAtLabel' @label record@
     (.-.),
+    HDeleteLabels(..),
 
     -- ** Lookup/update
     -- $lens
@@ -115,7 +116,6 @@ module Data.HList.Record
     -- ** Unions
     -- *** Left
     HLeftUnion(hLeftUnion),
-    HLeftUnionBool(hLeftUnionBool),
     (.<++.),
 
     -- *** Symmetric
@@ -813,31 +813,31 @@ type HMemberLabel l r b = HMember l (UnLabel l (LabelsOf r)) b
 
 -- Left Union
 
+class HDeleteLabels ks r r' | ks r -> r'
+ where hDeleteLabels :: proxy (ks :: [*]) -- ^ as provided by labelsOf
+          -> Record r -> Record r'
+
+instance (HMember (Label l) ks b,
+          HCond b (Record r2) (Record (Tagged l v ': r2)) (Record r3),
+          HDeleteLabels ks r1 r2) =>
+    HDeleteLabels ks (Tagged l v ': r1) r3 where
+      hDeleteLabels ks (Record (HCons lv r1)) =
+          case hDeleteLabels ks (Record r1) of
+             Record r2 -> hCond (Proxy :: Proxy b)
+                  (Record r2)
+                  (Record (HCons lv r2))
+instance HDeleteLabels ks '[] '[] where
+    hDeleteLabels _ _ = emptyRecord
+
+
 class  HLeftUnion r r' r'' | r r' -> r''
  where hLeftUnion :: Record r -> Record r' -> Record r''
 
-instance HLeftUnion r '[] r
- where   hLeftUnion r _ = r
+instance (HDeleteLabels (LabelsOf l) r r',
+         HAppendList l r' ~ lr) => HLeftUnion l r lr
+ where  hLeftUnion (Record l) r = case hDeleteLabels (labelsOf l) r of
+                                    Record r' -> Record (hAppendList l r')
 
-instance ( HMemberLabel l r b
-         , HLeftUnionBool b r (Tagged l v) r'''
-         , HLeftUnion r''' r' r''
-         )
-           => HLeftUnion r (Tagged l v ': r') r''
-  where
-   hLeftUnion r (Record (HCons f r')) = r''
-    where
-     r'''    = hLeftUnionBool (Proxy :: Proxy b) r f
-     r''     = hLeftUnion (r''' :: Record r''') (Record r' :: Record r')
-
-class  HLeftUnionBool (b :: Bool) r f r' | b r f -> r'
- where hLeftUnionBool :: Proxy b -> Record r -> f -> Record r'
-
-instance HLeftUnionBool True r f r
-   where hLeftUnionBool _ r _  = r
-
-instance HLeftUnionBool False r f (f ': r)
-   where hLeftUnionBool _ (Record r) f = Record (HCons f r)
 
 infixl 1 .<++.
 {-|

@@ -292,13 +292,11 @@ main = hspec $ do
         x <- $(rN n1) True
         y <- $(rN n2) True
         let asL r = r ^. unlabeled . to hList2List
-            asLs (r1,r2) = (sort $ asL r1, sort $ asL r2)
+            asLs (r1,r2) = (asL r1, asL r2)
             merge xs ys = xs ++ drop (length xs) ys
-            mergeSym xs ys = (sort $ merge xs ys, sort $ merge ys xs)
-            -- XXX sort should not be necessary, but
-            -- odd things happen with the result ordering
+            mergeSym xs ys = (merge xs ys, merge ys xs)
         return $ conjoin [
-          sort (asL (x .<++. y)) === sort (asL x `merge` asL y),
+          asL (x .<++. y) === asL x `merge` asL y,
           (x .<++. x) === x,
           (y .<++. y) === y,
           asLs (unionSR x y) === mergeSym (asL x) (asL y),
