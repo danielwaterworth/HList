@@ -20,7 +20,6 @@ import GHC.Exts (Constraint)
 
 import Text.ParserCombinators.ReadP
 import Data.List
-import Control.Monad
 
 import LensDefs
 
@@ -105,26 +104,26 @@ instance Read (HList '[]) where
                         Just rest -> [(HNil, rest)]
 
 instance
-   (ConvHList (e ': l),
+   (ConvHList l,
     Read e,
     HSequence ReadP (ReadP e ': readP_l) (e ': l),
     HMapCxt HList ReadElement l readP_l)  =>
       Read (HList (e ': l)) where
   readsPrec _ = readP_to_S $ do
     _ <- string "H["
-    e `HCons` l <- return (unPrime (error "Data.HList.HList read") :: HList (e ': l))
-    let parsers = applyAB (ReadElement False) e `HCons` hMap (ReadElement True) l
+    l <- return (unPrime (error "Data.HList.HList read") :: HList l)
+    let parsers = readS_to_P reads `HCons` hMap ReadElement l
     hlist <- hSequence parsers
     _ <- string "]"
     return hlist
 
 
 -- similar to ReadComponent used to define instance Read Record
-data ReadElement = ReadElement Bool
+data ReadElement = ReadElement
 
 instance (y ~ ReadP x, Read x) => ApplyAB ReadElement x y where
-    applyAB (ReadElement comma) _ = do
-      when comma (() <$ string ", ")
+    applyAB ReadElement _ = do
+      _ <- string ", "
       readS_to_P reads
 
 
