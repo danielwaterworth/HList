@@ -95,7 +95,7 @@ instance Show (HList '[]) where
 instance (Show e, Show (HList l)) => Show (HList (e ': l)) where
     show (HCons x l) = let 'H':'[':s = show l
 		       in "H[" ++ show x ++ 
-			          (if s == "]" then s else ", " ++ s)
+			          (if s == "]" then s else "," ++ s)
 
 
 instance Read (HList '[]) where
@@ -123,7 +123,7 @@ data ReadElement = ReadElement
 
 instance (y ~ ReadP x, Read x) => ApplyAB ReadElement x y where
     applyAB ReadElement _ = do
-      _ <- string ", "
+      _ <- string ","
       readS_to_P reads
 
 
