@@ -44,7 +44,7 @@ main = do
     print (z .=. () .*. r
               & unlabeled' . from tipHList %~ ttip (\x z -> x ++ show (z :: ())))
 
-    r ^! unlabeled . from tipHList . act tipPutStrLn
+    r ^. unlabeled . from tipHList & tipPutStrLn
 
 
 tipPutStrLn tip = ttipM ?? tip $ \x -> do
