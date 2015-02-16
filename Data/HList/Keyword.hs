@@ -375,15 +375,14 @@ instance  (v' ~ v, KWApply f' tail r)
     => KWApply' True (kw->v->f') (kw ': v' ': tail) r where
     kwapply' _ f (HCons kw_ (HCons v' tl)) =
                    kwapply (f kw_ v') tl
-    kwapply' _ _ _ = error "Data.HList.Keyword.kwapply': impossible 1"
 
 -- | Rotate the arg list ...
-instance  (HAppendList tail '[kw , v] ~ l',
+instance  (HAppendListR tail '[kw , v] ~ l',
+           HAppendList tail '[kw, v],
 	   KWApply f l' r)
     => KWApply' False f (kw ': v ': tail) r where
     kwapply' _ f (HCons kw_ (HCons v tl)) =
 	kwapply f (hAppend tl (kw_ .*. v .*. HNil))
-    kwapply' _ _ _ = error "Data.HList.Keyword.kwapply': impossible 2"
 
 {- |
 
@@ -489,12 +488,10 @@ instance KWMerge atail (kw ': v ': arg_values) arg_def f r
     kwmerge'' _ _ (HCons kw_ (HCons v _)) (Arg arg_values) =
 	kwmerge ((Arg (kw_ .*. v .*. arg_values))::
 		 (Arg atail (kw ': v ': arg_values)))
-    kwmerge'' _ _ _ _ = error "Data.HList.kwmerge'': impossible"
 instance KWMerge' kw tail atail arg_values arg_def f r
     => KWMerge'' False kw (kw' ': v' ': tail)
                  atail arg_values arg_def f r where
     kwmerge'' _ kw_ (HCons _ (HCons _ tl)) = kwmerge' kw_ tl
-    kwmerge'' _ _ _ = error "Data.HList.kwmerge'': impossible 2"
 
 -- | Add the real argument to the Arg structure, and continue
 

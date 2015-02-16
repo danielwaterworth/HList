@@ -76,25 +76,11 @@ import GHC.Exts (Constraint)
 import Unsafe.Coerce
 
 
-instance (Data x, Data (HList xs), Typeable (HList (x ': xs)),
-        TypeablePolyK (x ': xs))
-        => Data (HList (x ': xs)) where
-    gfoldl k z (HCons a b) = (z HCons `k` a) `k` b
-    gunfold k z _ = k (k (z HCons))
-
-    dataTypeOf _ = hListDataRep
-    toConstr _   = hConsConRep
-
-
-instance (TypeablePolyK ('[] :: [*])) => Data (HList '[]) where
-    gfoldl _k z HNil = z HNil
-    gunfold _k z _ = z HNil
-    dataTypeOf _ = hListDataRep
-    toConstr _   = hNilConRep
-
-hListDataRep = mkDataType "Data.HList.HList" [hConsConRep, hNilConRep]
-hConsConRep = mkConstr hListDataRep "HCons" [] Prefix
-hNilConRep = mkConstr hListDataRep "HNil" [] Prefix
+deriving instance Data (HList '[])
+deriving instance
+    (Data x,
+     Data (HList xs),
+     TypeablePolyK (x ': xs)) => Data (HList (x ': xs))
 
 -- | this data type only exists to have Data instance
 newtype HListFlat a = HListFlat (HList a)
@@ -228,10 +214,12 @@ deriving instance Typeable HListFlat
 -- orphans
 deriving instance Typeable 'HZero
 deriving instance Typeable 'HSucc
+#if !MIN_VERSION_base(4,8,0)
+-- GHC 7.9 adds these instances
 deriving instance Typeable '[]
 deriving instance Typeable '(:)
+#endif
 
-type TypeablePolyK (a :: k) = (Typeable a)
 #else
 instance TypeRepsList (Record xs) => Typeable (HList xs) where
    typeOf x = mkTyConApp (mkTyCon3 "HList" "Data.HList.HList" "HList")
@@ -252,8 +240,6 @@ instance (ShowLabel sy, Typeable x) => Typeable (Tagged sy x) where
             [mkTyConApp (mkTyCon3 "HList" "Data.HList.Record" "=") [],
                     typeOf (error "Data.HList.Data:Typeable Tagged" :: x)
                     ]
-
-type TypeablePolyK a = (() :: Constraint)
 
 
 instance Typeable (HList a) => Typeable (HListFlat a) where
@@ -276,14 +262,14 @@ class TypeRepsList a where
   typeRepsList :: a -> [TypeRep]
 
 
-instance (TypeRepsList (Prime xs), ConvHList xs) => TypeRepsList (Record xs) where
-  typeRepsList (Record xs) = typeRepsList (prime xs)
+instance (TypeRepsList (HList xs)) => TypeRepsList (Record xs) where
+  typeRepsList (Record xs) = typeRepsList xs
 
-instance (TypeRepsList xs, Typeable x, IsPrime xs) => TypeRepsList (HCons' x xs) where
-  typeRepsList (~(x `HCons'` xs))
+instance (TypeRepsList (HList xs), Typeable x) => TypeRepsList (HList (x ': xs)) where
+  typeRepsList (~(x `HCons` xs))
         = typeOf x : typeRepsList xs
 
-instance TypeRepsList HNil' where
+instance TypeRepsList (HList '[]) where
   typeRepsList _ = []
 
 

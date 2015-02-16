@@ -4,28 +4,28 @@ Key 42
 Name "Angus"
 Cow
 Price 75.5
-H[Key 42, Name "Angus", Cow, Price 75.5, Key 42, Name "Angus", Cow, Price 75.5]
+H[Key 42,Name "Angus",Cow,Price 75.5,Key 42,Name "Angus",Cow,Price 75.5]
 
 testHArray
 H[Key 42]
-H[Key 42, Name "Angus"]
-H[Key 42, Name "Angus"]
-H[Name "Angus", Cow, Price 75.5]
-(H[Key 42, Name "Angus"],H[Cow, Price 75.5])
+H[Key 42,Name "Angus"]
+H[Key 42,Name "Angus"]
+H[Name "Angus",Cow,Price 75.5]
+(H[Key 42,Name "Angus"],H[Cow,Price 75.5])
 
 testHOccurs
 Cow
 1
 True
-H[Key 42, Name "Angus"]
+H[Key 42,Name "Angus"]
 
 testTypeIndexed
-H[Key 42, Cow, Price 75.5]
-H[BSE, Key 42, Name "Angus", Cow, Price 75.5]
-H[Key 42, Sheep, Price 75.5]
-H[BSE, Key 42, Name "Angus", Price 75.5]
+H[Key 42,Cow,Price 75.5]
+H[BSE,Key 42,Name "Angus",Cow,Price 75.5]
+H[Key 42,Sheep,Price 75.5]
+H[BSE,Key 42,Name "Angus",Price 75.5]
 H[Cow]
-(H[Cow],H[Key 42, Name "Angus", Price 75.5])
+(H[Cow],H[Key 42,Name "Angus",Price 75.5])
 
 testTuple
 (2,False)
@@ -36,9 +36,9 @@ True
 
 testTIP
 Cow
-TIPH[BSE, Key 42, Name "Angus", Cow, Price 75.5]
-TIPH[Sheep, Key 42, Name "Angus", Price 75.5]
-TIPH[Key 42, Name "Angus", Sheep, Price 75.5]
+TIPH[BSE,Key 42,Name "Angus",Cow,Price 75.5]
+TIPH[Sheep,Key 42,Name "Angus",Price 75.5]
+TIPH[Key 42,Name "Angus",Sheep,Price 75.5]
 
 testRecords
 Record{key=42,name="Angus",breed=Cow}

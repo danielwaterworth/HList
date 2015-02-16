@@ -1,3 +1,18 @@
+15 Feb 2015
+Change HList to a data family (see comments in HList.hs).
+
+Change the Show instance for TIP and HList to use "," not ", " as the
+separator for consistency with Record and ordinary lists.
+
+Parameterize HZip over the collection type to work on Record, TIP as well as
+HList.
+
+Add and use HProxies for building the spine of a HList from the type, to avoid
+having HLists of undefined/error values somewhere.
+
+Build with ghc-7.10 RC1. RecordU/RecordUS is moved to broken/ instead of
+updating it.
+
 9 Sep 2014
 Change the ordering of the list produced by HLeftUnion / (.<++.)
 to better match hAppend / ++ suggested by the name.

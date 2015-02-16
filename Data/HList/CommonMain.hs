@@ -31,21 +31,6 @@ module Data.HList.CommonMain (
  -- name.
  , module Data.HList.RecordPuns
 
- -- ** Unpacked / Unboxed Records
- , RecordU
- , RecordUS
- , SortForRecordUS(..)
- , HUpdateMany(..)
- , hMapRU
-
- -- *** internals for types
- , HFindMany, HNats2Integrals(..)
-
- , RecordUSCxt
- , HLookupByHNatUS, HLookupByHNatUS1
- , HSubtract, HMapUnboxF, UnboxF
- , BoxF, EqTagValue, GetElemTy, ElemTyEq
- , RecordToRecordU, RecordUToRecord
 
  -- * HList
  -- | A subset of "Data.HList.HList" is re-exported.
@@ -73,7 +58,8 @@ module Data.HList.CommonMain (
  , tipyTuple3
  , tipyTuple4
  , tipyTuple5
- , TagUntag(..)
+ , TagUntag, TagUntagFD(..)
+ , TagR
 
  -- ** TIP transform
  , TransTIP(..)
@@ -141,11 +127,6 @@ module Data.HList.CommonMain (
  , HMaybiedToVariantFs
  , hMaybiedToVariants
 
- -- ** Record and RecordU
- , unboxed, unboxed'
- -- ** Record and RecordUS
- , unboxedS, unboxedS'
-
  -- * "Data.HList.Keyword"
  -- | the \"public\" parts. More examples are in the module documentation.
  , Kw(..), recToKW, IsKeyFN, K,  ErrReqdArgNotFound,  ErrUnexpectedKW
@@ -205,7 +186,7 @@ import Data.HList.HArray
 import Data.HList.HOccurs
 import Data.HList.HTypeIndexed
 import Data.HList.Record
-import Data.HList.RecordU
+-- import Data.HList.RecordU
 -- import Data.HList.RecordOrd
 import Data.HList.HList hiding (append',
                                 hAppend',

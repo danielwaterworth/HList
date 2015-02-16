@@ -77,7 +77,6 @@ library
                        Data.HList.Labelable,
                        Data.HList.MakeLabels,
                        Data.HList.Record,
-                       Data.HList.RecordU,
                        Data.HList.RecordPuns,
 --                       Data.HList.RecordOrd,
                        Data.HList.TIC,
@@ -94,7 +93,6 @@ library
   Default-Extensions:  ConstraintKinds
                        DataKinds
                        DeriveDataTypeable
-                       DatatypeContexts
                        EmptyDataDecls
                        FlexibleContexts
                        FlexibleInstances
@@ -120,6 +118,9 @@ library
   if impl(ghc >= 7.7)
     Default-Extensions: AllowAmbiguousTypes
 
+
+  if impl(ghc > 7.9)
+    Ghc-Options:      -fno-warn-unticked-promoted-constructors
 
   if flag(new_type_eq)
     Cpp-options:       -DNEW_TYPE_EQ

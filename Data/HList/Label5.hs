@@ -1,4 +1,8 @@
+{-# LANGUAGE CPP #-}
+#if (__GLASGOW_HASKELL__ < 709)
 {-# LANGUAGE OverlappingInstances #-}
+{-# OPTIONS_GHC -fno-warn-unrecognised-pragmas #-}
+#endif
 {- |
    Description: labels are any instance of Typeable
 
@@ -27,7 +31,7 @@ import Data.HList.FakePrelude
 
 
 -- | Show label
-instance Typeable (x :: *) => ShowLabel x
+instance {-# OVERLAPPABLE #-} Typeable (x :: *) => ShowLabel x
  where
   showLabel _ = (\(x:xs) -> toLower x:xs)
             . reverse

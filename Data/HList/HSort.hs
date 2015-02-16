@@ -129,7 +129,6 @@ instance HEqByFn le => HMSortBy le '[x] '[x] where hMSortBy _ x = x
 instance (HSort2 b x y ab, HEqBy le x y b) =>
     HMSortBy le '[x,y] ab where
       hMSortBy _ (a `HCons` b `HCons` HNil) = hSort2 (Proxy :: Proxy b) a b
-      hMSortBy _ _ = error "Data.HList.HList.HSortBy impossible"
 
 class HSort2 b x y ab | b x y -> ab where
     hSort2 :: Proxy b -> x -> y -> HList ab
@@ -187,7 +186,8 @@ instance HQSortBy le '[x] '[x] where hQSortBy _ x = x
 instance (HPartitionEq le a (b ': bs) bGeq bLt,
         HQSortBy le bLt  sortedLt,
         HQSortBy le bGeq sortedGeq,
-        HAppendList sortedLt (a ': sortedGeq) ~ sorted) =>
+        HAppendListR sortedLt (a ': sortedGeq) ~ sorted,
+        HAppendList sortedLt (a ': sortedGeq)) =>
     HQSortBy le (a ': b ': bs) sorted where
     hQSortBy le (a `HCons` xs) = case hPartitionEq le (Proxy :: Proxy a) xs of
                       (g,l) -> hQSortBy le l `hAppendList` (a `HCons` hQSortBy le g)

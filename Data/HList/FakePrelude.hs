@@ -18,6 +18,7 @@ import Data.Tagged
 import GHC.Prim (Constraint)
 import GHC.TypeLits
 import Control.Applicative
+import Data.Typeable
 #if NEW_TYPE_EQ
 import Data.Type.Equality (type (==))
 #endif
@@ -641,4 +642,8 @@ data ExtraField l
 data FieldNotFound l
 
 
-
+#if OLD_TYPEABLE
+type TypeablePolyK a = (() :: Constraint)
+#else
+type TypeablePolyK (a :: k) = Typeable a
+#endif

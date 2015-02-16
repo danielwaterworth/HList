@@ -24,6 +24,7 @@ import Data.HList.TypeEqO
 import Data.HList.TIPtuple
 import Data.List (intercalate)
 import Data.Monoid
+import Data.Array (Ix)
 
 import LensDefs
 
@@ -36,6 +37,10 @@ newtype TIP (l :: [*]) = TIP{unTIP:: HList l}
 
 deriving instance Monoid (HList a) => Monoid (TIP a)
 deriving instance Eq (HList a) => Eq (TIP a)
+deriving instance (Ord (HList r)) => Ord (TIP r)
+deriving instance (Ix (HList r)) => Ix (TIP r)
+deriving instance (Bounded (HList r)) => Bounded (TIP r)
+
 
 instance HMapOut (HShow `HComp` HUntag) l String => Show (TIP l) where
   showsPrec _ (TIP l) = ("TIPH[" ++)
@@ -90,12 +95,12 @@ instance HasField e (Record (x ': y ': l)) e
   hOccurs (TIP l) = Record l .!. (Label :: Label e)
 
 
-instance (HAppend (HList l) (HList l'), HTypeIndexed (HAppendList l l'))
+instance (HAppend (HList l) (HList l'), HTypeIndexed (HAppendListR l l'))
            => HAppend (TIP l) (TIP l')
  where
   hAppend (TIP l) (TIP l') = mkTIP (hAppend l l')
 
-type instance HAppendR (TIP l) (TIP l') = TIP (HAppendList l l')
+type instance HAppendR (TIP l) (TIP l') = TIP (HAppendListR l l')
 
 
 -- instance HOccurrence HList e l l' => HOccurrence TIP e l l'
@@ -129,7 +134,15 @@ tipyProject ps t = onRecord (hProjectByLabels ps) t
 
 -- | provides a @Lens' (TIP s) a@. 'hLens'' @:: Label a -> Lens' (TIP s) a@
 -- is another option.
-tipyLens' x = simple (tipyLens x)
+-- tipyLens' x = simple (tipyLens x) -- rejected by GHC-7.10RC1
+tipyLens' f s = simple (hLens x f) (asTIP s)
+  where
+    x = getA f
+    getA :: (a -> f a) -> Label a
+    getA _ = Label
+
+    asTIP :: TIP a -> TIP a
+    asTIP = id
 
 {- | provides a @Lens (TIP s) (TIP t) a b@
 
@@ -177,25 +190,66 @@ an equivalent FD version, which is slightly better with respect to
 simplifying types containing type variables (in ghc-7.8 and 7.6):
 <http://stackoverflow.com/questions/24110410/>
 
--}
+With ghc-7.10 (http://ghc.haskell.org/trac/ghc/ticket/10009) the FD version is superior
+to the TF version:
+
+@
 class (UntagR (TagR a) ~ a) => TagUntag a where
     type TagR a :: [*]
-    type UntagR (xs :: [*]) :: [*]
     hTagSelf :: HList a -> HList (TagR a)
     hUntagSelf :: HList (TagR a) -> HList a
 
 instance TagUntag '[] where
     type TagR '[] = '[]
-    type UntagR '[] = '[]
     hTagSelf _ = HNil
     hUntagSelf _ = HNil
 
 instance TagUntag xs => TagUntag (x ': xs) where
     type TagR (x ': xs) = Tagged x x ': TagR xs
-    type UntagR (x ': xs) = Untag1 x ': UntagR xs
     hTagSelf (HCons x xs) = Tagged x `HCons` hTagSelf xs
     hUntagSelf (HCons (Tagged x) xs) = x `HCons` hUntagSelf xs
-    hUntagSelf _ = error "Data.HList.TIP:ghc gadt bug"
+
+type family UntagR (xs :: [*]) :: [*]
+type instance UntagR '[] = '[]
+type instance UntagR (x ': xs) = Untag1 x ': UntagR xs
+@
+
+Length information should flow backwards
+
+>>> let len2 x = x `asTypeOf` (undefined :: HList '[a,b])
+>>> let f = len2 $ hTagSelf (hReplicate Proxy ())
+>>> :t f
+HList '[Tagged () (),Tagged () ()]
+
+-}
+class SameLength a ta => TagUntagFD a ta | a -> ta, ta -> a where
+    hTagSelf :: HList a -> HList ta
+    hUntagSelf :: HList ta -> HList a
+
+instance TagUntagFD '[] '[] where
+    hTagSelf _ = HNil
+    hUntagSelf _ = HNil
+
+instance (TagUntagFD xs ys)
+      => TagUntagFD (x ': xs) (Tagged x x ': ys) where
+    hTagSelf (HCons x xs) = Tagged x `HCons` hTagSelf xs
+    hUntagSelf (HCons (Tagged x) xs) = x `HCons` hUntagSelf xs
+
+type TagUntag xs = TagUntagFD xs (TagR xs)
+
+-- | Sometimes the type variables available have @TagR@ already applied
+-- (ie the lists have elements like @Tagged X X@). Then this abbreviation
+-- is useful:
+type UntagTag xs = TagUntagFD (UntagR xs) xs
+
+type family TagR (a :: [*]) :: [*]
+type family UntagR (ta :: [*]) :: [*]
+
+type instance TagR '[] = '[]
+type instance UntagR '[] = '[]
+
+type instance TagR (x ': xs) = Tagged x x ': TagR xs
+type instance UntagR (Tagged y y ': ys) = y ': UntagR ys
 
 type family Untag1 (x :: *) :: *
 type instance Untag1 (Tagged k x) = x
@@ -215,8 +269,30 @@ tipHList' x = simple (tipHList x)
 -- 'typeIndexed' may be more appropriate
 tipRecord x = isoNewtype (\(TIP a) -> Record a) (\(Record b) -> TIP b) x
 
--- | @Iso' (TIP (TagR s)) (HList a)@
+-- | @Iso' (TIP (TagR s)) (Record a)@
 tipRecord' x = simple (tipRecord x)
+
+-- --------------------------------------------------------------------------
+-- * Zip
+
+instance (HZipList (UntagR x) (UntagR y) (UntagR xy),
+          UntagTag x, UntagTag y, UntagTag xy,
+          SameLengths [x,y,xy],
+          HTypeIndexed x, HTypeIndexed y
+          -- HTypeIndexed xy is always satisfied given the above
+          -- constraints (with a handwaving proof), so don't require
+          -- callers of hZip/hUnzip to supply such proof
+    ) => HZip TIP x y xy where
+  hZip = hZipTIP
+  hUnzip = hUnzipTIP
+
+-- | specialization of 'hZip'
+hZipTIP (TIP x) (TIP y) = TIP (hTagSelf (hZipList (hUntagSelf x) (hUntagSelf y)))
+
+-- | specialization of 'hUnzip'
+hUnzipTIP (TIP xy) = case hUnzipList (hUntagSelf xy) of
+  (x,y) -> (mkTIP (hTagSelf x), mkTIP (hTagSelf y))
+
 
 
 -- --------------------------------------------------------------------------
@@ -387,22 +463,22 @@ myTipyCow :: TIP Animal
 Cow
 
 >>> BSE .*. myTipyCow
-TIPH[BSE, Key 42, Name "Angus", Cow, Price 75.5]
+TIPH[BSE,Key 42,Name "Angus",Cow,Price 75.5]
 
 
 
 >>> Sheep .*. hDeleteAtLabel (Label::Label Breed) myTipyCow
-TIPH[Sheep, Key 42, Name "Angus", Price 75.5]
+TIPH[Sheep,Key 42,Name "Angus",Price 75.5]
 
 >>> tipyUpdate Sheep myTipyCow
-TIPH[Key 42, Name "Angus", Sheep, Price 75.5]
+TIPH[Key 42,Name "Angus",Sheep,Price 75.5]
 
 
 >>> tipyProject2 (Proxy :: Labels '[Name,Price]) myTipyCow
-(TIPH[Name "Angus", Price 75.5],TIPH[Key 42, Cow])
+(TIPH[Name "Angus",Price 75.5],TIPH[Key 42, Cow])
 
 >>> tipyProject (Proxy :: Labels '[Name,Price]) myTipyCow
-TIPH[Name "Angus", Price 75.5]
+TIPH[Name "Angus",Price 75.5]
 
 -}
 

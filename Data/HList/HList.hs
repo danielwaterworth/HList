@@ -14,7 +14,6 @@ module Data.HList.HList where
 
 import Data.HList.FakePrelude
 import Data.HList.HListPrelude
-import Data.Maybe (fromMaybe)
 import Data.Monoid
 import GHC.Exts (Constraint)
 
@@ -23,70 +22,142 @@ import Data.List
 
 import LensDefs
 
+import Data.Array (Ix)
 
 -- --------------------------------------------------------------------------
 -- * Heterogeneous type sequences
--- $note
---
--- The easiest way to ensure that sequences can only be formed with Nil
--- and Cons is to use GADTs
--- The kind [*] is list kind (lists lifted to types)
+{- $note
 
+There are three sensible ways to define HLists:
+
+@
 data HList (l::[*]) where
     HNil  :: HList '[]
     HCons :: e -> HList l -> HList (e ': l)
+@
 
--- | this comparison is two traversals
-instance (ConvHList l, Eq (Prime l)) => Eq (HList l) where
-    x == y = prime x == prime y
+This ensures that sequences can only be formed with Nil
+and Cons. The argument to HList is a promoted lists (kind @[*]@),
+which has a more attractive syntax.
 
--- ** Alternative representation
-{- $note
 
-HNil' and HCons' are the older ADT-style. This has some advantages
-over the GADT:
+Earlier versions of HList used an algebraic data type:
 
-* lazy pattern matches are allowed, so that @unPrime (error "x")@
-  behaves like @hReplicate Proxy (error "x")@. In other words,
-  unPrime allows a straightforward way to create the spine of a
-  HList given only the type.
+@
+data HCons a b = HCons a b
+data HNil = HNil
+@
+
+Disadvantages:
+
+* values with types like @HCons Int Double@ to be created,
+  which are nonsense to the functions in HList
+
+* some recursive functions do not need a class with the GADT. For example:
+
+  @
+    hInit :: HListGADT (x ': xs) -> HListGADT (HInit (x ': xs))
+    hInit (HCons x xs@(HCons _ _)) = HCons x (hInit xs)
+    hInit (HCons _ HNil) = HNil
+
+    type family HInit (xs :: [k]) :: [k]
+  @
+
+  but without the GADT, 'hInit' is written as in a class,
+  which complicates inferred types
+
+
+Advantages
+
+* lazy pattern matches are allowed, so lazy pattern matching
+  on a value @undefined :: HList [a,b,c]@ can create the
+  spine of the list. 'hProxies' avoids the use of 'undefined',
+  but a slightly more complicated class context has to be written
+  or inferred.
 
 * type inference is better if you want to directly pattern match
 <http://stackoverflow.com/questions/19077037/is-there-any-deeper-type-theoretic-reason-ghc-cant-infer-this-type see stackoverflow post here>
 
+* better pattern exhaustiveness checking (as of ghc-7.8)
+
+* standalone deriving works
+
+* Data.Coerce.coerce works because the parameters have role representational,
+  not nominal as they are for the GADT and data family. Probably the GADT/type
+  family actually do have a representational role:
+  <http://stackoverflow.com/questions/24222552/does-this-gadt-actually-have-type-role-representational>
+
+
+
+The data family version (currently used) gives the same type constructor
+@HList :: [*] -> *@ as the GADT, while pattern matching behaves
+like the algebraic data type. Furthermore, nonsense values like
+@HCons 1 2 :: HCons Int Int@ cannot be written with the data family.
+
 -}
-data HNil' = HNil' deriving (Eq)
-data IsPrime b => HCons' a b = HCons' a b deriving (Eq)
 
-class IsPrime (a :: *)
-instance IsPrime HNil'
-instance IsPrime b => IsPrime (HCons' a b)
 
--- | conversion between GADT ('HList') and ADT ('HNil'' 'HCons'')
--- representations
-class (UnPrime (Prime a) ~ a, IsPrime (Prime a)) => ConvHList (a :: [*]) where
-    type Prime a :: *
-    type UnPrime b :: [*]
-    prime :: HList a -> Prime a
-    unPrime :: Prime a -> HList a
+data family HList (l::[*])
 
-instance (IsPrime (HCons' a (Prime as)), ConvHList as) => ConvHList (a ': as) where
-    type Prime   (a ': as) = a `HCons'` Prime as
-    type UnPrime (b `HCons'` bs) = (b ': UnPrime bs)
-    prime (a `HCons` as) = a `HCons'` prime as
-    unPrime ~(a `HCons'` as) = a `HCons` unPrime as
+data instance HList '[] = HNil
+data instance HList (x ': xs) = x `HCons` HList xs
 
-instance ConvHList '[] where
-    type Prime '[] = HNil'
-    type UnPrime HNil' = '[]
-    prime _ = HNil'
-    unPrime _ = HNil
+deriving instance Eq (HList '[])
+deriving instance (Eq x, Eq (HList xs)) => Eq (HList (x ': xs))
 
--- | @Iso (HList s) (HList t) (Prime s) (Prime t)@
-primed x = iso prime unPrime x
+deriving instance Ord (HList '[])
+deriving instance (Ord x, Ord (HList xs)) => Ord (HList (x ': xs))
 
--- | @Iso' (HList s) (Prime s)@
-primed' x = simple (primed x)
+deriving instance Ix (HList '[])
+deriving instance (Ix x, Ix (HList xs)) => Ix (HList (x ': xs))
+
+deriving instance Bounded (HList '[])
+deriving instance (Bounded x, Bounded (HList xs)) => Bounded (HList (x ': xs))
+
+
+-- Enum cannot be derived
+
+
+-- | creates a HList of Proxies
+
+class HProxiesFD (xs :: [*]) pxs | pxs -> xs -- DropProxy pxs ~ xs
+                      , xs -> pxs -- AddProxy xs ~ pxs
+      where hProxies :: HList pxs
+
+{- Ideally we could write:
+
+> class DropProxy (AddProxy xs) ~ xs => HProxies xs where
+>     hProxies :: HList (AddProxy xs)
+
+See https://ghc.haskell.org/trac/ghc/ticket/10009 -}
+type HProxies xs = HProxiesFD xs (AddProxy xs)
+
+
+{- | Add 'Proxy' to a type
+
+>>> let x = undefined :: HList (AddProxy [Char,Int])
+>>> :t x
+x :: HList '[Proxy Char, Proxy Int]
+
+
+-}
+type family AddProxy (xs :: k) :: k
+type instance AddProxy '[] = '[]
+type instance AddProxy (x ': xs) = AddProxy x ': AddProxy xs
+type instance AddProxy (x :: *) = Proxy x
+
+-- | inverse of 'AddProxy'
+type family DropProxy (xs :: k) :: k
+type instance DropProxy (x ': xs) = DropProxy x ': DropProxy xs
+type instance DropProxy '[] = '[]
+type instance DropProxy (Proxy x) = x
+
+instance HProxiesFD '[] '[] where
+    hProxies = HNil
+
+instance (HProxiesFD xs pxs) => HProxiesFD (x ': xs) (Proxy x ': pxs) where
+    hProxies = Proxy `HCons` hProxies
+
 
 
 instance Show (HList '[]) where
@@ -104,14 +175,13 @@ instance Read (HList '[]) where
                         Just rest -> [(HNil, rest)]
 
 instance
-   (ConvHList l,
-    Read e,
+   (HProxies l, Read e,
     HSequence ReadP (ReadP e ': readP_l) (e ': l),
-    HMapCxt HList ReadElement l readP_l)  =>
+    HMapCxt HList ReadElement (AddProxy l) readP_l)  =>
       Read (HList (e ': l)) where
   readsPrec _ = readP_to_S $ do
     _ <- string "H["
-    l <- return (unPrime (error "Data.HList.HList read") :: HList l)
+    l <- return (hProxies :: HList (AddProxy l))
     let parsers = readS_to_P reads `HCons` hMap ReadElement l
     hlist <- hSequence parsers
     _ <- string "]"
@@ -121,7 +191,7 @@ instance
 -- similar to ReadComponent used to define instance Read Record
 data ReadElement = ReadElement
 
-instance (y ~ ReadP x, Read x) => ApplyAB ReadElement x y where
+instance (y ~ ReadP x, Read x) => ApplyAB ReadElement (Proxy x) y where
     applyAB ReadElement _ = do
       _ <- string ","
       readS_to_P reads
@@ -144,15 +214,19 @@ hTail (HCons _ l) = l
 -- | 'last'
 hLast xs = hHead (hReverse xs)
 
-hInit :: (a ~ (aHead ': aTail)) => HList a -> HList (HInit a)
-hInit (HCons x xs@(HCons _ _)) = HCons x (hInit xs)
-hInit (HCons _ HNil) = HNil
-hInit _ = error "Data.HList.HList.hInit impossible"
 
-type family HInit (xs :: [*]) :: [*]
-type instance HInit '[] = '[]
-type instance HInit '[x] = '[]
-type instance HInit (a ': b ': c) = a ': HInit (b ': c)
+class HInit xs where
+    type HInitR xs :: [*]
+    hInit :: HList xs -> HList (HInitR xs)
+
+instance HInit '[x] where
+    type HInitR '[x] = '[]
+    hInit _ = HNil
+
+instance HInit (b ': c) => HInit (a ': b ': c) where
+    type HInitR (a ': b ': c) = a ': HInitR (b ': c)
+    hInit (a `HCons` bc) = a `HCons` hInit bc
+
 
 -- | Length
 type family HLength (x :: [k]) :: HNat
@@ -167,18 +241,24 @@ instance HExtend e (HList l) where
   type HExtendR e (HList l) = HList (e ': l)
   (.*.) = HCons
 
-instance HAppend (HList l1) (HList l2) where
+instance HAppendList l1 l2 => HAppend (HList l1) (HList l2) where
   hAppend = hAppendList
-type instance HAppendR (HList l1) (HList l2) = HList (HAppendList l1 l2)
+type instance HAppendR (HList l1) (HList l2) = HList (HAppendListR l1 l2)
 
-type family HAppendList (l1 :: [k]) (l2 :: [k]) :: [k]
-type instance HAppendList '[] l = l
-type instance HAppendList (e ': l) l' = e ': HAppendList l l'
+type family HAppendListR (l1 :: [k]) (l2 :: [k]) :: [k]
+type instance HAppendListR '[] l = l
+type instance HAppendListR (e ': l) l' = e ': HAppendListR l l'
 
--- | the same as 'hAppend'
-hAppendList :: HList l1 -> HList l2 -> HList (HAppendList l1 l2)
-hAppendList HNil l = l
-hAppendList (HCons x l) l' = HCons x (hAppend l l')
+
+class HAppendList l1 l2 where
+  -- | the same as 'hAppend'
+  hAppendList :: HList l1 -> HList l2 -> HList (HAppendListR l1 l2)
+
+instance HAppendList '[] l2 where
+  hAppendList HNil l = l
+
+instance HAppendList l l' => HAppendList (x ': l) l' where
+  hAppendList (HCons x l) l' = HCons x (hAppendList l l')
 
 -- --------------------------------------------------------------------------
 
@@ -230,17 +310,23 @@ we had to program the algorithm twice, at the term and the type levels.
 -- * Reversing HLists
 
 -- Append the reversed l1 to l2
-type family HRevApp (l1 :: [k]) (l2 :: [k]) :: [k]
-type instance HRevApp '[] l = l
-type instance HRevApp (e ': l) l' = HRevApp l (e ': l')
+type family HRevAppR (l1 :: [k]) (l2 :: [k]) :: [k]
+type instance HRevAppR '[] l = l
+type instance HRevAppR (e ': l) l' = HRevAppR l (e ': l')
 
-hRevApp :: HList l1 -> HList l2 -> HList (HRevApp l1 l2)
-hRevApp HNil l = l
-hRevApp (HCons x l) l' = hRevApp l (HCons x l')
+
+class HRevApp l1 l2 where
+    hRevApp :: HList l1 -> HList l2 -> HList (HRevAppR l1 l2)
+
+instance HRevApp '[] l2 where
+    hRevApp _ l = l
+
+instance HRevApp l (x ': l') => HRevApp (x ': l) l' where
+    hRevApp (HCons x l) l' = hRevApp l (HCons x l')
+
+
 
 hReverse l = hRevApp l HNil
-
-
 
 -- --------------------------------------------------------------------------
 
@@ -270,7 +356,7 @@ hBuild =  hBuild' HNil
 class HBuild' l r where
     hBuild' :: HList l -> r
 
-instance (l' ~ HRevApp l '[])
+instance (l' ~ HRevAppR l '[], HRevApp l '[])
       => HBuild' l (HList l') where
   hBuild' l = hReverse l
 
@@ -292,10 +378,10 @@ The classes above allow the third (shortest) way to make a list
 H[True]
 
 >>> let x = hBuild True 'a' in hEnd x
-H[True, 'a']
+H[True,'a']
 
 >>> let x = hBuild True 'a' "ok" in hEnd x
-H[True, 'a', "ok"]
+H[True,'a',"ok"]
 
 hBuild can also produce a Record, such that
 
@@ -430,13 +516,13 @@ Sometimes the result type can fix the type of the
 first argument:
 
 >>> hReplicate Proxy () :: HList '[ (), (), () ]
-H[(), (), ()]
+H[(),(),()]
 
 However, with HReplicate all elements must have the same type, so it may be
 easier to use 'HList2List':
 
 >>> list2HList (repeat 3) :: Maybe (HList [Int, Int, Int])
-Just H[3, 3, 3]
+Just H[3,3,3]
 
 -}
 class (HLength (HReplicateR n e) ~ n) =>
@@ -466,10 +552,10 @@ lists
 applyAB f :: Num b => Integer -> b
 
 >>> hReplicateF two f 3
-H[3, 3]
+H[3,3]
 
 >>> hReplicateF Proxy f 3 :: HList [Int, Double, Integer]
-H[3, 3.0, 3]
+H[3,3.0,3]
 
 -}
 class (n ~ HLength r) => HReplicateF (n :: HNat) f z r where
@@ -498,14 +584,14 @@ applyAB f :: a -> Maybe a
 
 f is applied to different types:
 >>> hIterate three f ()
-H[(), Just (), Just (Just ())]
+H[(),Just (),Just (Just ())]
 
 It is also possible to specify the length later on,
 as done with Prelude.'iterate'
 
 >>> let take3 x | _ <- hLength x `asTypeOf` three = x
 >>> take3 $ hIterate Proxy f ()
-H[(), Just (), Just (Just ())]
+H[(),Just (),Just (Just ())]
 
 -}
 class (HLength r ~ n) => HIterate n f z r where
@@ -543,8 +629,8 @@ instance HConcat '[] where
     type HConcatR '[] = '[]
     hConcat _ = HNil
 
-instance (x ~ HList t, HConcat xs) => HConcat (x ': xs) where
-    type HConcatR (x ': xs) = HAppendList (UnHList x) (HConcatR xs)
+instance (x ~ HList t, HConcat xs, HAppendList t (HConcatR xs)) => HConcat (x ': xs) where
+    type HConcatR (x ': xs) = HAppendListR (UnHList x) (HConcatR xs)
     hConcat (x `HCons` xs) = x `hAppendList` hConcat xs
 
 
@@ -736,16 +822,16 @@ class (Applicative m, SameLength a b) => HSequence m a b | a -> b, m b -> a wher
 [@Maybe@]
 
 >>> hSequence $ Just (1 :: Integer) `HCons` (Just 'c') `HCons` HNil
-Just H[1, 'c']
+Just H[1,'c']
 
 >>> hSequence $  return 1 `HCons` Just  'c' `HCons` HNil
-Just H[1, 'c']
+Just H[1,'c']
 
 
 [@List@]
 
 >>> hSequence $ [1] `HCons` ['c'] `HCons` HNil
-[H[1, 'c']]
+[H[1,'c']]
 
 
 -}
@@ -972,15 +1058,19 @@ instance HTIntersect t l1 l2
 class HList2List l e | l -> e
  where
   hList2List :: HList l -> [e]
-  list2HList :: [e] -> Maybe (HList l)
+  list2HListSuffix :: [e] -> Maybe (HList l, [e])
+
+
+list2HList :: HList2List l e => [e] -> Maybe (HList l)
+list2HList = fmap fst . list2HListSuffix
+
 
 instance HList2List '[e] e
  where
   hList2List (HCons e HNil) = [e]
-  hList2List _ = error "ghc bug"
 
-  list2HList (e : _) = Just (HCons e HNil)
-  list2HList [] = Nothing
+  list2HListSuffix (e : es) = Just (HCons e HNil, es)
+  list2HListSuffix [] = Nothing
 
 
 instance HList2List (e' ': l) e
@@ -988,14 +1078,14 @@ instance HList2List (e' ': l) e
  where
   hList2List (HCons e l) = e:hList2List l
 
-  list2HList (e : es) = HCons e <$> list2HList es
-  list2HList [] = Nothing
+  list2HListSuffix (e : es) = (\(hl,rest) -> (HCons e hl, rest))
+                                  <$> list2HListSuffix es
+  list2HListSuffix [] = Nothing
 
-{- | @Prism [s] [t] (HList s) (HList t)@
-
-calls 'error' if @[b]@ contains too few elements
--}
-listAsHList x = prism hList2List (maybe (Left []) Right . list2HList) x
+-- | @Prism [s] [t] (HList s) (HList t)@
+listAsHList x = prism hList2List (\l -> case list2HListSuffix l of
+                                 Just (hl,[])  -> Right hl
+                                 _ -> Left []) x
 
 -- | @Prism' [a] (HList s)@
 --
@@ -1010,10 +1100,10 @@ listAsHList' x = simple (listAsHList (simple x))
 -- | the same as @map Just@
 --
 -- >>> toHJust (2 .*. 'a' .*. HNil)
--- H[HJust 2, HJust 'a']
+-- H[HJust 2,HJust 'a']
 --
 -- >>> toHJust2 (2 .*. 'a' .*. HNil)
--- H[HJust 2, HJust 'a']
+-- H[HJust 2,HJust 'a']
 
 class FromHJustR (ToHJustR l) ~ l => ToHJust l
  where
@@ -1109,7 +1199,7 @@ hFlag l = hAddTag hTrue l
 --
 -- >>> let (.=.) :: p x -> y -> Tagged x y; _ .=. y = Tagged y
 -- >>> hSplit $ hTrue .=. 2 .*. hTrue .=. 3 .*. hFalse .=. 1 .*. HNil
--- (H[2, 3],H[1])
+-- (H[2,3],H[1])
 --
 -- it might make more sense to instead have @LVPair Bool e@
 -- instead of @(e, Proxy Bool)@ since the former has the same
@@ -1192,7 +1282,7 @@ setup
 If a length is explicitly provided, the resulting lists are inferred
 
 >>> hSplitAt two xsys
-(H[1, 2],H[3, 4])
+(H[1,2],H[3,4])
 
 >>> let sameLength_ :: SameLength a b => r a -> r b -> r a; sameLength_ = const
 >>> let len2 x = x `sameLength_` HCons () (HCons () HNil)
@@ -1201,7 +1291,7 @@ If the first chunk of the list (a) has to be a certain length, the type of the
 Proxy argument can be inferred.
 
 >>> case hSplitAt Proxy xsys of (a,b) -> (len2 a, b)
-(H[1, 2],H[3, 4])
+(H[1,2],H[3,4])
 
 -}
 class (n ~ HLength xs)
@@ -1213,8 +1303,10 @@ class (n ~ HLength xs)
 
 
 instance (HSplitAt1 '[] n xsys xsRev ys,
-          xsys ~ HRevApp xsRev ys,
-          HRevApp xsRev '[] ~ xs,
+          xsys ~ HRevAppR xsRev ys,
+          HRevApp xsRev ys,
+          HRevApp xsRev '[],
+          HRevAppR xsRev '[] ~ xs,
           HLength xs ~ n) =>
     HSplitAt n xsys xs ys where
       hSplitAt n xsys = case hSplitAt1 HNil n xsys of
@@ -1250,27 +1342,22 @@ instance HTuple '[] () where
 
 instance HTuple '[a,b] (a,b) where
     hToTuple (a `HCons` b `HCons` HNil) = (a,b)
-    hToTuple _ = error "HTuple impossible"
     hFromTuple (a,b) = (a `HCons` b `HCons` HNil)
 
 instance HTuple '[a,b,c] (a,b,c) where
     hToTuple (a `HCons` b `HCons` c `HCons` HNil) = (a,b,c)
-    hToTuple _ = error "HTuple impossible"
     hFromTuple (a,b,c) = (a `HCons` b `HCons` c `HCons` HNil)
 
 instance HTuple '[a,b,c,d] (a,b,c,d) where
     hToTuple (a `HCons` b `HCons` c `HCons` d `HCons` HNil) = (a,b,c,d)
-    hToTuple _ = error "HTuple impossible"
     hFromTuple (a,b,c,d) = (a `HCons` b `HCons` c `HCons` d `HCons` HNil)
 
 instance HTuple '[a,b,c,d,e] (a,b,c,d,e) where
     hToTuple (a `HCons` b `HCons` c `HCons` d `HCons` e `HCons` HNil) = (a,b,c,d,e)
-    hToTuple _ = error "HTuple impossible"
     hFromTuple (a,b,c,d,e) = (a `HCons` b `HCons` c `HCons` d `HCons` e `HCons` HNil)
 
 instance HTuple '[a,b,c,d,e,f] (a,b,c,d,e,f) where
     hToTuple (a `HCons` b `HCons` c `HCons` d `HCons` e `HCons` f `HCons` HNil) = (a,b,c,d,e,f)
-    hToTuple _ = error "HTuple impossible"
     hFromTuple (a,b,c,d,e,f) = (a `HCons` b `HCons` c `HCons` d `HCons` e `HCons` f `HCons` HNil)
 
 
@@ -1386,8 +1473,9 @@ class HSpanEqBy (f :: t) (x :: *) (y :: [*]) (fst :: [*]) (snd :: [*])
   hSpanEqBy :: Proxy f -> x -> HList y -> (HList fst, HList snd)
 
 instance (HSpanEqBy1 f x y revFst snd,
-          HRevApp revFst snd ~ y,
-          HRevApp revFst '[] ~ fst)
+          HRevApp revFst '[], HRevApp revFst snd,
+          HRevAppR revFst snd ~ y,
+          HRevAppR revFst '[] ~ fst)
     => HSpanEqBy f x y fst snd where
   hSpanEqBy f x y =  case hSpanEqBy1 f x y of
                       (revFst, second) -> (hReverse revFst, second)
@@ -1422,43 +1510,54 @@ instance HSpanEqBy2 False f x y ys '[] (y ': ys) where
 
 -- $note see alternative implementations in "Data.HList.HZip"
 
-class HZip x y l | x y -> l, l -> x y where
-  hZip   :: HList x -> HList y -> HList l
-  hUnzip :: HList l -> (HList x, HList y)
 
-instance HZip '[] '[] '[] where
-  hZip _ _ = HNil
-  hUnzip _ = (HNil, HNil)
+class SameLengths [x,y,xy] => HZip (r :: [*] -> *) x y xy
+        | x y -> xy, xy -> x y where
+  hZip :: r x -> r y -> r xy
+  hUnzip :: r xy -> (r x, r y)
 
-instance ((x,y)~z, HZip xs ys zs) => HZip (x ': xs) (y ': ys) (z ': zs) where
-  hZip (HCons x xs) (HCons y ys) = (x,y) `HCons` hZip xs ys
-  hUnzip (HCons ~(x,y) zs) = let ~(xs,ys) = hUnzip zs in (x `HCons` xs, y `HCons` ys)
+instance (SameLengths [x,y,xy], HZipList x y xy) => HZip HList x y xy where
+  hZip = hZipList
+  hUnzip = hUnzipList
+
+
+class HZipList x y l | x y -> l, l -> x y where
+  hZipList   :: HList x -> HList y -> HList l
+  hUnzipList :: HList l -> (HList x, HList y)
+
+instance HZipList '[] '[] '[] where
+  hZipList _ _ = HNil
+  hUnzipList _ = (HNil, HNil)
+
+instance ((x,y)~z, HZipList xs ys zs) => HZipList (x ': xs) (y ': ys) (z ': zs) where
+  hZipList (HCons x xs) (HCons y ys) = (x,y) `HCons` hZipList xs ys
+  hUnzipList (HCons ~(x,y) zs) = let ~(xs,ys) = hUnzipList zs in (x `HCons` xs, y `HCons` ys)
 
 -- * Monoid instance
 
 {- | Analogous to the Monoid instance for tuples
 
 >>> mempty :: HList '[(), All, [Int]]
-H[(), All {getAll = True}, []]
+H[(),All {getAll = True},[]]
 
 >>> mappend (hBuild "a") (hBuild "b") :: HList '[String]
 H["ab"]
 
 -}
 instance
-   (ConvHList a,
-    HMapCxt HList ConstMempty a a,
-    HZip a a aa,
+   (HProxies a,
+    HMapCxt HList ConstMempty (AddProxy a) a,
+    HZip HList a a aa,
     HMapCxt HList UncurryMappend aa a) => Monoid (HList a) where
   mempty = hMap ConstMempty
-            $ unPrime (error "Data.HList.Record.hmempty" :: Prime a)
+            $ (hProxies :: HList (AddProxy a))
   mappend a b = hMap UncurryMappend $ hZip a b
 
 
 -- ** helper functions
 
 data ConstMempty = ConstMempty
-instance (x ~ y, Monoid y) => ApplyAB ConstMempty x y where
+instance (x ~ Proxy y, Monoid y) => ApplyAB ConstMempty x y where
     applyAB _ _ = mempty
 
 data UncurryMappend = UncurryMappend

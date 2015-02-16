@@ -52,6 +52,7 @@ module Data.HList.Record
     labelsOf,
 
     SameLabels(sameLabels),
+    asLabelsOf,
 
     -- *** Getting Values
     RecordValues(..),
@@ -165,6 +166,12 @@ module Data.HList.Record
     ReadComponent,
     HMapTaggedFn,
     HLensCxt,
+
+    -- ** zip
+    -- | use the more general 'HZip' class instead
+    HZipRecord,
+    -- *** alternative implementation
+    hZipRecord2, hUnzipRecord2
 ) where
 
 
@@ -182,6 +189,9 @@ import Text.ParserCombinators.ReadP
 import GHC.TypeLits
 
 import LensDefs
+
+import GHC.Exts (Constraint)
+import Data.Array (Ix)
 
 -- imports for doctest/examples
 import Data.HList.Label6 ()
@@ -233,7 +243,10 @@ l .=. v = newLVPair l v
 newtype Record (r :: [*]) = Record (HList r)
 
 deriving instance Monoid (HList r) => Monoid (Record r)
-deriving instance (Eq (Prime r),ConvHList r) => Eq (Record r)
+deriving instance (Eq (HList r)) => Eq (Record r)
+deriving instance (Ord (HList r)) => Ord (Record r)
+deriving instance (Ix (HList r)) => Ix (Record r)
+deriving instance (Bounded (HList r)) => Bounded (Record r)
 
 
 -- | Build a record
@@ -460,7 +473,7 @@ data ReadComponent = ReadComponent Bool -- ^ include comma?
 instance (Read v, ShowLabel l,
           x ~ Tagged l v,
           ReadP x ~ y) =>
-  ApplyAB ReadComponent x y where
+  ApplyAB ReadComponent (Proxy x) y where
     applyAB (ReadComponent comma) _ = do
       when comma (() <$ string ",")
       _ <- string (showLabel (Label :: Label l))
@@ -469,9 +482,9 @@ instance (Read v, ShowLabel l,
       return (Tagged v)
 
 
-instance (HMapCxt HList ReadComponent rs bs,
-          ApplyAB ReadComponent r readP_r,
-          ConvHList rs,
+instance (HMapCxt HList ReadComponent (AddProxy rs) bs,
+          ApplyAB ReadComponent (Proxy r) readP_r,
+          HProxies rs,
           HSequence ReadP (readP_r ': bs) (r ': rs)) => Read (Record (r ': rs)) where
     readsPrec _ = readP_to_S $ do
         _ <- string "Record{"
@@ -480,15 +493,15 @@ instance (HMapCxt HList ReadComponent rs bs,
         return (Record content)
 
       where
-        zs :: HList rs
-        zs = unPrime (error "Data.HList.Record reads")
+        rs :: HList (AddProxy rs)
+        rs = hProxies
 
         readP_r :: readP_r
         readP_r = applyAB
                       (ReadComponent False)
-                      (error "Data.HList.Record reads z" :: r)
+                      (Proxy :: Proxy r)
 
-        parsers = readP_r `HCons` (hMap (ReadComponent True) zs :: HList bs)
+        parsers = readP_r `HCons` (hMap (ReadComponent True) rs :: HList bs)
 
 
 
@@ -522,11 +535,11 @@ instance (HRLabelSet (t ': r),
 
 -- Concatenation
 
-instance (HRLabelSet (HAppendList r1 r2), HAppend (HList r1) (HList r2))
+instance (HRLabelSet (HAppendListR r1 r2), HAppend (HList r1) (HList r2))
     => HAppend (Record r1) (Record r2) where
   hAppend (Record r) (Record r') = mkRecord (hAppend r r')
 
-type instance HAppendR (Record r1) (Record r2) = Record (HAppendList r1 r2)
+type instance HAppendR (Record r1) (Record r2) = Record (HAppendListR r1 r2)
 -- --------------------------------------------------------------------------
 
 -- Lookup
@@ -834,9 +847,9 @@ class  HLeftUnion r r' r'' | r r' -> r''
  where hLeftUnion :: Record r -> Record r' -> Record r''
 
 instance (HDeleteLabels (LabelsOf l) r r',
-         HAppendList l r' ~ lr) => HLeftUnion l r lr
- where  hLeftUnion (Record l) r = case hDeleteLabels (labelsOf l) r of
-                                    Record r' -> Record (hAppendList l r')
+         HAppend (Record l) (Record r'),
+         HAppendR (Record l) (Record r') ~ (Record lr)) => HLeftUnion l r lr
+ where  hLeftUnion l r = l `hAppend` hDeleteLabels (labelsOf l) r
 
 
 infixl 1 .<++.
@@ -1093,10 +1106,68 @@ instance HMapAux HList (HFmap f) x y =>
 -- | This instance allows creating Record with
 --
 -- @hBuild 3 'a' :: Record '[Tagged "x" Int, Tagged "y" Char]@
-instance (HRevApp l '[] ~ lRev,
+instance (HRevAppR l '[] ~ lRev,
+          HRevApp l '[],
          HMapTaggedFn lRev l') => HBuild' l (Record l') where
   hBuild' l = hMapTaggedFn (hReverse l)
 
 -- | serves the same purpose as 'hEnd'
 hEndR :: Record a -> Record a
 hEndR = id
+
+
+-- --------------------------------------------------------------------------
+
+{- |
+
+>>> let x :: Record '[Tagged "x" Int]; x = undefined
+>>> let y :: Record '[Tagged "x" Char]; y = undefined
+>>> :t hZip x y
+hZip x y :: Record '[Tagged "x" (Int, Char)]
+
+-}
+instance (HZipRecord x y xy, SameLengths [x,y,xy])
+      => HZip Record x y xy where
+    hZip = hZipRecord
+    hUnzip = hUnzipRecord
+
+
+class HZipRecord x y xy | x y -> xy, xy -> x y where
+    hZipRecord :: Record x -> Record y -> Record xy
+    hUnzipRecord :: Record xy -> (Record x,Record y)
+
+
+instance HZipRecord '[] '[] '[] where
+    hZipRecord _ _ = emptyRecord
+    hUnzipRecord _ = (emptyRecord, emptyRecord)
+
+instance HZipRecord as bs abss
+       => HZipRecord (Tagged x a ': as) (Tagged x b ': bs) (Tagged x (a,b) ': abss) where
+    hZipRecord (Record (Tagged a `HCons` as)) (Record (Tagged b `HCons` bs)) =
+        let Record abss = hZipRecord (Record as) (Record bs)
+        in Record (Tagged (a,b) `HCons` abss)
+    hUnzipRecord (Record (Tagged (a,b) `HCons` abss)) =
+        let (Record as, Record bs) = hUnzipRecord (Record abss)
+        in (Record (Tagged a `HCons` as), Record (Tagged b `HCons` bs))
+
+
+-- | instead of explicit recursion above, we could define HZipRecord in
+-- terms of 'HZipList'. While all types are inferred, this implementation
+-- is probably slower, so explicit recursion is used in the 'HZip' 'Record'
+-- instance.
+hZipRecord2 x y = hMapTaggedFn (hZipList (recordValues x) (recordValues y))
+        `asLabelsOf` x `asLabelsOf` y
+
+hUnzipRecord2 xy = let (x,y) = hUnzipList (recordValues xy)
+                 in (hMapTaggedFn x `asLabelsOf` xy, hMapTaggedFn y `asLabelsOf` xy)
+
+
+{- | similar to 'asTypeOf':
+
+>>> let s = Proxy :: Proxy '[Tagged "x" (), Tagged "y" Char]
+>>> let f r = () where _ = r `asLabelsOf` s 
+>>> :t f
+f :: r '[Tagged "x" a, Tagged "y" a1] -> ()
+-}
+asLabelsOf :: (SameLabels x y, SameLength x y) => r x -> s y -> r x
+asLabelsOf = const

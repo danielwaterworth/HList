@@ -16,4 +16,4 @@ Record{x=(),y=Record{y=321,x=123}}
 Record{x="hi",y=()}
 Record{z=(),x="hi()",y=Record{y=321,x=123}}
 hi
-TIPH["hi", Record{y=321,x=123}]
+TIPH["hi",Record{y=321,x=123}]

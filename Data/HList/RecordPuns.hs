@@ -147,19 +147,15 @@ mp (C as) =
     in viewP (extracts (map fst extractPats)) tupleP
 
 
--- use of prime here (non GADT version) because it is better for type
--- inference. See commentary surrounding HCons' in Data.HList.HList
 mp (D as) = conP 'Record
-  [viewP (varE 'prime) -- nicer to have [p| prime -> $( ... ) |],
-                       -- but ghc-7.6 rejects that over types
-   (foldr ( \ (n,p) xs -> conP 'HCons'
+  [(foldr ( \ (n,p) xs -> conP 'HCons
                 [ let ty
                           | n == "_"  = [| undefined :: Tagged anyLabel t |]
                           | otherwise = [| undefined :: Tagged $(litT (strTyLit n)) t |]
                   in viewP [| \x -> x `asTypeOf` $ty |]
                       (conP 'Tagged [p]),
                 xs])
-          (conP 'HNil' [])
+          (conP 'HNil [])
           (mps as))]
 mp a = do
     reportWarning $ "Data.HList.RecordPuns.mp implicit {} added around:" ++ show a

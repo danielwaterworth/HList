@@ -1,6 +1,36 @@
 {- | Description: records where elements are stored in unboxed arrays
 
+XXX works with ghc-7.8 and 7.6. Broken with GHC-7.10 RC1 on account of ghc
+bug #10009
+
 The public interface is exported from <Data-HList-CommonMain.html#t:RecordU RecordU>
+
+Export list (from CommonMain.hs)
+
+@
+ -- ** Unpacked / Unboxed Records
+ , RecordU
+ , RecordUS
+ , SortForRecordUS(..)
+ , HUpdateMany(..)
+ , hMapRU
+
+ -- *** internals for types
+ , HFindMany, HNats2Integrals(..)
+
+ , RecordUSCxt
+ , HLookupByHNatUS, HLookupByHNatUS1
+ , HSubtract, HMapUnboxF, UnboxF
+ , BoxF, EqTagValue, GetElemTy, ElemTyEq
+ , RecordToRecordU, RecordUToRecord
+
+
+
+ -- ** Record and RecordU
+ , unboxed, unboxed'
+ -- ** Record and RecordUS
+ , unboxedS, unboxedS'
+@
 -}
 module Data.HList.RecordU where
 
@@ -133,7 +163,8 @@ instance SortForRecordUS '[] '[] where
 
 instance (HPartitionEq EqTagValue x (x ': xs) xi xo,
           SortForRecordUS xo xo',
-          sorted ~ HAppendList xi xo') =>
+          sorted ~ HAppendListR xi xo',
+          HAppendList xi xo') =>
   SortForRecordUS (x ': xs) sorted where
   sortForRecordUS (Record xs) = Record (hAppendList xi xo')
     where

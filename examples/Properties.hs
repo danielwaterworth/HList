@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# OPTIONS_GHC -fcontext-stack=100 #-}
 {-# OPTIONS_GHC -fno-warn-deprecations #-} -- ghc-7.8 has no Typeable (x :: Symbol), so use OldTypeable
 {-# LANGUAGE QuasiQuotes #-}
@@ -117,6 +118,33 @@ main = hspec $ do
         -- selected from there
         genHL proxy = $(hlN n1) proxy
 
+    it "hConcat/hAppend" $
+        property $ do
+          x <- genHL True
+          y <- genHL True
+          return $ conjoin [hConcat (hBuild x y) == hAppend x y,
+                            hConcat (hBuild x) == x]
+
+    it "partition" $
+        property $ do
+          x <- genHL True
+          return $ conjoin
+            [hPartitionEq (Proxy :: Proxy ConstTrue) (Proxy :: Proxy ()) x `eq` (x, HNil),
+             hPartitionEq (Proxy :: Proxy ConstFalse) (Proxy :: Proxy ()) x `eq` (HNil, x)]
+
+
+    it "listAsHList/hList2List" $ do
+        property $ do
+          x <- genHL True
+          return $ conjoin [
+              review listAsHList x `eq` hList2List x,
+              review listAsHList' x `eq` hList2List x]
+
+    it "read/show" $
+        property $ do
+          xs <- genHL True
+          return $ read (show xs) == xs
+
     it "hLength/hReplicate" $
         property $ do
           xs <- genHL True
@@ -233,6 +261,14 @@ main = hspec $ do
         let (x,y) = hUnzip xy
         return $ xy `eq` hZip x y
 
+#if __GLASGOW_HASKELL__ < 710
+-- XXX doesn't work with ghc-7.10 RC1
+    it "hZip/hZip2" $ property $ do
+        x <- genHL (BoolN True :: BoolN "x")
+        y <- genHL (BoolN True :: BoolN "y")
+        return $ hZip x y `eq` hZip2 x y
+#endif
+
     it "monoid assoc" $
       property $ do
         x <- genHL (BoolN True :: BoolN "x")
@@ -295,11 +331,12 @@ main = hspec $ do
             asLs (r1,r2) = (asL r1, asL r2)
             merge xs ys = xs ++ drop (length xs) ys
             mergeSym xs ys = (merge xs ys, merge ys xs)
+            eqSorted (a,b) (c,d) = sort a === sort c .&&. sort b === sort d
         return $ conjoin [
           asL (x .<++. y) === asL x `merge` asL y,
           (x .<++. x) === x,
           (y .<++. y) === y,
-          asLs (unionSR x y) === mergeSym (asL x) (asL y),
+          asLs (unionSR x y) `eqSorted` mergeSym (asL x) (asL y),
           (x `unionSR` x) === (x,x),
           (y `unionSR` y) === (y,y)]
 
@@ -341,6 +378,51 @@ instance (bb ~ (b, b), b ~ b') => ApplyAB (BinF b') bb b where
 -- | tests for a fixed length
 hl0 = describe "0 -- length independent"  $ do
   hTuples
+
+  it "listAsHList" $ property $ do
+    (f :: Bool -> Bool) <- arbitrary
+    let bools = [True,False]
+        mapF (a `HCons` b `HCons` HNil) = f a `HCons` f b `HCons` HNil
+        len3 = id :: As (HList '[a,b,c])
+        len2 = id :: As (HList [a,b])
+        len1 = id :: As (HList '[a])
+    return $ conjoin
+      [ (bools & listAsHList %~ mapF) `eq` map f bools,
+        (bools & listAsHList' . len2 %~ hMap f ) `eq` map f bools,
+        (bools & listAsHList' . len3 %~ hMap f ) `eq` ([] :: [Bool]),
+        (bools & listAsHList' . len1 %~ hMap f ) `eq` ([] :: [Bool])]
+
+  it "read0" $ read "H[]" `shouldBe` HNil
+
+  it "Fun" $ property $ do
+    let plusF = Fun (+1) :: Fun Num '()
+    x :: Int <- arbitrary
+    y :: Double <- arbitrary
+    return $ hMap plusF (hBuild x y) === hEnd (hBuild (x+1) (y+1))
+
+  it "Fun 2" $ property $ do
+    let showSuccF = Fun (show . (+1)) :: Fun [Num,Show] String
+    x :: Int <- arbitrary
+    y :: Double <- arbitrary
+    return $ hMapOut showSuccF (hBuild x y) === [ show (x+1), show (y+1)]
+
+  it "Fun'" $ property $ do
+    x :: Bool <- arbitrary
+    return $ applyAB (Fun' read :: Fun' Read String) (show x) === x
+
+  it "HComp" $ property $ do
+    let f = Fun (+1) :: Fun Num '()
+        g = Fun show :: Fun Show String
+        gof = g `HComp` f
+
+    x :: Int <- arbitrary
+    y :: Double <- arbitrary
+
+    let ref = [show (x+1), show (y+1)]
+
+    return $ conjoin [
+        hMapOut gof (hBuild x y) `eq` ref,
+        hMapOut g (hMap f (hBuild x y)) `eq` ref ]
 
   it "toLabel 1" $
     case hCast (toLabel (hLens' lx)) of
@@ -562,13 +644,13 @@ hl0 = describe "0 -- length independent"  $ do
       return $ hOccurs (runIdentity (ttipM f tp)) == (runIdentity (f a b c) :: BoolN "a")
 
   it "Show/Read instances" $ do
-    show (hEnd (hBuild 1 2 3)) `shouldBe` "H[1, 2, 3]"
+    show (hEnd (hBuild 1 2 3)) `shouldBe` "H[1,2,3]"
 
     let r = lx .=. 'x' .*. ly .=. "y" .*. emptyRecord
     show r `shouldBe` "Record{x='x',y=\"y\"}"
     read (show r) `shouldBe` r
 
-    show (r ^. unlabeled . from tipHList) `shouldBe` "TIPH['x', \"y\"]"
+    show (r ^. unlabeled . from tipHList) `shouldBe` "TIPH['x',\"y\"]"
 
     v <- return $ map ($ r) [mkVariant lx 'a', mkVariant ly "ly"]
 
@@ -576,8 +658,9 @@ hl0 = describe "0 -- length independent"  $ do
     read (show v) `shouldBe` v
 
     -- XXX ticVariant needs to adjust the labels
-    -- show (map (^. from ticVariant) v) `shouldBe` "[TIC['a'], TIC[\"ly\"]]"
+    show (map (^. typeIndexed') v) `shouldBe` "[TIC{char='a'},TIC{[Char]=\"ly\"}]"
 
+{- RecordU is disabled for now
   it "unboxed" $ do
     property $ do
       (x :: Bool) <- arbitrary
@@ -606,6 +689,7 @@ hl0 = describe "0 -- length independent"  $ do
           ru .!. ly === y,
           ru .!. lz === z,
           r === ru ^. from unboxedS ]
+         -}
 
   it "monoid0" $ do
     mempty `shouldBe` HNil
@@ -750,3 +834,13 @@ instance (pn ~ Proxy n,
           y ~ HAppendR (HList a) (HList b)) => ApplyAB (HSplitAtAppend l) pn y where
     applyAB (HSplitAtAppend l) n = case hSplitAt n l of
                                      (a,b) -> hAppend a b
+
+
+
+data ConstTrue
+instance HEqByFn ConstTrue
+instance HEqBy ConstTrue x y True
+
+data ConstFalse
+instance HEqByFn ConstFalse
+instance HEqBy ConstFalse x y False
