@@ -1,5 +1,9 @@
-Record{x=5,y=True,z=False}
-Record{x=5,y=False,z=True}
-Record{x=6,y=True,z=False}
-Record{x=1,y=True,z=True}
-Record{x=5,y=True,z=False}
+Record{x=5,y=True,z=V{optC=1.0},tic=TIC{char='x'}}
+V{optC=2.0}
+V{optC=1.0}
+Record{x=5,y=False,z=V{optC=1.0},tic=TIC{char='x'}}
+Record{x=6,y=True,z=V{optC=1.0},tic=TIC{char='x'}}
+Record{x=1,y=True,z=V{optC=2.5},tic=TIC{char='b'}}
+Cmdargs
+E {a = 4, b = False}
+Record{x=4,y=False}

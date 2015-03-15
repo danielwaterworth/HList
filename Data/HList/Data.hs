@@ -65,8 +65,12 @@ module Data.HList.Data (
 import Data.HList.FakePrelude
 import Data.HList.HList
 import Data.HList.Record
+import Data.HList.Variant
 import GHC.TypeLits
 import Data.Data
+import Data.HList.TIC
+import Data.HList.TIP
+
 
 #if OLD_TYPEABLE
 import Data.List
@@ -80,7 +84,18 @@ deriving instance Data (HList '[])
 deriving instance
     (Data x,
      Data (HList xs),
-     TypeablePolyK (x ': xs)) => Data (HList (x ': xs))
+     TypeablePolyK (x ': xs), -- for new typeable
+     Typeable (HList (x ': xs) -- for old typeable
+     )) => Data (HList (x ': xs))
+
+deriving instance
+    (TypeablePolyK xs,
+     Typeable (HList xs),
+     Data (HList xs)) => Data (TIP xs)
+deriving instance
+    (TypeablePolyK xs,
+     Typeable (Variant xs),
+     Data (Variant xs)) => Data (TIC xs)
 
 -- | this data type only exists to have Data instance
 newtype HListFlat a = HListFlat (HList a)
@@ -210,6 +225,9 @@ data C a
 deriving instance Typeable Record
 deriving instance Typeable HList
 deriving instance Typeable HListFlat
+deriving instance Typeable Variant
+deriving instance Typeable TIC
+deriving instance Typeable TIP
 
 -- orphans
 deriving instance Typeable 'HZero
@@ -228,6 +246,18 @@ instance TypeRepsList (Record xs) => Typeable (HList xs) where
 instance (TypeRepsList (Record xs)) => Typeable (Record xs) where
   typeOf x = mkTyConApp (mkTyCon3 "HList" "Data.HList.Record" "Record")
                 [ tyConList (typeRepsList x) ]
+
+instance TypeRepsList (Record xs) => Typeable (Variant xs) where
+  typeOf _ = mkTyConApp (mkTyCon3 "HList" "Data.HList.Variant" "Variant")
+                [ tyConList (typeRepsList (error "Data.HList.Data:Typeable Variant" :: Record xs)) ]
+
+instance Typeable (Variant xs) => Typeable (TIC xs) where
+  typeOf (TIC xs) = mkTyConApp (mkTyCon3 "HList" "Data.HList.TIC" "TIC")
+                      [typeOf xs]
+
+instance Typeable (HList xs) => Typeable (TIP xs) where
+  typeOf (TIP xs) = mkTyConApp (mkTyCon3 "HList" "Data.HList.TIP" "TIP")
+                      [typeOf xs]
 
 instance ShowLabel sy => Typeable1 (Tagged sy) where
   typeOf1 _ = mkTyConApp

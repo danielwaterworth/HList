@@ -36,8 +36,16 @@
 module Data.HList.Label3 where
 
 import Data.HList.FakePrelude
+import Data.HList.HListPrelude
+import GHC.TypeLits
 import Data.Typeable
 
+{- $setup
+
+>>> let label3 = Label :: Label (Lbl HZero () ())
+>>> let label6 = Label :: Label "6"
+
+-}
 
 data Lbl (x :: HNat) (ns :: *) (desc :: *)  -- labels are exclusively type-level entities
 #if !OLD_TYPEABLE
@@ -49,7 +57,11 @@ instance (ShowLabel x) => Typeable2 (Lbl x) where
       []]
 #endif
 
--- Public constructors for labels
+type instance ZipTagged (Lbl ix ns n ': ts) (v ': vs) = Tagged (Lbl ix ns n) v ': ZipTagged ts vs
+
+instance (Label t ~ Label (Lbl ix ns n)) => SameLabels (Label t) (Lbl ix ns n)
+
+-- * Public constructors for labels
 
 -- | Construct the first label
 firstLabel :: ns -> desc -> Label (Lbl HZero ns desc)
@@ -84,3 +96,59 @@ instance Show desc => Show (Label (Lbl x ns desc))
       where getd :: Label (Lbl x ns desc) -> desc -- for the sake of Hugs
             getd = error "Data.HList.Label3 desc"
 
+
+
+{- |
+
+If possible, Label is left off:
+
+>>> let q = label3 .*. label3 .*. emptyProxy
+>>> :t q
+q :: Proxy '[Lbl 'HZero () (), Lbl 'HZero () ()]
+
+-}
+instance HExtend (Label (Lbl n ns desc)) (Proxy (Lbl n' ns' desc' ': xs)) where
+    type HExtendR (Label (Lbl n ns desc)) (Proxy (Lbl n' ns' desc' ': xs))
+                = Proxy (Lbl n ns desc ': Lbl n' ns' desc' ': xs)
+    (.*.) _ _ = Proxy
+
+{- | Mixing two label kinds means we have to include 'Label':
+
+>>> let r = label3 .*. label6 .*. emptyProxy
+>>> :t r
+r :: Proxy '[Label (Lbl 'HZero () ()), Label "6"]
+
+-}
+instance HExtend (Label (Lbl n ns desc)) (Proxy (x ': xs :: [Symbol])) where
+    type HExtendR (Label (Lbl n ns desc)) (Proxy (x ': xs))
+              = Proxy (Label (Lbl n ns desc) ': MapLabel (x ': xs))
+    (.*.) _ _ = Proxy
+
+{- | Mixing two label kinds means we have to include 'Label':
+
+>>> let s = label6 .*. label3 .*. emptyProxy
+>>> :t s
+s :: Proxy '[Label "6", Label (Lbl 'HZero () ())]
+
+With GHC>=7.8, this instance also works for Label5 labels.
+
+-}
+instance HExtend (Label (y :: Symbol)) (Proxy ((x :: *) ': xs)) where
+    type HExtendR (Label (y :: Symbol)) (Proxy (x ': xs))
+          = Proxy (Label y ':  (MapLabel (x ': xs)))
+    (.*.) _ _ = Proxy
+
+-- | similar to Data.HList.Record.Labels1, but avoids producing Label (Label x)
+type family MapLabel (xs :: [k]) :: [*]
+type instance MapLabel '[] = '[]
+#if NO_CLOSED_TF
+-- if we can't have any overlap in the TF (ghc-7.6), cover the Label3/Label6 case
+type instance MapLabel ((x :: Symbol) ': xs) = Label x ': MapLabel xs
+type instance MapLabel (Lbl n ns desc ': xs) = Label (Lbl n ns desc) ': MapLabel xs
+type instance MapLabel (Label x ': xs) = Label x ': MapLabel xs
+#else
+type instance MapLabel (x ': xs) = AddLabel x ': MapLabel xs
+type family AddLabel (x :: k) :: * where
+  AddLabel (Label x) = Label x
+  AddLabel x = Label x
+#endif

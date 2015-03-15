@@ -1,4 +1,3 @@
-{-# LANGUAGE CPP #-}
 {- |
 
 Description : labels which are also lenses (or prisms)
@@ -23,6 +22,10 @@ module Data.HList.Labelable
      LabeledOptic,
      (.==.),
 
+
+     -- * multiple lookups
+     Projected(..), projected',
+
     -- * comparison with 'hLens'
     -- $comparisonWithhLensFunction
 
@@ -41,12 +44,15 @@ module Data.HList.Labelable
     ) where
 
 
+import Data.HList.RecordPuns
+import Data.HList.HListPrelude
 import Data.HList.FakePrelude
 import Data.HList.HList
 import Data.HList.Record
 import Data.HList.Variant
 import Data.HList.TIP
 import Data.HList.TIC
+import Data.HList.Label3
 
 import Control.Monad.Identity
 import GHC.TypeLits
@@ -210,3 +216,110 @@ but that is a bit beside the point being made here.
 The same points apply to the use of 'hPrism' over 'hLens''.
 
 -}
+
+{- | Sometimes it may be more convenient to operate on a record/variant
+that only contains the fields of interest. 'projected' can then be used
+to apply that function to a record that contains additional elements.
+
+
+>>> :set -XViewPatterns
+>>> let f [pun| (x y) |] = case x+y of z -> [pun| z |]
+>>> :t f
+f :: Num v =>
+     Record '[Tagged "x" v, Tagged "y" v] -> Record '[Tagged "z" v]
+
+>>> let r = (let x = 1; y = 2; z = () in [pun| x y z |])
+>>> r
+Record{x=1,y=2,z=()}
+
+>>> r & sameLabels . projected %~ f
+Record{x=1,y=2,z=3}
+
+
+
+
+-}
+class Projected r s t a b where
+    projected :: (ty ~ LabelableTy r,
+                LabeledOpticP ty p,
+                LabeledOpticF ty f) => r a `p` f (r b) -> r s `p` f (r t)
+
+-- | @Lens rs rt ra rb@
+--
+-- where @rs ~ Record s, rt ~ Record t, ra ~ Record a, rb ~ Record b@
+instance (-- for Record s -> Record a
+          H2ProjectByLabels (LabelsOf a) s a_ _s_minus_a,
+          HRLabelSet a_, HRLabelSet a,
+          HRearrange (LabelsOf a) a_ a,
+
+          HLeftUnion b s bs, HRLabelSet bs,
+          HRearrange (LabelsOf t) bs t, HRLabelSet t
+        ) => Projected Record s t a b where
+    projected f s = (\b -> hRearrange' (b .<++. s)) <$> f (hProjectByLabels' s :: Record a)
+
+-- | @Prism (Variant s) (Variant t) (Variant a) (Variant b)@
+instance (ExtendsVariant b t,
+          ProjectVariant s a,
+          ProjectExtendVariant s t,
+
+          HLeftUnion b s bs, HRLabelSet bs,
+          HRearrange (LabelsOf t) bs t)
+      => Projected Variant s t a b where
+    projected = prism extendsVariant
+            (\s -> case projectVariant s of
+                    Just a -> Right a
+                    Nothing | Just t <- projectExtendVariant s -> Left t
+                    _ -> error "Data.HList.Labelable.projected impossible"
+                    -- projectExtendVariant gives Nothing when the element of
+                    -- `t` that is actually stored in the variant comes
+                    -- from the `b`. But in that case the projectVariant
+                    -- above must have been Just
+              )
+
+
+{- | @Lens' (Record s) (Record a)@
+
+@Prism' (Variant s) (Variant a)@
+-}
+projected' s = simple (projected (simple s))
+
+
+{- | Together with the instance below, this allows writing
+
+@
+'makeLabelable' "x y z"
+p = x .*. y .*. z .*. 'emptyProxy'
+@
+
+Or with HListPP
+
+@
+p = `x .*. `y .*. `z .*. emptyProxy
+@
+
+instead of
+
+> p = Proxy :: Proxy ["x","y","z"]
+
+-}
+instance (to ~ LabeledTo x, ToSym (to p q) x)
+       => HExtend (to p q) (Proxy ('[] :: [k])) where
+    type HExtendR (to p q) (Proxy '[]) = Proxy '[GetXFromLabeledTo to]
+    (.*.) _ _ = Proxy
+
+instance (to ~ LabeledTo x, ToSym (to p q) x)
+       => HExtend (to p q) (Proxy (x ': xs)) where
+    type HExtendR (to p q) (Proxy (x ': xs)) = Proxy (GetXFromLabeledTo to ': x ': xs)
+    (.*.) _ _ = Proxy
+
+-- | if the proxy has Data.HList.Label3."Lbl", then everything has to be
+-- wrapped in Label to make the kinds match up.
+instance (to ~ LabeledTo x, ToSym (to p q) x)
+       => HExtend (to p q) (Proxy (Lbl n ns desc ': xs)) where
+    type HExtendR (to p q) (Proxy (Lbl n ns desc ': xs))
+        = Proxy (Label (GetXFromLabeledTo to) ': MapLabel (Lbl n ns desc ': xs))
+    (.*.) _ _ = Proxy
+
+type family GetXFromLabeledTo (to :: * -> * -> *) :: Symbol
+type instance GetXFromLabeledTo (LabeledTo x) = x
+

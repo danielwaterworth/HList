@@ -32,7 +32,7 @@ happens to have the field names PtX.
 
 module Main where
 
-import Data.HList
+import Data.HList.CommonMain
 
 makeLabels ["px","py"]
 
@@ -47,7 +47,7 @@ data PtY; py = proxy::Proxy PtY
 -}
 
 
-accessor r f = r # f
+accessor r f = r .!. f
 
 -- 1D points
 point1 x = 
@@ -63,7 +63,7 @@ point2 x y =
 
 -- Record-polymorphic function, which illustrates record pattern-matching,
 -- with the help of generalized guards
-foo p | 0 <- p # px = "X is zero"
+foo p | 0 <- p .!. px = "X is zero"
 foo _ = "something else"
 
 test1  = foo (point1 0)     -- X is zero

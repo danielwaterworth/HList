@@ -12,6 +12,7 @@
 module Data.HList.HListPrelude where
 
 import Data.HList.FakePrelude
+import GHC.TypeLits (Symbol)
 
 
 class HExtend e l where
@@ -19,6 +20,20 @@ class HExtend e l where
   (.*.) :: e -> l -> HExtendR e l
 
 infixr 2 .*.
+
+
+-- | to keep types shorter, '.*.' used with Proxy avoids
+-- producing a @Proxy :: Proxy '[Label x,Label y,Label z]@
+-- if @Proxy :: Proxy '[x,y,z]@ is not a kind error (as it
+-- is when mixing Label6 and Label3 labels).
+instance HExtend (Label x) (Proxy '[]) where
+    type HExtendR (Label x) (Proxy '[]) = Proxy '[x]
+    (.*.) _ _ = Proxy
+
+
+-- | similar to 'emptyRecord', 'emptyTIP', emptyHList (actually called 'HNil'),
+-- except emptyProxy is the rightmost argument to '.*.'
+emptyProxy = Proxy :: Proxy '[]
 
 -- Poly-kinded
 class SubType l l'
@@ -63,5 +78,17 @@ class HDeleteMany e l l' | e l -> l' where
 
 class HDeleteAtLabel (r :: [*] -> *) (l :: k) v v' | l v -> v' where
     hDeleteAtLabel :: Label l -> r v -> r v'
+
+
+
+
+-- | 'unzip'
+class SameLengths [x,y,xy] => HUnzip (r :: [*] -> *) x y xy
+        | x y -> xy, xy -> x y where
+  hUnzip :: r xy -> (r x, r y)
+
+-- | 'zip'. Variant supports hUnzip, but not hZip ('hZipVariant' returns a Maybe)
+class HUnzip r x y xy => HZip (r :: [*] -> *) x y xy where
+  hZip :: r x -> r y -> r xy
 
 

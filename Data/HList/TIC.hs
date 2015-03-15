@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 
 {- |
    The HList library
@@ -22,6 +23,9 @@ import Data.HList.HList
 
 import Data.HList.HArray
 
+import Data.Array (Ix)
+import Data.Monoid (Monoid)
+
 import Text.ParserCombinators.ReadP
 import LensDefs
 
@@ -33,6 +37,12 @@ import LensDefs
 newtype TIC (l :: [*]) = TIC (Variant l)
 
 deriving instance Eq (Variant l) => Eq (TIC l)
+deriving instance Ord (Variant l) => Ord (TIC l)
+deriving instance Ix (Variant l) => Ix (TIC l)
+deriving instance Bounded (Variant l) => Bounded (TIC l)
+deriving instance Enum (Variant l) => Enum (TIC l)
+deriving instance Monoid (Variant l) => Monoid (TIC l)
+
 
 instance HMapAux Variant f xs ys => HMapAux TIC f xs ys where
     hMapAux f (TIC a) = TIC (hMapAux f a)

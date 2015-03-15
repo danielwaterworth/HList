@@ -9,9 +9,13 @@ module LensDefs
 import Data.Profunctor
 import Data.Profunctor.Unsafe
 import Control.Applicative
+import Control.Monad.Identity
 
 simple :: p a (f a) -> p a (f a)
 simple = id
+
+
+l %~ f = \t -> runIdentity $ l (rmap Identity f) t
 
 iso :: (Profunctor p, Functor f)
     => (s -> a) -> (b -> t)

@@ -20,6 +20,7 @@ module Data.HList.Label6 () where
 
 import Data.HList.FakePrelude
 import GHC.TypeLits
+import Data.HList.HListPrelude
 
 #if MIN_VERSION_base(4,7,0)
 instance KnownSymbol x => ShowLabel (x :: Symbol) where
@@ -30,3 +31,19 @@ instance KnownNat x => ShowLabel (x :: Nat) where
 instance SingI x => ShowLabel (x :: Symbol) where
   showLabel _ =  fromSing (sing :: Sing x)
 #endif
+
+
+
+{- |
+
+>>> let labelX = Label :: Label "x"
+>>> let labelY = Label :: Label "y"
+>>> let p = labelX .*. labelY .*. emptyProxy
+>>> :t p
+p :: Proxy '["x", "y"]
+
+-}
+instance HExtend (Label (y :: Symbol)) (Proxy (x ': xs :: [Symbol])) where
+    type HExtendR (Label y) (Proxy (x ': xs)) = Proxy (y ': x ': xs)
+    (.*.) _ _ = Proxy
+

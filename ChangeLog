@@ -1,3 +1,42 @@
+15 Mar 2015
+Add HCurry.hs.
+
+Redefine Arity such that `Arity f (HSucc HZero)` will refine the
+type of `f` to `x -> y`.
+
+SameLabels is generalized so that functions like 'asLabelsOf' do
+not need to explicitly convert a that specifies the ordering of
+labels. Additional constraints might be needed to restore the old
+behavior:
+
+> type SameLabelsOld x y = (HAllTaggedLV x, HAllTaggedLV y, SameLabels x y)
+
+Similarly HExtend instances Proxy intended for making Proxies
+used to disambiguate labels (see 'asLabelsOf' again).
+
+Add hMapOutV, zipVR, extendsVariant. Rename the previous
+splitVariant to splitVariant1, and use the name splitVariant for
+a function that splits a Variant into two Variants.
+
+Add projected to Labelable.hs which allows working on a smaller
+Record or Variant.
+
+Add HasFieldM for lookups that return a default value if the
+field is missing.
+
+Split HZip into two classes: class HUnzip r x y xy => HZip r x y xy.
+This allows instance HUnzip Variant x y xy.
+
+Add Data,Typeable,Enum,Bounded,Ord,Monoid instances for Variant and TIC
+
+Implement HRLabelSet in terms of HLabelSet, which simplifies
+inferred types that would otherwise have redundancy (HLabelSet
+(LabelsOf r), HRLabelSet r)
+
+Move definitions into FakePrelude, and split up
+examples/Properties.hs into separate modules to help with
+compilation times when adding new tests.
+
 15 Feb 2015
 Change HList to a data family (see comments in HList.hs).
 

@@ -64,6 +64,7 @@ library
                        Data.HList.Data,
                        Data.HList.FakePrelude,
                        Data.HList.HArray,
+                       Data.HList.HCurry,
                        Data.HList.HList,
                        Data.HList.HListPrelude,
                        Data.HList.HOccurs,
@@ -113,11 +114,11 @@ library
                        OverlappingInstances
 
   if impl(ghc < 7.7)
-    Cpp-options:       -DOLD_TYPEABLE
+    Cpp-options:       -DOLD_TYPEABLE -DNO_CLOSED_TF
 
   if impl(ghc >= 7.7)
     Default-Extensions: AllowAmbiguousTypes
-
+                        RoleAnnotations
 
   if impl(ghc > 7.9)
     Ghc-Options:      -fno-warn-unticked-promoted-constructors
@@ -153,7 +154,8 @@ Test-Suite properties
                  mtl,
                  QuickCheck,
                  template-haskell,
-                 array
+                 array,
+                 syb
   Main-Is:  Properties.hs
   Hs-Source-Dirs: examples
   Default-Language:    Haskell2010

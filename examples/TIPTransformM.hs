@@ -26,7 +26,8 @@
 
 module TIPTransformM where
 
-import Data.HList
+import Data.HList.CommonMain
+import Data.Typeable
 import Control.Monad.Identity
 
 -- We start with the examples

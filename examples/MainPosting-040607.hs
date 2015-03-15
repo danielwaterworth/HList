@@ -22,7 +22,8 @@ Ralf
 
 module Main where
 
-import Data.HList
+import Data.HList.CommonMain
+import Data.Typeable
 
 -- These are your two "implementations".
 

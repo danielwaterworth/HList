@@ -50,8 +50,6 @@ module Data.HList.Record
     -- *** Getting Labels
     LabelsOf,
     labelsOf,
-
-    SameLabels(sameLabels),
     asLabelsOf,
 
     -- *** Getting Values
@@ -89,7 +87,7 @@ module Data.HList.Record
 
     -- ** Lookup
     HasField(..),
-    HasField'(..),
+    HasFieldM(..),
     (.!.),
 
     -- ** Update
@@ -112,7 +110,11 @@ module Data.HList.Record
 
     -- $projection
     hProjectByLabels,
+    hProjectByLabels',
     hProjectByLabels2,
+
+    -- *** a lens for projection
+    -- $msg see "Data.HList.Labelable".'Projected'
 
     -- ** Unions
     -- *** Left
@@ -129,7 +131,7 @@ module Data.HList.Record
     hRearrange',
 
     -- *** isos using hRearrange
-    rearranged, rearranged',
+    Rearranged(rearranged), rearranged',
 
 
     -- ** Apply a function to all values
@@ -147,12 +149,16 @@ module Data.HList.Record
     -- * Unclassified
 
     -- | Probably internals, that may not be useful
+    zipTagged,
+    HasField'(..),
+    DemoteMaybe,
+    HasFieldM1(..),
     H2ProjectByLabels(h2projectByLabels),
     H2ProjectByLabels'(h2projectByLabels'),
     HLabelSet,
     HLabelSet',
     HRLabelSet,
-    HRLabelSet',
+    HAllTaggedLV,
     HRearrange(hRearrange2),
     HRearrange3(hRearrange3),
     HRearrange4(hRearrange4),
@@ -179,6 +185,8 @@ import Data.HList.FakePrelude
 import Data.HList.HListPrelude
 import Data.HList.HList
 import Data.HList.HArray
+
+import Data.HList.Label3 (MapLabel)
 
 import Data.Tagged
 import Data.Monoid
@@ -281,25 +289,6 @@ type Unlabeled x y =
        SameLength x y, SameLabels x y)
 type Unlabeled' x = Unlabeled x x
 
-class SameLabels (x :: [*]) (y :: [*]) where
-  {- | @sameLabels@ constrains the type of an optic, such that the labels
-     (@t@ in @Tagged t a@) are the same. @x@ or @y@ may have more elements
-     than the other, in which case the elements at the end
-     of the longer list do not have their labels constrained.
-
-     see also 'sameLength'
-  -}
-  sameLabels :: p (r x) (f (q y)) -> p (r x) (f (q y))
-  sameLabels = id
-
-instance SameLabels '[] '[]
-instance SameLabels '[] (x ': xs)
-instance SameLabels (x ': xs) '[]
-instance
-    (ta ~ Tagged t a,
-     tb ~ Tagged t b,
-     SameLabels x y) =>
-  SameLabels (ta ': x) (tb ': y)
 
 
 -- | @Unlabeled' x => Iso' (Record x) (HList (RecordValuesR x))@
@@ -351,22 +340,15 @@ type HMapTaggedFn l r =
 hMapTaggedFn :: HMapTaggedFn a b => HList a -> Record b
 hMapTaggedFn = Record . hMap TaggedFn
 
--- | Propery of a proper label set for a record: no duplication of labels
+-- | Property of a proper label set for a record: no duplication of labels,
+-- and every element of the list is @Tagged label value@
 
 data DuplicatedLabel l
 
-class HRLabelSet (ps :: [*])
-instance HRLabelSet '[]
-instance HRLabelSet '[x]
-instance ( HEqK l1 l2 leq
-         , HRLabelSet' l1 l2 leq r
-         ) => HRLabelSet (Tagged l1 v1 ': Tagged l2 v2 ': r)
+class (HLabelSet (LabelsOf ps), HAllTaggedLV ps) => HRLabelSet (ps :: [*])
+instance (HLabelSet (LabelsOf ps), HAllTaggedLV ps) => HRLabelSet (ps :: [*])
 
-class HRLabelSet' l1 l2 (leq::Bool) (r :: [*])
-instance ( HRLabelSet (Tagged l2 () ': r)
-         , HRLabelSet (Tagged l1 () ': r)
-         ) => HRLabelSet' l1 l2 False r
-instance ( Fail (DuplicatedLabel l1) ) => HRLabelSet' l1 l2 True r
+
 
 
 {- | Relation between HLabelSet and HRLabelSet
@@ -391,7 +373,6 @@ instance ( Fail (DuplicatedLabel l1) ) => HLabelSet' l1 l2 True r
 
 -- | Construct the (phantom) list of labels of a record,
 -- or list of Label.
---
 type family LabelsOf (ls :: [*]) :: [*]
 type instance LabelsOf '[] = '[]
 type instance LabelsOf (Label l ': r)  = Label l ': LabelsOf r
@@ -399,6 +380,8 @@ type instance LabelsOf (Tagged l v ': r) = Label l ': LabelsOf r
 
 labelsOf :: hlistOrRecord l -> Proxy (LabelsOf l)
 labelsOf _ = Proxy
+
+
 
 -- | remove the Label type constructor. The @proxy@ argument is
 -- supplied to make it easier to fix the kind variable @k@.
@@ -511,8 +494,7 @@ instance (HMapCxt HList ReadComponent (AddProxy rs) bs,
 
 -- Extension
 
-instance (HRLabelSet (t ': r),
-          t ~ Tagged l v)
+instance HRLabelSet (t ': r)
     => HExtend t (Record r) where
   type HExtendR t (Record r) = Record (t ': r)
   f .*. (Record r) = mkRecord (HCons f r)
@@ -565,6 +547,43 @@ instance ( LabelsOf r ~ ls
       where
         (LVPair v) = hLookupByHNat (proxy :: Proxy n) r
 -}
+
+{- | a version of 'HasField' / 'hLookupByLabel' / '.!.' that
+returns a default value when the label is not in the record:
+
+>>> let r = x .=. "the x value" .*. emptyRecord
+
+>>> hLookupByLabelM y r ()
+()
+
+>>> hLookupByLabelM x r ()
+"the x value"
+
+
+
+-}
+class HasFieldM (l :: k) r (v :: Maybe *) | l r -> v where
+    hLookupByLabelM :: Label l
+          -> r -- ^ Record (or Variant,TIP,TIC)
+          -> t -- ^ default value
+          -> DemoteMaybe t v
+
+type family DemoteMaybe (d :: *) (v :: Maybe *) :: *
+type instance DemoteMaybe d (Just a) = a
+type instance DemoteMaybe d Nothing = d
+
+class HasFieldM1 (b :: Maybe [*]) (l :: k) r v | b l r -> v where
+    hLookupByLabelM1 :: Proxy b -> Label l -> r -> t -> DemoteMaybe t v
+
+instance (HMemberM (Label l) (LabelsOf xs) b,
+          HasFieldM1 b l (r xs) v)  => HasFieldM l (r xs) v where
+    hLookupByLabelM = hLookupByLabelM1 (Proxy :: Proxy b)
+
+instance HasFieldM1 Nothing l r Nothing where
+    hLookupByLabelM1 _ _ _ t = t
+
+instance HasField l r v => HasFieldM1 (Just b) l r (Just v) where
+    hLookupByLabelM1 _ l r _t = hLookupByLabel l r
 
 
 
@@ -714,6 +733,16 @@ hProjectByLabels2 ::
     Proxy ls -> Record t -> (Record t1, Record t2)
 hProjectByLabels2 ls (Record r) = (mkRecord rin, mkRecord rout)
    where (rin,rout) = h2projectByLabels ls r
+
+-- need to rearrange because the ordering in the result is determined by
+-- the ordering in the original record, not the ordering in the proxy. In
+-- other words,
+--
+-- > hProjectByLabels (Proxy :: Proxy ["x","y"]) r == hProjectByLabels (Proxy :: Proxy ["y","x"]) r
+hProjectByLabels' r =
+    let r' = hRearrange' (hProjectByLabels (labelsOf r') r)
+    in r'
+
 
 
 {- | A helper to make the Proxy needed by hProjectByLabels,
@@ -970,14 +999,32 @@ hRearrange' r =
     in r'
 
 
+class Rearranged r s t a b where
+    -- @Iso (r s) (r t) (r a) (r b)@
+    rearranged :: (Profunctor p, Functor f) => r a `p` f (r b) -> r s `p` f (r t)
+
+
 {- | @Iso (Record s) (Record t) (Record a) (Record b)@
 
 where @s@ is a permutation of @a@, @b@ is a permutation of @t@.
 In practice 'sameLabels' and 'sameLength' are likely needed on both
-sides of @rearranged@, to avoid ambiguous types.  -}
-rearranged x = iso hRearrange' hRearrange' x
+sides of @rearranged@, to avoid ambiguous types.  
 
-{- | @Iso' (Record s) (Record a)@
+An alternative implementation:
+
+> rearranged x = iso hRearrange' hRearrange' x
+
+-}
+instance (la ~ LabelsOf a, lt ~ LabelsOf t,
+          HRearrange la s a,
+          HRearrange lt b t,
+          HLabelSet la,
+          HLabelSet lt)
+  => Rearranged Record s t a b where
+    rearranged = iso (hRearrange (Proxy :: Proxy la))
+                     (hRearrange (Proxy :: Proxy lt))
+
+{- | @Iso' (r s) (r a)@
 
 where @s@ is a permutation of @a@ -}
 rearranged' x = simple (rearranged (simple x))
@@ -1129,7 +1176,54 @@ hZip x y :: Record '[Tagged "x" (Int, Char)]
 instance (HZipRecord x y xy, SameLengths [x,y,xy])
       => HZip Record x y xy where
     hZip = hZipRecord
+
+instance (HZipRecord x y xy, SameLengths [x,y,xy])
+      => HUnzip Record x y xy where
     hUnzip = hUnzipRecord
+
+
+instance (RecordValuesR lvs ~ vs,
+          SameLabels ls lvs,
+          LabelsOf lvs ~ ls,
+          SameLengths [ls,vs,lvs],
+          HAllTaggedLV lvs)
+    => HUnzip Proxy ls vs lvs where
+    hUnzip _ = (Proxy, Proxy)
+
+instance HUnzip Proxy ls vs lvs 
+      => HZip Proxy ls vs lvs where
+  hZip _ _ = Proxy
+
+
+{- | a variation on 'hZip' for 'Proxy', where
+the list of labels does not have to include Label
+(as in @ts'@)
+
+>>> let ts = Proxy :: Proxy ["x","y"]
+>>> let ts' = Proxy :: Proxy [Label "x",Label "y"]
+>>> let vs = Proxy :: Proxy [Int,Char]
+
+>>> :t zipTagged ts Proxy
+zipTagged ts Proxy :: Proxy '[Tagged "x" y, Tagged "y" y1]
+
+>>> :t zipTagged ts vs
+zipTagged ts vs :: Proxy '[Tagged "x" Int, Tagged "y" Char]
+
+
+And and the case when hZip does the same thing:
+
+>>> :t zipTagged ts' vs
+zipTagged ts' vs :: Proxy '[Tagged "x" Int, Tagged "y" Char]
+
+>>> :t hZip ts' vs
+hZip ts' vs :: Proxy '[Tagged "x" Int, Tagged "y" Char]
+
+-}
+zipTagged :: (MapLabel ts ~ lts,
+              HZip Proxy lts vs tvs)
+      => Proxy ts -> proxy vs -> Proxy tvs
+zipTagged _ _ = Proxy
+
 
 
 class HZipRecord x y xy | x y -> xy, xy -> x y where
@@ -1164,10 +1258,23 @@ hUnzipRecord2 xy = let (x,y) = hUnzipList (recordValues xy)
 
 {- | similar to 'asTypeOf':
 
->>> let s = Proxy :: Proxy '[Tagged "x" (), Tagged "y" Char]
->>> let f r = () where _ = r `asLabelsOf` s 
->>> :t f
-f :: r '[Tagged "x" a, Tagged "y" a1] -> ()
+>>> let s0 = Proxy :: Proxy '["x", "y"]
+>>> let s1 = Proxy :: Proxy '[Label "x", Label "y"]
+>>> let s2 = Proxy :: Proxy '[Tagged "x" Int, Tagged "y" Char]
+
+>>> let f0 r = () where _ = r `asLabelsOf` s0
+>>> let f1 r = () where _ = r `asLabelsOf` s1 
+>>> let f2 r = () where _ = r `asLabelsOf` s2
+
+>>> :t f0
+f0 :: r '[Tagged "x" v, Tagged "y" v1] -> ()
+
+>>> :t f1
+f1 :: r '[Tagged "x" v, Tagged "y" v1] -> ()
+
+>>> :t f2
+f2 :: r '[Tagged "x" v, Tagged "y" v1] -> ()
+
 -}
-asLabelsOf :: (SameLabels x y, SameLength x y) => r x -> s y -> r x
+asLabelsOf :: (HAllTaggedLV x, SameLabels x y, SameLength x y) => r x -> s y -> r x
 asLabelsOf = const

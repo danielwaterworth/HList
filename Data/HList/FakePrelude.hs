@@ -585,6 +585,21 @@ class HEqByFn f => HEqBy (f :: t) (x :: k) (y :: k) (b :: Bool) | f x y -> b
 -- | Every instance of this class should have an instance of 'HEqBy'
 class HEqByFn f
 
+-- * Arity
+
+type Arity f n = (ArityFwd f n, ArityRev f n)
+
+-- | calculate the number of arguments a function can take
+class ArityFwd (f :: *) (n :: HNat) | f -> n
+
+
+-- | given the number of arguments a function can take, make sure
+-- the function type actually matches
+class ArityRev (f :: *) (n :: HNat) -- n -> f -- if we had -XDysfunctionalDependencies
+
+instance ArityRev f HZero
+instance (xf ~ (x -> f), ArityRev f n) => ArityRev xf (HSucc n)
+
 
 -- --------------------------------------------------------------------------
 
@@ -647,3 +662,85 @@ type TypeablePolyK a = (() :: Constraint)
 #else
 type TypeablePolyK (a :: k) = Typeable a
 #endif
+
+-- * Constraining Lists
+-- ** Length
+
+-- | Ensure two lists have the same length. We do case analysis on the
+-- first one (hence the type must be known to the type checker).
+-- In contrast, the second list may be a type variable.
+class SameLength' (es1 :: [k]) (es2 :: [m])
+instance (es2 ~ '[]) => SameLength' '[] es2
+instance (SameLength' xs ys, es2 ~ (y ': ys)) => SameLength' (x ': xs) es2
+
+{- | symmetrical version of 'SameLength''. Written as a class instead of
+
+ > type SameLength a b = (SameLength' a b, SameLength' b a)
+
+since ghc expands type synonyms, but not classes (and it seems to have the same
+result)
+
+-}
+class (SameLength' x y, SameLength' y x) =>
+        SameLength (x :: [k]) (y :: [m]) where
+
+  {- | @SameLength x y => Equality (r x) (q y) (r x) (q y)@
+
+  used like 'Control.Lens.simple', except it restricts
+  the type-level lists involved to have the same length,
+  without fixing the type of container or the elements
+  in the list.
+  -}
+  sameLength :: r x `p` f (q y) -> r x `p` f (q y)
+  sameLength = id
+
+instance (SameLength' x y, SameLength' y x) => SameLength x y
+
+type family SameLengths (xs :: [[k]]) :: Constraint
+type instance SameLengths (x ': y ': ys) = (SameLength x y, SameLengths (y ': ys))
+type instance SameLengths '[] = ()
+type instance SameLengths '[x] = ()
+
+-- ** Labels
+
+class SameLabels (x :: k) (y :: m)
+
+{- | @sameLabels@ constrains the type of an optic, such that the labels
+   (@t@ in @Tagged t a@) are the same. @x@ or @y@ may have more elements
+   than the other, in which case the elements at the end
+   of the longer list do not have their labels constrained.
+
+   see also 'sameLength'
+-}
+sameLabels :: SameLabels x y => p (r x) (f (q y)) -> p (r x) (f (q y))
+sameLabels = id
+
+-- instances for [*] kind
+instance SameLabels '[] '[]
+instance SameLabels '[] (x ': xs)
+instance SameLabels (x ': xs) '[]
+instance (SameLabels x y, SameLabels xs ys) =>
+  SameLabels (x ': xs) (y ': ys)
+
+
+instance (Label t ~ Label t') => SameLabels (Label t) (Tagged t' a)
+instance (Label t ~ Label t') => SameLabels (Label t) (Label t')
+instance (Label t ~ Label t') => SameLabels (Label t) (t' :: Symbol)
+
+instance SameLabels (Label t) s => SameLabels (t :: Symbol) s
+instance SameLabels (Label t) s => SameLabels (Tagged t a) s
+
+-- ** A list has only Tagged values
+
+-- | The 'Record', 'Variant', 'TIP', 'TIC' type constructors only make
+-- sense when they are applied to an instance of this class
+class HAllTaggedLV (ps :: [*])
+instance HAllTaggedLV '[]
+instance (HAllTaggedLV xs, x ~ Tagged t v) => HAllTaggedLV (x ': xs)
+
+
+-- | see Data.HList.Record.'zipTagged'
+type family ZipTagged (ts :: [k]) (vs :: [*]) :: [*]
+type instance ZipTagged (Label t ': ts) (v ': vs) = Tagged t v ': ZipTagged ts vs
+type instance ZipTagged ((t :: Symbol) ': ts) (v ': vs) = Tagged t v ': ZipTagged ts vs
+type instance ZipTagged '[] '[] = '[]

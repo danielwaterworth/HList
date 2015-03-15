@@ -44,6 +44,12 @@ module Data.HList.CommonMain (
  , HIsSet, HIsSetBy
  , HAscList, HIsAscList
 
+ -- ** A subset of "Data.HList.HCurry"
+ , HCurry
+ , HCurry'(..)
+ , hCurry, hUncurry
+ , hCompose
+
  -- * TIP
  -- | Public interface of "Data.HList.TIP"
  , TIP
@@ -83,22 +89,27 @@ module Data.HList.CommonMain (
  , mkVariant1
  , castVariant
  , HMapV(..), hMapV
+ , hMapOutV
  , ZipVariant(..)
+ , ZipVR(..), zipVR
  -- ** projection
- -- *** to one value
+ -- *** many
+ , SplitVariant(splitVariant)
+ , ProjectVariant(..)
+ , ExtendsVariant(..)
+ , ProjectExtendVariant(..)
+ -- *** one
  , HPrism(..)
  , unvarianted, unvarianted'
+
+ , splitVariant1
+ , splitVariant1'
+ , extendVariant
  -- **** implementation
  , Unvariant(..)
  , Unvariant'(..)
- -- *** to another variant
- , projected, projected'
- , ProjectVariant(..)
- -- ** operations on the \"Head\"
- , splitVariant
- , splitVariant'
- , extendVariant
- , ExtendsVariant(..)
+
+
 
  -- * Conversions between collections
  -- $convention the foo' optic has the same type as
@@ -196,6 +207,7 @@ import Data.HList.HList hiding (append',
                                 hMapMapCar,
                                 hSequence2,
                                 )
+import Data.HList.HCurry
 import Data.HList.HSort
 import Data.HList.MakeLabels
 import Data.HList.TypeEqO hiding (IsKeyFN)
@@ -203,10 +215,11 @@ import Data.HList.TIP
 import Data.HList.TIC
 
 import Data.HList.HZip
-import Data.HList.Label3
+import Data.HList.Label3 hiding (MapLabel)
 import Data.HList.Label5 () -- only instances
 import Data.HList.Label6 () -- only instances
 import Data.HList.Labelable (Labelable(..),
+                             Projected(..), projected',
                              toLabel,
                              (.==.),
                              LabeledOptic)

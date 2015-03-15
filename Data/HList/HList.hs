@@ -710,40 +710,6 @@ class (SameLength a b, HMapAux r f a b) => HMapCxt r f a b
 instance (SameLength a b, HMapAux r f a b) => HMapCxt r f a b
 
 
--- | Ensure two lists have the same length. We do case analysis on the
--- first one (hence the type must be known to the type checker).
--- In contrast, the second list may be a type variable.
-class SameLength' (es1 :: [k]) (es2 :: [m])
-instance (es2 ~ '[]) => SameLength' '[] es2
-instance (SameLength' xs ys, es2 ~ (y ': ys)) => SameLength' (x ': xs) es2
-
-{- | symmetrical version of 'SameLength''. Written as a class instead of
-
- > type SameLength a b = (SameLength' a b, SameLength' b a)
-
-since ghc expands type synonyms, but not classes (and it seems to have the same
-result)
-
--}
-class (SameLength' x y, SameLength' y x) =>
-        SameLength (x :: [k]) (y :: [m]) where
-
-  {- | @SameLength a b => Iso (r a) (q b) (r a) (q b)@
-
-  used like 'Control.Lens.simple', except it restricts
-  the type-level lists involved to have the same length,
-  without fixing the type of container or the elements
-  in the list.
-  -}
-  sameLength :: r x `p` f (q y) -> r x `p` f (q y)
-  sameLength = id
-
-instance (SameLength' x y, SameLength' y x) => SameLength x y
-
-type family SameLengths (xs :: [[k]]) :: Constraint
-type instance SameLengths (x ': y ': ys) = (SameLength x y, SameLengths (y ': ys))
-type instance SameLengths '[] = ()
-type instance SameLengths '[x] = ()
 
 class HMapAux (r :: [*] -> *) f (x :: [*]) (y :: [*]) where
   hMapAux :: SameLength x y => f -> r x -> r y
@@ -1294,16 +1260,16 @@ Proxy argument can be inferred.
 (H[1,2],H[3,4])
 
 -}
-class (n ~ HLength xs)
+class (n ~ HLength xs,
+       HAppendListR xs ys ~ xsys)
       => HSplitAt (n :: HNat) xsys xs ys
-                   | n xsys -> xs ys,
-                     xs -> n,
-                     xs ys -> xsys where
+                   | n xsys -> xs ys where
     hSplitAt :: Proxy n -> HList xsys -> (HList xs, HList ys)
 
 
 instance (HSplitAt1 '[] n xsys xsRev ys,
           xsys ~ HRevAppR xsRev ys,
+          HAppendListR xs ys ~ xsys,
           HRevApp xsRev ys,
           HRevApp xsRev '[],
           HRevAppR xsRev '[] ~ xs,
@@ -1511,14 +1477,12 @@ instance HSpanEqBy2 False f x y ys '[] (y ': ys) where
 -- $note see alternative implementations in "Data.HList.HZip"
 
 
-class SameLengths [x,y,xy] => HZip (r :: [*] -> *) x y xy
-        | x y -> xy, xy -> x y where
-  hZip :: r x -> r y -> r xy
-  hUnzip :: r xy -> (r x, r y)
+
+instance (SameLengths [x,y,xy], HZipList x y xy) => HUnzip HList x y xy where
+  hUnzip = hUnzipList
 
 instance (SameLengths [x,y,xy], HZipList x y xy) => HZip HList x y xy where
   hZip = hZipList
-  hUnzip = hUnzipList
 
 
 class HZipList x y l | x y -> l, l -> x y where
@@ -1563,4 +1527,5 @@ instance (x ~ Proxy y, Monoid y) => ApplyAB ConstMempty x y where
 data UncurryMappend = UncurryMappend
 instance (aa ~ (a,a), Monoid a) => ApplyAB UncurryMappend aa a where
     applyAB _ = uncurry mappend
+
 

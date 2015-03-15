@@ -44,10 +44,8 @@ instance {-# OVERLAPPING #-} HNat2Integral n => Show (Proxy (n :: HNat)) where
     show n = "H" ++ show (hNat2Integral n :: Integer)
 
 
--- | the number of arguments a function can take
-class Arity (f :: *) (n :: HNat) | f -> n
-instance {-# OVERLAPPABLE #-} hZero ~ HZero => Arity f hZero
-instance {-# OVERLAPPING #-} Arity f n => Arity (x -> f) (HSucc n)
+instance {-# OVERLAPPABLE #-} hZero ~ HZero => ArityFwd f hZero
+instance {-# OVERLAPPING #-} Arity f n => ArityFwd (x -> f) (HSucc n)
 
 
 -- | All our keywords must be registered

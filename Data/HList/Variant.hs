@@ -1,4 +1,4 @@
-
+{-# LANGUAGE CPP #-}
 
 {- |
    Description: Variants, i.e., labelled sums, generalizations of Either
@@ -22,13 +22,17 @@ import Data.HList.Record
 import Data.HList.RecordPuns -- for doctest
 import Data.HList.HList
 import Data.HList.HListPrelude
+import Data.HList.HOccurs()
 import Data.HList.HArray
 
 import Text.ParserCombinators.ReadP hiding (optional)
 
 import Unsafe.Coerce
 import GHC.Prim (Any)
+import GHC.Exts (Constraint)
 
+import Data.Monoid (Monoid(..))
+import Data.Data
 import Control.Applicative
 import LensDefs
 import Control.Monad
@@ -198,6 +202,13 @@ In some cases the 'pun' quasiquote works with variants,
 -}
 data Variant (vs :: [*]) = Variant !Int Any
 
+#if __GLASGOW_HASKELL__ > 707
+-- the inferred role is phantom, which is not safe
+type role Variant representational
+#endif
+
+
+
 -- ** Unsafe operations
 
 -- | This is only safe if the n'th element of vs has type @Tagged t v@
@@ -217,6 +228,7 @@ unsafeMkVariant n a = Variant n (unsafeCoerce a)
 unsafeCastVariant :: Variant v -> Variant v'
 unsafeCastVariant (Variant n e) = Variant n e
 
+-- | in ghc>=7.8, 'Data.Coerce.coerce' is probably a better choice
 castVariant :: (RecordValuesR v ~ RecordValuesR v',
               SameLength v v') => Variant v -> Variant v'
 castVariant = unsafeCastVariant
@@ -234,7 +246,7 @@ unsafeUnVariant (Variant _ e) = unsafeCoerce e
 when used together with the 'HExtend' instance (.*.)
 
 >>> print $ (Label :: Label "x") .=. (Nothing :: Maybe ()) .*. unsafeEmptyVariant
-V{*** Exception: empty variant: invariant broken
+V{*** Exception: invalid variant
 
 use 'mkVariant1' instead
 
@@ -283,13 +295,14 @@ instance (HasField x (Record vs) a,
           | hNat2Integral (Proxy :: Proxy n) == n = Just (unsafeCoerce d)
           | otherwise = Nothing
 
-splitVariant :: Variant (Tagged s x ': xs) -> Either x (Variant xs)
-splitVariant (Variant 0 x) = Left (unsafeCoerce x)
-splitVariant (Variant n x) = Right (Variant (n-1) x)
+splitVariant1 :: Variant (Tagged s x ': xs) -> Either x (Variant xs)
+splitVariant1 (Variant 0 x) = Left (unsafeCoerce x)
+splitVariant1 (Variant n x) = Right (Variant (n-1) x)
 
-splitVariant' :: Variant (Tagged t x ': xs) -> Either (Tagged t x) (Variant xs)
-splitVariant' (Variant 0 x) = Left (unsafeCoerce x)
-splitVariant' (Variant n x) = Right (Variant (n-1) x)
+-- | x ~ Tagged s t
+splitVariant1' :: Variant (x ': xs) -> Either x (Variant xs)
+splitVariant1' (Variant 0 x) = Left (unsafeCoerce x)
+splitVariant1' (Variant n x) = Right (Variant (n-1) x)
 
 extendVariant :: Variant l -> Variant (e ': l)
 extendVariant (Variant m e) = Variant (m+1) e
@@ -352,15 +365,18 @@ instance (ShowVariant vs) => Show (Variant vs) where
 class ShowVariant vs where
     showVariant :: Variant vs -> ShowS
 
-instance (ShowLabel l, Show v, ShowVariant vs)
-      => ShowVariant (Tagged l v ': vs) where
-    showVariant vs | Just v <- hLookupByLabel l vs = \rest ->
-                            showLabel l ++ "=" ++ show v ++ rest
+instance (ShowLabel l, Show v, ShowVariant (w ': ws))
+      => ShowVariant (Tagged l v ': w ': ws) where
+    showVariant vs = case splitVariant1 vs of
+        Left v -> \rest -> showLabel l ++ "=" ++ show v ++ rest
+        Right wws -> showVariant wws
       where l = Label :: Label l
-    showVariant (Variant n v) = showVariant (Variant (n-1) v :: Variant vs)
 
-instance ShowVariant '[] where
-    showVariant = error "empty variant: invariant broken"
+instance (ShowLabel l, Show v, lv ~ Tagged l v) => ShowVariant '[lv] where
+    showVariant vs = case splitVariant1 vs of
+        Left v -> \rest -> showLabel l ++ "=" ++ show v ++ rest
+        Right _ -> error "invalid variant"
+      where l = Label :: Label l
 
 -- --------------------------------------------------------------------------
 -- * Show
@@ -401,6 +417,112 @@ instance (ShowLabel l, Read v, ReadVariant vs,
 
         p = Proxy :: Proxy (Tagged l v ': vs)
 
+
+-- * Data
+instance (Typeable (Variant v), GfoldlVariant v v,
+          GunfoldVariant v v,
+          VariantConstrs v)
+        => Data (Variant v) where
+    gfoldl = gfoldlVariant
+    gunfold k z c = gunfoldVariant (\con -> k (z con)) (Proxy :: Proxy v) (constrIndex c - 1)
+    toConstr v@(Variant n _) = case drop n (variantConstrs (dataTypeOf v) v) of
+        c : _ -> c
+        _ -> error "Data.HList.Variant.toConstr impossible"
+    dataTypeOf x = let self = mkDataType (show (typeOf x)) (variantConstrs self x)
+          in self
+
+class VariantConstrs (xs :: [*]) where
+  variantConstrs :: DataType -> proxy xs -> [Constr]
+
+instance VariantConstrs '[] where
+  variantConstrs _ _ = []
+
+instance (ShowLabel l, VariantConstrs xs) => VariantConstrs (Tagged l e ': xs) where
+  variantConstrs dt _ = mkConstr dt (showLabel (Label :: Label l)) [] Prefix :
+        variantConstrs dt (Proxy :: Proxy xs)
+
+
+
+
+{- | [@implementation of gunfold for Variant@]
+
+In ghci
+
+> :set -ddump-deriv -XDeriveDataTypeable
+> data X a b c = A a | B b | C c deriving (Data,Typeable)
+
+shows that gunfold is defined something like
+
+> gunfold k z c = case constrIndex c of
+>       1 -> k (z Ghci1.A)
+>       2 -> k (z Ghci1.B)
+>       _ -> k (z Ghci1.C)
+
+If we instead had
+
+type X a b c = Variant [Tagged "A" a, Tagged "B" b, Tagged "C" c]
+
+Then we could write:
+
+> gunfold1 :: (forall b r. Data b => (b -> r) -> c r)
+          -> Variant [Tagged "A" a, Tagged "B" b, Tagged "C" c]
+> gunfold1 f c = case constrIndex c of
+>       1 -> f mkA
+>       2 -> f mkB
+>       _ -> f mkC
+>   where mkA a = mkVariant (Label :: Label "A") (a :: a) v
+>         mkB b = mkVariant (Label :: Label "B") (b :: b) v
+>         mkC c = mkVariant (Label :: Label "C") (c :: c) v
+>         v = Proxy :: Proxy [Tagged "A" a, Tagged "B" b, Tagged "C" c]
+
+where @f = k.z@
+
+
+-}
+class GunfoldVariant (es :: [*]) v where
+    gunfoldVariant ::
+        (forall b. Data b => (b -> Variant v) -> c (Variant v))
+          -- ^ @f = k . z@
+        -> Proxy es
+        -> Int
+        -> c (Variant v)
+
+instance (MkVariant l e v, Data e) => GunfoldVariant '[Tagged l e] v where
+    gunfoldVariant f _ _ = f (\e -> mkVariant (Label :: Label l) (e :: e) Proxy)
+
+instance (MkVariant l e v, Data e,
+        GunfoldVariant (b ': bs) v) => GunfoldVariant (Tagged l e ': b ': bs)  v where
+    gunfoldVariant f _ 0 = f (\e -> mkVariant (Label :: Label l) (e :: e) Proxy)
+    gunfoldVariant f _ n = gunfoldVariant f (Proxy :: Proxy (b ': bs)) (n-1)
+
+
+
+class GfoldlVariant xs xs' where
+  -- | the same as 'gfoldl', except the variant that is returned can have more
+  -- possible values (needed to actually implement gfoldl).
+  gfoldlVariant ::
+     (forall d b. Data d => c (d -> b) -> d -> c b)
+     -> (forall g. g -> c g) -> Variant xs -> c (Variant xs')
+
+instance (a ~ Tagged l v, MkVariant l v r, Data v,
+          GfoldlVariant (b ': c) r)
+      => GfoldlVariant (a ': b ': c) r where
+  gfoldlVariant k z xxs = case splitVariant1 xxs of
+      Right xs -> gfoldlVariant k z xs
+      -- If the c@type variable in 'gfoldl' had a Functor constraint,
+      -- this case could be extendVariant `fmap` gfoldl k z xs,
+      -- and then 'GfoldlVariant' would be unnecessary
+      Left x ->
+            let mkV e = mkVariant (Label :: Label l) e Proxy
+            in z mkV `k` x
+
+instance (Unvariant '[a] v, a ~ Tagged l v, Data v,
+          MkVariant l v b) => GfoldlVariant '[a] b where
+    gfoldlVariant k z xxs = z mkV `k` unvariant xxs
+        where mkV e = mkVariant (Label :: Label l) e Proxy
+
+
+
 -- --------------------------------------------------------------------------
 -- * Map
 -- | Apply a function to all possible elements of the variant
@@ -409,7 +531,23 @@ newtype HMapV f = HMapV f
 -- | shortcut for @applyAB . HMapV@. 'hMap' is more general
 hMapV f v = applyAB (HMapV f) v
 
--- | apply a function to all tags of the variant.
+-- | @hMapOutV f = unvariant . hMapV f@, except an ambiguous type
+-- variable is resolved by 'HMapOutV_gety'
+hMapOutV :: forall x y z f. (SameLength x y,
+      HMapAux Variant (HFmap f) x y,
+      Unvariant y z,
+      HMapOutV_gety x z ~ y
+  ) => f -> Variant x -> z
+hMapOutV f v = unvariant (hMapV f v :: Variant y)
+
+
+-- | resolves an ambiguous type in 'hMapOutV'
+type family HMapOutV_gety (x :: [*]) (z :: *) :: [*]
+type instance HMapOutV_gety (Tagged s x ': xs) z = Tagged s z ': HMapOutV_gety xs z
+type instance HMapOutV_gety '[] z = '[]
+
+
+-- | apply a function to all values that could be in the variant.
 instance (vx ~ Variant x,
           vy ~ Variant y,
           HMapAux Variant (HFmap f) x y,
@@ -417,15 +555,15 @@ instance (vx ~ Variant x,
      => ApplyAB (HMapV f) vx vy where
     applyAB (HMapV f) x = hMapAux (HFmap f) x
 
-instance HMapAux Variant f '[] '[] where
-    hMapAux _ _ = error "HMapVAux: variant invariant broken"
+instance (ApplyAB f te te') => HMapAux Variant f '[te] '[te'] where
+    hMapAux f v = case splitVariant1' v of
+        Left te -> unsafeMkVariant 0 (applyAB f te :: te')
+        Right _ -> error "HMapVAux: variant invariant broken"
 
 instance (ApplyAB f te te',
-          HMapCxt Variant f l l',
-          te ~ Tagged t e,
-          te' ~ Tagged t e')
-    => HMapAux Variant f (te ': l) (te' ': l') where
-      hMapAux f v = case splitVariant' v of
+          HMapCxt Variant f (l ': ls) (l' ': ls'))
+    => HMapAux Variant f (te ': l ': ls) (te' ': l' ': ls') where
+      hMapAux f v = case splitVariant1' v of
           Left te -> unsafeMkVariant 0 (applyAB f te :: te')
           Right es -> extendVariant (hMapAux f es)
 
@@ -580,6 +718,8 @@ in the same order. A generalization of
 > zipEither (Right a) (Right a') = Just (Right (a,a'))
 > zipEither _ _ = Nothing
 
+see 'HZip' for zipping other collections
+
 -}
 class ZipVariant x y xy | x y -> xy, xy -> x y where
     zipVariant :: Variant x -> Variant y -> Maybe (Variant xy)
@@ -593,22 +733,109 @@ instance (tx ~ Tagged t x,
           ZipVariant xs ys zs,
           MkVariant t (x,y) (txy ': zs))
   => ZipVariant (tx ': xs) (ty ': ys) (txy ': zs) where
-    zipVariant x y = case (splitVariant x, splitVariant y) of
+    zipVariant x y = case (splitVariant1 x, splitVariant1 y) of
         (Left x', Left y') -> Just (mkVariant (Label :: Label t) (x',y') Proxy)
         (Right x', Right y') -> extendVariant <$> zipVariant x' y'
         _ -> Nothing
 
 
--- * Eq
-instance (ZipVariant v v vv,
-          HMapCxt Variant (HFmap UncurryEq) vv bools,
-          Unvariant bools Bool) => Eq (Variant v)
-  where
-    v == v' = maybe
-                False
-                (\vv -> unvariant (hMapV UncurryEq vv :: Variant bools))
-               $ zipVariant v v'
+instance (HUnzip Variant (x2 ': xs) (y2 ': ys) (xy2 ': xys),
+          tx ~ Tagged t x,
+          ty ~ Tagged t y,
+          txy ~ Tagged t (x,y))
+      => HUnzip Variant (tx ': x2 ': xs) (ty ': y2 ': ys) (txy ': xy2 ': xys) where
+    hUnzip xy = case splitVariant1 xy of
+      Left (x,y) -> (mkVariant (Label :: Label t) x Proxy,
+                     mkVariant (Label :: Label t) y Proxy)
+      Right xy' | (x,y) <- hUnzip xy' ->
+                    (extendVariant x,
+                     extendVariant y)
 
+instance (Unvariant '[txy] txy,
+          tx ~ Tagged t x,
+          ty ~ Tagged t y,
+          txy ~ Tagged t (x,y))
+      => HUnzip Variant '[tx] '[ty] '[txy] where
+    hUnzip xy | Tagged (x,y) <- unvariant xy =
+        (mkVariant1 Label x, mkVariant1 Label y)
+
+
+-- ** with a record
+
+{- | Apply a record of functions to a variant of values.
+The functions are selected based on those having the same
+label as the value.
+
+-}
+class (SameLength v v',
+       SameLabels v v')  => ZipVR fs v v' | fs v -> v' where
+    -- | 'zipVR' is probably a better choice in most
+    -- situations, since it requires that @fs@ has one function for every
+    -- element of @v@
+    zipVR_ :: Record fs -> Variant v -> Variant v'
+
+instance (lv ~ Tagged l v,
+          lv' ~ Tagged l v',
+          HMemberM (Label l) (LabelsOf fs) b,
+          HasFieldM l (Record fs) f,
+          DemoteMaybe (v -> v) f ~ (v -> v'),
+          MkVariant l v' (lv' ': rs),
+          ZipVR fs vs rs) =>
+          ZipVR fs (lv ': vs) (lv' ': rs) where
+    zipVR_ r lvs = case splitVariant1 lvs of
+                  Left v | v' <- hLookupByLabelM l r (id :: v -> v) v -> mkVariant l v' Proxy
+                  Right vs -> extendVariant $ zipVR_ r vs
+      where l = Label :: Label l
+
+
+instance ZipVR fs '[] '[] where
+    zipVR_ _ x = x
+
+{- |
+
+>>> let xy = x .*. y .*. emptyProxy
+>>> let p = Proxy `asLabelsOf` xy
+>>> let vs = [ mkVariant x 1.0 p, mkVariant y () p ]
+
+
+>>> zipVR (hBuild (+1) id) `map` vs
+[V{x=2.0},V{y=()}]
+
+
+-}
+zipVR :: (SameLabels fs v, SameLength fs v, ZipVR fs v v',
+          ZipVRCxt fs v v')
+    => Record fs -> Variant v -> Variant v'
+zipVR = zipVR_
+
+
+{- | Lets 'zipVR' act as if @'ZipVR' fs v v'@ had an FD @v v' -> fs@
+
+> ZipVRCxt [Tagged s f,  Tagged t g]
+>          [Tagged s fx, Tagged t gx]
+>          [Tagged s fy, Tagged t gy]
+>   = (f ~ (fx -> fy), g ~ (gx -> gy))
+
+-}
+type family ZipVRCxt (fs :: [*]) (xs :: [*]) (ys :: [*]) :: Constraint
+
+type instance ZipVRCxt (Tagged s f ': fs) (Tagged s x ': xs) (Tagged s y ': ys) =
+        (f ~ (x -> y), ZipVRCxt fs xs ys)
+type instance ZipVRCxt '[] '[] '[] = ()
+
+-- * Eq
+instance Eq (Variant '[]) where
+  _ == _ = True
+
+instance (Eq (Variant xs), Eq x) => Eq (Variant (x ': xs)) where
+  v == v' = case (splitVariant1' v, splitVariant1' v') of
+    (Left l, Left r) -> l == r
+    (Right l, Right r) -> l == r
+    _ -> False
+
+-- ** Alternative Eq
+-- | implemented like @and (zipWith (==) xs ys)@. Behaves the same as the Eq instances for 'Variant'
+eqVariant v v' = maybe False (hMapOutV UncurryEq) $ zipVariant v v'
 
 data UncurryEq = UncurryEq
 
@@ -616,15 +843,126 @@ instance (ee ~ (e,e), Eq e, bool ~ Bool) =>
     ApplyAB UncurryEq ee bool where
       applyAB _ (e,e') = e == e'
 
+-- * Ord
+instance Ord (Variant '[]) where
+  compare _ _ = EQ
+
+instance (Ord x, Ord (Variant xs)) => Ord (Variant (x ': xs)) where
+  compare a b = compare (splitVariant1' a) (splitVariant1' b)
+
+-- * Bounded
+instance (Bounded x, Bounded z,
+          HRevAppR (Tagged s x ': xs) '[] ~ (Tagged t z ': sx),
+          MkVariant t z (Tagged s x ': xs))
+        => Bounded (Variant (Tagged s x ': xs)) where
+  minBound = mkVariant (Label :: Label s) (minBound :: x) Proxy
+  maxBound = mkVariant (Label :: Label t) (maxBound :: z) Proxy
+
+-- * Enum
+{- |
+
+>>> let t = minBound :: Variant '[Tagged "x" Bool, Tagged "y" Bool]
+>>> [t .. maxBound]
+[V{x=False},V{x=True},V{y=False},V{y=True}]
+
+
+[@Odd behavior@]
+There are some arguments that this instance should not exist.
+
+The last type in the Variant does not need to be Bounded. This
+means that 'enumFrom' behaves a bit unexpectedly:
+
+>>> [False .. ]
+[False,True]
+
+>>> [t .. ]
+[V{x=False},V{x=True},V{y=False},V{y=True},V{y=*** Exception: Prelude.Enum.Bool.toEnum: bad argument
+
+This is a \"feature\" because it allows an @Enum (Variant '[Tagged \"a\" Bool, Tagged \"n\" 'Integer'])@
+
+Another difficult choice is that the lower bound is @fromEnum 0@ rather than @minBound@:
+
+>>> take 5 [ minBound :: Variant '[Tagged "b" Bool, Tagged "i" Int] .. ]
+[V{b=False},V{b=True},V{i=0},V{i=1},V{i=2}]
+
+-}
+instance (Enum x, Bounded x, Enum (Variant (y ': z))) => Enum (Variant (Tagged s x ': y ': z)) where
+  fromEnum v = case splitVariant1 v of
+    Left x -> fromEnum x
+    Right yz -> 1 + fromEnum (maxBound :: Tagged s x) + fromEnum yz
+
+  toEnum n
+      | m >= n = mkVariant (Label :: Label s) (toEnum n) Proxy
+      | otherwise = extendVariant $ toEnum (n - m - 1)
+    where m = fromEnum (maxBound :: Tagged s x)
+
+{- |
+
+While the instances could be written Enum (Variant '[])
+Eq/Ord which cannot produce values, so they have instances for
+empty variants ('unsafeEmptyVariant'). Enum can produce values,
+so it is better that @fromEnum 0 :: Variant '[]@ fails with No instance for
+@Enum (Variant '[])@ than producing an invalid variant.
+
+-}
+instance Enum x => Enum (Variant '[Tagged s x]) where
+  fromEnum v = case splitVariant1 v of
+    Left x -> fromEnum x
+    _ -> error "Data.HList.Variant fromEnum impossible"
+  toEnum n = mkVariant (Label :: Label s) (toEnum n) Proxy
+
+-- * Ix (TODO)
+
+
+-- * Monoid
+instance (Unvariant '[Tagged t x] x, Monoid x) => Monoid (Variant '[Tagged t x]) where
+    mempty = mkVariant (Label :: Label t) mempty Proxy
+    mappend a b = case (unvariant a, unvariant b) of
+                    (l, r) -> mkVariant (Label :: Label t) (mappend l r) Proxy
+
+
+-- | XXX check this mappend is legal
+instance (Monoid x, Monoid (Variant (a ': b))) => Monoid (Variant (Tagged t x ': a ': b)) where
+    mempty = extendVariant mempty
+    mappend a b = case (splitVariant1 a, splitVariant1 b) of
+                    (Left l, Left r) -> mkVariant (Label :: Label t) (mappend l r) Proxy
+                    (Left l, _) -> mkVariant (Label :: Label t) l Proxy
+                    (_, Left r) -> mkVariant (Label :: Label t) r Proxy
+                    (Right l, Right r) -> extendVariant $ mappend l r
+
 -- * Projection
 
+{- | convert a variant with more fields into one with fewer (or the same)
+fields.
+
+
+>>> let ty = Proxy :: Proxy [Tagged "left" Int, Tagged "right" Int]
+>>> let l = mkVariant _left 1 ty
+>>> let r = mkVariant _right 2 ty
+
+
+>>> map projectVariant [l, r] :: [Maybe (Variant '[Tagged "left" Int])]
+[Just V{left=1},Nothing]
+
+
+@'rearrangeVariant' = 'fromJust' . 'projectVariant'@ is one implementation
+of 'rearrangeVariant', since the result can have the same fields with
+a different order:
+
+>>> let yt = Proxy :: Proxy [Tagged "right" Int, Tagged "left" Int]
+
+>>> map projectVariant [l, r] `asTypeOf` [Just (mkVariant _left 0 yt)]
+[Just V{left=1},Just V{right=2}]
+
+
+-}
 class ProjectVariant x y where
     projectVariant :: Variant x -> Maybe (Variant y)
 
 instance (ProjectVariant x ys,
-          ty ~ Tagged t y,
           HasField t (Variant x) (Maybe y),
-          HOccursNot (Label t) (LabelsOf ys))
+          HOccursNot (Label t) (LabelsOf ys),
+          ty ~ Tagged t y)
   => ProjectVariant x (ty ': ys) where
     projectVariant x = y `mplus` ys
       where t = Label :: Label t
@@ -635,41 +973,100 @@ instance (ProjectVariant x ys,
 instance ProjectVariant x '[] where
     projectVariant _ = Nothing
 
--- | @projectVariant . extendsVariant = id@ (when the types match up)
+
+
+{- | @projectExtendVariant = fmap 'extendVariant' . 'projectVariant'@
+
+where intermediate variant is as large as possible. Used to implement
+"Data.HList.Labelable".'projected'
+
+Note that:
+
+>>> let r = projectExtendVariant (mkVariant1 Label 1 :: Variant '[Tagged "x" Int])
+>>> r :: Maybe (Variant '[Tagged "x" Integer])
+Nothing
+
+-}
+class HAllTaggedLV y => ProjectExtendVariant x y where
+    projectExtendVariant :: Variant x -> Maybe (Variant y)
+
+instance HAllTaggedLV y => ProjectExtendVariant '[] y where
+    projectExtendVariant _ = Nothing
+
+instance (lv ~ Tagged l v,
+          HMemberM lv y inY,
+          ProjectExtendVariant' inY lv y,
+          ProjectExtendVariant xs y
+      ) => ProjectExtendVariant (lv ': xs) y where
+  projectExtendVariant v = case splitVariant1' v of
+      Left lv -> projectExtendVariant' (Proxy :: Proxy inY) lv
+      Right v' -> projectExtendVariant v'
+
+
+class ProjectExtendVariant' (inY :: Maybe [*]) lv (y :: [*]) where
+    projectExtendVariant' :: Proxy inY -> lv -> Maybe (Variant y)
+
+instance ProjectExtendVariant' Nothing lv y where
+    projectExtendVariant' _ _ = Nothing
+
+instance (MkVariant l v y, lv ~ Tagged l v) => ProjectExtendVariant' (Just t) lv y where
+    projectExtendVariant' _ (Tagged v) = Just (mkVariant (Label :: Label l) v Proxy)
+
+
+
+class (ProjectVariant x yin,
+       ProjectVariant x yout) => SplitVariant x yin yout where
+    splitVariant :: Variant x -> Either (Variant yin) (Variant yout)
+
+instance
+   (-- implementation
+    ProjectVariant x yin,
+    ProjectVariant x yout,
+
+    -- constraints to ensure exactly one of
+    -- the uses of projectVariant gives a Just
+    H2ProjectByLabels (LabelsOf yin) x xi xo,
+    HRearrange (LabelsOf yin) xi yin,
+    HRearrange (LabelsOf yout) xo yout,
+
+    HLeftUnion xi xo xixo,
+    HRearrange (LabelsOf x) xixo x,
+
+    -- probably redundant
+    HAllTaggedLV x, HAllTaggedLV yin, HAllTaggedLV yout) =>
+  SplitVariant x yin yout where
+  splitVariant x = case (projectVariant x, projectVariant x) of
+   (Nothing, Just yout) -> Right yout
+   (Just yin, Nothing) -> Left yin
+   _ -> error "Data.HList.Variant:splitVariant impossible"
+
+-- | @projectVariant . extendsVariant = Just@ (when the types match up)
 --
 -- 'extendVariant' is a special case
-class ExtendsVariant x y where
+class (HAllTaggedLV y, HAllTaggedLV x) => ExtendsVariant x y where
     extendsVariant :: Variant x -> Variant y
 
-instance (a ~ Tagged l e,
-          MkVariant l e y,
-          ExtendsVariant (b ': bs) y) => ExtendsVariant (a ': b ': bs) y where
-    extendsVariant v = case splitVariant v of
+instance (MkVariant l e y, le ~ Tagged l e,
+          ExtendsVariant (b ': bs) y) => ExtendsVariant (le ': b ': bs) y where
+    extendsVariant v = case splitVariant1 v of
         Left e -> mkVariant (Label :: Label l) (e :: e) Proxy
         Right vs -> extendsVariant vs
 
-instance (y ~ Tagged l e,
-          MkVariant l e x) => ExtendsVariant '[y] x where
-    extendsVariant v = case splitVariant v of
-        Left e -> mkVariant (Label :: Label l) (e :: e) Proxy
-        Right _ -> error "Data.HList.Variant.ExtendsVariant impossible"
+instance (HAllTaggedLV x, Unvariant '[le] e, MkVariant l e x,
+          le ~ Tagged l e) => ExtendsVariant '[le] x where
+    extendsVariant v = mkVariant (Label :: Label l) (unvariant v) Proxy
 
 
--- | @Prism' (Variant s) (Variant a)@
---
--- where @y@ is a subset of @x@ (@a ⊆ s@)
-projected' x = prism' extendsVariant projectVariant x
+-- | @rearrangeVariant@ is a specialization of 'extendsVariant' whose
+-- result is always . see also 'rearranged'
+rearrangeVariant :: (SameLength v v', ExtendsVariant v v')
+      => Variant v -> Variant v'
+rearrangeVariant v = extendsVariant v
 
--- | @Prism (Variant s) (Variant t) (Variant a) (Variant b)@
---
--- Operate on a variant with a subset of the original fields
--- (@a ⊆ s, b ⊆ t@) where order is unimportant
-projected  x = prism extendsVariant
-      (\s -> case projectVariant s of
-         Just a -> Right a
-         Nothing -> Left (unsafeCastVariant s))
-      x
-
+instance (SameLength s a, ExtendsVariant s a,
+          SameLength b t, ExtendsVariant b t) => Rearranged Variant s t a b
+  where
+    rearranged = iso rearrangeVariant rearrangeVariant
 
 -- | @Prism (Record tma) (Record tmb) (Variant ta) (Variant tb)@
 --
@@ -738,7 +1135,7 @@ instance (VariantToHMaybied v r,
           tx ~ Tagged t x,
           tmx ~ Tagged t (Maybe x))
     => VariantToHMaybied (tx ': v) (tmx ': r) where
-      variantToHMaybied v = case splitVariant v of
+      variantToHMaybied v = case splitVariant1 v of
             Left x -> Record
                 $ HCons (Tagged (Just x))
                 $ hReplicateF Proxy ConstTaggedNothing ()
