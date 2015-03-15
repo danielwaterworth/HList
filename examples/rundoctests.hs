@@ -40,9 +40,6 @@ main = do
              "-optP-include":
              "-optPdist/build/autogen/cabal_macros.h" :
              "-Idist/build/autogen" : "-w":
-             "-XDatatypeContexts" : -- somehow ghci forgets about this extension. Ex. try:
-                                    -- :set -XDatatypeContexts -XTypeFamilies
-                                    -- :show language
              files ++ flags
     readProcess "doctest" args ""
 
