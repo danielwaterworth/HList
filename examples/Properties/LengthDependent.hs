@@ -1,9 +1,19 @@
+{-# LANGUAGE FlexibleContexts #-}
+{-# LANGUAGE RankNTypes #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE TypeOperators #-}
 {-# LANGUAGE KindSignatures #-}
 {-# LANGUAGE CPP #-}
 {-# LANGUAGE DataKinds #-}
 {-# LANGUAGE TemplateHaskell #-}
+-- NOTE:
+--
+-- To be able to compile with ghc-7.6 functions like foo are sometimes
+-- called
+--
+-- $(varE 'foo) because this prevents ghc-7.6 from failing to typecheck
+-- the expression (which fails because the number of elements in the
+-- supplied HList isn't known until Properties.LengthDependentSplice)
 module Properties.LengthDependent where
 
 
@@ -61,8 +71,8 @@ hl1 n1 = [| do
       property $ do
         x <- genHL True
         y <- genHL True
-        return $ conjoin [hConcat (hBuild x y) == hAppend x y,
-                          hConcat (hBuild x) == x]
+        return $ conjoin [$(varE 'hConcat) ($(varE 'hBuild) x y) == hAppend x y,
+                          $(varE 'hConcat) (hBuild x) == x]
 
   it "partition" $
       property $ do
@@ -92,7 +102,7 @@ hl1 n1 = [| do
   it "hInits last id" $
       property $ do
         xs <- genHL True
-        return $ hLast (hInits xs) == xs
+        return $ $(varE 'hLast) (hInits xs) == xs
 
   it "hInits head empty" $
       property $ do
@@ -107,7 +117,7 @@ hl1 n1 = [| do
   it "hTails last empty" $
       property $ do
         xs <- genHL True
-        return $ hLast (hTails xs) == HNil
+        return $ $(varE 'hLast) (hTails xs) == HNil
 
   it "hScanr equals scanr" $
       property $ do
@@ -148,10 +158,10 @@ hl1 n1 = [| do
         return $ conjoin
           [ case hSplitAt hZero hl of
               (hNil, hl') -> (hNil `eq` HNil) .&&. (hl' `eq` hl),
-            case hSplitAt n hl of
+            case $(varE 'hSplitAt) n hl of
               (hl', hNil) -> (hNil `eq` HNil) .&&. (hl' `eq` hl),
 
-            hMap (HSplitAtAppend hl) (hIterate (hSucc n) HSuccF hZero) `eq` hReplicate (hSucc n) hl ,
+            $(varE 'hMap) (HSplitAtAppend hl) ($(varE 'hIterate) (hSucc n) HSuccF hZero) `eq` $(varE 'hReplicate) (hSucc n) hl ,
             map (\n -> uncurry (++) $ splitAt n l) [0 .. length l]      === replicate (length l+1) l
               -- the equivalent list-version
            ]
@@ -159,22 +169,22 @@ hl1 n1 = [| do
   it "hAppend empty is identity" $
       property $ do
         x <- genHL (BoolN True :: BoolN "x")
-        return $ all (== x) [HNil `hAppend` x, x `hAppend` HNil]
+        return $ all (== x) [$(varE 'hAppend) HNil x, $(varE 'hAppend) x HNil]
 
   it "hReverse involution" $ do
       property $ do
         x <- genHL True
-        return $ x == hReverse (hReverse x)
+        return $ x == $(varE 'hReverse) (hReverse x)
 
   it "hReverse does nothing for ()" $
       let xs = hReplicate $(toN n1) ()
-      in xs `shouldBe` hReverse xs
+      in xs `shouldBe` $(varE 'hReverse) xs
 
   it "hInit == tail on reverse" $
       property $ do
         let hInitReference xs = hReverse (hTail (hReverse xs))
         hl <- genHL True
-        return $ hInit hl `eq` hInitReference hl
+        return $ $(varE 'hInit) hl `eq` $(varE 'hInitReference) hl
 
   it "hList2List/list2HList" $ property $ do
       x <- genHL True
@@ -254,6 +264,8 @@ hl1 n1 = [| do
         s:ss = map sort (permutations xyz)
     return $ all (s ==) ss
 
+#if __GLASGOW_HASKELL__ > 707
+  -- ghc-7.6 has no ordering for Nat (only for HNat)
   it "hSort (the labels)" $ property $ do
     x <- $(rN n1) True
     let rx = x & from hListRecord %~ hReverse
@@ -264,6 +276,7 @@ hl1 n1 = [| do
          x `eq` (x  & from hListRecord %~ hMSortBy (Proxy :: Proxy HLeFn)),
          x `eq` (rx & from hListRecord %~ hMSortBy (Proxy :: Proxy HLeFn))
          ]
+#endif
 
   it "hRenameLabel" $ property $ do
     r <- $(rN n1) True
@@ -308,10 +321,10 @@ hl2 n1 n2 = [| do
                 ExtendsVariant yin x,
                 ExtendsVariant yout x) =>
                 Proxy n -> Variant x -> Bool
-        testV n v = case splitVariant v of
+        testV n v = case $(varE 'splitVariant) v of
                       Left a -> extendsVariant (a :: Variant yin) == v
                       Right a -> extendsVariant (a :: Variant yout) == v
-    return $ testV $(toN n1) x
+    return $ $(varE 'testV) $(toN n1) x
 
 
   it "hAppend equals ++" $
@@ -323,7 +336,7 @@ hl2 n1 n2 = [| do
   it "hTranspose involution" $ property $ do
     x <- return (error "hTranspose involution") `asTypeOf` $(hlN n1) True
     xx <- $(hlN n2) x
-    return $ hTranspose (hTranspose xx) === xx
+    return $ $(varE 'hTranspose) ($(varE 'hTranspose) xx) === xx
 
   it "leftUnion / unionSR" $
     property $ do
@@ -336,8 +349,8 @@ hl2 n1 n2 = [| do
           eqSorted (a,b) (c,d) = sort a === sort c .&&. sort b === sort d
       return $ conjoin [
         asL (x .<++. y) === asL x `merge` asL y,
-        (x .<++. x) === x,
-        (y .<++. y) === y,
+        ($(varE '(.<++.)) x x) === x,
+        ($(varE '(.<++.)) y y) === y,
         asLs (unionSR x y) `eqSorted` mergeSym (asL x) (asL y),
         (x `unionSR` x) === (x,x),
         (y `unionSR` y) === (y,y)]
@@ -351,9 +364,15 @@ hl3 n1 n2 n3 = [| do
       y <- $(hlN n2) (BoolN True :: BoolN "y")
       z <- $(hlN n3) (BoolN True :: BoolN "z")
       return $ conjoin
+#if __GLASGOW_HASKELL__ < 707
+        [ $([| (x `hAppend` y) `hAppend` z |]) === $([| x `hAppend` (y `hAppend` z) |]),
+          $([| (x `hAppendList` y) `hAppendList` z|]) === $([| x `hAppendList` (y `hAppendList` z)|])
+        ]
+#else
         [ ((x `hAppend` y) `hAppend` z) === (x `hAppend` (y `hAppend` z)),
           ((x `hAppendList` y) `hAppendList` z) === (x `hAppendList` (y `hAppendList` z))
         ]
+#endif
   |]
 
 

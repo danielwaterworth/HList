@@ -303,8 +303,8 @@ instead of
 
 -}
 instance (to ~ LabeledTo x, ToSym (to p q) x)
-       => HExtend (to p q) (Proxy ('[] :: [k])) where
-    type HExtendR (to p q) (Proxy '[]) = Proxy '[GetXFromLabeledTo to]
+       => HExtend (to p q) (Proxy ('[] :: [*])) where
+    type HExtendR (to p q) (Proxy ('[] :: [*])) = Proxy '[GetXFromLabeledTo to]
     (.*.) _ _ = Proxy
 
 instance (to ~ LabeledTo x, ToSym (to p q) x)

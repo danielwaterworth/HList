@@ -30,6 +30,9 @@ instance KnownNat x => ShowLabel (x :: Nat) where
 #else
 instance SingI x => ShowLabel (x :: Symbol) where
   showLabel _ =  fromSing (sing :: Sing x)
+
+instance SingI x => ShowLabel (x :: Nat) where
+  showLabel _ =  show (fromSing (sing :: Sing x))
 #endif
 
 
@@ -47,3 +50,6 @@ instance HExtend (Label (y :: Symbol)) (Proxy (x ': xs :: [Symbol])) where
     type HExtendR (Label y) (Proxy (x ': xs)) = Proxy (y ': x ': xs)
     (.*.) _ _ = Proxy
 
+instance HExtend (Label (y :: Nat)) (Proxy (x ': xs :: [Nat])) where
+    type HExtendR (Label y) (Proxy (x ': xs)) = Proxy (y ': x ': xs)
+    (.*.) _ _ = Proxy

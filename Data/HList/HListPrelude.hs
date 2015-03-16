@@ -26,14 +26,17 @@ infixr 2 .*.
 -- producing a @Proxy :: Proxy '[Label x,Label y,Label z]@
 -- if @Proxy :: Proxy '[x,y,z]@ is not a kind error (as it
 -- is when mixing Label6 and Label3 labels).
-instance HExtend (Label x) (Proxy '[]) where
-    type HExtendR (Label x) (Proxy '[]) = Proxy '[x]
+--
+-- ghc-7.6 does not accept @Proxy ('[] :: [k])@ so for now
+-- require @k ~ *@
+instance HExtend (Label x) (Proxy ('[] :: [*])) where
+    type HExtendR (Label x) (Proxy ('[] :: [*])) = Proxy '[x]
     (.*.) _ _ = Proxy
 
 
 -- | similar to 'emptyRecord', 'emptyTIP', emptyHList (actually called 'HNil'),
 -- except emptyProxy is the rightmost argument to '.*.'
-emptyProxy = Proxy :: Proxy '[]
+emptyProxy = Proxy :: Proxy ('[] :: [*])
 
 -- Poly-kinded
 class SubType l l'
