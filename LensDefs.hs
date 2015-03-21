@@ -15,6 +15,11 @@ simple :: p a (f a) -> p a (f a)
 simple = id
 
 
+-- Used by doctests (which should probably just import Control.Lens...)
+infixl 1 &
+x & f = f x
+
+infixr 4 %~
 l %~ f = \t -> runIdentity $ l (rmap Identity f) t
 
 iso :: (Profunctor p, Functor f)
