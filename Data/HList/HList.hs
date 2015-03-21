@@ -212,7 +212,7 @@ hTail :: HList (e ': l) -> HList l
 hTail (HCons _ l) = l
 
 -- | 'last'
-hLast xs = hHead (hReverse xs)
+hLast xs = hHead (hReverse_ xs)
 
 
 class HInit xs where
@@ -315,18 +315,27 @@ type instance HRevAppR '[] l = l
 type instance HRevAppR (e ': l) l' = HRevAppR l (e ': l')
 
 
-class HRevApp l1 l2 where
-    hRevApp :: HList l1 -> HList l2 -> HList (HRevAppR l1 l2)
+class HRevApp l1 l2 l3 | l1 l2 -> l3 where
+    hRevApp :: HList l1 -> HList l2 -> HList l3
 
-instance HRevApp '[] l2 where
+instance HRevApp '[] l2 l2 where
     hRevApp _ l = l
 
-instance HRevApp l (x ': l') => HRevApp (x ': l) l' where
+instance HRevApp l (x ': l') z => HRevApp (x ': l) l' z where
     hRevApp (HCons x l) l' = hRevApp l (HCons x l')
 
 
 
-hReverse l = hRevApp l HNil
+class HReverse xs sx | xs -> sx, sx -> xs where
+    hReverse :: HList xs -> HList sx
+
+instance (HRevApp xs '[] sx,
+          HRevAppR sx '[] ~ xs) => HReverse xs sx where
+    hReverse l = hRevApp l HNil
+
+-- | a version of 'hReverse' that does not allow the type
+-- information to flow backwards
+hReverse_ l = hRevApp l HNil
 
 -- --------------------------------------------------------------------------
 
@@ -356,7 +365,7 @@ hBuild =  hBuild' HNil
 class HBuild' l r where
     hBuild' :: HList l -> r
 
-instance (l' ~ HRevAppR l '[], HRevApp l '[])
+instance HReverse l l'
       => HBuild' l (HList l') where
   hBuild' l = hReverse l
 
@@ -1260,34 +1269,53 @@ Proxy argument can be inferred.
 (H[1,2],H[3,4])
 
 -}
-class (n ~ HLength xs,
-       HAppendListR xs ys ~ xsys)
+class (HLength1 xs n,
+       HAppendList1 xs ys xsys
+       )
       => HSplitAt (n :: HNat) xsys xs ys
-                   | n xsys -> xs ys where
+                   | n xsys -> xs ys
+                      , xs ys -> xsys
+                      , xs -> n
+                     where
+       
     hSplitAt :: Proxy n -> HList xsys -> (HList xs, HList ys)
 
-
-instance (HSplitAt1 '[] n xsys xsRev ys,
-          xsys ~ HRevAppR xsRev ys,
-          HAppendListR xs ys ~ xsys,
-          HRevApp xsRev ys,
-          HRevApp xsRev '[],
-          HRevAppR xsRev '[] ~ xs,
-          HLength xs ~ n) =>
+instance (HSplitAt1 '[] n xsys xs ys,
+          HAppendList1 xs ys xsys,
+          HLength1 xs n) =>
     HSplitAt n xsys xs ys where
-      hSplitAt n xsys = case hSplitAt1 HNil n xsys of
-                          (revXs, ys) -> (hReverse revXs, ys)
+      hSplitAt n xsys = hSplitAt1 HNil n xsys
 
 -- | helper for 'HSplitAt'
 class HSplitAt1 accum (n :: HNat) xsys xs ys | accum n xsys -> xs ys where
     hSplitAt1 :: HList accum -> Proxy n -> HList xsys -> (HList xs, HList ys)
 
-instance HSplitAt1 accum HZero ys accum ys where
-    hSplitAt1 xs _zero ys = (xs, ys)
+instance HRevApp accum '[] xs => HSplitAt1 accum HZero ys xs ys where
+    hSplitAt1 xs _zero ys = (hReverse_ xs, ys)
 
 instance HSplitAt1 (b ': accum) n bs xs ys
     => HSplitAt1 accum (HSucc n) (b ': bs) xs ys where
     hSplitAt1 accum n (HCons b bs) = hSplitAt1 (HCons b accum) (hPred n) bs
+
+class SameLength' (HReplicateR n ()) xs => HLength1 (xs :: [k]) (n :: HNat) | xs -> n
+instance HLength1 xs n => HLength1 (x ': xs) (HSucc n)
+instance HLength1 '[] HZero
+
+
+class HStripPrefix xs xsys ys
+      => HAppendList1 (xs :: [k]) (ys :: [k]) (xsys :: [k])
+        | xs ys -> xsys,
+          xs xsys -> ys
+          -- , ys xsys -> xs
+          -- hard to prove
+
+instance HAppendList1 '[] ys ys
+instance (HAppendList1 xs ys zs) => HAppendList1 (x ': xs) ys (x ': zs)
+
+
+class HStripPrefix xs xsys ys | xs xsys -> ys
+instance HStripPrefix xs xsys ys => HStripPrefix (x ': xs) (x ': xsys) ys
+instance HStripPrefix '[] ys ys
 
 
 -- * Conversion to and from tuples
@@ -1439,9 +1467,9 @@ class HSpanEqBy (f :: t) (x :: *) (y :: [*]) (fst :: [*]) (snd :: [*])
   hSpanEqBy :: Proxy f -> x -> HList y -> (HList fst, HList snd)
 
 instance (HSpanEqBy1 f x y revFst snd,
-          HRevApp revFst '[], HRevApp revFst snd,
-          HRevAppR revFst snd ~ y,
-          HRevAppR revFst '[] ~ fst)
+          HReverse revFst fst,
+
+          HRevApp revFst snd y)
     => HSpanEqBy f x y fst snd where
   hSpanEqBy f x y =  case hSpanEqBy1 f x y of
                       (revFst, second) -> (hReverse revFst, second)
