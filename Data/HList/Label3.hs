@@ -130,8 +130,6 @@ instance HExtend (Label (Lbl n ns desc)) (Proxy (x ': xs :: [Symbol])) where
 >>> :t s
 s :: Proxy '[Label "6", Label (Lbl 'HZero () ())]
 
-With GHC>=7.8, this instance also works for Label5 labels.
-
 -}
 instance HExtend (Label (y :: Symbol)) (Proxy ((x :: *) ': xs)) where
     type HExtendR (Label (y :: Symbol)) (Proxy (x ': xs))
