@@ -115,7 +115,7 @@ module Data.HList.Record
     hProjectByLabels2,
 
     -- *** a lens for projection
-    -- $msg see "Data.HList.Labelable".'Projected'
+    -- | see "Data.HList.Labelable".'Projected'
 
     -- ** Unions
     -- *** Left
