@@ -176,7 +176,7 @@ module Data.HList.Record
 
     -- ** zip
     -- | use the more general 'HZip' class instead
-    HZipRecord,
+    HZipRecord(..),
     -- *** alternative implementation
     hZipRecord2, hUnzipRecord2
 ) where
