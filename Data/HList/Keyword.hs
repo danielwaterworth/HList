@@ -205,7 +205,7 @@ keyword in the rest.
 If we omit a required argument, we get a type error:
 
 > ] testse1 = let f x = kw make_square HNil Color Red x
-> ] 	    in "here: " ++ f Origin (0,10)
+> ]         in "here: " ++ f Origin (0,10)
 >
 >   Couldn't match `ErrReqdArgNotFound Size' against `[Char]'
 >       Expected type: ErrReqdArgNotFound Size
@@ -215,11 +215,11 @@ The error message seems reasonably clear. Likewise we get an error
 message if we pass to a keyword function an argument it does not expect:
 
 > ] testse2 = let f x = kw make_square HNil Color Red x
-> ] 	    in "here: " ++ f Origin (0,10) Size (1::Int)
-> ]	                   RaisedBorder False
+> ]         in "here: " ++ f Origin (0,10) Size (1::Int)
+> ]                       RaisedBorder False
 >
 >   No instances for (Fail (ErrUnexpectedKW RaisedBorder),
-> 		    KWApply [Char] (HCons RaisedBorder (:*: Bool HNil)) [Char])
+>             KWApply [Char] (HCons RaisedBorder (:*: Bool HNil)) [Char])
 >       arising from use of `f' at ...
 >     In the second argument of `(++)', namely
 >   `f Origin (0,10) Size (1 :: Int) RaisedBorder False'
@@ -264,7 +264,7 @@ then we can run
 > katest21 = kwapply f2 (Color .*. Red .*. Size .*. (1::Int) .*.  HNil)
 >
 > katest3  = kwapply f3 (Size .*. (1::Int) .*. Origin .*. (2.0::Float) .*.
-> 		         Color .*. Red .*. HNil)
+>                  Color .*. Red .*. HNil)
 
 -}
 
@@ -364,7 +364,7 @@ instance (r ~ r') => KWApply r '[] r' where
     kwapply f _ = f
 
 instance (HEq kw kw' flag,
-	  KWApply' flag (kw ->a->f') (kw' ': a' ': tail) r)
+      KWApply' flag (kw ->a->f') (kw' ': a' ': tail) r)
     => KWApply (kw ->a->f') (kw' ': a' ': tail) r where
     kwapply = kwapply' (Proxy :: Proxy flag)
 
@@ -379,10 +379,10 @@ instance  (v' ~ v, KWApply f' tail r)
 -- | Rotate the arg list ...
 instance  (HAppendListR tail '[kw , v] ~ l',
            HAppendList tail '[kw, v],
-	   KWApply f l' r)
+       KWApply f l' r)
     => KWApply' False f (kw ': v ': tail) r where
     kwapply' _ f (HCons kw_ (HCons v tl)) =
-	kwapply f (hAppend tl (kw_ .*. v .*. HNil))
+      kwapply f (hAppend tl (kw_ .*. v .*. HNil))
 
 {- |
 
@@ -423,7 +423,7 @@ class KW f arg_desc arg_def r where
     kwdo :: f -> arg_desc -> HList arg_def -> r
 
 instance (IsKeyFN r rflag,
-	    KW' rflag f arg_desc arg_def r)
+        KW' rflag f arg_desc arg_def r)
     => KW f arg_desc arg_def r where
     kwdo = kw' (Proxy ::Proxy rflag)
 
@@ -462,8 +462,8 @@ instance KWApply f arg_values r
 instance KWMerge' kw arg_def atail arg_values arg_def f r
     => KWMerge (kw ': atail) arg_values arg_def f r where
     kwmerge (Arg arg_values) arg_def =
-	kwmerge' (undefined :: kw) arg_def
-	         ((Arg arg_values)::Arg atail arg_values) arg_def
+      kwmerge' (undefined :: kw) arg_def
+             ((Arg arg_values)::Arg atail arg_values) arg_def
 
 class KWMerge' kw list atail arg_values arg_def f r where
     kwmerge':: kw -> HList list -> (Arg atail arg_values) -> HList arg_def -> f -> r
@@ -473,7 +473,7 @@ instance (Fail (ErrReqdArgNotFound kw), nff ~ (ErrReqdArgNotFound kw))
                 nff where
     kwmerge' = undefined
 instance (HEq kw kw' flag,
-	  KWMerge'' flag kw (kw' ': etc) atail arg_values arg_def f r)
+      KWMerge'' flag kw (kw' ': etc) atail arg_values arg_def f r)
     => KWMerge' kw (kw' ': etc) atail arg_values arg_def f r where
     kwmerge' = kwmerge'' (Proxy :: Proxy flag)
 
@@ -481,13 +481,13 @@ class KWMerge'' (flag :: Bool) kw (list :: [*]) atail arg_values arg_def f r
      where
     kwmerge'':: Proxy flag -> kw -> HList list
         -> Arg atail arg_values -> HList arg_def
-		-> f -> r
+        -> f -> r
 instance KWMerge atail (kw ': v ': arg_values) arg_def f r
     => KWMerge'' True kw (kw ': v ': tail)
                  atail arg_values arg_def f r where
     kwmerge'' _ _ (HCons kw_ (HCons v _)) (Arg arg_values) =
-	kwmerge ((Arg (kw_ .*. v .*. arg_values))::
-		 (Arg atail (kw ': v ': arg_values)))
+      kwmerge ((Arg (kw_ .*. v .*. arg_values))::
+         (Arg atail (kw ': v ': arg_values)))
 instance KWMerge' kw tail atail arg_values arg_def f r
     => KWMerge'' False kw (kw' ': v' ': tail)
                  atail arg_values arg_def f r where
@@ -500,11 +500,11 @@ class KWAcc arg_desc kw a f arg_def r where
 
 
 instance (HDelete kw arg_types arg_types',
-	  KW f (Arg arg_types' (kw ': a ': arg_values)) arg_def r)
+      KW f (Arg arg_types' (kw ': a ': arg_values)) arg_def r)
     => KWAcc (Arg arg_types arg_values) kw a f arg_def r  where
     kwaccum (Arg arg_values) kw_ a f =
-	kwdo f (Arg (kw_ .*. a .*. arg_values)::
-		Arg arg_types' (kw ': a ': arg_values))
+      kwdo f (Arg (kw_ .*. a .*. arg_values)::
+        Arg arg_types' (kw ': a ': arg_values))
 
 
 -- | Delete e from l to yield l' The element e must occur in l
@@ -629,7 +629,7 @@ limited form of the reflection on a function.
 
 Our implementation is a trivial extension of the strongly-typed
 polymorphic open records described in
-	<http://homepages.cwi.nl/~ralf/HList/>
+    <http://homepages.cwi.nl/~ralf/HList/>
 
 In fact, the implementation relies on the HList library.  To run the
 code (which this message is), one needs to download the HList library
