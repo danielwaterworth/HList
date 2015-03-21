@@ -287,7 +287,8 @@ type Unlabeled x y =
       (HMapCxt HList TaggedFn (RecordValuesR y) y,
        RecordValues x, RecordValues y,
        SameLength (RecordValuesR x) (RecordValuesR y),
-       SameLength x y, SameLabels x y)
+       SameLength x y, SameLabels x y,
+       HAllTaggedLV x, HAllTaggedLV y)
 type Unlabeled' x = Unlabeled x x
 
 
