@@ -85,12 +85,18 @@ See also @examples/pun.hs@. In @{}@ patterns, @pun@ can work with
 -- or "Data.HList.Labelable"
 pun :: QuasiQuoter
 pun = QuasiQuoter {
-    quotePat = mp . parseRec,
-    quoteExp = me . parseRec,
+    quotePat = suppressWarning mp . parseRec,
+    quoteExp = suppressWarning me . parseRec,
     quoteDec  = error "Data.HList.RecordPuns.quoteDec",
     quoteType = error "Data.HList.RecordPuns.quoteType"
  }
 
+
+-- | the warning about @implicit {} added@ doesn't
+-- make sense at top level (but it does if you say
+-- have  [pun| x @ y |]
+suppressWarning f (V a) = f (C [V a])
+suppressWarning f x = f x
 
 -- like  \x -> (x .!. x1, x .!. x2)
 extracts xs = do
