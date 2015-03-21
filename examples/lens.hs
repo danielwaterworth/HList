@@ -1,3 +1,4 @@
+{-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE TemplateHaskell, DataKinds, PolyKinds #-}
 {- | Demonstrates @hLens@. See also labelable.hs which is more "convenient"
 
