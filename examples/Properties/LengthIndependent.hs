@@ -149,7 +149,7 @@ hl0 = describe "0 -- length independent"  $ do
            | otherwise = mkVariant ly y Proxy
         v' | b = mkVariant lx (f x) Proxy `asLabelsOf` p
            | otherwise = mkVariant ly (g y) Proxy
-    
+
         fun = lx .=. f .*. ly .=. g .*. emptyRecord
 
     return $ zipVR fun v `eq` v'
@@ -371,7 +371,7 @@ hl0 = describe "0 -- length independent"  $ do
 
       containX :: Bool <- arbitrary
       let
-          v p | containX = mkVariant lx x p 
+          v p | containX = mkVariant lx x p
             | otherwise = mkVariant ly y Proxy
 
 
@@ -599,7 +599,7 @@ hTuples = do
 
 -- XXX projected
 v =  mkVariant (Label :: Label "x") () (Proxy :: Proxy '[Tagged "x" (), Tagged "y" Double])
-vy = mkVariant (Label :: Label "y") 2.4 (Proxy :: Proxy '[Tagged "x" (), Tagged "y" Double]) 
+vy = mkVariant (Label :: Label "y") 2.4 (Proxy :: Proxy '[Tagged "x" (), Tagged "y" Double])
 
 vp1 :: Maybe (Variant '[Tagged "x" ()])
 vp1 =  projectVariant v
