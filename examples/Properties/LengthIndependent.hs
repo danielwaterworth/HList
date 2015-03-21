@@ -270,13 +270,24 @@ hl0 = describe "0 -- length independent"  $ do
   it "Record lookup mixing labels" $ do
     property $ do
       v1 :: BoolN "v1" <- arbitrary
-      v2 :: BoolN "v1" <- arbitrary
+      v2 :: BoolN "v2" <- arbitrary
+      v3 :: BoolN "v3" <- arbitrary
       let l1 = Label :: Label ()
           l2 = Label :: Label 2
-          r = l1 .=. v1 .*. l2 .=. v2 .*. emptyRecord
+          l3 = Label :: Label "3"
+          p = Proxy :: Proxy '[Label (), Label 2 , Label "3"]
+
+          p1 = consl1 $ l2 .*. l3 .*. emptyProxy
+
+          -- HExtend doesn't support Label5
+          consl1 :: Proxy x -> Proxy (Label () ': x)
+          consl1 _ = Proxy
+
+          r = hEndR (hBuild v1 v2 v3) `asLabelsOf` p
       return $ conjoin
         [ r.!.l1 `eq` v1,
-          r.!.l2 `eq` v2 ]
+          r.!.l2 `eq` v2,
+          p1 `eq` p ]
 
   it "HOccurs HList" $ do
     property $ do
