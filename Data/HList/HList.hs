@@ -330,7 +330,7 @@ class HReverse xs sx | xs -> sx, sx -> xs where
     hReverse :: HList xs -> HList sx
 
 instance (HRevApp xs '[] sx,
-          HRevAppR sx '[] ~ xs) => HReverse xs sx where
+          HRevApp sx '[] xs) => HReverse xs sx where
     hReverse l = hRevApp l HNil
 
 -- | a version of 'hReverse' that does not allow the type
