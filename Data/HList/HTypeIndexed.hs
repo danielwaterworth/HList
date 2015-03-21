@@ -66,27 +66,13 @@ instance HDeleteMany e1 (HList l) (HList l1)
 -- --------------------------------------------------------------------------
 -- Type-indexed operations in terms of the natural-based primitives
 
-hDeleteAt :: forall e l n. (HDeleteAtHNat n l, HType2HNat e l n) => 
-	   Proxy e -> HList l -> HList (HDeleteAtHNatR n l)
-hDeleteAt _p l = hDeleteAtHNat (Proxy :: Proxy n) l
+hDeleteAt p l = hDeleteAtHNat (hType2HNat p l) l
 
-hUpdateAt :: forall n e l.
-		 (HUpdateAtHNat n e l, HType2HNat e l n) => 
-		 e -> HList l -> (HList (HUpdateAtHNatR n e l))
-hUpdateAt e l = hUpdateAtHNat (Proxy :: Proxy n) e l
+hUpdateAt e l = hUpdateAtHNat (hType2HNat (Just e) l) e l
 
-hProjectBy :: forall (ns :: [HNat]) (ps :: [*]) (l :: [*]).
-	      (HProjectByHNatsCtx ns l, HTypes2HNats ps l ns,
-	      ps ~ (HProjectByHNatsR ns l)) =>
-	      Proxy ps -> HList l -> HList ps
-hProjectBy _ps l = hProjectByHNats (Proxy ::Proxy ns) l
+hProjectBy ps l = hProjectByHNats (hTypes2HNats ps l) l
 
-hSplitBy :: forall (ps :: [*]) l ns.
-	    (HProjectByHNatsCtx ns l, HProjectAwayByHNatsCtx ns l,
-	     HTypes2HNats ps l ns) =>
-	    Proxy ps -> HList l -> (HList (HProjectByHNatsR ns l), 
-				    HList (HProjectAwayByHNatsR ns l))
-hSplitBy _ps l = hSplitByHNats (Proxy ::Proxy ns) l
+hSplitBy ps l = hSplitByHNats (hTypes2HNats ps l) l
 
 
 -- | should this instead delete the first element of that type?

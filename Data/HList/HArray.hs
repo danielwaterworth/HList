@@ -140,7 +140,8 @@ type HProjectByHNatsR (ns :: [HNat]) (l :: [*]) =
 type HProjectByHNatsCtx ns l =
   (Apply (FHUProj True ns) (HList l, Proxy 'HZero),
       HUnfold' (FHUProj True ns) 
-       (ApplyR (FHUProj True ns) (HList l, Proxy 'HZero)))
+       (HList l, Proxy 'HZero)
+    )
 
 -- * Complement of Projection
 
@@ -161,8 +162,8 @@ type HProjectAwayByHNatsR (ns :: [HNat]) (l :: [*]) =
 
 type HProjectAwayByHNatsCtx ns l =
   (Apply (FHUProj False ns) (HList l, Proxy 'HZero),
-      HUnfold' (FHUProj False ns) (ApplyR (FHUProj False ns) 
-				   (HList l, Proxy 'HZero)))
+      HUnfold' (FHUProj False ns) (HList l, Proxy 'HZero)
+  )
 
 -- * Splitting
 -- | Splitting an array according to indices

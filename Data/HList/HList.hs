@@ -499,21 +499,24 @@ instance (z ~ z') => HFoldl f z '[] z' where
 -- 'Apply' instead of 'App' since that's all that is needed for uses of this
 -- function downstream. Those could in principle be re-written.
 
-hUnfold :: (Apply p s, HUnfold' p (ApplyR p s)) => p -> s -> HList (HUnfold p s)
+-- hUnfold :: (Apply p s, HUnfold' p s) => p -> s -> HList (HUnfold p s)
 hUnfold p s = hUnfold' p (apply p s)
 
 type HUnfold p s = HUnfoldR p (ApplyR p s)
 
-class HUnfold' p res where
-    type HUnfoldR p res :: [*]
-    hUnfold' :: p -> res -> HList (HUnfoldR p res)
+type family HUnfoldR p res :: [*]
+type instance HUnfoldR p HNothing = '[]
+type instance HUnfoldR p (HJust (e,s)) = e ': HUnfoldR p (ApplyR p s)
 
-instance HUnfold' p HNothing where
-    type HUnfoldR p HNothing = '[]
+type HUnfold' p res = HUnfoldFD p (ApplyR p res) (HUnfold p res)
+
+class HUnfoldFD p res z | p res -> z where
+    hUnfold' :: p -> res -> HList z
+
+instance HUnfoldFD p HNothing '[] where
     hUnfold' _ _ = HNil
 
-instance (Apply p s, HUnfold' p (ApplyR p s)) => HUnfold' p (HJust (e,s)) where
-    type HUnfoldR p (HJust (e,s)) = e ': HUnfold p s
+instance (Apply p s, HUnfoldFD p (ApplyR p s) z) => HUnfoldFD p (HJust (e,s)) (e ': z) where
     hUnfold' p (HJust (e,s)) = HCons e (hUnfold p s)
 
 
