@@ -138,6 +138,21 @@ instance HExtend (Label (y :: Symbol)) (Proxy ((x :: *) ': xs)) where
           = Proxy (Label y ':  (MapLabel (x ': xs)))
     (.*.) _ _ = Proxy
 
+instance HExtend (Label (y :: Symbol)) (Proxy ((x :: Nat) ': xs)) where
+    type HExtendR (Label (y :: Symbol)) (Proxy (x ': xs))
+          = Proxy (Label y ':  (MapLabel (x ': xs)))
+    (.*.) _ _ = Proxy
+
+instance HExtend (Label (y :: Nat)) (Proxy ((x :: *) ': xs)) where
+    type HExtendR (Label (y :: Nat)) (Proxy (x ': xs))
+          = Proxy (Label y ':  (MapLabel (x ': xs)))
+    (.*.) _ _ = Proxy
+
+instance HExtend (Label (y :: Nat)) (Proxy ((x :: Symbol) ': xs)) where
+    type HExtendR (Label (y :: Nat)) (Proxy (x ': xs))
+          = Proxy (Label y ':  (MapLabel (x ': xs)))
+    (.*.) _ _ = Proxy
+
 -- | similar to Data.HList.Record.Labels1, but avoids producing Label (Label x)
 type family MapLabel (xs :: [k]) :: [*]
 type instance MapLabel '[] = '[]
