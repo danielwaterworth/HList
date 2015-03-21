@@ -44,6 +44,7 @@ module Data.HList.Record
     mkRecord,
     emptyRecord,
     hEndR,
+    hEndP,
 
     hListRecord, hListRecord',
 
@@ -1161,6 +1162,27 @@ instance (HReverse l lRev,
 hEndR :: Record a -> Record a
 hEndR = id
 
+
+-- | see 'hEndP'
+instance (HRevAppR l '[] ~ lRev,
+          HExtendRs lRev (Proxy ('[] :: [*])) ~ Proxy l1,
+          l' ~ l1) => HBuild' l (Proxy l') where
+  hBuild' _ = Proxy
+
+{- | @'hEndP' $ 'hBuild' label1 label2@
+
+is one way to make a Proxy of labels (for use with 'asLabelsOf'
+for example). Another way is
+
+@label1 .*. label2 .*. 'emptyProxy'@
+
+-}
+hEndP :: Proxy (xs :: [k]) -> Proxy xs
+hEndP = id
+
+type family HExtendRs (ls :: [*]) (z :: k) :: k
+type instance HExtendRs (l ': ls) z = HExtendR l (HExtendRs ls z)
+type instance HExtendRs '[] z = z
 
 -- --------------------------------------------------------------------------
 
