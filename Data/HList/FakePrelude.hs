@@ -694,6 +694,10 @@ class (SameLength' x y, SameLength' y x) =>
   sameLength :: r x `p` f (q y) -> r x `p` f (q y)
   sameLength = id
 
+asLengthOf :: SameLength x y => r x -> s y -> r x
+asLengthOf = const
+
+
 instance (SameLength' x y, SameLength' y x) => SameLength x y
 
 type family SameLengths (xs :: [[k]]) :: Constraint
