@@ -27,10 +27,12 @@ import Test.Hspec
 
 import Properties.LengthDependentSplice
 import Properties.LengthIndependent
+import Properties.KW
 
 main = hspec $ do
    hl0
    hl1_2_3
+   kwSpecs
 
 
 
