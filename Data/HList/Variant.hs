@@ -134,11 +134,10 @@ In other cases the other tags will be defaulted to (), at least if `ExtendedDefa
 V{left='x'}
 
 >>> :set -XNoExtendedDefaultRules
->>> let doctestCleanActual x = case x of "" -> x; _ -> (lines x !! 2) ++ "\n"
 >>> v3'
-    No instance for (Show b0) arising from a use of ‘print’
-
->>> let doctestCleanActual x = x
+...
+...No instance for (Show ...) arising from a use of ‘print’
+...
 
 
 Another way around this issue is to make sure that the proxy

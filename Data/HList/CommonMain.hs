@@ -275,25 +275,12 @@ The Labelable way:
 >>> r & x .~ ()
 Record{x=()}
 
-
-Cut out the important line in a message like
-
-> <interactive>:1:4:
->     No instance for (Fail (FieldNotFound "y"))
->       arising from a use of ‘y’
->     In the second argument of ‘(^.)’, namely ‘y’
->     In the expression: r ^. y
-
->>> import Data.Char
-
->>> :{
-let doctestCleanActual x
-      | null x = x
-      | otherwise = dropWhile isSpace $ lines x !! 2 ++ "\n"
-:}
+When a field is missing, the error names that field:
 
 >>> :t r^.y
-No instance for (Fail (FieldNotFound "y"))
+...
+...No instance for (Fail (FieldNotFound "y"))
+...
 
 -}
 

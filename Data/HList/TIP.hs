@@ -499,14 +499,9 @@ TIPH[Name "Angus",Price 75.5]
 Don't bother repeating the type error:
 
 
->>> import Data.Char
->>> :{
-let doctestCleanActual x
-      | null x = x
-      | otherwise = dropWhile isSpace $ lines x !! 2 ++ "\n"
-:}
-
 >>> Sheep .*. myTipyCow
-No instance for (Fail (DuplicatedLabel Breed))
+...
+...No instance for (Fail (DuplicatedLabel (Label Breed)))
+...
 
 -}
