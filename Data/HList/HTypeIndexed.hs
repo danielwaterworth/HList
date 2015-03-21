@@ -26,7 +26,7 @@ class HType2HNatCase (b :: Bool) (e :: *) (l :: [*]) (n :: HNat) | b e l -> n
 instance HOccursNot e l => HType2HNatCase True e l HZero
 instance HType2HNat e l n => HType2HNatCase False e l (HSucc n)
 
-hType2HNat :: HType2HNat e l n => Proxy e -> proxy l -> Proxy n
+hType2HNat :: HType2HNat e l n => proxy1 e -> proxy l -> Proxy n
 hType2HNat _ _ = Proxy
 
 -- | And lift to the list of types
@@ -37,7 +37,7 @@ instance (HType2HNat e l n, HTypes2HNats es l ns)
       => HTypes2HNats (e ': es) (l :: [*]) (n ': ns)
 
 hTypes2HNats :: HTypes2HNats es l ns => 
-		Proxy (es :: [*]) -> HList l -> Proxy (ns :: [HNat])
+		Proxy (es :: [*]) -> hlist l -> Proxy (ns :: [HNat])
 hTypes2HNats _ _ = Proxy
 
 -- --------------------------------------------------------------------------
