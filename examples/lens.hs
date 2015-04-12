@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE TemplateHaskell, DataKinds, PolyKinds #-}
 {- | Demonstrates @hLens@. See also labelable.hs which is more "convenient"
@@ -9,8 +10,16 @@ import Control.Lens
 
 makeLabels6 (words "x y z")
 
+
+#if __GLASGOW_HASKELL__ > 707
+yRec = y .=. 321 .*. x .=. 123 .*. emptyRecord
+#else
+-- defaulting doesn't work in ghc-7.6.3
+yRec = y .=. (321 :: Integer) .*. x .=. (123 :: Integer) .*. emptyRecord
+#endif
+
 r = x .=. "hi" .*.
-    y .=. (y .=. 321 .*. x .=. 123 .*. emptyRecord) .*.
+    y .=. yRec .*.
     emptyRecord
 
 
