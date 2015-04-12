@@ -36,7 +36,7 @@ toN n = foldr appE [| hZero |] (replicate n [| hSucc |])
 
 hlN :: Int -> ExpQ
 hlN n = [| \proxy -> hSequence
-              $ hReplicate $(toN n)
+              $ $(varE 'hReplicate) $(toN n)
                     (arbitrary `asTypeOf` return proxy) |]
 
 -- > $(rN n) (undefined :: t) :: Arbitrary t => Gen (Record ts)
@@ -177,7 +177,7 @@ hl1 n1 = [| do
         return $ x == $(varE 'hReverse) (hReverse x)
 
   it "hReverse does nothing for ()" $
-      let xs = hReplicate $(toN n1) ()
+      let xs = $(varE 'hReplicate) $(toN n1) ()
       in xs `shouldBe` $(varE 'hReverse) xs
 
   it "hInit == tail on reverse" $
