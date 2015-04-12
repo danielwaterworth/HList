@@ -26,7 +26,7 @@ main = do
         ["repl","--ghc-options","-v0 -w"]
         ":show packages\n:show language"
     let flags = words $ unlines
-                    $ filter (\f -> not $ "template-haskell" `isInfixOf` f)
+                    $ filter (\f -> not $ "package" `isInfixOf` f)
                     $ filter ((=="-") . take 1 . dropWhile isSpace)
                     $ lines o
 
