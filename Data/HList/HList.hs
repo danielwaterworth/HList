@@ -1322,6 +1322,10 @@ class HLengthEq2 (xs :: [*]) n | xs -> n -- pick the instance based on xs' const
 instance (HLengthEq xs n, sn ~ HSucc n) => HLengthEq2 (x ': xs) sn 
 instance zero ~ HZero => HLengthEq2 '[] zero
 
+
+-- | @HAppendList1 xs ys xsys@ is the type-level way of saying @xs ++ ys == xsys@
+--
+-- used by 'HSplitAt'
 class HStripPrefix xs xsys ys
       => HAppendList1 (xs :: [k]) (ys :: [k]) (xsys :: [k])
         | xs ys -> xsys,
@@ -1333,6 +1337,7 @@ instance HAppendList1 '[] ys ys
 instance (HAppendList1 xs ys zs) => HAppendList1 (x ': xs) ys (x ': zs)
 
 
+-- | analog of 'Data.List.stripPrefix'
 class HStripPrefix xs xsys ys | xs xsys -> ys
 instance HStripPrefix xs xsys ys => HStripPrefix (x ': xs) (x ': xsys) ys
 instance HStripPrefix '[] ys ys
