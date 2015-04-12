@@ -11,9 +11,10 @@ import Data.HList.FakePrelude
 import Data.HList.HList
 import Data.HList.TypeEqO () -- Arity instance
 
-
-
 {- | 'curry'/'uncurry' for many arguments and HLists instead of tuples
+
+XXX the last FD @xs -> n@ is needed to make hCompose infer the right types:
+arguably it shouldn't be needed
 
 -}
 class HLengthEq xs n => HCurry' (n :: HNat) f xs r
