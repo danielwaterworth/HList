@@ -16,8 +16,8 @@ import Data.HList.TypeEqO () -- Arity instance
 {- | 'curry'/'uncurry' for many arguments and HLists instead of tuples
 
 -}
-class HLength1 xs n => HCurry' (n :: HNat) f xs r
-          | f xs -> r, r xs -> f, n f -> xs where
+class HLengthEq xs n => HCurry' (n :: HNat) f xs r
+          | f xs -> r, r xs -> f, n f -> xs, xs -> n where
     hUncurry' :: Proxy n -> f -> HList xs -> r
     hCurry' :: Proxy n -> (HList xs -> r) -> f
 

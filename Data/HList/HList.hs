@@ -227,12 +227,12 @@ instance HInit (b ': c) => HInit (a ': b ': c) where
     hInit (a `HCons` bc) = a `HCons` hInit bc
 
 
--- | Length
+-- | Length, but see 'HLengthEq' instead
 type family HLength (x :: [k]) :: HNat
 type instance HLength '[] = HZero
 type instance HLength (x ': xs) = HSucc (HLength xs)
 
-hLength   :: HList l -> Proxy (HLength l)
+hLength   :: HLengthEq l n => HList l -> Proxy n
 hLength _ =  Proxy
 
 -- ** Append
@@ -536,9 +536,9 @@ easier to use 'HList2List':
 Just H[3,3,3]
 
 -}
-class (HLength (HReplicateR n e) ~ n) =>
-      HReplicate (n :: HNat) e where
-    hReplicate :: Proxy n -> e -> HList (HReplicateR n e)
+class HLengthEq (HReplicateR n e) n => HReplicate (n :: HNat) e where
+    hReplicate :: HLengthEq (HReplicateR n e) n =>
+          Proxy n -> e -> HList (HReplicateR n e)
 
 instance HReplicate HZero e where
     hReplicate _ _ = HNil
@@ -569,16 +569,15 @@ H[3,3]
 H[3,3.0,3]
 
 -}
-class (n ~ HLength r) => HReplicateF (n :: HNat) f z r where
-    hReplicateF :: Proxy n -> f -> z -> HList r
+class HLengthEq r n => HReplicateF (n :: HNat) f z r | r -> n where
+    hReplicateF :: HLengthEq r n => Proxy n -> f -> z -> HList r
 
-instance (r ~ '[]) => HReplicateF HZero f z r where
+instance HReplicateF HZero f z '[] where
     hReplicateF _ _ _ = HNil
 
-instance (r ~ (fz ': r'),
-          ApplyAB f z fz,
+instance (ApplyAB f z fz,
           HReplicateF n f z r')
-  => HReplicateF (HSucc n) f z r where
+  => HReplicateF (HSucc n) f z (fz ': r') where
     hReplicateF n f z = applyAB f z `HCons` hReplicateF (hPred n) f z
 
 -- ** iterate
@@ -605,16 +604,16 @@ as done with Prelude.'iterate'
 H[(),Just (),Just (Just ())]
 
 -}
-class (HLength r ~ n) => HIterate n f z r where
-    hIterate :: Proxy n -> f -> z -> HList r
+class HLengthEq r n => HIterate n f z r where
+    hIterate :: HLengthEq r n => Proxy n -> f -> z -> HList r
 
-instance (r ~ '[]) => HIterate HZero f z r where
+instance HIterate HZero f z '[] where
     hIterate _ _ _ = HNil
 
 instance (ApplyAB f z z',
-      r ~ (z ': r'),
-      HIterate n f z' r')
-     => HIterate (HSucc n) f z r where
+      HIterate n f z' r',
+      z ~ z_)
+     => HIterate (HSucc n) f z (z_ ': r') where
     hIterate n f z = z `HCons` hIterate (hPred n) f (applyAB f z :: z')
 
 -- * concat
@@ -1271,7 +1270,7 @@ Proxy argument can be inferred.
 (H[1,2],H[3,4])
 
 -}
-class (HLength1 xs n,
+class (HLengthEq xs n,
        HAppendList1 xs ys xsys
        )
       => HSplitAt (n :: HNat) xsys xs ys
@@ -1284,7 +1283,7 @@ class (HLength1 xs n,
 
 instance (HSplitAt1 '[] n xsys xs ys,
           HAppendList1 xs ys xsys,
-          HLength1 xs n) =>
+          HLengthEq xs n) =>
     HSplitAt n xsys xs ys where
       hSplitAt n xsys = hSplitAt1 HNil n xsys
 
@@ -1299,10 +1298,29 @@ instance HSplitAt1 (b ': accum) n bs xs ys
     => HSplitAt1 accum (HSucc n) (b ': bs) xs ys where
     hSplitAt1 accum n (HCons b bs) = hSplitAt1 (HCons b accum) (hPred n) bs
 
-class SameLength' (HReplicateR n ()) xs => HLength1 (xs :: [k]) (n :: HNat) | xs -> n
-instance HLength1 xs n => HLength1 (x ': xs) (HSucc n)
-instance HLength1 '[] HZero
+{- | a better way to write @HLength xs ~ n@ because:
 
+1. it works properly with ghc-7.10 (probably another example of ghc bug #10009)
+
+2. it works backwards a bit in that if @n@ is known, then @xs@ can be
+   refined:
+
+>>> undefined :: HLengthEq xs HZero => HList xs
+H[]
+
+-}
+class SameLength' (HReplicateR n ()) xs => HLengthEq (xs :: [*]) (n :: HNat) | xs -> n
+
+instance (SameLength' (HReplicateR n ()) xs,
+          HLengthEq1 xs n, HLengthEq2 xs n) => HLengthEq xs n
+
+class HLengthEq1 (xs :: [*]) n -- pick the instance based on n's constructor
+instance (HLengthEq xs n, xxs ~ (x ': xs)) => HLengthEq1 xxs (HSucc n)
+instance (xxs ~ '[]) => HLengthEq1 xxs HZero 
+
+class HLengthEq2 (xs :: [*]) n | xs -> n -- pick the instance based on xs' constructor
+instance (HLengthEq xs n, sn ~ HSucc n) => HLengthEq2 (x ': xs) sn 
+instance zero ~ HZero => HLengthEq2 '[] zero
 
 class HStripPrefix xs xsys ys
       => HAppendList1 (xs :: [k]) (ys :: [k]) (xsys :: [k])

@@ -98,7 +98,7 @@ deriving instance
 -- | this data type only exists to have Data instance
 newtype HListFlat a = HListFlat (HList a)
 
-type DataHListFlatCxt g a = (HBuild' '[] g,
+type DataHListFlatCxt na g a = (HBuild' '[] g,
         Typeable (HListFlat a),
         TypeablePolyK a,
         HFoldl (GfoldlK  C) (C g) a (C (HList a)),
@@ -106,12 +106,20 @@ type DataHListFlatCxt g a = (HBuild' '[] g,
         HFoldr
             (GunfoldK C)
             (C g)
-            (HReplicateR (HLength a) ())
+            (HReplicateR na ())
             (C (HList a)),
 
-        HReplicate (HLength a) ())
+        HLengthEq a na,
+        HReplicate na (),
 
-instance DataHListFlatCxt g a => Data (HListFlat a) where
+        -- these should be implied by HReplicate's superclass,
+        -- (and they are for ghc-7.8.4)
+        HLengthEq (HReplicateR na ()) na,
+        HLengthEq2 (HReplicateR na ()) na,
+        HLengthEq1 (HReplicateR na ()) na
+        )
+
+instance DataHListFlatCxt na g a => Data (HListFlat a) where
     gfoldl k z (HListFlat xs) = c3 $
                     hFoldl
                         (c1 (GfoldlK k))

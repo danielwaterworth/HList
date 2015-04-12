@@ -142,7 +142,8 @@ instance HSort2 False x y '[y,x] where
 instance (HMerge le xs' ys' sorted,
           HMSortBy le ys ys',
           HMSortBy le xs xs',
-          HDiv2 (HLength (a ': b ': c ': cs)) ~ n,
+          HLengthEq (a ': b ': c ': cs) n2,
+          HDiv2 n2 ~ n,
           HSplitAt n (a ': b ': c ': cs) xs ys)
   => HMSortBy le (a ': b ': c ': cs) sorted where
   hMSortBy le abbs = case hSplitAt (Proxy :: Proxy n) abbs of

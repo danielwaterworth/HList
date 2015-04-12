@@ -1129,7 +1129,7 @@ instance VariantToHMaybied '[] '[] where
     variantToHMaybied _ = emptyRecord
 
 instance (VariantToHMaybied v r,
-          HReplicateF (HLength r) ConstTaggedNothing () r,
+          HReplicateF nr ConstTaggedNothing () r,
 
           tx ~ Tagged t x,
           tmx ~ Tagged t (Maybe x))
