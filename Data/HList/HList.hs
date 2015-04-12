@@ -1339,7 +1339,7 @@ instance (HAppendList1 xs ys zs) => HAppendList1 (x ': xs) ys (x ': zs)
 
 -- | analog of 'Data.List.stripPrefix'
 class HStripPrefix xs xsys ys | xs xsys -> ys
-instance HStripPrefix xs xsys ys => HStripPrefix (x ': xs) (x ': xsys) ys
+instance (x' ~ x, HStripPrefix xs xsys ys) => HStripPrefix (x' ': xs) (x ': xsys) ys
 instance HStripPrefix '[] ys ys
 
 
