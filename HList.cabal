@@ -27,6 +27,7 @@ Build-Type:          Simple
 
 Extra-Source-Files:
                      examples/*.hs,
+                     examples/Properties/*.hs,
                      examples/broken/*.hs,
                      examples/broken/*.lhs,
 
