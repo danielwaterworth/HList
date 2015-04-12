@@ -45,7 +45,6 @@ module Data.HList.CommonMain (
  , HAscList, HIsAscList
 
  -- ** A subset of "Data.HList.HCurry"
- , HCurry
  , HCurry'(..)
  , hCurry, hUncurry
  , hCompose

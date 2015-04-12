@@ -11,8 +11,6 @@ import Data.HList.FakePrelude
 import Data.HList.HList
 import Data.HList.TypeEqO () -- Arity instance
 
-type HCurry f xs r = HCurry' (HLength xs) f xs r
-
 
 
 {- | 'curry'/'uncurry' for many arguments and HLists instead of tuples
