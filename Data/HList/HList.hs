@@ -1345,6 +1345,7 @@ instance HStripPrefix '[] ys ys
 -- * Conversion to and from tuples
 
 class HTuple v t | v -> t, t -> v where
+    -- | alternatively: @hUncurry (,,,)@
     hToTuple :: HList v -> t
     hFromTuple :: t -> HList v
 
