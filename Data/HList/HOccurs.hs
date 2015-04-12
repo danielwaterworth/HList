@@ -46,7 +46,7 @@ instance HOccurrence e1 l l' => HOccurrence' False e1 (e ': l) l' where
 class HOccursMany e (l :: [*]) where
   hOccursMany :: HList l -> [e]
 
-instance (HOccurrence e l l', HOccursMany' e l') 
+instance (HOccurrence e l l', HOccursMany' e l')
     => HOccursMany e l
  where
   hOccursMany l = hOccursMany' (hOccurrence (Proxy::Proxy e) l)
@@ -65,10 +65,10 @@ instance (e ~ e1, HOccursMany e l) => HOccursMany' e (e1 ': l) where
 -- One or more occurrences
 
 hOccursMany1 :: forall e l l'.
-		(HOccurrence e l (e ': l'), HOccursMany e l') =>
-		HList l -> (e,[e])
+                (HOccurrence e l (e ': l'), HOccursMany e l') =>
+                HList l -> (e,[e])
 hOccursMany1 l = case hOccurrence (Proxy :: Proxy e) l of
-		   (HCons e l') -> (e,hOccursMany (l'::HList l'))
+                   (HCons e l') -> (e,hOccursMany (l'::HList l'))
 
 -- --------------------------------------------------------------------------
 -- The first occurrence
@@ -106,8 +106,8 @@ hOccursRest tip = case hOccurs tip of
 -- --------------------------------------------------------------------------
 -- Zero or at least one occurrence
 
-hOccursOpt :: forall e l l'. 
-	      (HOccurrence e l l', HOccursOpt' e l') => HList l -> Maybe e
+hOccursOpt :: forall e l l'.
+              (HOccurrence e l l', HOccursOpt' e l') => HList l -> Maybe e
 hOccursOpt = hOccursOpt' . hOccurrence (Proxy :: Proxy e)
 
 class HOccursOpt' e l where

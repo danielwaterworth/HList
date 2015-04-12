@@ -344,7 +344,7 @@ instance (
 
     -- to convince GHC the fundeps are satisfied
     HUpdateAtLabel Variant x b s t,
-    HUpdateAtLabel Variant x a t s 
+    HUpdateAtLabel Variant x a t s
    ) => HPrism x s t a b where
     hPrism x = prism (\b -> mkVariant x b Proxy)
                   (\s -> case hLookupByLabel x s of

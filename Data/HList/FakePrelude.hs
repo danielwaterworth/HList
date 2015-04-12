@@ -127,7 +127,7 @@ class Apply f a where
 
  > class (GetB f a ~ b, GetA f b ~ a) => ApplyAB' f a b
 
- would not require an annotation for @twoJusts@. However, 
+ would not require an annotation for @twoJusts@. However,
  not all instances of ApplyAB will satisfy those functional
  dependencies, and thus the number of classes would proliferate.
  Furthermore, inference does not have to be in one direction

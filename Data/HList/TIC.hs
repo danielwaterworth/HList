@@ -118,7 +118,7 @@ mkTIC' :: forall i l proxy.
          )
       => i
       -> proxy l -- ^ the ordering of types in the @l :: [*]@ matters.
-                 -- This argument is intended to fix the ordering 
+                 -- This argument is intended to fix the ordering
                  -- it can be a Record, Variant, TIP, Proxy
       -> TIC l
 

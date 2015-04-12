@@ -73,7 +73,7 @@ hProjectByHNats' ns l = hMap (FHLookupByHNat l) ns
 
 newtype FHLookupByHNat (l :: [*]) = FHLookupByHNat (HList l)
 
-instance HLookupByHNat n l => 
+instance HLookupByHNat n l =>
     Apply (FHLookupByHNat l) (Proxy (n :: HNat)) where
   type ApplyR (FHLookupByHNat l) (Proxy n) = HLookupByHNatR n l
   apply (FHLookupByHNat l) n               = hLookupByHNat  n l
@@ -83,7 +83,7 @@ instance HLookupByHNat n l =>
 -- repeated traversals of the HList l at run-time.
 
 -- Here is a more optimal version with a better separation of
--- compile-time and run-time computation. 
+-- compile-time and run-time computation.
 -- The list of labels to project is type-level only.
 -- We treat this list of labels as a set -- that is, we will
 -- ignore duplicates.
@@ -93,11 +93,11 @@ instance HLookupByHNat n l =>
 -- We unify hProjectByHNats and hProjectAwayByHNats in one
 -- function, distinguished by the sel :: Bool in
 -- FHUProj below. The operation hProjectByHNats corresponds
--- to sel = True (that is, elements of l whose indices are found in 
+-- to sel = True (that is, elements of l whose indices are found in
 -- ns are to be included in the result), whereas hProjectByHNats
 -- corresponds to set = False.
 
-hProjectByHNats (_ :: Proxy (ns :: [HNat])) l = 
+hProjectByHNats (_ :: Proxy (ns :: [HNat])) l =
     hUnfold (FHUProj :: FHUProj True ns) (l,hZero)
 
 data FHUProj (sel :: Bool) (ns :: [HNat]) = FHUProj
@@ -106,25 +106,25 @@ instance Apply (FHUProj sel ns) (HList '[],n) where
     type ApplyR (FHUProj sel ns) (HList '[],n) = HNothing
     apply _ _ = HNothing
 
-instance (ch ~ Proxy (HBoolEQ sel (KMember n ns)), 
-	  Apply (ch, FHUProj sel ns) (HList (e ': l),Proxy (n :: HNat))) =>
+instance (ch ~ Proxy (HBoolEQ sel (KMember n ns)),
+          Apply (ch, FHUProj sel ns) (HList (e ': l),Proxy (n :: HNat))) =>
     Apply (FHUProj sel ns) (HList (e ': l),Proxy (n :: HNat)) where
-    type ApplyR (FHUProj sel ns) (HList (e ': l),Proxy n) = 
+    type ApplyR (FHUProj sel ns) (HList (e ': l),Proxy n) =
        ApplyR (Proxy (HBoolEQ sel (KMember n ns)), FHUProj sel ns)
-	      (HList (e ': l),Proxy n)
+              (HList (e ': l),Proxy n)
     apply fn s = apply (Proxy::ch,fn) s
 
-instance Apply (Proxy True, FHUProj sel ns) 
+instance Apply (Proxy True, FHUProj sel ns)
                (HList (e ': l),Proxy (n::HNat)) where
-    type ApplyR (Proxy True, FHUProj sel ns) (HList (e ': l),Proxy n) = 
-	(HJust (e, (HList l,Proxy (HSucc n))))
+    type ApplyR (Proxy True, FHUProj sel ns) (HList (e ': l),Proxy n) =
+        (HJust (e, (HList l,Proxy (HSucc n))))
     apply _ (HCons e l,n) = (HJust (e,(l,hSucc n)))
 
 instance (Apply (FHUProj sel ns) (HList l, Proxy (HSucc n))) =>
-    Apply (Proxy False, FHUProj sel ns) 
+    Apply (Proxy False, FHUProj sel ns)
           (HList (e ': l),Proxy (n::HNat)) where
-    type ApplyR (Proxy False, FHUProj sel ns) (HList (e ': l),Proxy n) = 
-	ApplyR (FHUProj sel ns) (HList l, Proxy (HSucc n))
+    type ApplyR (Proxy False, FHUProj sel ns) (HList (e ': l),Proxy n) =
+        ApplyR (FHUProj sel ns) (HList l, Proxy (HSucc n))
     apply (_,fn) (HCons _ l,n) = apply fn (l,hSucc n)
 
 
@@ -134,12 +134,12 @@ type instance KMember n '[]       = False
 type instance KMember n (n1 ': l) = HOr (HNatEq n n1) (KMember n l)
 
 -- Useful abbreviations for complex types (which are inferred)
-type HProjectByHNatsR (ns :: [HNat]) (l :: [*]) = 
+type HProjectByHNatsR (ns :: [HNat]) (l :: [*]) =
     HUnfold (FHUProj True ns) (HList l, Proxy 'HZero)
 
 type HProjectByHNatsCtx ns l =
   (Apply (FHUProj True ns) (HList l, Proxy 'HZero),
-      HUnfold' (FHUProj True ns) 
+      HUnfold' (FHUProj True ns)
        (HList l, Proxy 'HZero)
     )
 
@@ -150,14 +150,14 @@ type HProjectByHNatsCtx ns l =
 -- Instead, we compute the complement of indices to project away
 -- to obtain the indices to project to, and then use hProjectByHNats.
 -- Only the latter requires run-time computation. The rest
--- are done at compile-time only. 
+-- are done at compile-time only.
 
-hProjectAwayByHNats (_ :: Proxy (ns :: [HNat])) l = 
+hProjectAwayByHNats (_ :: Proxy (ns :: [HNat])) l =
     hUnfold (FHUProj :: FHUProj False ns) (l,hZero)
 
 
 -- Useful abbreviations for complex types (which are inferred)
-type HProjectAwayByHNatsR (ns :: [HNat]) (l :: [*]) = 
+type HProjectAwayByHNatsR (ns :: [HNat]) (l :: [*]) =
     HUnfold (FHUProj False ns) (HList l, Proxy 'HZero)
 
 type HProjectAwayByHNatsCtx ns l =
@@ -171,7 +171,7 @@ type HProjectAwayByHNatsCtx ns l =
 -- The following is not optimal; we'll optimize later if needed
 
 hSplitByHNats ns l = (hProjectByHNats ns l,
-		      hProjectAwayByHNats ns l)
+                      hProjectAwayByHNats ns l)
 {-
 hSplitByHNats ns l = hSplitByHNats' ns (hFlag l)
 

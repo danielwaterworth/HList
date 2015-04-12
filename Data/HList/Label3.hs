@@ -78,7 +78,7 @@ nextLabel _ _ = Label
 {-
 instance ( HEq x x' b
          , HEq ns ns' b'
-	 , bres ~ HAnd b b'
+         , bres ~ HAnd b b'
          )
       =>   HEq (Lbl x ns desc) (Lbl x' ns' desc') bres
 -}

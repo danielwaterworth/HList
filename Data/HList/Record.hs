@@ -724,7 +724,7 @@ f@(Tagged v) .@. r  =  hUpdateAtLabel (labelLVPair f) v r
 
 -- | @hProjectByLabels ls r@ returns @r@ with only the labels in @ls@ remaining
 hProjectByLabels :: (HRLabelSet a, H2ProjectByLabels ls t a b) =>
-	proxy ls -> Record t -> Record a
+        proxy ls -> Record t -> Record a
 hProjectByLabels ls (Record r) = mkRecord (fst $ h2projectByLabels ls r)
 
 -- | See 'H2ProjectByLabels'
@@ -790,7 +790,7 @@ instance (HMemberM (Label l1) ((l :: *) ': ls) (b :: Maybe [*]),
 class H2ProjectByLabels' (b::Maybe [*]) (ls::[*]) r rin rout
                          | b ls r -> rin rout where
     h2projectByLabels' :: Proxy b -> proxy ls ->
-				     HList r -> (HList rin,HList rout)
+                                     HList r -> (HList rin,HList rout)
 
 instance H2ProjectByLabels ls1 r rin rout =>
     H2ProjectByLabels' ('Just ls1) ls (f ': r) (f ': rin) rout where
@@ -1008,7 +1008,7 @@ class Rearranged r s t a b where
 
 where @s@ is a permutation of @a@, @b@ is a permutation of @t@.
 In practice 'sameLabels' and 'sameLength' are likely needed on both
-sides of @rearranged@, to avoid ambiguous types.  
+sides of @rearranged@, to avoid ambiguous types.
 
 An alternative implementation:
 
@@ -1210,7 +1210,7 @@ instance (RecordValuesR lvs ~ vs,
     => HUnzip Proxy ls vs lvs where
     hUnzip _ = (Proxy, Proxy)
 
-instance HUnzip Proxy ls vs lvs 
+instance HUnzip Proxy ls vs lvs
       => HZip Proxy ls vs lvs where
   hZip _ _ = Proxy
 
@@ -1283,7 +1283,7 @@ hUnzipRecord2 xy = let (x,y) = hUnzipList (recordValues xy)
 >>> let s2 = Proxy :: Proxy '[Tagged "x" Int, Tagged "y" Char]
 
 >>> let f0 r = () where _ = r `asLabelsOf` s0
->>> let f1 r = () where _ = r `asLabelsOf` s1 
+>>> let f1 r = () where _ = r `asLabelsOf` s1
 >>> let f2 r = () where _ = r `asLabelsOf` s2
 
 >>> :t f0

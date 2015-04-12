@@ -9,7 +9,7 @@
 
    (C) 2004, Oleg Kiselyov, Ralf Laemmel, Keean Schupke
 
-   Generic type equality predicate: 
+   Generic type equality predicate:
    The implementation based on overlapping instances
    The only place where overlapping instances are really used
    besides Label5

@@ -36,8 +36,8 @@ instance HTypes2HNats ('[] :: [*]) (l :: [*]) '[]
 instance (HType2HNat e l n, HTypes2HNats es l ns)
       => HTypes2HNats (e ': es) (l :: [*]) (n ': ns)
 
-hTypes2HNats :: HTypes2HNats es l ns => 
-		Proxy (es :: [*]) -> hlist l -> Proxy (ns :: [HNat])
+hTypes2HNats :: HTypes2HNats es l ns =>
+                Proxy (es :: [*]) -> hlist l -> Proxy (ns :: [HNat])
 hTypes2HNats _ _ = Proxy
 
 -- --------------------------------------------------------------------------
@@ -48,7 +48,7 @@ instance HDeleteMany e (HList '[]) (HList '[]) where
 
 instance (HEq e1 e b, HDeleteManyCase b e1 e l l1)
       => HDeleteMany e1 (HList (e ': l)) (HList l1) where
-  hDeleteMany p (HCons e l) = 
+  hDeleteMany p (HCons e l) =
       hDeleteManyCase (Proxy :: Proxy b) p e l
 
 class HDeleteManyCase (b :: Bool) e1 e l l1 | b e1 e l -> l1 where

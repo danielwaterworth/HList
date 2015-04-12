@@ -164,8 +164,8 @@ instance Show (HList '[]) where
 
 instance (Show e, Show (HList l)) => Show (HList (e ': l)) where
     show (HCons x l) = let 'H':'[':s = show l
-		       in "H[" ++ show x ++ 
-			          (if s == "]" then s else "," ++ s)
+                       in "H[" ++ show x ++
+                                  (if s == "]" then s else "," ++ s)
 
 
 instance Read (HList '[]) where
@@ -924,7 +924,7 @@ type instance HMemberP pred e1 (e ': l) = HMemberP' pred e1 l (ApplyR pred (e1,e
 type family HMemberP' pred e1 (l :: [*]) pb :: Bool
 type instance HMemberP' pred e1 l (Proxy True) = True
 type instance HMemberP' pred e1 l (Proxy False) = HMemberP pred e1 l
- 
+
 
 hMember :: HMember e l b => Proxy e -> Proxy l -> Proxy b
 hMember _ _ = Proxy
@@ -1278,7 +1278,6 @@ class (HLengthEq xs n,
                       , xs ys -> xsys
                       , xs -> n
                      where
-       
     hSplitAt :: Proxy n -> HList xsys -> (HList xs, HList ys)
 
 instance (HSplitAt1 '[] n xsys xs ys,
@@ -1316,10 +1315,10 @@ instance (SameLength' (HReplicateR n ()) xs,
 
 class HLengthEq1 (xs :: [*]) n -- pick the instance based on n's constructor
 instance (HLengthEq xs n, xxs ~ (x ': xs)) => HLengthEq1 xxs (HSucc n)
-instance (xxs ~ '[]) => HLengthEq1 xxs HZero 
+instance (xxs ~ '[]) => HLengthEq1 xxs HZero
 
 class HLengthEq2 (xs :: [*]) n | xs -> n -- pick the instance based on xs' constructor
-instance (HLengthEq xs n, sn ~ HSucc n) => HLengthEq2 (x ': xs) sn 
+instance (HLengthEq xs n, sn ~ HSucc n) => HLengthEq2 (x ': xs) sn
 instance zero ~ HZero => HLengthEq2 '[] zero
 
 
