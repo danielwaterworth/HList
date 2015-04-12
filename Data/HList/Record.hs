@@ -195,11 +195,9 @@ import Control.Monad
 import Control.Applicative
 
 import Text.ParserCombinators.ReadP
-import GHC.TypeLits
 
 import LensDefs
 
-import GHC.Exts (Constraint)
 import Data.Array (Ix)
 
 -- imports for doctest/examples

@@ -18,11 +18,13 @@ import Data.Tagged
 import GHC.Prim (Constraint)
 import GHC.TypeLits
 import Control.Applicative
-import Data.Typeable
 #if NEW_TYPE_EQ
 import Data.Type.Equality (type (==))
 #endif
 
+#if !OLD_TYPEABLE
+import Data.Typeable
+#endif
 
 
 

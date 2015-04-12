@@ -66,7 +66,6 @@ import Data.HList.FakePrelude
 import Data.HList.HList
 import Data.HList.Record
 import Data.HList.Variant
-import GHC.TypeLits
 import Data.Data
 import Data.HList.TIC
 import Data.HList.TIP
@@ -74,7 +73,6 @@ import Data.HList.TIP
 
 #if OLD_TYPEABLE
 import Data.List
-import GHC.Exts (Constraint)
 #endif
 
 import Unsafe.Coerce

@@ -12,7 +12,6 @@
 module Data.HList.HListPrelude where
 
 import Data.HList.FakePrelude
-import GHC.TypeLits (Symbol)
 
 
 class HExtend e l where

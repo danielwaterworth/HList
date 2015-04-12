@@ -44,10 +44,9 @@ module Data.HList.Labelable
     ) where
 
 
-import Data.HList.RecordPuns
+
 import Data.HList.HListPrelude
 import Data.HList.FakePrelude
-import Data.HList.HList
 import Data.HList.Record
 import Data.HList.Variant
 import Data.HList.TIP
@@ -223,6 +222,7 @@ to apply that function to a record that contains additional elements.
 
 
 >>> :set -XViewPatterns
+>>> import Data.HList.RecordPuns
 >>> let f [pun| (x y) |] = case x+y of z -> [pun| z |]
 >>> :t f
 f :: Num v =>

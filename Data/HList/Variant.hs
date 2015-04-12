@@ -19,7 +19,6 @@ module Data.HList.Variant where
 
 import Data.HList.FakePrelude
 import Data.HList.Record
-import Data.HList.RecordPuns -- for doctest
 import Data.HList.HList
 import Data.HList.HListPrelude
 import Data.HList.HOccurs()
@@ -41,6 +40,7 @@ import Control.Monad
 
 {- $setup
 
+>>> import Data.HList.RecordPuns
 >>> let x = Label :: Label "x"
 >>> let y = Label :: Label "y"
 >>> let z = Label :: Label "z"

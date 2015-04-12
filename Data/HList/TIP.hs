@@ -21,7 +21,6 @@ import Data.HList.HList
 import Data.HList.Record
 import Data.HList.HTypeIndexed ()
 import Data.HList.HOccurs
-import Data.HList.TypeEqO
 import Data.HList.TIPtuple
 import Data.List (intercalate)
 import Data.Monoid
@@ -443,6 +442,7 @@ _ = tipyTuple ( '1' .*. True .*. emptyTIP ) :: (Bool, Char)
 
 [@Assume@]
 
+>>> import Data.HList.TypeEqO
 >>> import Data.HList.FakePrelude
 >>> import Data.HList.HOccurs
 

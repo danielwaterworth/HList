@@ -15,7 +15,6 @@ module Data.HList.HList where
 import Data.HList.FakePrelude
 import Data.HList.HListPrelude
 import Data.Monoid
-import GHC.Exts (Constraint)
 
 import Text.ParserCombinators.ReadP
 import Data.List
