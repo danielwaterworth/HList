@@ -78,7 +78,7 @@ import Data.List
 import Unsafe.Coerce
 
 
-deriving instance Data (HList '[])
+deriving instance Typeable (HList '[]) => Data (HList '[])
 deriving instance
     (Data x,
      Data (HList xs),
