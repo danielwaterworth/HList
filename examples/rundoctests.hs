@@ -5,6 +5,8 @@ import System.IO
 import Data.Char
 import System.Environment
 
+import Cabal
+
 -- | tests that all the >>> comments are followed by correct output. Easiest is to
 --
 -- > cabal test
@@ -20,8 +22,8 @@ import System.Environment
 -- you need Cabal >= 1.18 since that's around when cabal repl got added.
 main = do
     as <- getArgs
-    o <- readProcess
-        "cabal" ["repl","--ghc-options","-v0 -w"]
+    (ExitSuccess, o, _) <- cabal
+        ["repl","--ghc-options","-v0 -w"]
         ":show packages\n:show language"
     let flags = words $ unlines
                     $ filter (\f -> not $ "template-haskell" `isInfixOf` f)

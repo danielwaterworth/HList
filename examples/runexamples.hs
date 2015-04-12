@@ -1,10 +1,11 @@
 module Main where
 
+import Cabal
 import Control.Exception
 import System.FilePath
 import Test.Hspec
-import System.Process
 import System.Exit
+import System.Process
 import System.Directory
 import Data.Maybe
 import Control.Monad
@@ -30,9 +31,10 @@ runghcwith f = describe f $ it "ok" $
         outFile = dropExtension inFile ++ ".out"
         refFile = dropExtension inFile ++ ".ref"
 
-    (ec, stdout, stderr) <- readProcessWithExitCode "cabal" ["repl","examples",
-        "-v0", "--ghc-options", "-w -fcontext-stack=50 -iexamples -v0"]
-        (":set -i\n:set -iexamples\n:load " ++ inFile ++ "\nmain")
+    (ec, stdout, stderr) <- cabal
+            ["repl","examples",
+              "-v0", "--ghc-options", "-w -fcontext-stack=50 -iexamples -v0"]
+              (":set -i\n:set -iexamples\n:load " ++ inFile ++ "\nmain")
 
     writeFile outFile stdout
 
