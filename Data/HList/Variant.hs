@@ -30,7 +30,6 @@ import Unsafe.Coerce
 import GHC.Prim (Any)
 import GHC.Exts (Constraint)
 
-import Data.Monoid (Monoid(..))
 import Data.Data
 import Control.Applicative
 import LensDefs

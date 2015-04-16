@@ -14,7 +14,6 @@ module Data.HList.HList where
 
 import Data.HList.FakePrelude
 import Data.HList.HListPrelude
-import Data.Monoid
 
 import Text.ParserCombinators.ReadP
 import Data.List
@@ -1554,6 +1553,7 @@ instance ((x,y)~z, HZipList xs ys zs) => HZipList (x ': xs) (y ': ys) (z ': zs) 
 
 {- | Analogous to the Monoid instance for tuples
 
+>>> import Data.Monoid
 >>> mempty :: HList '[(), All, [Int]]
 H[(),All {getAll = True},[]]
 

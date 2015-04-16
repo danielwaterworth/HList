@@ -190,7 +190,6 @@ import Data.HList.HArray
 import Data.HList.Label3 (MapLabel)
 
 import Data.Tagged
-import Data.Monoid
 import Control.Monad
 import Control.Applicative
 

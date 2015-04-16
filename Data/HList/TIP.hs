@@ -23,7 +23,6 @@ import Data.HList.HTypeIndexed ()
 import Data.HList.HOccurs
 import Data.HList.TIPtuple
 import Data.List (intercalate)
-import Data.Monoid
 import Data.Array (Ix)
 
 import LensDefs

@@ -11,7 +11,8 @@
 module Data.HList.FakePrelude
     (module Data.HList.FakePrelude,
      module Data.Proxy,
-     module Data.Tagged) where
+     module Data.Tagged,
+     Monoid(..)) where
 
 import Data.Proxy
 import Data.Tagged
@@ -26,6 +27,9 @@ import Data.Type.Equality (type (==))
 import Data.Typeable
 #endif
 
+#if __GLASGOW_HASKELL__ < 709
+import Data.Monoid
+#endif
 
 
 -- --------------------------------------------------------------------------
