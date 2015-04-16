@@ -535,15 +535,17 @@ easier to use 'HList2List':
 Just H[3,3,3]
 
 -}
-class HLengthEq (HReplicateR n e) n => HReplicate (n :: HNat) e where
-    hReplicate :: HLengthEq (HReplicateR n e) n =>
-          Proxy n -> e -> HList (HReplicateR n e)
+class HLengthEq es n => HReplicateFD (n :: HNat) e es
+          | n e -> es, es -> n where
+    hReplicate :: Proxy n -> e -> HList es
 
-instance HReplicate HZero e where
+instance HReplicateFD HZero e '[] where
     hReplicate _ _ = HNil
 
-instance HReplicate n e => HReplicate (HSucc n) e where
+instance (HReplicateFD n e es, e ~ e') => HReplicateFD (HSucc n) e (e' ': es) where
     hReplicate n e = e `HCons` hReplicate (hPred n) e
+
+type HReplicate n e = HReplicateFD n e (HReplicateR n e)
 
 -- | would be associated with 'HReplicate' except we want
 -- it to work with `e` of any kind, not just `*` that you can
@@ -1307,7 +1309,8 @@ instance HSplitAt1 (b ': accum) n bs xs ys
 H[]
 
 -}
-class SameLength' (HReplicateR n ()) xs => HLengthEq (xs :: [*]) (n :: HNat) | xs -> n
+class (SameLength' (HReplicateR n ()) xs,
+        HLengthEq1 xs n, HLengthEq2 xs n) => HLengthEq (xs :: [*]) (n :: HNat) | xs -> n
 
 instance (SameLength' (HReplicateR n ()) xs,
           HLengthEq1 xs n, HLengthEq2 xs n) => HLengthEq xs n

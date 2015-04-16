@@ -110,13 +110,7 @@ type DataHListFlatCxt na g a = (HBuild' '[] g,
             (C (HList a)),
 
         HLengthEq a na,
-        HReplicate na (),
-
-        -- these should be implied by HReplicate's superclass,
-        -- (and they are for ghc-7.8.4)
-        HLengthEq (HReplicateR na ()) na,
-        HLengthEq2 (HReplicateR na ()) na,
-        HLengthEq1 (HReplicateR na ()) na
+        HReplicate na ()
         )
 
 instance DataHListFlatCxt na g a => Data (HListFlat a) where
