@@ -185,7 +185,6 @@ module Data.HList.Record
 import Data.HList.FakePrelude
 import Data.HList.HListPrelude
 import Data.HList.HList
-import Data.HList.HArray
 
 import Data.HList.Label3 (MapLabel)
 
@@ -689,6 +688,14 @@ class
           | l v r -> r', l r' -> v where
     hUpdateAtLabel :: SameLength r r' => Label l -> v -> record r -> record r'
 
+instance (HUpdateAtLabel2 l v r r',
+        HasField l (Record r') v) =>
+        HUpdateAtLabel Record l v r r' where
+    hUpdateAtLabel = hUpdateAtLabel2
+
+{- alternative impl which reports a Fail constraint that is too long (the
+one from HUpdateAtHNat) on ghc 7.10 RC1
+
 instance (HasField l (Record r') v,
           HFindLabel l r n,
           HUpdateAtHNat n (Tagged l v) r,
@@ -697,6 +704,29 @@ instance (HasField l (Record r') v,
   HUpdateAtLabel Record l v r r' where
   hUpdateAtLabel l v (Record r) =
     Record (hUpdateAtHNat (Proxy::Proxy n) (newLVPair l v) r)
+-}
+
+class HUpdateAtLabel2 (l :: k) (v :: *) (r :: [*]) (r' :: [*])
+        | l r v -> r' where
+    hUpdateAtLabel2 :: Label l -> v -> Record r -> Record r'
+
+class HUpdateAtLabel1 (b :: Bool) (l :: k) (v :: *) (r :: [*]) (r' :: [*])
+        | b l v r -> r' where
+    hUpdateAtLabel1 :: Proxy b -> Label l -> v -> Record r -> Record r'
+
+instance HUpdateAtLabel1 True l v (Tagged l e ': xs) (Tagged l v ': xs) where
+    hUpdateAtLabel1 _b _l v (Record (e `HCons` xs)) = Record (e{ unTagged = v } `HCons` xs)
+
+instance HUpdateAtLabel2 l v xs xs' => HUpdateAtLabel1 False l v (x ': xs) (x ': xs') where
+    hUpdateAtLabel1 _b l v (Record (x `HCons` xs)) = case hUpdateAtLabel2 l v (Record xs) of
+        Record xs' -> Record (x `HCons` xs')
+
+instance (HEqK l l' b, HUpdateAtLabel1 b l v (Tagged l' e ': xs) xs')
+    => HUpdateAtLabel2 l v (Tagged l' e ': xs) xs' where
+    hUpdateAtLabel2 = hUpdateAtLabel1 (Proxy :: Proxy b)
+
+instance Fail (FieldNotFound l) => HUpdateAtLabel2 l v '[] '[] where
+    hUpdateAtLabel2 _ _ r = r
 
 
 infixr 2 .@.
