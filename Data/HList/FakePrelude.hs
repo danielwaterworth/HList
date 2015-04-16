@@ -449,6 +449,14 @@ type family HNot (x :: Bool) :: Bool
 type instance HNot True = False
 type instance HNot False = True
 
+-- | as compared with 'HNot' this version is injective
+class HNotFD (b :: Bool) (nb :: Bool) | b -> nb, nb -> b
+instance HNotFD True False
+instance HNotFD False True
+
+hNot :: HNotFD a notA => Proxy a -> Proxy notA
+hNot _ = Proxy
+
 
 class HCond (t :: Bool) x y z | t x y -> z
  where

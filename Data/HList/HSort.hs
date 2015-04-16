@@ -245,3 +245,9 @@ instance HEqByFn le => HAscList0 le '[x] ps0
 instance ( Fail '("Duplicated element", y, "using le", le, "in", ys0), HEqByFn le )
     => HAscList1 le False (y ': ys) ys0
 instance HAscList0 le ys ys0 => HAscList1 le True ys ys0
+
+{- $setup
+
+>>> import Data.HList.TypeEqO
+
+-}
