@@ -335,7 +335,6 @@ hl0 = describe "0 -- length independent"  $ do
     show v `shouldBe` "[V{x='a'},V{y=\"ly\"}]"
     read (show v) `shouldBe` v
 
-    -- XXX ticVariant needs to adjust the labels
     show (map (^. typeIndexed') v) `shouldBe` "[TIC{char='a'},TIC{[Char]=\"ly\"}]"
 
   it "Data instances gread/gshow" $ do
