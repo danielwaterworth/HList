@@ -427,7 +427,7 @@ can also be produced using
 
 -- * folds
 -- ** foldr
--- $foldNote  Consume a heterogenous list. GADTs and type-classes mix well
+-- $foldNote  Consume a heterogenous list.
 
 
 class HFoldr f v (l :: [*]) r where
