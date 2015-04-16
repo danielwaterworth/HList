@@ -679,20 +679,20 @@ direction that type information is propagated for the individual elements.
 
 >>> :t lr
 lr
-  :: (Read y1, Read y) => HList '[String, String] -> HList '[y, y1]
+  :: (Read ..., Read ...) => HList '[String, String] -> HList '[..., ...]
 
 >>> :t rl
 rl
-  :: (Read y1, Read y) => HList '[String, String] -> HList '[y, y1]
+  :: (Read ..., Read ...) => HList '[String, String] -> HList '[..., ...]
 
 
 >>> :t ls
 ls
-  :: (Show y1, Show y) => HList '[y, y1] -> HList '[String, String]
+  :: (Show ..., Show ...) => HList '[..., ...] -> HList '[String, String]
 
 >>> :t sl
 sl
-  :: (Show y1, Show y) => HList '[y, y1] -> HList '[String, String]
+  :: (Show ..., Show ...) => HList '[..., ...] -> HList '[String, String]
 
 -}
 

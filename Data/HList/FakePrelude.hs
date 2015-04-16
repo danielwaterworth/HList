@@ -161,9 +161,14 @@ class ApplyAB f a b where
  constraints on the argument type:
 
  >>> :set -XDataKinds
- >>> let plus1 = Fun (\x -> if x < 5 then x+1 else 5) :: Fun '[Num, Ord] '()
+ >>> let plus1f x = if x < 5 then x+1 else 5
+ >>> let plus1 = Fun plus1f :: Fun '[Num, Ord] '()
  >>> :t applyAB plus1
- applyAB plus1 :: (Ord a, Num a) => a -> a
+ applyAB plus1 :: (Num b, Ord b) => b -> b
+
+ >>> let xs = [1 .. 8]
+ >>> map (applyAB plus1) xs == map plus1f xs
+ True
 
  Also note the use of @'()@ to signal that the result
  type is the same as the argument type.
@@ -173,7 +178,7 @@ class ApplyAB f a b where
 
  >>> let succ1 = Fun succ :: Fun Enum '()
  >>> :t applyAB succ1
- applyAB succ1 :: Enum a => a -> a
+ applyAB succ1 :: Enum b => b -> b
 
 
  >>> let just = Fun Just :: Fun '[] Maybe

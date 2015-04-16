@@ -1112,7 +1112,7 @@ suppose we have a function that should be applied to every element
 of a record:
 >>> let circSucc_ x | x == maxBound = minBound | otherwise = succ x
 
->>> :t circSucc_
+> :t circSucc_
 circSucc_ :: (Eq a, Enum a, Bounded a) => a -> a
 
 Use a shortcut ('Fun') to create a value that has an appropriate 'ApplyAB' instance:
@@ -1120,7 +1120,7 @@ Use a shortcut ('Fun') to create a value that has an appropriate 'ApplyAB' insta
 
 Confirm that we got Fun right:
 >>> :t applyAB circSucc
-applyAB circSucc :: (Eq a, Enum a, Bounded a) => a -> a
+applyAB circSucc :: (Bounded b, Enum b, Eq b) => b -> b
 
 >>> applyAB circSucc True
 False
