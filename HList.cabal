@@ -140,6 +140,8 @@ Test-Suite examples
 Test-Suite doctests
   Type:     exitcode-stdio-1.0
   Ghc-Options: -threaded
+  if impl(ghc <= 7.9)
+    Buildable: False
   Main-Is: rundoctests.hs
   Hs-Source-Dirs:  examples
   Build-Depends: base, doctest >= 0.8, process
