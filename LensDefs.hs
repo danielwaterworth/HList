@@ -1,15 +1,26 @@
+{-# LANGUAGE CPP #-}
 -- | parts of lens that would be imported if we depended on it
 module LensDefs
   (module LensDefs,
    module Control.Applicative,
    Choice,
-   Profunctor)
+   Profunctor,
+   Coercible)
    where
 
 import Data.Profunctor
 import Data.Profunctor.Unsafe
 import Control.Applicative
 import Control.Monad.Identity
+
+import Unsafe.Coerce
+#if __GLASGOW_HASKELL__ > 707
+import GHC.Exts(Coercible)
+#else
+import GHC.Exts(Constraint)
+-- | for ghc-7.6 we don't have coercible
+type Coercible a b = (() :: Constraint)
+#endif
 
 simple :: p a (f a) -> p a (f a)
 simple = id
@@ -29,10 +40,14 @@ iso sa bt = dimap sa (fmap bt)
 
 -- | iso, except assumes that the functions supplied could
 -- be 'Data.Coerce.coerce'
-isoNewtype :: (Profunctor p, Functor f)
+isoNewtype :: (Profunctor p, Functor f,
+               Coercible b t, -- Coercible (f b) (f t) -- is really needed but that complicates types later on (since f is forall'd)
+               Coercible a s)
     => (s -> a) -> (b -> t)
     -> p a (f b) -> p s (f t)
-isoNewtype sa bt x = fmap bt #. x .# sa
+isoNewtype sa _bt x = coerceBT x .# sa
+  where coerceBT :: p a (f b) -> p a (f t)
+        coerceBT = unsafeCoerce
 
 prism :: (b -> t) -> (s -> Either t a)
     -> (forall p f. (Choice p, Applicative f) => p a (f b) -> p s (f t))

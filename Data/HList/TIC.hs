@@ -84,6 +84,8 @@ type TypeIndexedCxt s t a b =
   SameLength (TagR a) s,
   SameLength (TagR b) t,
   -}
+  Coercible (TagR b) t,
+  Coercible (TagR a) s,
   HAllTaggedLV s,
   HRLabelSet t,
   TagUntag a,
