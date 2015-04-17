@@ -21,8 +21,8 @@ import Datatypes2
 import Data.HList.CommonMain
 import Control.Lens
 
-reproxy :: proxy a -> Proxy a
-reproxy _ = Proxy
+asProxy :: proxy a -> Proxy a
+asProxy _ = Proxy
 
 
 -- --------------------------------------------------------------------------
@@ -282,7 +282,7 @@ testVariant = do
   testVar2 = testVar1 .!. key
   testVar3 = testVar1 .!. name
 
-animalVar = reproxy $ 
+animalVar = asProxy $
                key   .=. (undefined :: Integer)
            .*. name  .=. (undefined :: String)
            .*. breed .=. (undefined :: Breed)
