@@ -29,6 +29,7 @@ runghcwith f = describe f $ it "ok" $
     let ex = ("examples" </>)
     let inFile = ex (takeBaseName f)
         outFile = dropExtension inFile ++ ".out"
+        errFile = dropExtension inFile ++ ".err"
         refFile = dropExtension inFile ++ ".ref"
 
     (ec, stdout, stderr) <- cabal
@@ -41,6 +42,8 @@ runghcwith f = describe f $ it "ok" $
     ofe <- doesFileExist refFile
     diff <- if ofe then fmap Just $
         readProcess "diff" ["-b", outFile, refFile] "" else return Nothing
+
+    unless (diff == Just "") $ writeFile errFile stderr
 
     return (ec, stderr, diff)
  `shouldReturn` (ExitSuccess, "", Just "")
