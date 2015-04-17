@@ -1,3 +1,10 @@
+16 Apr 2015
+Make tests run (and pass) when called by "runghc Setup test"
+
+Add hNot, and add HNotFD which is injective (unlike the type family)
+
+Replace uses of `HLength xs ~ n` with `HLengthEq xs n`.
+
 15 Mar 2015
 Add HCurry.hs.
 
