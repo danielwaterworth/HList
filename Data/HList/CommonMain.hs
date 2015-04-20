@@ -38,6 +38,7 @@ module Data.HList.CommonMain (
  , module Data.HList.HZip
  -- ** A subset of "Data.HList.HSort"
  , hSort
+ , HSort
  , HSortBy(..)
  , HLeFn, HDown
  , HSet, HSetBy

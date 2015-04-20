@@ -85,6 +85,9 @@ instance (HEqBy le x y b1,
 class (SameLength a b, HEqByFn le) => HSortBy le (a :: [*]) (b :: [*]) | le a -> b where
     hSortBy :: Proxy le -> HList a -> HList b
 
+type HSort x y = HSortBy HLeFn x y
+
+hSort :: HSort x y => HList x -> HList y
 hSort xs = hSortBy (Proxy :: Proxy HLeFn) xs
 
 instance (SameLength a b,
