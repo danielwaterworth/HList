@@ -1,3 +1,4 @@
+{-# LANGUAGE TemplateHaskell #-}
 {-# LANGUAGE PolyKinds #-}
 {-# LANGUAGE TypeFamilies #-}
 {-# LANGUAGE MultiParamTypeClasses #-}
@@ -19,6 +20,20 @@ import Data.Monoid
 import Control.Lens
 import Control.Applicative
 import GHC.TypeLits (Symbol)
+import Language.Haskell.TH
+
+hListT :: [TypeQ] -> TypeQ
+hListT = foldr (\a b -> [t| $a ': $b |]) promotedNilT
+
+hListE :: [ExpQ] -> ExpQ
+hListE = foldr (\a b -> [| $a `HCons` $b |]) [| HNil |]
+
+hNatE :: Int -> ExpQ
+hNatE n = foldr appE [| hZero |] (replicate n [| hSucc |])
+
+hNatT :: Int -> TypeQ
+hNatT n = foldr appT [t| HZero |] (replicate n [t| HSucc |])
+
 
 lx = Label :: Label "x"
 ly = Label :: Label "y"

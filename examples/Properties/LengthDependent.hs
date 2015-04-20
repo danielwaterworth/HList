@@ -31,12 +31,9 @@ import Control.Lens
 import Data.List (sort,permutations)
 import Data.Monoid
 
-toN :: Int -> ExpQ
-toN n = foldr appE [| hZero |] (replicate n [| hSucc |])
-
 hlN :: Int -> ExpQ
 hlN n = [| \proxy -> hSequence
-              $ $(varE 'hReplicate) $(toN n)
+              $ $(varE 'hReplicate) $(hNatE n)
                     (arbitrary `asTypeOf` return proxy) |]
 
 -- > $(rN n) (undefined :: t) :: Arbitrary t => Gen (Record ts)
@@ -97,7 +94,7 @@ hl1 n1 = [| do
   it "hLength/hReplicate" $
       property $ do
         xs <- genHL True
-        return $ hNat2Integral (hLength xs) == hNat2Integral $(toN n1)
+        return $ hNat2Integral (hLength xs) == hNat2Integral $(hNatE n1)
 
   it "hInits last id" $
       property $ do
@@ -177,7 +174,7 @@ hl1 n1 = [| do
         return $ x == $(varE 'hReverse) (hReverse x)
 
   it "hReverse does nothing for ()" $
-      let xs = $(varE 'hReplicate) $(toN n1) ()
+      let xs = $(varE 'hReplicate) $(hNatE n1) ()
       in xs `shouldBe` $(varE 'hReverse) xs
 
   it "hInit == tail on reverse" $
@@ -324,7 +321,7 @@ hl2 n1 n2 = [| do
         testV n v = case $(varE 'splitVariant) v of
                       Left a -> extendsVariant (a :: Variant yin) == v
                       Right a -> extendsVariant (a :: Variant yout) == v
-    return $ $(varE 'testV) $(toN n1) x
+    return $ $(varE 'testV) $(hNatE n1) x
 
 
   it "hAppend equals ++" $
