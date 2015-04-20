@@ -1,4 +1,4 @@
-{-# OPTIONS_GHC -fcontext-stack=100 #-}
+{-# OPTIONS_GHC -fcontext-stack=1000 #-}
 {-# LANGUAGE FlexibleContexts #-}
 {-# LANGUAGE ScopedTypeVariables #-}
 {-# LANGUAGE RankNTypes #-}

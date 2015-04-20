@@ -36,19 +36,48 @@ hlN n = [| \proxy -> hSequence
               $ $(varE 'hReplicate) $(hNatE n)
                     (arbitrary `asTypeOf` return proxy) |]
 
--- > $(rN n) (undefined :: t) :: Arbitrary t => Gen (Record ts)
+-- > $(rKN id n) (undefined :: t) :: Arbitrary t => Gen (HList [Record t1, Record t2, ... ])
 --
--- where ts ~ '[Tagged 1 t, Tagged 2 t, Tagged 3 t, ... , Tagged n t]
-rN :: Int -> ExpQ
-rN n = [| \proxy -> do
-        hl <- $(hlN n) proxy
-        return $ (unlabeled # hl) `asTypeOf` $sig |]
-    where sig = [| undefined |] `sigE` quantify [t| (Record :: [*] -> *) $ns |]
-          quantify ty = forallT [ PlainTV (mkName ("x" ++ show i)) | i <- [1 .. n]] (return []) ty
-          ns = foldr (\a b -> [t| $a ': $b |])
-                  promotedNilT
-                  [ [t| Tagged $(litT (numTyLit i)) $(varT (mkName ("x"++show i))) |] | i <- [1 .. fromIntegral n] ]
+-- where
+--    t1 ~ '[Tagged 1 t, Tagged 2 t, Tagged 3 t, ... , Tagged n t]
+--    t2 ~ '[Tagged 2 t, Tagged 1 t, Tagged 3 t, ... , Tagged n t]
+--    tN ~ nth permutation of t1
+rKN :: (forall a. [a] -> [a]) -- ^ take some subset of the permutations of 1 .. n
+    -> Int
+    -> ExpQ
+rKN takeK n = [| \proxy -> do
+        $(recs [| arbitrary `asTypeOf` return proxy |])
+            `asTypeOf` return $sig
+         |]
+    where sig = [| undefined |] `sigE` quantify [t| HList $(hListT rss) |]
 
+
+          ti :: Int -> Name
+          ti i = mkName ("t" ++ show i)
+
+          recs gen = doE $
+               [ bindS (varP (ti i)) gen   | i <- [1 .. n] ] ++
+               [ noBindS
+                  [| return $ $(hListE
+                      [ [| unlabeled # $(hListE (map (varE . ti) is)) |]
+                        | is <- takeK $ permutations [1 .. n] ])
+                   |]
+                ]
+
+          quantify :: TypeQ -> TypeQ
+          quantify ty = forallT [ PlainTV (mkName ("x" ++ show i)) | i <- [1 .. n]] (return []) ty
+
+
+          rss :: [TypeQ]
+          rss = takeK $
+                [ [t| (Record :: [*] -> *) $(hListT (map taggedN ns)) |]
+                   | ns <- permutations [1 .. fromIntegral n] ]
+
+          -- taggedN 1 == [t| Tagged 1 x1 |]
+          taggedN :: Integer -> TypeQ
+          taggedN i = [t| Tagged $(litT (numTyLit i)) $(varT (mkName ("x"++show i))) |]
+
+rN n = [| \proxy -> $(varE 'hHead) `fmap` $(rKN (take 1) n) proxy |]
 
 vN :: Int -> ExpQ
 vN n = [| \proxy -> do
@@ -273,6 +302,13 @@ hl1 n1 = [| do
          x `eq` (x  & from hListRecord %~ hMSortBy (Proxy :: Proxy HLeFn)),
          x `eq` (rx & from hListRecord %~ hMSortBy (Proxy :: Proxy HLeFn))
          ]
+
+  -- restrict to lists of length 4 (since then the number of permutations
+  -- is a manageable 24 not 120)
+  it "hSort permutations" $ property $ do
+    xs <- $(rKN id (min 4 n1)) True
+    return $ all (== hHead xs) (hMapOut HSortF xs)
+
 #endif
 
   it "hRenameLabel" $ property $ do

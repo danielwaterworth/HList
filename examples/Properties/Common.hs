@@ -130,3 +130,10 @@ instance Monoid (BoolN n) where
 instance Arbitrary (Identity (BoolN n)) where
     arbitrary = fmap return arbitrary
 
+
+data HSortF = HSortF
+instance (x ~ Record xs,
+          y ~ Record ys,
+          HRLabelSet ys,
+          HSort xs ys) => ApplyAB HSortF x y where
+  applyAB _ (Record x) = mkRecord (hSort x)
