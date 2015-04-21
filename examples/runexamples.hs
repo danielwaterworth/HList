@@ -40,8 +40,11 @@ runghcwith f = describe f $ it "ok" $
     writeFile outFile stdout
 
     ofe <- doesFileExist refFile
-    diff <- if ofe then fmap Just $
-        readProcess "diff" ["-b", outFile, refFile] "" else return Nothing
+    diff <- if ofe
+      then fmap Just $
+        readProcess "diff" ["-b", outFile, refFile] ""
+          `finally` writeFile errFile stderr
+      else return Nothing
 
     unless (diff == Just "") $ writeFile errFile stderr
 
