@@ -140,6 +140,10 @@ Test-Suite doctests
   Type:     exitcode-stdio-1.0
   Ghc-Options: -threaded
   if impl(ghc <= 7.9)
+    -- doctests include things like :t pred . maxBound, which
+    -- depending on the ghc version, comes out as one of
+    -- (Bounded a, Enum a) => ...
+    -- (Enum b, Bounded b) => ...
     Buildable: False
   Main-Is: rundoctests.hs
   Hs-Source-Dirs:  examples
