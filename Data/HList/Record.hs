@@ -190,7 +190,6 @@ import Data.HList.Label3 (MapLabel)
 
 import Data.Tagged
 import Control.Monad
-import Control.Applicative
 
 import Text.ParserCombinators.ReadP
 
