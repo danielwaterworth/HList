@@ -45,7 +45,7 @@ $ darcs get --partial http://code.haskell.org/HList/
 $ cd HList; cabal install
 
 The code works --- within the limits exercised in the source files ---
-for GHC-7.6 and GHC-7.7. Older compilers are not supported.
+for GHC-7.6 and GHC-7.8 and GHC-7.10. Older compilers are not supported.
 
 One may run "cabal test" to check the distribution.
 
