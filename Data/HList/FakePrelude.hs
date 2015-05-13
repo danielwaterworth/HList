@@ -502,11 +502,28 @@ hPred :: Proxy (HSucc n) -> Proxy n; hPred _ = Proxy
 class HNat2Integral (n::HNat) where
     hNat2Integral :: Integral i => Proxy n -> i
 
+type family HNat2Nat (n :: HNat) :: Nat
+type instance HNat2Nat HZero = 0
+type instance HNat2Nat (HSucc n) = 1 + HNat2Nat n
+
+#if MIN_VERSION_base(4,7,0)
+{- Instead convert HNat to GHC.TypeLits.'Nat' with 'HNat2Nat' and use functions
+from that module to produce the 'Integer' -}
+instance KnownNat (HNat2Nat n) => HNat2Integral n where
+    hNat2Integral _ = fromIntegral (natVal (Proxy :: Proxy (HNat2Nat n)))
+#else
+{- doesn't work: gives "No instance for (SingI Nat (1 + (1 + 0)))"
+instance SingI (HNat2Nat n) => HNat2Integral n where
+    hNat2Integral _ = fromIntegral (fromSing (sing :: Sing (HNat2Nat n)))
+-}
+
+-- | a slow (at runtime) implementation for ghc 7.6:
 instance HNat2Integral HZero where
     hNat2Integral _ = 0
 
 instance HNat2Integral n => HNat2Integral (HSucc n) where
     hNat2Integral n = hNat2Integral (hPred n) + 1
+#endif
 
 
 class HNats2Integrals (ns :: [HNat]) where
