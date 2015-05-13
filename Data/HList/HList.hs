@@ -1493,13 +1493,10 @@ class HSpanEqBy (f :: t) (x :: *) (y :: [*]) (fst :: [*]) (snd :: [*])
       | f x y -> fst snd, fst snd -> y where
   hSpanEqBy :: Proxy f -> x -> HList y -> (HList fst, HList snd)
 
-instance (HSpanEqBy1 f x y revFst snd,
-          HReverse revFst fst,
-
-          HRevApp revFst snd y)
+instance (HSpanEqBy1 f x y fst snd,
+          HAppendListR fst snd ~ y)
     => HSpanEqBy f x y fst snd where
-  hSpanEqBy f x y =  case hSpanEqBy1 f x y of
-                      (revFst, second) -> (hReverse revFst, second)
+  hSpanEqBy f x y =  hSpanEqBy1 f x y
 
 class HSpanEqBy1 (f :: t) (x :: *) (y :: [*]) (i :: [*]) (o :: [*])
       | f x y -> i o where
