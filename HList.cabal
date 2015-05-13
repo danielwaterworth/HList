@@ -80,6 +80,7 @@ library
                        Data.HList.MakeLabels,
                        Data.HList.Record,
                        Data.HList.RecordPuns,
+                       Data.HList.RecordU,
                        Data.HList.TIC,
                        Data.HList.TIP,
                        Data.HList.TIPtuple,

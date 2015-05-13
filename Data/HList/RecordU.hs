@@ -8,28 +8,6 @@ The public interface is exported from <Data-HList-CommonMain.html#t:RecordU Reco
 Export list (from CommonMain.hs)
 
 @
- -- ** Unpacked / Unboxed Records
- , RecordU
- , RecordUS
- , SortForRecordUS(..)
- , HUpdateMany(..)
- , hMapRU
-
- -- *** internals for types
- , HFindMany, HNats2Integrals(..)
-
- , RecordUSCxt
- , HLookupByHNatUS, HLookupByHNatUS1
- , HSubtract, HMapUnboxF, UnboxF
- , BoxF, EqTagValue, GetElemTy, ElemTyEq
- , RecordToRecordU, RecordUToRecord
-
-
-
- -- ** Record and RecordU
- , unboxed, unboxed'
- -- ** Record and RecordUS
- , unboxedS, unboxedS'
 @
 -}
 module Data.HList.RecordU where
@@ -366,7 +344,8 @@ class RecordToRecordU x where
 instance (
     RecordValues x,
     HList2List (RecordValuesR x) (GetElemTy x),
-    HNat2Integral (HLength x),
+    HNat2Integral n,
+    HLengthEq x n,
     IArray UArray (GetElemTy x)
    ) => RecordToRecordU x where
   recordToRecordU (rx @ (Record x)) = RecordU $ listArray

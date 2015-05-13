@@ -31,6 +31,21 @@ module Data.HList.CommonMain (
  -- name.
  , module Data.HList.RecordPuns
 
+ -- ** Unpacked / Unboxed Records
+ , RecordU
+ , RecordUS
+ , SortForRecordUS(..)
+ , HUpdateMany(..)
+ , hMapRU
+
+ -- *** internals for types
+ , HFindMany, HNats2Integrals(..)
+
+ , RecordUSCxt
+ , HLookupByHNatUS, HLookupByHNatUS1
+ , HSubtract, HMapUnboxF, UnboxF
+ , BoxF, EqTagValue, GetElemTy, ElemTyEq
+ , RecordToRecordU, RecordUToRecord
 
  -- * HList
  -- | A subset of "Data.HList.HList" is re-exported.
@@ -122,6 +137,12 @@ module Data.HList.CommonMain (
 
  -- ** HList and TIP
  , tipHList, tipHList'
+ -- ** Record and RecordU
+ , unboxed, unboxed'
+ -- ** Record and RecordUS
+ , unboxedS, unboxedS'
+ -- ** Record and Variant
+ , hMaybied, hMaybied'
 
  -- ** Newtype wrappers
  -- $convention these isos unwrap/wrap the newtypes 'TIP' 'TIC' and
@@ -131,8 +152,6 @@ module Data.HList.CommonMain (
  , ticVariant, ticVariant'
  , tipRecord, tipRecord'
 
- -- ** Record and Variant
- , hMaybied, hMaybied'
  -- *** implementation
  , VariantToHMaybied(variantToHMaybied)
  , HMaybiedToVariantFs
@@ -230,6 +249,7 @@ import Data.HList.Data () -- only instances
 
 import Data.HList.Keyword
 import Data.HList.RecordPuns
+import Data.HList.RecordU
 
 {- $label6demo #label6demo#
 
