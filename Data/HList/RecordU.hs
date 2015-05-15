@@ -118,7 +118,7 @@ Record{x=1.0,i=2,y=3.0,j=4}
 Record is stored as a RecordUS
 
 >>> recordToRecordUS bad
-RecordUS H[RecordU (array (0,0) [(0,1.0)]), RecordU (array (0,0) [(0,2)]), RecordU (array (0,0) [(0,3.0)]), RecordU (array (0,0) [(0,4)])]
+RecordUS H[RecordU (array (0,0) [(0,1.0)]),RecordU (array (0,0) [(0,2)]),RecordU (array (0,0) [(0,3.0)]),RecordU (array (0,0) [(0,4)])]
 
 It is possible to sort the record
 
@@ -129,7 +129,7 @@ This allows the same content to be stored in
 two unboxed arrays
 
 >>> recordToRecordUS (sortForRecordUS bad)
-RecordUS H[RecordU (array (0,1) [(0,1.0),(1,3.0)]), RecordU (array (0,1) [(0,2),(1,4)])]
+RecordUS H[RecordU (array (0,1) [(0,1.0),(1,3.0)]),RecordU (array (0,1) [(0,2),(1,4)])]
 
 -}
 class SortForRecordUS x x' | x -> x' where
