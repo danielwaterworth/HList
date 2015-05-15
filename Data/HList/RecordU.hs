@@ -18,7 +18,6 @@ import Data.HList.Record
 import Data.HList.HList
 
 import Data.HList.HArray
-import Data.HList.HOccurs
 import LensDefs
 
 import Data.HList.Labelable
