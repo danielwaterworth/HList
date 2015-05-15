@@ -232,13 +232,12 @@ recordToRecordUS (Record x) = hListToRecordUS u
 
 -- | @^. from unboxedS@ is preferred
 recordUSToRecord :: forall u g x.
-  (HConcatR g ~ x,
-   HConcat g,
+  (HConcatFD g x,
    HMapCxt HList BoxF u g,
    HMapUnboxF g u,
    RecordUSCxt x u
   ) => RecordUS x -> Record x
-recordUSToRecord rus = Record (hConcat g)
+recordUSToRecord rus = Record (hConcatFD g)
   where
     g :: HList g
     g = hMap BoxF (recordUSToHList rus)

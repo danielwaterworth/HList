@@ -632,21 +632,37 @@ H[1, 2, 3, 'a', "abc"]
 
 
 -}
-class HConcat (a :: [*]) where
-    type HConcatR a :: [*]
-    hConcat :: HList a -> HList (HConcatR a)
+type HConcat xs = HConcatFD xs (HConcatR xs)
 
-instance HConcat '[] where
-    type HConcatR '[] = '[]
-    hConcat _ = HNil
+hConcat :: HConcat xs => HList xs -> HList (HConcatR xs)
+hConcat x = hConcatFD x
 
-instance (x ~ HList t, HConcat xs, HAppendList t (HConcatR xs)) => HConcat (x ': xs) where
-    type HConcatR (x ': xs) = HAppendListR (UnHList x) (HConcatR xs)
-    hConcat (x `HCons` xs) = x `hAppendList` hConcat xs
-
+type family HConcatR (a :: [*]) :: [*]
+type instance HConcatR '[] = '[]
+type instance HConcatR (x ': xs) = HAppendListR (UnHList x) (HConcatR xs)
 
 type family UnHList a :: [*]
 type instance UnHList (HList a) = a
+
+-- for the benefit of ghc-7.10.1
+class HConcatFD xxs xs | xxs -> xs
+    where hConcatFD :: HList xxs -> HList xs
+
+instance HConcatFD '[] '[] where
+    hConcatFD _ = HNil
+
+instance (HConcatFD as bs, HAppendFD a bs cs) => HConcatFD (HList a ': as) cs where
+    hConcatFD (HCons x xs) = x `hAppendFD` hConcatFD xs
+
+class HAppendFD a b ab | a b -> ab where
+    hAppendFD :: HList a -> HList b -> HList ab
+
+instance HAppendFD '[] b b where
+    hAppendFD _ b = b
+
+instance HAppendFD as bs cs => HAppendFD (a ': as) bs (a ': cs) where
+    hAppendFD (HCons a as) bs = a `HCons` hAppendFD as bs
+
 
 -- --------------------------------------------------------------------------
 -- * traversing HLists
