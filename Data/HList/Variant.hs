@@ -458,12 +458,12 @@ shows that gunfold is defined something like
 
 If we instead had
 
-type X a b c = Variant [Tagged "A" a, Tagged "B" b, Tagged "C" c]
+> type X a b c = Variant [Tagged "A" a, Tagged "B" b, Tagged "C" c]
 
 Then we could write:
 
 > gunfold1 :: (forall b r. Data b => (b -> r) -> c r)
-          -> Variant [Tagged "A" a, Tagged "B" b, Tagged "C" c]
+>          -> Variant [Tagged "A" a, Tagged "B" b, Tagged "C" c]
 > gunfold1 f c = case constrIndex c of
 >       1 -> f mkA
 >       2 -> f mkB

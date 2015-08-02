@@ -594,6 +594,7 @@ argument to help figure out the result length
 applyAB f :: a -> Maybe a
 
 f is applied to different types:
+
 >>> hIterate three f ()
 H[(),Just (),Just (Just ())]
 
@@ -626,10 +627,8 @@ Like 'concat' but for HLists of HLists.
 Works in ghci... puzzling as what is different in doctest (it isn't
 @-XExtendedDefaultRules@)
 
-> hConcat $ hBuild (hBuild 1 2 3) (hBuild 'a' "abc")
-
+>>> hConcat $ hBuild (hBuild 1 2 3) (hBuild 'a' "abc")
 H[1, 2, 3, 'a', "abc"]
-
 
 -}
 type HConcat xs = HConcatFD xs (HConcatR xs)
@@ -883,7 +882,7 @@ hMapOut f l = hFoldr (Mapcar f) ([] :: [e]) l
 --
 -- > mapM :: forall b m a. (Monad m) => (a -> m b) -> [a] -> m [b]
 --
--- Likewise for mapM_.
+-- Likewise for 'mapM_'.
 --
 -- See 'hSequence' if the result list should also be heterogenous.
 
@@ -891,7 +890,9 @@ hMapM   :: (Monad m, HMapOut f l (m e)) => f -> HList l -> [m e]
 hMapM f =  hMapOut f
 
 -- | GHC doesn't like its own type.
--- hMapM_  :: forall m a f e. (Monad m, HMapOut f a (m e)) => f -> a -> m ()
+--
+-- > hMapM_ :: forall m a f e. (Monad m, HMapOut f a (m e)) => f -> a -> m ()
+--
 -- Without explicit type signature, it's Ok. Sigh.
 -- Anyway, Hugs does insist on a better type. So we restrict as follows:
 --
@@ -1181,7 +1182,8 @@ instance (e' ~ e) => ApplyAB HRmTag (e,t) e'
 
 
 -- | Annotate list with a type-level Boolean
--- hFlag :: HMapCxt (HAddTag (Proxy True)) l r => HList l -> HList r
+--
+-- > hFlag :: HMapCxt (HAddTag (Proxy True)) l r => HList l -> HList r
 hFlag l = hAddTag hTrue l
 
 

@@ -192,7 +192,7 @@ an equivalent FD version, which is slightly better with respect to
 simplifying types containing type variables (in ghc-7.8 and 7.6):
 <http://stackoverflow.com/questions/24110410/>
 
-With ghc-7.10 (http://ghc.haskell.org/trac/ghc/ticket/10009) the FD version is superior
+With ghc-7.10 (<http://ghc.haskell.org/trac/ghc/ticket/10009>) the FD version is superior
 to the TF version:
 
 @

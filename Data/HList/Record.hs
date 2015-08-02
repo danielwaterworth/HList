@@ -1139,15 +1139,18 @@ instance HLensCxt r x s t a b => HLens r x s t a b where
 
 suppose we have a function that should be applied to every element
 of a record:
+
 >>> let circSucc_ x | x == maxBound = minBound | otherwise = succ x
 
-> :t circSucc_
+>>> :t circSucc_
 circSucc_ :: (Eq a, Enum a, Bounded a) => a -> a
 
 Use a shortcut ('Fun') to create a value that has an appropriate 'ApplyAB' instance:
+
 >>> let circSucc = Fun circSucc_ :: Fun '[Eq,Enum,Bounded] '()
 
 Confirm that we got Fun right:
+
 >>> :t applyAB circSucc
 applyAB circSucc :: (Bounded b, Enum b, Eq b) => b -> b
 
@@ -1155,6 +1158,7 @@ applyAB circSucc :: (Bounded b, Enum b, Eq b) => b -> b
 False
 
 define the actual record:
+
 >>> let r = x .=. 'a' .*. y .=. False .*. emptyRecord
 >>> r
 Record{x='a',y=False}
