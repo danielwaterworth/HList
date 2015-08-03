@@ -49,6 +49,10 @@ flag new_type_eq
   Description: use Data.Type.Equality.== to define the instance of HEq
                instead of overlapping instances (in Data.HList.TypeEqO)
                (needs ghc >= 7.8)
+              .
+               This version does not allow `HEq x [x] f` to lead to
+               f ~ False, unlike the version with overlapping instances.
+               See <https://ghc.haskell.org/trac/ghc/ticket/9918>
 
 library
   Build-Depends:       base >= 4.6 && < 4.9,
