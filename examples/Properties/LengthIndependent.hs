@@ -289,6 +289,14 @@ hl0 = describe "0 -- length independent"  $ do
           r.!.l2 `eq` v2,
           p1 `eq` p ]
 
+  it "Record hLookupByLabelM" $ property $ do
+    v :: BoolN "v" <- arbitrary
+    w :: BoolN "v" <- arbitrary
+    let r = [pun| v |]
+    return $ conjoin
+      [ hLookupByLabelM (Label :: Label "v") r w `eq` v,
+        hLookupByLabelM (Label :: Label "w") r w `eq` w ]
+
   it "HOccurs HList" $ do
     property $ do
       x <- arbitrary
@@ -343,9 +351,15 @@ hl0 = describe "0 -- length independent"  $ do
       b :: Bool <- arbitrary
       let h = hEnd $ hBuild a b
           v = lx_ .=. a .*. mkVariant1 ly_ b
+          r = (unlabeled # h) `asLabelsOf` pLabel3
+
+          -- ghc-7.8 can't use pLabel5 (due to a lack of Typeable "x")
+          pLabel3 = lx_ .*. ly_ .*. emptyProxy
+          pLabel5 = lx .*. ly .*. emptyProxy -- Proxy :: Proxy ["x","y"]
       return $ conjoin
         [ gread (gshow h) === [(h, "")],
-          gread (gshow v) === [(v, "")] ]
+          gread (gshow v) === [(v, "")],
+          gread (gshow r) === [(r, "")] ]
 
   it "Enum" $ do
     show [ mkVariant lx False (Proxy :: Proxy '[Tagged "x" Bool, Tagged "y" Bool]) .. maxBound ]

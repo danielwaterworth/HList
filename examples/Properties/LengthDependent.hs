@@ -45,7 +45,15 @@ hlN n = [| \proxy -> hSequence
 rKN :: (forall a. [a] -> [a]) -- ^ take some subset of the permutations of 1 .. n
     -> Int
     -> ExpQ
-rKN takeK n = [| \proxy -> do
+rKN = rKN' (litT . numTyLit)
+
+
+rKN' ::
+    (Integer -> TypeQ) -- ^ make the label
+    -> (forall a. [a] -> [a]) -- ^ take some subset of the permutations of 1 .. n
+    -> Int
+    -> ExpQ
+rKN' mkLab takeK n = [| \proxy -> do
         $(recs [| arbitrary `asTypeOf` return proxy |])
             `asTypeOf` return $sig
          |]
@@ -75,9 +83,14 @@ rKN takeK n = [| \proxy -> do
 
           -- taggedN 1 == [t| Tagged 1 x1 |]
           taggedN :: Integer -> TypeQ
-          taggedN i = [t| Tagged $(litT (numTyLit i)) $(varT (mkName ("x"++show i))) |]
+          taggedN i = [t| Tagged $(mkLab i) $(varT (mkName ("x"++show i))) |]
 
+-- | > $(rN n) :: a -> Record [Tagged 1 a, Tagged 2 a, ... Tagged n a]
 rN n = [| \proxy -> $(varE 'hHead) `fmap` $(rKN (take 1) n) proxy |]
+
+
+-- | > $(rNstr n) :: a -> Record [Tagged "1" a, Tagged "2" a, ... Tagged n a]
+rNstr n = [| \proxy -> $(varE 'hHead) `fmap` $(rKN' (litT . strTyLit . show) (take 1) n) proxy |]
 
 vN :: Int -> ExpQ
 vN n = [| \proxy -> do
@@ -249,7 +262,8 @@ hl1 n1 = [| do
       return $ xy `eq` hZip x y
 
 #if __GLASGOW_HASKELL__ < 710
- -- XXX doesn't work with ghc-7.10 RC1
+  -- XXX doesn't work with ghc-7.10.1
+  -- (should be fixed for 7.10.2)
   it "hZip/hZip2" $ property $ do
       x <- genHL (BoolN True :: BoolN "x")
       y <- genHL (BoolN True :: BoolN "y")
