@@ -638,7 +638,9 @@ Like 'concat' but for HLists of HLists.
 Works in ghci... puzzling as what is different in doctest (it isn't
 @-XExtendedDefaultRules@)
 
->>> hConcat $ hBuild (hBuild 1 2 3) (hBuild 'a' "abc")
+>>> let a = hEnd $ hBuild 1 2 3
+>>> let b = hEnd $ hBuild 'a' "abc"
+>>> hConcat $ hBuild a b
 H[1, 2, 3, 'a', "abc"]
 
 -}
