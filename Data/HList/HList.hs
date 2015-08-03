@@ -92,6 +92,17 @@ The data family version (currently used) gives the same type constructor
 like the algebraic data type. Furthermore, nonsense values like
 @HCons 1 2 :: HCons Int Int@ cannot be written with the data family.
 
+A variation on the data family version is
+
+> data instance HList '[] = HNil
+> newtype instance HList (x ': xs) = HCons1 (x, HList xs)
+> pattern HCons x xs = HCons1 (x, xs)
+
+This allows HList to have a nominal role, but on the other
+hand the PatternSynonym is not supported with ghc-7.6 and
+exhaustiveness checking is not as good (warnings for _ being
+unmatched)
+
 -}
 
 
