@@ -1,14 +1,7 @@
 {- | Description: records where elements are stored in unboxed arrays
 
-XXX works with ghc-7.8 and 7.6. Broken with GHC-7.10 RC1 on account of ghc
-bug #10009
-
 The public interface is exported from <Data-HList-CommonMain.html#t:RecordU RecordU>
 
-Export list (from CommonMain.hs)
-
-@
-@
 -}
 module Data.HList.RecordU where
 
@@ -33,8 +26,8 @@ to allow the 'RecordUS' to contain elements of different
 types, so long all of the types can be put into an unboxed
 array ('UArray').
 
-It is advantageous to sort the record to keep elements
-with the same types elements adjacent. See 'SortForRecordUS'
+It is advantageous (at least space-wise) to sort the record to keep
+elements with the same types elements adjacent. See 'SortForRecordUS'
 for more details.  -}
 newtype RecordUS (x :: [*]) =
     RecordUS Any -- ^ Any here is the @HList u@
@@ -89,12 +82,13 @@ this is that @RecordU@ has the following properties:
 * it cannot do type-changing updates of 'RecordU', except if
   the function applies to all elements
 
-* it probably is slower to updates the very first elements
+* it probably is slower to update the very first elements
   of the 'RecordU'
 
 The benefit is that lookups should be faster and records
-should take up less space. However benchmarks do not suggest
-that RecordU is faster than Record.
+should take up less space. However benchmarks done with
+a slow 'HNat2Integral' do not suggest that RecordU is
+faster than Record.
 -}
 newtype RecordU l = RecordU (UArray Int (GetElemTy l))
 
