@@ -402,8 +402,6 @@ hl0 = describe "0 -- length independent"  $ do
           ]
 
 
-
-{- RecordU is disabled for now
   it "unboxed" $ do
     property $ do
       (x :: Bool) <- arbitrary
@@ -432,7 +430,6 @@ hl0 = describe "0 -- length independent"  $ do
           ru .!. ly === y,
           ru .!. lz === z,
           r === ru ^. from unboxedS ]
-         -}
 
   it "monoid0" $ do
     mempty `shouldBe` HNil
