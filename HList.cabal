@@ -56,6 +56,8 @@ flag new_type_eq
 
 library
   Build-Depends:       base >= 4.6 && < 4.9,
+                       -- for Typeable '[] and '(:) with ghc-7.6
+                       base-orphans,
                        template-haskell,
                        ghc-prim,
                        mtl,

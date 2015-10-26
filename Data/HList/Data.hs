@@ -70,6 +70,8 @@ import Data.Data
 import Data.HList.TIC
 import Data.HList.TIP
 
+-- for Typeable '[] and Typeable '(:) with ghc-7.6
+import Data.Orphans ()
 
 #if OLD_TYPEABLE
 import Data.List
@@ -232,11 +234,6 @@ deriving instance Typeable TIP
 -- orphans
 deriving instance Typeable 'HZero
 deriving instance Typeable 'HSucc
-#if !MIN_VERSION_base(4,8,0)
--- GHC 7.9 adds these instances
-deriving instance Typeable '[]
-deriving instance Typeable '(:)
-#endif
 
 #else
 instance TypeRepsList (Record xs) => Typeable (HList xs) where
