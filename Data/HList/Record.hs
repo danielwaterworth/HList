@@ -1182,7 +1182,7 @@ instance HMapAux HList (HFmap f) x y =>
 
 
 -- --------------------------------------------------------------------------
--- | This instance allows creating Record with
+-- | This instance allows creating a Record with
 --
 -- @hBuild 3 'a' :: Record '[Tagged "x" Int, Tagged "y" Char]@
 instance (HReverse l lRev,
