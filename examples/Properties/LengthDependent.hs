@@ -270,20 +270,38 @@ hl1 n1 = [| do
       return $ hZip x y `eq` hZip2 x y
 #endif
 
-  it "HList monoid assoc" $
-    property $ do
-      x <- genHL (BoolN True :: BoolN "x")
-      y <- genHL (BoolN True :: BoolN "x")
-      z <- genHL (BoolN True :: BoolN "x")
-      return $ ((x `mappend` y) `mappend` z) `eq` (x `mappend` (y `mappend` z))
-
+  -- lots of duplication, not sure if it's worth factoring out
   it "HList monoid unit" $
     property $ do
       x <- genHL (BoolN True :: BoolN "x")
       return $ conjoin
         [ x === (x `mappend` mempty),
           x === (mempty `mappend` x) ]
+  it "Record monoid unit" $
+    property $ do
+      x <- $(rN n1) (BoolN True :: BoolN "x")
+      return $ conjoin
+        [ x === (x `mappend` mempty),
+          x === (mempty `mappend` x) ]
+  it "Variant monoid unit" $
+    property $ do
+      x <- $(rN n1) (BoolN True :: BoolN "x")
+      return $ conjoin
+        [ x === (x `mappend` mempty),
+          x === (mempty `mappend` x) ]
 
+  -- lots of duplication, not sure if it's worth factoring out
+  it "HList monoid assoc" $
+    property $ do
+      x <- genHL (BoolN True :: BoolN "x")
+      y <- genHL (BoolN True :: BoolN "x")
+      z <- genHL (BoolN True :: BoolN "x")
+      return $ ((x `mappend` y) `mappend` z) `eq` (x `mappend` (y `mappend` z))
+  it "Record monoid assoc" $ property $ do
+    x <- $(rN n1) (BoolN True :: BoolN "x")
+    y <- $(rN n1) (BoolN True :: BoolN "x")
+    z <- $(rN n1) (BoolN True :: BoolN "x")
+    return $ ((x `mappend` y) `mappend` z) `eq` (x `mappend` (y `mappend` z))
   it "Variant monoid assoc" $ property $ do
     x <- $(vN n1) (BoolN True :: BoolN "x")
     y <- $(vN n1) (BoolN True :: BoolN "x")
