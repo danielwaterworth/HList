@@ -1143,7 +1143,7 @@ of a record:
 >>> let circSucc_ x | x == maxBound = minBound | otherwise = succ x
 
 >>> :t circSucc_
-circSucc_ :: (Eq a, Enum a, Bounded a) => a -> a
+circSucc_ :: (Bounded a, Enum a, Eq a) => a -> a
 
 Use a shortcut ('Fun') to create a value that has an appropriate 'ApplyAB' instance:
 

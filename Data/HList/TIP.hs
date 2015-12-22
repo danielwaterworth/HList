@@ -467,7 +467,10 @@ let myTipyCow :: TIP Animal -- optional
 [@Session log@]
 
 >>> :t myTipyCow
-myTipyCow :: TIP Animal
+myTipyCow
+  :: TIP
+       '[Tagged Key Key, Tagged Name Name, Tagged Breed Breed,
+         Tagged Price Price]
 
 >>> hOccurs myTipyCow :: Breed
 Cow

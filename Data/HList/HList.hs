@@ -641,7 +641,7 @@ Works in ghci... puzzling as what is different in doctest (it isn't
 >>> let a = hEnd $ hBuild 1 2 3
 >>> let b = hEnd $ hBuild 'a' "abc"
 >>> hConcat $ hBuild a b
-H[1, 2, 3, 'a', "abc"]
+H[1,2,3,'a',"abc"]
 
 -}
 type HConcat xs = HConcatFD xs (HConcatR xs)
