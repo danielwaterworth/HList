@@ -16,7 +16,7 @@ module Data.HList.FakePrelude
 
 import Data.Proxy
 import Data.Tagged
-import GHC.Prim (Constraint)
+import GHC.Exts (Constraint)
 import GHC.TypeLits
 import Control.Applicative
 #if NEW_TYPE_EQ
@@ -285,7 +285,7 @@ instance (String ~ string, Show a) => ApplyAB HShow a string where
 -}
 data HComp g f = HComp g f -- ^ @g . f@
 
-instance forall f g a b c. (ApplyAB f a b, ApplyAB g b c) => ApplyAB (HComp g f) a c where
+instance (ApplyAB f a b, ApplyAB g b c) => ApplyAB (HComp g f) a c where
     applyAB ~(HComp g f) x = applyAB g (applyAB f x :: b)
 
 

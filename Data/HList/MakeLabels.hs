@@ -1,3 +1,4 @@
+{-# LANGUAGE CPP #-}
 {-# LANGUAGE TemplateHaskell #-}
 
 {- | Description : Automate some of the ways to make labels.
@@ -34,7 +35,12 @@ dcl n = let
     c = make_cname n
     d = make_dname n
 
-    dd = dataD (return []) c [] [] [''Typeable]
+    dd =
+#if MIN_VERSION_template_haskell(2,11,0)
+      dataD (return []) c [] Nothing [] (fmap (:[]) [t| Typeable |])
+#else
+      dataD (return []) c [] [] [''Typeable]
+#endif
 
     labelSig = sigD d [t| Label $(conT c) |]
 

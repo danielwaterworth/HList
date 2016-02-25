@@ -738,6 +738,8 @@ instance (tx ~ Tagged t x,
 
 
 instance (HUnzip Variant (x2 ': xs) (y2 ': ys) (xy2 ': xys),
+          SameLength xs ys,
+          SameLength ys xys,
           tx ~ Tagged t x,
           ty ~ Tagged t y,
           txy ~ Tagged t (x,y))

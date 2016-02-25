@@ -92,7 +92,8 @@ hSort xs = hSortBy (Proxy :: Proxy HLeFn) xs
 
 instance (SameLength a b,
           HIsAscList le a ok,
-          HSortBy1 ok le a b) => HSortBy le a b where
+          HSortBy1 ok le a b,
+          HEqByFn le) => HSortBy le a b where
     hSortBy = hSortBy1 (Proxy :: Proxy ok)
 
 instance HSortBy1 True le a a where
@@ -208,7 +209,7 @@ it would be possible to use the following definitions:
 
 -}
 class HEqByFn lt => HSetBy lt (ps :: [*])
-instance (HSortBy lt ps ps', HAscList lt ps') => HSetBy lt ps
+instance (HEqByFn lt, HSortBy lt ps ps', HAscList lt ps') => HSetBy lt ps
 
 class HSetBy (HNeq HLeFn) ps => HSet (ps :: [*])
 instance HSetBy (HNeq HLeFn) ps => HSet ps
@@ -228,14 +229,14 @@ class HIsSet (ps :: [*]) (b :: Bool) | ps -> b
 instance HIsSetBy (HNeq HLeFn) ps b => HIsSet ps b
 
 class HEqByFn lt => HIsSetBy lt (ps :: [*]) (b :: Bool) | lt ps -> b
-instance (HSortBy lt ps ps', HIsAscList lt ps' b) => HIsSetBy lt ps b
+instance (HEqByFn lt, HSortBy lt ps ps', HIsAscList lt ps' b) => HIsSetBy lt ps b
 
 
 -- | @HAscList le xs@ confirms that xs is in ascending order,
 -- and reports which element is duplicated otherwise.
 class HEqByFn le => HAscList le (ps :: [*])
 
-instance HAscList0 le ps ps => HAscList le ps
+instance (HEqByFn le, HAscList0 le ps ps) => HAscList le ps
 
 class HEqByFn le => HAscList0 le (ps :: [*]) (ps0 :: [*])
 

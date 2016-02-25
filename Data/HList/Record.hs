@@ -400,7 +400,8 @@ class SameLength r (RecordValuesR r)
 instance RecordValues '[] where
   type RecordValuesR '[] = '[]
   recordValues' _ = HNil
-instance RecordValues r=> RecordValues (Tagged l v ': r) where
+instance (SameLength' r (RecordValuesR r),
+          SameLength' (RecordValuesR r) r, RecordValues r) => RecordValues (Tagged l v ': r) where
    type RecordValuesR (Tagged l v ': r) = v ': RecordValuesR r
    recordValues' (HCons (Tagged v) r) = HCons v (recordValues' r)
 

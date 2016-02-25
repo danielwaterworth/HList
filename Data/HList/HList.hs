@@ -490,7 +490,7 @@ instance (ApplyAB f (e, r) r', HFoldr1 f (e' ': l) r)
 class HFoldl f (z :: *) xs (r :: *) where
     hFoldl :: f -> z -> HList xs -> r
 
-instance forall f z z' r x zx xs. (zx ~ (z,x), ApplyAB f zx z', HFoldl f z' xs r)
+instance (zx ~ (z,x), ApplyAB f zx z', HFoldl f z' xs r)
     => HFoldl f z (x ': xs) r where
     hFoldl f z (x `HCons` xs) = hFoldl f (applyAB f (z,x) :: z') xs
 

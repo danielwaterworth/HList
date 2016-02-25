@@ -55,7 +55,7 @@ flag new_type_eq
                See <https://ghc.haskell.org/trac/ghc/ticket/9918>
 
 library
-  Build-Depends:       base >= 4.6 && < 4.9,
+  Build-Depends:       base >= 4.6 && < 4.10,
                        -- for Typeable '[] and '(:) with ghc-7.6
                        base-orphans,
                        template-haskell,
@@ -119,6 +119,8 @@ library
   Other-Extensions:    CPP
                        TemplateHaskell
                        OverlappingInstances
+  if impl(ghc >= 8.0)
+    Default-Extensions: UndecidableSuperClasses
 
   if impl(ghc < 7.7)
     Cpp-options:       -DOLD_TYPEABLE -DNO_CLOSED_TF
