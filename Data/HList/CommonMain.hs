@@ -216,7 +216,6 @@ import Data.HList.HArray
 import Data.HList.HOccurs
 import Data.HList.HTypeIndexed
 import Data.HList.Record
--- import Data.HList.RecordU
 -- import Data.HList.RecordOrd
 import Data.HList.HList hiding (append',
                                 hAppend',
