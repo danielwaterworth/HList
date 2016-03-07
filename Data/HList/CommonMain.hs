@@ -188,6 +188,13 @@ module Data.HList.CommonMain (
  , module Data.HList.Labelable
  -- $labelable
 
+ -- ** "Data.HList.Deep"
+ -- *** lenses
+ , deep, deep'
+ , deepND, deepND'
+ -- *** plain lookup
+ , hLookupByLabelDeep, HasFieldPath
+
  -- ** namespaced labels
  , module Data.HList.Label3
 
@@ -249,6 +256,8 @@ import Data.HList.Data () -- only instances
 import Data.HList.Keyword
 import Data.HList.RecordPuns
 import Data.HList.RecordU
+
+import Data.HList.Deep
 
 {- $label6demo #label6demo#
 
