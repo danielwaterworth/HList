@@ -112,6 +112,18 @@ data LabeledTo (x :: k) (a :: *) (b :: *) = LabeledTo deriving (Show)
 
 data LabeledR (x :: [*]) = LabeledR
 
+{- if __GLASGOW_HASKELL__ > 800
+-- should this orphan instance really be supplied? ghc 8's
+-- -XOverloadedLabels is uglier syntax than HListPP, and it
+-- seems likely that other users of IsLabel probably define
+-- an instance for (->) which will be chosen over this one
+-- when labels are composed with (.),
+-- (or alternatively there will be complaints about overlap)
+instance (x ~ x', Labelable x r s t a b) => IsLabel x (LabeledOptic x' r s t a b) where
+    fromLabel _ = hLens' (Label :: Label x)
+-- endif
+-}
+
 
 -- | make a @Lens (Record s) (Record t) a b@
 instance HLens x Record s t a b
