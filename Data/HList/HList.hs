@@ -5,9 +5,6 @@
 
    Basic declarations for typeful heterogeneous lists.
 
-   Excuse the unstructured haddocks: while there are many declarations here
-   some are alternative implementations should be grouped, and the definitions
-   here are analgous to many list functions in the "Prelude".
  -}
 
 module Data.HList.HList where
