@@ -33,7 +33,7 @@ module Data.HList.Labelable
     LabeledCxt1,
     LabeledTo(LabeledTo),
     LabeledR(LabeledR),
-    ToSym(toLabel),
+    ToSym, EnsureLabel(toLabel),
     Identity,
     LabelableTIPCxt,
     LabeledOpticType(..),
@@ -179,23 +179,32 @@ l .==. v = toLabel l .=. v
 
 infixr 4 .==.
 
+-- | Get the Symbol out of a 'Label' or 'LabeledTo'
+class ToSym label (s :: Symbol) | label -> s
 
-{- | Create a @'Label' (x :: 'Symbol')@:
+instance LabeledTo x (a `p` f b) (LabeledR s `p` f (LabeledR t)) ~ v1 v2 v3
+    => ToSym (v1 v2 v3) x
 
-> toLabel :: LabeledTo x _ _ -> Label x
+instance ToSym (label x) x
+
+{- | Convert a type to @Label :: Label blah@
+
+> toLabel :: LabeledTo x _ _ -> Label (x :: Symbol)
+> toLabel (hLens' lx)         = (lx :: Label x)
 > toLabel :: Label x         -> Label x
 > toLabel :: Proxy x         -> Label x
 
 -}
-class ToSym label (s :: Symbol) | label -> s where
-    toLabel :: label -> Label s
+class EnsureLabel x y | x -> y where
+  toLabel :: x -> y
 
-instance LabeledTo x (a `p` f b) (LabeledR s `p` f (LabeledR t)) ~ v1 v2 v3
-    => ToSym (v1 v2 v3) x where
-      toLabel _ = Label
+instance EnsureLabel (label x) (Label (x :: k)) where
+  toLabel _ = Label
 
-instance ToSym (label x) x where
-    toLabel _ = Label
+-- | get the Label out of a 'LabeledTo' (ie. `foobar HListPP).
+instance ToSym (a b c) (x :: Symbol) => EnsureLabel (a b c) (Label x) where
+  toLabel _ = Label
+
 
 
 {- $comparisonWithhLensFunction
