@@ -4,6 +4,8 @@ Add Dredge.hs
 Move toLabel to another class to allow it to return Labels with
 kinds other than Symbol.
 
+Fix tipyLens
+
 22 Dec 2015
 0.4.2 Release
 

@@ -152,14 +152,14 @@ When using @set@ (also known as @.~@), 'tipyLens'' can address the
 ambiguity as to which field \"a\" should actually be updated.
 
 -}
-tipyLens f s = hLens x f (asTIP s)
+tipyLens f (TIP s) =
+      case hSplitAt (getN s f) s of
+          (x, Tagged a `HCons` ys) ->
+              let mkt b = mkTIP (x `hAppendList` (tagSelf b `HCons` ys))
+              in mkt <$> f a
   where
-    x = getA f
-    getA :: (a -> f b) -> Label a
-    getA _ = Label
-
-    asTIP :: TIP a -> TIP a
-    asTIP = id
+    getN :: HFind (Label a) (LabelsOf s) n => HList s -> (a -> f b) -> Proxy n
+    getN _ _ = Proxy
 
 
 -- | The same as 'tipyProject', except also return the

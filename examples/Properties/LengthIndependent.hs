@@ -311,6 +311,16 @@ hl0 = describe "0 -- length independent"  $ do
     hOccurs (HCons True HNil^. from tipHList)
       `eq` True
 
+  it "tipyLens" $ property $ do
+    u :: BoolN "u" <- arbitrary
+    v :: BoolN "v" <- arbitrary
+    w :: BoolN "w" <- arbitrary
+    let r = tipHList # hBuild v w
+    return $ conjoin
+      [ (r & tipyLens %~ ( \ (_ :: BoolN "v") -> u)) `eq` tipHList # hBuild u w,
+        (r & tipyLens %~ ( \ (_ :: BoolN "w") -> u)) `eq` tipHList # hBuild v u
+        ]
+
   it "ttip 3" $ do
     property $ do
       f <- arbitrary
