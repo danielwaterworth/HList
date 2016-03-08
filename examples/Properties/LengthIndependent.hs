@@ -502,9 +502,7 @@ hl0 = describe "0 -- length independent"  $ do
 
     return $ conjoin
       [ v' `eq` (v & hPrism lx %~ not),
-        tic' `eq` (tic & hLens' (Label :: Label Bool) %~ not),
-        -- should work, but it doesn't
-        -- tic' `eq` (tic & hLens' Label %~ not),
+        tic' `eq` (tic & hLens' Label %~ not),
         tic' `eq` (tic & ticPrism %~ not)
       ]
 

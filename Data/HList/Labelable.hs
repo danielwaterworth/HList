@@ -150,9 +150,12 @@ instance (HPrism x s t a b,
 --
 -- note that a more general function @'ticPrism' :: Prism (TIC s) (TIC t) a b@,
 -- cannot have an instance of Labelable
-instance (TICPrism s t a b, x ~ a, a ~ b, s ~ t,
+--
+-- Note: `x :: k` according to the instance head, but the instance body
+-- forces the kind variable to be * later on. IE. (k ~ *)
+instance (TICPrism s t a b, Label x ~ Label a,a ~ b, s ~ t,
           SameLength s t) =>
-    Labelable (x :: *) TIC s t a b where
+    Labelable (x :: k) TIC s t a b where
       type LabelableTy TIC = LabelablePrism
       hLens' _ = ticPrism
 
@@ -162,12 +165,12 @@ instance (TICPrism s t a b, x ~ a, a ~ b, s ~ t,
 -- 'tipyLens' provides a @Lens (TIP s) (TIP t) a b@, which tends to need
 -- too many type annotations to be practical
 instance LabelableTIPCxt x s t a b =>
-    Labelable x TIP s t a b where
+    Labelable (x :: k) TIP s t a b where
     type LabelableTy TIP = LabelableLens
     hLens' = hLens
 
 type LabelableTIPCxt x s t a b =
-     (s ~ t, a ~ b, x ~ a,
+     (s ~ t, a ~ b, Label x ~ Label a,
       HLens x TIP s t a b)
 
 
