@@ -22,9 +22,25 @@ import GHC.Exts(Constraint)
 type Coercible a b = (() :: Constraint)
 #endif
 
-simple :: p a (f a) -> p a (f a)
-simple = id
 
+type Equality' s a = forall p (f :: * -> *). a `p` f a -> s `p` f s
+
+{- | if we write @f' = simple . f@, then the inferred type is
+
+> f' :: (s ~ t, _) => Lens s t a b
+
+which normally will let ghc figure out (a~b). However with the
+types that come up in HList this can only be figure out with
+concrete types, so we use isSimple instead which also specifies
+(a~b).
+
+-}
+isSimple :: optic ~ (p a (f a) -> p s (f s)) => optic -> optic
+isSimple = id
+-- alternatively: isSimple x = simple . x . simple
+
+simple :: Equality' a a
+simple = id
 
 -- Used by doctests (which should probably just import Control.Lens...)
 infixl 1 &

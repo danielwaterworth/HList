@@ -52,7 +52,7 @@ instance HMapAux Variant f xs ys => HMapAux TIC f xs ys where
 ticVariant x = isoNewtype (\(TIC a) -> a) TIC x
 
 -- | @Iso' (TIC s) (Variant s)@
-ticVariant' x = simple (ticVariant x)
+ticVariant' x = isSimple ticVariant x
 
 
 -- --------------------------------------------------------------------------
@@ -108,7 +108,7 @@ instance TypeIndexed Variant TIC where
 where @s@ has a type like @'[Tagged \"x\" Int]@, and
 @a@ has a type like @'[Tagged Int Int]@.
 -}
-typeIndexed' x = simple (typeIndexed x)
+typeIndexed' x = isSimple typeIndexed x
 
 -- --------------------------------------------------------------------------
 -- | Public constructor (or, open union's injection function)

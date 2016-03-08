@@ -261,7 +261,7 @@ mkRecord = Record
 hListRecord x = isoNewtype mkRecord (\(Record r) -> r) x
 
 -- | @Iso' (HList s) (Record s)@
-hListRecord' x = simple (isoNewtype Record (\(Record r) -> r) x)
+hListRecord' x = isSimple hListRecord x
 
 -- | Build an empty record
 emptyRecord :: Record '[]
@@ -322,7 +322,7 @@ instance Relabeled Record where
 -- | @Iso' (Record s) (Record a)@
 --
 -- such that @RecordValuesR s ~ RecordValuesR a@
-relabeled' x = simple (relabeled x)
+relabeled' x = isSimple relabeled x
 
 data TaggedFn = TaggedFn
 instance (tx ~ Tagged t x) => ApplyAB TaggedFn x tx where
@@ -1056,7 +1056,7 @@ instance (la ~ LabelsOf a, lt ~ LabelsOf t,
 {- | @Iso' (r s) (r a)@
 
 where @s@ is a permutation of @a@ -}
-rearranged' x = simple (rearranged (simple x))
+rearranged' x = isSimple rearranged x
 
 -- | Helper class for 'hRearrange'
 class (HRearrange3 ls r r', LabelsOf r' ~ ls,

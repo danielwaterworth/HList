@@ -204,7 +204,7 @@ recordUS r = iso hListToRecordUS recordUSToHList r
 is list of @Tagged label value@
 
 -}
-recordUS' r = simple (recordUS r)
+recordUS' r = isSimple recordUS r
 
 -- ** with 'Record'
 
@@ -239,7 +239,7 @@ recordUSToRecord rus = Record (hConcatFD g)
 unboxedS r = iso recordToRecordUS recordUSToRecord r
 
 -- | @Iso' (Record x) (RecordUS x)@
-unboxedS' r = simple (unboxedS r)
+unboxedS' r = isSimple unboxedS r
 
 
 
@@ -327,7 +327,7 @@ unboxed :: forall x y f p.
 unboxed r = iso recordToRecordU recordUToRecord r
 
 -- | @Iso' (Record x) (RecordU x)@
-unboxed' x = simple (unboxed x)
+unboxed' x = isSimple unboxed x
 
 
 class RecordToRecordU x where

@@ -134,9 +134,9 @@ tipyProject ps t = onRecord (hProjectByLabels ps) t
 -- | provides a @Lens' (TIP s) a@. 'hLens'' @:: Label a -> Lens' (TIP s) a@
 -- is another option.
 #if __GLASGOW_HASKELL__ < 707
-tipyLens' x = simple (tipyLens x) -- rejected by GHC-7.10RC1
+tipyLens' x = isSimple tipyLens x -- rejected by GHC-7.10RC1
 #else
-tipyLens' f s = simple (hLens x f) (asTIP s) -- rejected by GHC-7.6.3
+tipyLens' f s = isSimple (hLens x) f (asTIP s) -- rejected by GHC-7.6.3
   where
     x = getA f
     getA :: (a -> f a) -> Label a
@@ -261,7 +261,7 @@ type instance Untag1 (Tagged k x) = x
 tipHList x = iso (\(TIP a) -> hUntagSelf a) (TIP . hTagSelf) x
 
 -- | @Iso' (TIP (TagR s)) (HList a)@
-tipHList' x = simple (tipHList x)
+tipHList' x = isSimple tipHList x
 
 
 -- * conversion to and from 'Record'
@@ -272,7 +272,7 @@ tipHList' x = simple (tipHList x)
 tipRecord x = isoNewtype (\(TIP a) -> Record a) (\(Record b) -> TIP b) x
 
 -- | @Iso' (TIP (TagR s)) (Record a)@
-tipRecord' x = simple (tipRecord x)
+tipRecord' x = isSimple tipRecord x
 
 -- --------------------------------------------------------------------------
 -- * Zip

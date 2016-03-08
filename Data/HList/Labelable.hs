@@ -305,7 +305,7 @@ instance (ExtendsVariant b t,
 
 @Prism' (Variant s) (Variant a)@
 -}
-projected' s = simple (projected (simple s))
+projected' s = isSimple projected s
 
 
 {- | Together with the instance below, this allows writing

@@ -128,7 +128,8 @@ module Data.HList.CommonMain (
 
  -- * Conversions between collections
  -- $convention the foo' optic has the same type as
- -- @Control.Lens.simple . foo@. 'hLens'' is an exception to this rule.
+ -- @Control.Lens.simple . foo . Control.Lens.simple@.
+ -- 'hLens'' is an exception to this rule.
 
  , TypeIndexed(..)
  , typeIndexed'

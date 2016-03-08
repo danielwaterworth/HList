@@ -1094,7 +1094,7 @@ listAsHList x = prism hList2List (\l -> case list2HListSuffix l of
 -- | @Prism' [a] (HList s)@
 --
 -- where @s ~ HReplicateR n a@
-listAsHList' x = simple (listAsHList (simple x))
+listAsHList' x = isSimple listAsHList x
 
 
 -- --------------------------------------------------------------------------
@@ -1383,7 +1383,7 @@ class HTuple v t | v -> t, t -> v where
 hTuple x = iso hToTuple hFromTuple x
 
 -- | @Iso' (HList v) a@
-hTuple' x = simple (hTuple x)
+hTuple' x = isSimple hTuple x
 
 instance HTuple '[] () where
     hToTuple HNil = ()

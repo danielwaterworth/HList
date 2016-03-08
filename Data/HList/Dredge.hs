@@ -15,7 +15,7 @@ import Data.HList.TIC
 import Data.HList.FakePrelude
 import Data.HList.Labelable
 import GHC.Exts
-import LensDefs (simple)
+import LensDefs (isSimple)
 import Data.HList.TypeEqO () -- if this is missing, dredge fails
 
 {- |
@@ -75,7 +75,7 @@ getSAfromOutputOptic f = f (Proxy :: Proxy s) (Proxy :: Proxy a)
 
 
 -- | 'dredge' except a simple (s ~ t, a ~ b) optic is produced
-dredge' label = simple . dredge label . simple
+dredge' label = isSimple (dredge label)
 
 
 -- | dredgeND (named directed only) is the same as 'dredge', except the
@@ -87,7 +87,7 @@ dredgeND label = getSAfromOutputOptic $ \ pr _a ->
 
 
 -- | 'dredgeND' except a simple (s ~ t, a ~ b) optic is produced
-dredgeND' label = simple . dredgeND label . simple
+dredgeND' label = isSimple (dredgeND label)
 
 
 {- | The same as dredgeND', except intended for TIP/TICs because
@@ -101,7 +101,7 @@ be replaced by
 where we might have @s ~ '[Tagged a a, Tagged b b]@
 
 -}
-dredgeTI' label = simple . lens . simple where
+dredgeTI' label = isSimple lens where
         lens = getSAfromOutputOptic $ \ pr pa ->
             hLens'Path (labelPathEndingWith pr (pa `proxyTypeOf` label))
 
