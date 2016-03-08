@@ -69,7 +69,7 @@ library
   Exposed-modules:     Data.HList,
                        Data.HList.CommonMain,
                        Data.HList.Data,
-                       Data.HList.Deep,
+                       Data.HList.Dredge,
                        Data.HList.FakePrelude,
                        Data.HList.HArray,
                        Data.HList.HCurry,

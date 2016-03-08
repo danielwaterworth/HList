@@ -1,5 +1,5 @@
 0.4.3
-Add Deep.hs
+Add Dredge.hs
 
 Move toLabel to another class to allow it to return Labels with
 kinds other than Symbol.

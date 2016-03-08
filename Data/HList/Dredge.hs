@@ -4,8 +4,8 @@
 {-# LANGUAGE OverlappingInstances #-}
 {-# OPTIONS_GHC -fno-warn-unrecognised-pragmas #-}
 #endif
-{- | Description: access nested records/variants given only the deepest label -}
-module Data.HList.Deep where
+{- | Description: access nested records/variants given only the last label along a path -}
+module Data.HList.Dredge where
 
 import Data.HList.Record
 import Data.HList.Variant
@@ -16,11 +16,11 @@ import Data.HList.FakePrelude
 import Data.HList.Labelable
 import GHC.Exts
 import LensDefs (simple)
-import Data.HList.TypeEqO () -- if this is missing, deep fails
+import Data.HList.TypeEqO () -- if this is missing, dredge fails
 
 {- |
 
-Using HListPP for short hand, @deep `foo@ expands out to
+Using HListPP syntax for short hand, @dredge `foo@ expands out to
 something like @`path . `to . `foo@, with the restriction that
 there is only one possible @`path .  `to@ which leads to the
 label @foo@.
@@ -34,58 +34,94 @@ For example, if we have the following definitions,
 
 Then we have:
 
-> deep `x :: Lens (R a) (R b) a b
-> deep lx :: Lens (R a) (R b) a b
+> dredge `x :: Lens (R a) (R b) a b
+> dredge lx :: Lens (R a) (R b) a b
 
-> deep `x :: Prism (V a) (V b) a b
-> deep lx :: Prism (V a) (V b) a b
+> dredge `x :: Traversal (V a) (V b) a b -- there were only variants along the path we'd get a Prism
+> dredge lx :: Traversal (V a) (V b) a b
 
 [@result-type directed operations are supported@]
 
-There are ways to acces a field with tag @a@ in the R type
+There are two ways to access a field with tag @a@ in the R type
 defined above, but they result in fields with different types
 being looked up:
 
 > `a        :: Lens' (R a) Char
 > `b . `a   :: Lens' (R a) Int
 
-so provided the result type is disambiguated by the context,
+so provided that the result type is disambiguated by the context,
 the following two types can happen
 
-> deep `a :: Lens' (R a) Char
-> deep `a :: Lens' (R a) Int
+> dredge `a :: Lens' (R a) Char
+> dredge `a :: Lens' (R a) Int
 
+
+[@TIP & TIC@]
+
+type indexed collections are allowed along those paths, but
+as explained in the 'Labelable' instances, only simple optics
+(Lens' / Prism' / Traversal' ) are produced. @dredgeTI'@
+works better if the target is a TIP or TIC
 
 -}
-deep label = getSA $ \ pr pa -> hLens'Path (labelPathEndingWithTD pr (toLabel label) pa)
-  where getSA :: forall a fb rft p rs lens. (p a fb -> p rs rft) ~ lens
-                => (Proxy rs -> Proxy a -> lens) -> lens
-        getSA f = f (Proxy :: Proxy s) (Proxy :: Proxy a)
+dredge label = getSAfromOutputOptic $ \ pr pa ->
+      hLens'Path (labelPathEndingWithTD pr (toLabel label) pa)
 
 
--- | 'deep' except a simple (s ~ t, a ~ b) optic is produced
-deep' label = simple . deep label . simple
+
+getSAfromOutputOptic :: forall a fb rft p rs stab. (p a fb -> p rs rft) ~ stab 
+                => (Proxy rs -> Proxy a -> stab) -> stab
+getSAfromOutputOptic f = f (Proxy :: Proxy s) (Proxy :: Proxy a)
 
 
--- | deepND (named directed only) is the same as 'deep', except the
+-- | 'dredge' except a simple (s ~ t, a ~ b) optic is produced
+dredge' label = simple . dredge label . simple
+
+
+-- | dredgeND (named directed only) is the same as 'dredge', except the
 -- result type (@a@) is not used when the label would otherwise
--- be ambiguous. deepND might give better type errors, but otherwise
--- there should be no reason to pick it over deep
-deepND label = getS $ \ pr -> hLens'Path (labelPathEndingWith pr (toLabel label))
-  where getS :: forall apfb rft p rs lens. (apfb -> p rs rft  ) ~ lens
-                => (Proxy rs -> lens) -> lens
-        getS f = f (Proxy :: Proxy s)
+-- be ambiguous. dredgeND might give better type errors, but otherwise
+-- there should be no reason to pick it over dredge
+dredgeND label = getSAfromOutputOptic $ \ pr _a ->
+      hLens'Path (labelPathEndingWith pr (toLabel label))
 
 
--- | 'deepND' except a simple (s ~ t, a ~ b) optic is produced
-deepND' label = simple . deepND label . simple
+-- | 'dredgeND' except a simple (s ~ t, a ~ b) optic is produced
+dredgeND' label = simple . dredgeND label . simple
+
+
+{- | The same as dredgeND', except intended for TIP/TICs because
+the assumption is made that @l ~ v@ for the @Tagged l v@ elements.
+In other words, ticPrism' and 'tipyLens'' could usually
+be replaced by
+
+> dredgeTI' :: _ => Label a -> Lens'  (TIP s) a
+> dredgeTI' :: _ => Label a -> Prism' (TIC s) a
+
+where we might have @s ~ '[Tagged a a, Tagged b b]@
+
+-}
+dredgeTI' label = simple . lens . simple where
+        lens = getSAfromOutputOptic $ \ pr pa ->
+            hLens'Path (labelPathEndingWith pr (pa `proxyTypeOf` label))
+
+        proxyTypeOf :: p a -> q a -> Label a
+        proxyTypeOf _ _ = Label
 
 
 -- | @HSingleton msg xs x@ is like @'[x] ~ xs@ if that constraint can hold,
 -- otherwise it is @Fail msg@
-class HSingleton (errmsg :: m) (ns :: [k]) (p :: k) | errmsg ns -> p
-instance HSingleton errmsg '[n] n
-instance (Fail errmsg, Any ~ a) => HSingleton errmsg ns a
+class HSingleton (msgAmb :: m) (msgEmpty :: m2) (ns :: [k]) (p :: k) | ns -> p
+instance HSingleton m1 m2 '[n] n
+instance (Fail m2, Any ~ a) => HSingleton m1 m2 '[] a
+instance (Fail m1, Any ~ a) => HSingleton m1 m2 (n1 ': n2 ': n3) a
+
+
+-- | @HGuardNonNull msg xs@ is like @when (null xs) (fail msg)@
+class HGuardNonNull emptymsg (xs :: [k])
+
+instance Fail msg => HGuardNonNull msg '[]
+instance             HGuardNonNull msg (x ': xs)
 
 
 -- | @ConsTrue b x xs r@ is like @r = if b then x:xs else xs@
@@ -133,11 +169,13 @@ class LabelPathEndingWith (r :: *) (l :: k) (path :: [*]) | r l -> path where
 instance
    (FieldTree r ns,
     FilterLastEq (Label l) ns ns ns',
-    HSingleton '("path is ending in",l, "is not unique in", r) ns' path)
+    HSingleton '("path is ending in",l, "is not unique in", r)
+               '("record",r,"has paths",ns,"none ending in the desired label", l)  ns' path)
     => LabelPathEndingWith r l path
 
 
-labelPathEndingWithTD :: forall r l v path
+labelPathEndingWithTD :: forall nonUnique typesDontMatch namesDontMatch
+                                r l v path
                                 vs vs1 ns ns1 ns2.
    (SameLength ns vs,
     SameLength ns1 vs1,
@@ -146,13 +184,26 @@ labelPathEndingWithTD :: forall r l v path
     FilterLastEq (Label l) ns ns ns1,
     FilterLastEq (Label l) ns vs vs1,
     FilterVEq1 v vs1 ns1 ns2,
-    HSingleton '("path is ending in label",l, "is not unique in record", r, "also considering the v type", v) ns2 path)
+
+    namesDontMatch ~ '("record", r, "has paths", ns,
+                      "none of which end in the desired label", l),
+
+    nonUnique ~ '("path is ending in label",l,
+                 "is not unique in record", r,
+                 "also considering the v type", v),
+    typesDontMatch ~
+        '("record",r,"has potential paths with the right labels",ns1,
+          "which point at types",vs1,
+          "but none of these match the desired type", v),
+
+    HGuardNonNull namesDontMatch ns1,
+    HSingleton nonUnique typesDontMatch ns2 path)
     => Proxy r -> Label l -> Proxy v -> Label path
 labelPathEndingWithTD _ _ _ = Label
 
 
 -- | see 'hLookupByLabelPath'
-hLookupByLabelDeep l r = labelPathEndingWith (toProxy r) l `hLookupByLabelPath` r
+hLookupByLabelDredge l r = labelPathEndingWith (toProxy r) l `hLookupByLabelPath` r
   where toProxy :: r x -> Proxy x
         toProxy _ = Proxy
 
@@ -169,10 +220,10 @@ Just 'r'
 >>> hLookupByLabelPath p r
 'r'
 
->>> hLookupByLabelDeep lx v
+>>> hLookupByLabelDredge lx v
 Just 'r'
 
->>> hLookupByLabelDeep lx r
+>>> hLookupByLabelDredge lx r
 'r'
 
 -}
@@ -196,6 +247,7 @@ instance (x ~ x') => LabelablePath '[] x x' where
     hLens'Path _ = id
 
 class HasFieldPath (needJust :: Bool) (ls :: [*]) r v | needJust ls r -> v where
+    -- | use 'hLookupByLabelPath' instead
     hLookupByLabelPath1 :: Proxy needJust -> Label ls -> r -> v
 
 instance HasFieldPath False '[] v v where
@@ -285,3 +337,5 @@ instance MapFieldTree (Just '[]) '[]
 class MapCons (x :: k) (xs :: [[k]]) (xxs :: [[k]]) | x xs -> xxs
 instance MapCons x '[] '[]
 instance MapCons x b r => MapCons x (a ': b) ( (x ':  a) ': r)
+
+

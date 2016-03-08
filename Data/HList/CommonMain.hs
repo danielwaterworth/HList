@@ -188,12 +188,13 @@ module Data.HList.CommonMain (
  , module Data.HList.Labelable
  -- $labelable
 
- -- ** "Data.HList.Deep"
+ -- ** "Data.HList.Dredge"
  -- *** lenses
- , deep, deep'
- , deepND, deepND'
+ , dredge, dredge'
+ , dredgeND, dredgeND'
+ , dredgeTI'
  -- *** plain lookup
- , hLookupByLabelDeep, HasFieldPath
+ , hLookupByLabelDredge, HasFieldPath
 
  -- ** namespaced labels
  , module Data.HList.Label3
@@ -257,7 +258,7 @@ import Data.HList.Keyword
 import Data.HList.RecordPuns
 import Data.HList.RecordU
 
-import Data.HList.Deep
+import Data.HList.Dredge
 
 {- $label6demo #label6demo#
 
