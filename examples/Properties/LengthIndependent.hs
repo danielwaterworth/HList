@@ -441,6 +441,26 @@ hl0 = describe "0 -- length independent"  $ do
           ru .!. lz === z,
           r === ru ^. from unboxedS ]
 
+  it "sortForRecordUS" $ do
+    property $ do
+      a :: Bool <- arbitrary
+      b :: (Bool,Bool) <- arbitrary
+      c :: Bool <- arbitrary
+      d :: (Bool,Bool) <- arbitrary
+      let r = [pun| a b c d |]
+          sr = sortForRecordUS r
+          ssr = sortForRecordUS sr
+
+      return $ conjoin
+        [ sr `eq` ssr,
+          sr .!. (Label :: Label "a") === a,
+          sr .!. (Label :: Label "b") === b,
+          sr .!. (Label :: Label "c") === c,
+          sr .!. (Label :: Label "d") === d,
+          hRearrange' sr === r
+        ]
+
+
   it "monoid0" $ do
     mempty `shouldBe` HNil
     mempty `shouldBe` emptyRecord
