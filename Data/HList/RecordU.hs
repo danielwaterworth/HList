@@ -195,7 +195,7 @@ type instance HSubtract (HSucc y) HZero = Left (HSucc y)
 
 -- ** with the actual representation
 
--- | @Iso (HList s) (HList t) (RecordUS a) (Record b)@
+-- | @Iso (HList s) (HList t) (RecordUS a) (RecordUS b)@
 recordUS r = iso hListToRecordUS recordUSToHList r
 
 {- | @Iso (HList s) (RecordUS a)@
