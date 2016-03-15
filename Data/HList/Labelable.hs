@@ -201,10 +201,13 @@ instance ToSym (label x) x
 class EnsureLabel x y | x -> y where
   toLabel :: x -> y
 
-instance EnsureLabel (label x) (Label (x :: k)) where
+instance EnsureLabel (Label x) (Label (x :: k)) where
   toLabel _ = Label
 
--- | get the Label out of a 'LabeledTo' (ie. `foobar HListPP).
+instance EnsureLabel (Proxy x) (Label (x :: k)) where
+  toLabel _ = Label
+
+-- | get the Label out of a 'LabeledTo' (ie. `foobar when using HListPP).
 instance ToSym (a b c) (x :: Symbol) => EnsureLabel (a b c) (Label x) where
   toLabel _ = Label
 
