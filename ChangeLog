@@ -6,6 +6,8 @@ kinds other than Symbol.
 
 Fix tipyLens
 
+Add hTake and hDrop
+
 22 Dec 2015
 0.4.2 Release
 

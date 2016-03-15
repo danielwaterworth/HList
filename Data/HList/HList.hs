@@ -1351,6 +1351,14 @@ class HLengthEq2 (xs :: [*]) n | xs -> n -- pick the instance based on xs' const
 instance (HLengthEq xs n, sn ~ HSucc n) => HLengthEq2 (x ': xs) sn
 instance zero ~ HZero => HLengthEq2 '[] zero
 
+-- | @HLengthGe xs n@ says that @HLength xs >= n@.
+--
+-- unlike the expression with a type family HLength,
+-- ghc assumes @xs ~ (aFresh ': bFresh)@ when given a
+-- constraint @HLengthGe xs (HSucc HZero)@
+class HLengthGe (xs :: [*]) (n :: HNat)
+instance (HLengthGe xs n, xxs ~ (x ': xs)) => HLengthGe xxs (HSucc n)
+instance HLengthGe xxs HZero
 
 -- | @HAppendList1 xs ys xsys@ is the type-level way of saying @xs ++ ys == xsys@
 --
@@ -1370,6 +1378,30 @@ instance (HAppendList1 xs ys zs) => HAppendList1 (x ': xs) ys (x ': zs)
 class HStripPrefix xs xsys ys | xs xsys -> ys
 instance (x' ~ x, HStripPrefix xs xsys ys) => HStripPrefix (x' ': xs) (x ': xsys) ys
 instance HStripPrefix '[] ys ys
+
+
+-- ** take
+
+class HTake (n :: HNat) xs ys | n xs -> ys where
+    hTake :: (HLengthEq ys n, HLengthGe xs n) => Proxy n -> HList xs -> HList ys
+
+instance HTake HZero xs '[] where
+    hTake _ _ = HNil
+
+instance (HLengthEq ys n, HLengthGe xs n, HTake n xs ys)
+        => HTake (HSucc n) (x ': xs) (x ': ys) where
+    hTake sn (HCons x xs) = HCons x (hTake (hPred sn) xs)
+
+-- ** drop
+
+class HDrop (n :: HNat) xs ys | n xs -> ys where
+    hDrop :: HLengthGe xs n => Proxy n -> HList xs -> HList ys
+
+instance HDrop HZero xs xs where
+    hDrop _ xs = xs
+
+instance (HLengthGe xs n, HDrop n xs ys) => HDrop (HSucc n) (x ': xs) ys where
+    hDrop sn (HCons _ xs) = hDrop (hPred sn) xs
 
 
 -- * Conversion to and from tuples
