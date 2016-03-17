@@ -4,7 +4,7 @@ Add Dredge.hs
 Move toLabel to another class to allow it to return Labels with
 kinds other than Symbol.
 
-Fix tipyLens
+tipyLens can now change the element type
 
 Add hTake and hDrop
 
