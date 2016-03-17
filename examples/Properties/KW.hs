@@ -55,7 +55,7 @@ kwSpecs = describe "kw" $ do
       y :: BoolN "y" <- arbitrary
       y2 :: BoolN "y" <- arbitrary
 
-      let addDef new = hRearrange' (new .<++. [pun| x y |])
+      let addDef new = hRearrange (Proxy :: Proxy [Label "x", Label "y"]) (new .<++. [pun| x y |])
           f2 (addDef  -> [pun| (x y) |]) = f1 x y
       return $ conjoin
         [ f2 emptyRecord `eq` f1 x y,
