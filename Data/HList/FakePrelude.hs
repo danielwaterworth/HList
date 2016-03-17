@@ -730,6 +730,7 @@ class (SameLength' x y, SameLength' y x) =>
   sameLength :: r x `p` f (q y) -> r x `p` f (q y)
   sameLength = id
 
+-- | 'asTypeOf'
 asLengthOf :: SameLength x y => r x -> s y -> r x
 asLengthOf = const
 

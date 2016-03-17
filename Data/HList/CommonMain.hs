@@ -163,25 +163,39 @@ module Data.HList.CommonMain (
  , Kw(..), recToKW, IsKeyFN, K,  ErrReqdArgNotFound,  ErrUnexpectedKW
 
  -- * Labels
- {- | there are three options for now. However, there are
-   a couple different styles for the first option here:
+ {- | By labels, we mean either the first argument to 'Tagged' (in the
+   type-level lists that are supplied to 'Record', 'RecordU', 'TIP', 'TIC'),
+   or the expressions used to specify those types to be able to look up
+   the correct value in those collections.
 
-   GHC supports type-level strings ('GHC.TypeLits.Symbol'), and these can be
-   labels. You can refer to these strings using an unwieldy syntax described
-   below. For example if you want to store a value @5@ in a record @rec@
-   with a field called @\"x\"@, and then get it out again:
+   Nearly all types can be labels. For example:
 
-   let rec = ('Label' :: Label \"x\") '.=.' 5 '.*.' 'emptyRecord'
+   @
+     r :: Record '[Tagged "x" Int,   -- kind GHC.TypeLits.Symbol 
+                   Tagged () (),    -- see "Data.HList.Label5"
+                   Tagged (Lbl HZero LabelUniverse LabelMember1) () -- Label3
+                  ]
+     r = 'hBuild' 8 () () -- don't need to use '.=.' / '.==.' and '.*.'
+                           -- if we have a type signature above
+   @
+ 
+    we could define these variables
 
-   rec '.!.' (Label :: Label \"x\")
+   @
+    xLabel = Label :: Label \"x\" -- 'makeLabels6' ["x"] would define x with the same RHS
+    xLens  = hLens' xLabel        -- 'makeLabelable' "x" would define x with the same RHS
+   @
 
-   To avoid that pain, you can have a definition @x = Label :: Label "x"@.
-   and just use @x@ instead of repeating @Label :: Label \"x\"@ so that
-   a lookup becomes:
+   to access the @8@ given above:
 
-   > rec .!. x
-
-   'makeLabels6' automates definitions like @x = Label :: Label \"x\"@.
+   @
+    r '.!.' xLabel
+    r  ^.   xLens   -- alternatively Control.Lens.view
+    r  ^. `x        -- with HListPP is used (not in ghci),
+                    -- which avoids the issue of conflicting
+                    -- definitions of x, which mean the same
+                    -- thing
+   @
 
  -}
  -- $label6demo
