@@ -110,7 +110,8 @@ dredgeTI' label = isSimple lens where
 
 
 -- | @HSingleton msg xs x@ is like @'[x] ~ xs@ if that constraint can hold,
--- otherwise it is @Fail msg@
+-- otherwise it is @Fail msg@. See comments on 'Fail' about how its kind
+-- varies with ghc version.
 class HSingleton (msgAmb :: m) (msgEmpty :: m2) (ns :: [k]) (p :: k) | ns -> p
 instance HSingleton m1 m2 '[n] n
 instance (Fail m2, Any ~ a) => HSingleton m1 m2 '[] a
@@ -169,13 +170,11 @@ class LabelPathEndingWith (r :: *) (l :: k) (path :: [*]) | r l -> path where
 instance
    (FieldTree r ns,
     FilterLastEq (Label l) ns ns ns',
-    HSingleton '("path is ending in",l, "is not unique in", r)
-               '("record",r,"has paths",ns,"none ending in the desired label", l)  ns' path)
+    HSingleton (NonUnique r v l) (NamesDontMatch r ns l) ns' path)
     => LabelPathEndingWith r l path
 
 
-labelPathEndingWithTD :: forall nonUnique typesDontMatch namesDontMatch
-                                r l v path
+labelPathEndingWithTD :: forall r l v path
                                 vs vs1 ns ns1 ns2.
    (SameLength ns vs,
     SameLength ns1 vs1,
@@ -185,22 +184,34 @@ labelPathEndingWithTD :: forall nonUnique typesDontMatch namesDontMatch
     FilterLastEq (Label l) ns vs vs1,
     FilterVEq1 v vs1 ns1 ns2,
 
-    namesDontMatch ~ '("record", r, "has paths", ns,
-                      "none of which end in the desired label", l),
+    HGuardNonNull (NamesDontMatch r ns l) ns1,
 
-    nonUnique ~ '("path is ending in label",l,
-                 "is not unique in record", r,
-                 "also considering the v type", v),
-    typesDontMatch ~
-        '("record",r,"has potential paths with the right labels",ns1,
-          "which point at types",vs1,
-          "but none of these match the desired type", v),
-
-    HGuardNonNull namesDontMatch ns1,
-    HSingleton nonUnique typesDontMatch ns2 path)
+    -- '[path] ~ ns2, plus error reporting if ns2 has >1 or 0 elements
+    HSingleton (NonUnique r v l) (TypesDontMatch r ns1 vs1 v) ns2 path)
     => Proxy r -> Label l -> Proxy v -> Label path
 labelPathEndingWithTD _ _ _ = Label
 
+
+type NamesDontMatch r ns l = ErrShowType r
+  :$$: ErrText "has paths"  :<>: ErrShowType ns
+  :$$: ErrText "but none which end in the desired label" :<>: ErrShowType l
+
+type NonUnique r v l = ErrText "Path ending in label " :<>: ErrShowType l
+  :$$: ErrText "is not unique in " :<>: ErrShowType r
+  :$$: ErrText "also considering the v type " :<>: ErrShowType v
+
+{- | XXX
+
+> let x = 'x'; y = [pun| x |]; z = [pun| y |]
+> z & dredge (Label :: Label "x") %~ (succ :: Int -> Int)
+
+Should reference this type error, but for whatever reason it doesn't
+
+-}
+type TypesDontMatch r ns1 vs1 v = ErrShowType r
+  :$$: ErrText "has potential paths with the right labels" :<>: ErrShowType ns1
+  :$$: ErrText "which point at types" :<>: ErrShowType vs1 :<>: ErrText "respectively"
+  :$$: ErrText "but none of these match the desired type" :<>: ErrShowType v
 
 -- | see 'hLookupByLabelPath'
 hLookupByLabelDredge l r = labelPathEndingWith (toProxy r) l `hLookupByLabelPath` r

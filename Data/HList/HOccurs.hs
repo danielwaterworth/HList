@@ -82,18 +82,21 @@ hOccursFst l = case hOccurrence (Proxy::Proxy e) l of HCons e _ -> e
 
 data TypeNotFound e
 
-instance (HOccurrence e (x ': y) l', HOccurs' e l')
+instance (HOccurrence e (x ': y) l', HOccurs' e l' (x ': y))
     => HOccurs e (HList (x ': y)) where
-    hOccurs = hOccurs' . hOccurrence (Proxy ::Proxy e)
+    hOccurs = hOccurs' (Proxy :: Proxy (x ': y)) . hOccurrence (Proxy ::Proxy e)
 
-class HOccurs' e l where
-    hOccurs' :: HList l -> e
+-- | l0 is the original list so that when we reach the end of l
+-- without finding an e, we can report an error that gives an
+-- idea about what the original list was.
+class HOccurs' e l (l0 :: [*]) where
+    hOccurs' :: Proxy l0 -> HList l -> e
 
-instance Fail (TypeNotFound e) => HOccurs' e '[] where
-    hOccurs' = error "Data.HList.FakePrelude.Fail must have no instances"
+instance Fail (FieldNotFound e (HList l0)) => HOccurs' e '[] l0 where
+    hOccurs' = error "HOccurs'' Fail failed"
 
-instance (e ~ e1, HOccursNot e l) => HOccurs' e (e ': l) where
-    hOccurs' (HCons e _) = e
+instance HOccursNot e l => HOccurs' e (e ': l) l0 where
+    hOccurs' _ (HCons e _) = e
 
 -- | lookup a value in the collection (TIP usually) and return the TIP with that
 -- element deleted. Used to implement 'tipyTuple'.
@@ -122,12 +125,15 @@ instance e ~ e1 => HOccursOpt' e (e1 ': l) where
 -- --------------------------------------------------------------------------
 -- Class to test that a type is "free" in a type sequence
 
-data TypeFound e
-instance HOccursNot e ('[]::[*])
-instance (HEq e e1 b, HOccursNot' b e l) => HOccursNot e (e1 ': l)
-class HOccursNot' (b :: Bool) e (l :: [*])
-instance Fail (TypeFound e) => HOccursNot' True e l
-instance HOccursNot e l => HOccursNot' False e l
+instance HOccursNot1 e xs xs => HOccursNot e xs
+
+class HOccursNot1 (e :: k) (xs :: [k]) (xs0 :: [k])
+
+instance HOccursNot1 (e :: k) ('[]::[k]) l0
+instance (HEq e e1 b, HOccursNot2 b e l l0) => HOccursNot1 e (e1 ': l) l0
+class HOccursNot2 (b :: Bool) e (l :: [k]) (l0 :: [k])
+instance Fail (ExcessFieldFound e l0) => HOccursNot2 True e l l0
+instance HOccursNot1 e l l0 => HOccursNot2 False e l l0
 
 
 -- --------------------------------------------------------------------------

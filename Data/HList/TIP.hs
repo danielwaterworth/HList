@@ -350,8 +350,9 @@ instance (HMember (Tagged arg arg) db b,
     => TransTIP1 False (HSucc n) (arg -> op) db where
     ttip1 _ _ = ttip2 (Proxy :: Proxy b)
 
-instance Fail '(TypeNotFound notfun, "in TIP", db) => TransTIP1 False HZero notfun db where
-    ttip1 = error "TransTIP1 Fail must have no instances"
+instance Fail (FieldNotFound notfun (TIP db))
+      => TransTIP1 False HZero notfun db where
+    ttip1 = error "TransTIP1 Fail failed"
 
 class TransTIP2 (b :: Bool) arg op db where
     ttip2 :: Proxy b -> (arg -> op) -> TIP db -> TIP db
@@ -361,8 +362,9 @@ instance (HOccurs arg (TIP db),
    => TransTIP2 True arg op db where
     ttip2 _ f db = ttip (f (hOccurs db)) db
 
-instance Fail '(TypeNotFound arg, "in TIP", db) => TransTIP2 False arg op db where
-    ttip2 = error "TransTIP2 Fail must have no instances"
+instance Fail (FieldNotFound arg (TIP db))
+    => TransTIP2 False arg op db where
+    ttip2 = error "TransTIP2 Fail failed"
 
 -- ** Monadic version
 
@@ -400,9 +402,9 @@ instance (Monad m, m ~ m', HTPupdateAtLabel TIP op op db)
          op' <- op
          return $ tipyUpdate op' db
 
-instance (Fail '(TypeNotFound op, "in TIP", db), Monad m)
+instance (Fail (FieldNotFound op (TIP db)), Monad m)
     => TransTIPM1 False HZero m op db where
-    ttipM1 _ _ = error "TransTIPM1 Fail must have no instances"
+    ttipM1 _ _ = error "TransTIPM1 Fail failed"
 
 -- If op is not found in a TIP, it must be a function. Look up
 -- its argument in a TIP and recur.
@@ -421,9 +423,9 @@ instance (HOccurs arg (TIP db), TransTIPM m op db)
     ttipM2 _ f db = ttipM (f (hOccurs db)) db
 
 
-instance (Fail '(TypeNotFound op, "in TIP", db))
+instance Fail (FieldNotFound op (TIP db))
     => TransTIPM2 False m arg op db where
-    ttipM2 _ _ = error "TransTIPM1 Fail must have no instances"
+    ttipM2 _ _ = error "TransTIPM1 Fail failed"
 
 -- --------------------------------------------------------------------------
 

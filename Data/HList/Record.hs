@@ -590,7 +590,8 @@ instance (HEqK l l1 b, HasField' b l (Tagged l1 v1 ': r) v)
     hLookupByLabel l (Record r) =
              hLookupByLabel' (Proxy::Proxy b) l r
 
-instance Fail (FieldNotFound l) => HasField l (Record '[]) (FieldNotFound l) where
+-- | XXX
+instance (t ~ Any, Fail (FieldNotFound l ())) => HasField l (Record '[]) t where
     hLookupByLabel _ _ = error "Data.HList.Record.HasField: Fail instances should not exist"
 
 
@@ -725,7 +726,8 @@ instance (HEqK l l' b, HUpdateAtLabel1 b l v (Tagged l' e ': xs) xs')
     => HUpdateAtLabel2 l v (Tagged l' e ': xs) xs' where
     hUpdateAtLabel2 = hUpdateAtLabel1 (Proxy :: Proxy b)
 
-instance Fail (FieldNotFound l) => HUpdateAtLabel2 l v '[] '[] where
+-- | XXX
+instance Fail (FieldNotFound l ()) => HUpdateAtLabel2 l v '[] '[] where
     hUpdateAtLabel2 _ _ r = r
 
 
@@ -1095,8 +1097,8 @@ instance (HRearrange3 ls rout r',
    hRearrange4 _ ls (HCons lv@(Tagged v) _HNil) rout
         = HCons (Tagged v `asTypeOf` lv) (hRearrange3 ls rout)
 
--- | For improved error messages
-instance Fail (FieldNotFound l) =>
+-- | For improved error messages. XXX FieldNotFound
+instance Fail (FieldNotFound l ()) =>
         HRearrange4 l ls '[] rout '[] where
    hRearrange4 _ _ _ _ = error "Fail has no instances"
 

@@ -8,6 +8,12 @@ tipyLens can now change the element type
 
 Add hTake and hDrop
 
+Use TypeError for prettier error messages in ghc-8.0 (still backwards
+compatible)
+
+Improve HFind and HUpdateAtHNat error messages by mentioning the whole
+record being changed
+
 22 Dec 2015
 0.4.2 Release
 

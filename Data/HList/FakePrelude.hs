@@ -10,14 +10,19 @@
 
 module Data.HList.FakePrelude
     (module Data.HList.FakePrelude,
+     -- * re-exports
      module Data.Proxy,
      module Data.Tagged,
-     Monoid(..)) where
+     Monoid(..),
+     Any) where
 
 import Data.Proxy
 import Data.Tagged
-import GHC.Exts (Constraint)
+import GHC.Exts (Constraint,Any)
 import GHC.TypeLits
+#if __GLASGOW_HASKELL__ >= 800
+import qualified GHC.TypeLits as Data.HList.FakePrelude (ErrorMessage((:$$:), (:<>:))) -- XXX check this works?
+#endif
 import Control.Applicative
 #if NEW_TYPE_EQ
 import Data.Type.Equality (type (==))
@@ -682,15 +687,52 @@ instance HCast1 False x y where
 
 -- * Error messages
 
--- | A class without instances for explicit failure
-class Fail x
+{- | A class without instances for explicit failure.
 
+Note that with ghc>=8.0, `x :: TypeError` which is formatted properly.
+Otherwise `x` is made of nested (left-associated) promoted tuples.
+For example:
 
--- ** Uses of fail
--- $note these could be replaced by `'("helpful message", l)`,
--- but these look better.
-data ExtraField l
-data FieldNotFound l
+> (x ~ '( '( '("the", Int), "is wrong") ) ) :: ((,) Symbol *, Symbol)
+
+Therefore code that works across ghc-7.6 through ghc-8.0 needs to
+use ErrText, ErrShowType, :<>:, :$$: to construct the type x.  -}
+class Fail (x :: k)
+
+#if __GLASGOW_HASKELL__ >= 800
+-- | use the alias ErrText to prevent conflicts with Data.Text
+--
+-- GHC.TypeLits.:<>: and GHC.TypeLits.:$$: are re-exported
+type ErrText x = GHC.TypeLits.Text x
+type ErrShowType x = GHC.TypeLits.ShowType x
+
+-- XXX this should be different
+instance TypeError x => Fail x
+#else
+
+type ErrText x = x
+type ErrShowType x = x
+type x :<>: y = '(x,y)
+type x :$$: y = '(x,y)
+infixl 6 :<>:
+infixl 5 :$$:
+#endif
+
+-- ** Error messages used elsewhere
+type FieldNotFound key collection = ErrText "key" :<>: ErrShowType key
+      :$$: ErrText "could not be found in" :<>: ErrShowType collection
+
+type ExcessFieldFound key collection = ErrText "found field" :<>: ErrShowType key
+      :$$: ErrText "when it should be absent from" :<>: ErrShowType collection
+
+type HNatIndexTooLarge (nat :: HNat) (r :: [k] -> *) (xs :: [k]) =
+      ErrText "0-based index" :<>: ErrShowType (HNat2Nat nat) :<>:
+      ErrText "is too large for collection"
+            :$$: ErrShowType (r xs)
+    -- :$$: ErrText "(length: " :<>: ErrShowType (HNat2Nat (HLength collection)) :<>: ErrText " )"
+    -- Data.HList.HList.HLength isn't available here
+
+type ExtraField x = ErrText "extra field" :<>: ErrShowType x
 
 
 #if OLD_TYPEABLE

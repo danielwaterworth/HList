@@ -47,22 +47,27 @@ instance HDeleteAtHNat n l => HDeleteAtHNat (HSucc n) (e ': l) where
 
 -- --------------------------------------------------------------------------
 -- * Update
+class HUpdateAtHNat' n e l l => HUpdateAtHNat n e l where
+    hUpdateAtHNat :: Proxy n -> e -> HList l -> HList (HUpdateAtHNatR n e l)
 
-class HUpdateAtHNat (n :: HNat) e (l :: [*]) where
+instance HUpdateAtHNat' n e l l => HUpdateAtHNat n e l where
+    hUpdateAtHNat = hUpdateAtHNat' (Proxy :: Proxy l)
+
+class HUpdateAtHNat' (n :: HNat) e (l :: [*]) (l0 :: [*]) where
   type HUpdateAtHNatR (n :: HNat) e (l :: [*]) :: [*]
-  hUpdateAtHNat :: Proxy n -> e -> HList l -> HList (HUpdateAtHNatR n e l)
+  hUpdateAtHNat' :: Proxy l0 -> Proxy n -> e -> HList l -> HList (HUpdateAtHNatR n e l)
 
-instance HUpdateAtHNat HZero e1 (e ': l) where
+instance HUpdateAtHNat' HZero e1 (e ': l) l0 where
   type HUpdateAtHNatR  HZero e1 (e ': l) = e1 ': l
-  hUpdateAtHNat _ e1 (HCons _ l)         = HCons e1 l
+  hUpdateAtHNat' _ _ e1 (HCons _ l)      = HCons e1 l
 
-instance HUpdateAtHNat n e1 l => HUpdateAtHNat (HSucc n) e1 (e ': l) where
+instance HUpdateAtHNat' n e1 l l0 => HUpdateAtHNat' (HSucc n) e1 (e ': l) l0 where
   type HUpdateAtHNatR  (HSucc n) e1 (e ': l) = e ': (HUpdateAtHNatR n e1 l)
-  hUpdateAtHNat n e1 (HCons e l) = HCons e (hUpdateAtHNat (hPred n) e1 l)
+  hUpdateAtHNat' l0 n e1 (HCons e l) = HCons e (hUpdateAtHNat' l0 (hPred n) e1 l)
 
-instance Fail (FieldNotFound (Proxy n, e1)) => HUpdateAtHNat n e1 '[] where
+instance Fail (HNatIndexTooLarge n HList l0) => HUpdateAtHNat' n e1 '[] l0 where
   type HUpdateAtHNatR n e1 '[] = '[]
-  hUpdateAtHNat _ _ _ = error "Data.HList.HArray.HUpdateAtHNat: Fail must have no instances"
+  hUpdateAtHNat' _ _ _ = error "Data.HList.HArray.HUpdateAtHNat: Fail must have no instances"
 
 -- --------------------------------------------------------------------------
 -- * Projection
