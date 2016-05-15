@@ -16,8 +16,8 @@ hl1_2_3 = $(doE $
                [| describe $(stringE (show n)) $(hl1 n) |]
             | n <- [1 .. 5]]
     ++ [ noBindS [| describe $(stringE (show (n1,n2))) $(hl2 n1 n2) |]
-      | n1 <- [1 .. 3],
-        n2 <- [1 .. 3] ]
+      | n1 <- [1 .. 2],
+        n2 <- [1 .. 2] ]
     ++ [ noBindS [| describe $(stringE (show (n1,n2,n3))) $(hl3 n1 n2 n3) |]
       | n1 <- [0 .. 2],
         n2 <- [0 .. 1],
