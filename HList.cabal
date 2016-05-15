@@ -7,9 +7,13 @@ Description:         HList provides many operations to create and manipulate
                      types are known at compile-time. HLists are used to implement
                     .
                       * records
+                    .
                       * variants
+                    .
                       * type-indexed products (TIP)
+                    .
                       * type-indexed co-products (TIC)
+                    .
                       * keyword arguments
                     .
                      User code should import "Data.HList" or
